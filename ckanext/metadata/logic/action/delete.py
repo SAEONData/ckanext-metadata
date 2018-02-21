@@ -4,7 +4,6 @@ import logging
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
-from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
 
 log = logging.getLogger(__name__)

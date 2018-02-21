@@ -10,6 +10,10 @@ from ckanext.metadata.lib.dictization import model_save
 log = logging.getLogger(__name__)
 
 
+# optional params may or may not be supplied by the caller
+# nullable params must be supplied but may be empty
+# all other params must be supplied and must not be empty
+
 def metadata_schema_create(context, data_dict):
     """
     Create a new metadata schema.
@@ -24,11 +28,11 @@ def metadata_schema_create(context, data_dict):
     :type description: string
     :param schema_name: the name of the metadata schema
     :type schema_name: string
-    :param schema_version: the version of the metadata schema (optional)
+    :param schema_version: the version of the metadata schema
     :type schema_version: string
-    :param schema_xsd: the XSD document defining the schema (optional)
+    :param schema_xsd: the XSD document defining the schema (nullable)
     :type schema_xsd: string
-    :param base_schema_id: the id of the metadata schema from which this schema is derived (optional)
+    :param base_schema_id: the id of the metadata schema from which this schema is derived (nullable)
     :type base_schema_id: string
 
     :returns: the newly created metadata schema (unless 'return_id_only' is set to True
@@ -85,11 +89,11 @@ def metadata_model_create(context, data_dict):
     :type description: string
     :param metadata_schema_id: the id of the metadata schema from which this model is derived
     :type metadata_schema_id: string
-    :param model_json: the JSON dictionary defining the model (optional)
+    :param model_json: the JSON dictionary defining the model (nullable)
     :type model_json: string
-    :param organization_id: the id or name of the associated organization (optional)
+    :param organization_id: the id or name of the associated organization (nullable)
     :type organization_id: string
-    :param infrastructure_id: the id or name of the associated infrastructure (optional)
+    :param infrastructure_id: the id or name of the associated infrastructure (nullable)
     :type infrastructure_id: string
 
     :returns: the newly created metadata model (unless 'return_id_only' is set to True
@@ -133,14 +137,18 @@ def infrastructure_create(context, data_dict):
     
     You must be authorized to create infrastructures.
 
-    :param name: the name of the infrastructure; must conform to group naming rules
-    :type name: string
     :param id: the id of the infrastructure (optional - only sysadmins can set this)
     :type id: string
+    :param name: the name of the infrastructure; must conform to group naming rules
+    :type name: string
     :param title: the title of the infrastructure (optional)
     :type title: string
     :param description: the description of the infrastructure (optional)
     :type description: string
+    :param users: the users associated with the infrastructure (optional); a list of dictionaries
+        each with key ``'name'`` (string, the id or name of the user) and optionally ``'capacity'``
+        (string, the capacity in which the user is a member of the infrastructure)
+    :type users: list of dictionaries
 
     :returns: the newly created infrastructure (unless 'return_id_only' is set to True
               in the context, in which case just the infrastructure id will be returned)
@@ -179,10 +187,10 @@ def metadata_collection_create(context, data_dict):
 
     You must be authorized to create metadata collections.
 
-    :param name: the name of the metadata collection; must conform to group naming rules
-    :type name: string
     :param id: the id of the metadata collection (optional - only sysadmins can set this)
     :type id: string
+    :param name: the name of the metadata collection; must conform to group naming rules
+    :type name: string
     :param title: the title of the metadata collection (optional)
     :type title: string
     :param description: the description of the metadata collection (optional)
@@ -238,18 +246,18 @@ def metadata_record_create(context, data_dict):
     :type owner_org: string
     :param metadata_collection_id: the id or name of the metadata collection to which this record will be added
     :type metadata_collection_id: string
-    :param infrastructures: the infrastructures associated with the metadata record, a list of
-        dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
+    :param infrastructures: the infrastructures associated with the metadata record (nullable - may be an
+        empty list); list of dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
     :type infrastructures: list of dictionaries
     :param schema_name: the name of the metadata schema, used to look up a metadata_schema object
     :type schema_name: string
     :param schema_version: the version of the metadata schema, used to look up a metadata_schema object
     :type schema_version: string
-    :param content_json: JSON dictionary of metadata content (optional)
+    :param content_json: JSON dictionary of metadata content (nullable)
     :type content_json: string
-    :param content_raw: original unmodified metadata (optional)
+    :param content_raw: original unmodified metadata (nullable)
     :type content_raw: string
-    :param content_url: URL pointing to original unmodified metadata (optional)
+    :param content_url: URL pointing to original unmodified metadata (nullable)
     :type content_url: string
 
     :returns: the newly created metadata record (unless 'return_id_only' is set to True

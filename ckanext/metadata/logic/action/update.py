@@ -11,10 +11,25 @@ import ckanext.metadata.model as ckanext_model
 log = logging.getLogger(__name__)
 
 
-# NB: We allow partial updates unconditionally because this is consistent with
-# how updating of "native" fields is done in CKAN. On the contrary, not allowing
-# partial updates results in inconsistent behaviour between "native" and "extra"
-# fields, and requires that the API user understands the inner workings of the system.
+# NB: We allow partial updates unconditionally because this is consistent with how
+# updating of "native" fields is handled in CKAN: fields are left at their current
+# values when parameters are missing from the input (where permitted by ignore_missing
+# in the schema). On the contrary, not allowing partial updates can result in data
+# (extras, members, etc) being deleted if "list" type params are missing from the input,
+# and correct use of the 'allow_partial_update' option would require the caller to
+# understand the inner workings of the system.
+
+# The extras saving mechanism is flawed. If a schema defines two "extra" fields, say
+# field1 and field2, then these would be left unchanged if neither is supplied by the
+# caller on update (assuming we're allowing partial updates). However, if only field1
+# is supplied, then field2 ends up being deleted because all extras are lumped together
+# in the same list. Again, this requires the caller to understand the inner workings
+# of the system - in particular, to know that field1 and field2 are "extra" rather
+# than "native". The only way to avoid this problem is to ensure that "extra" fields
+# are validated as not_missing in the schema.
+
+# Fields indicated as "optional" in the docstrings remain at their current values if
+# not supplied by the caller.
 
 def metadata_schema_update(context, data_dict):
     """
@@ -151,6 +166,8 @@ def infrastructure_update(context, data_dict):
 
     :param id: the id or name of the infrastructure to update
     :type id: string
+    :param name: the name of the infrastructure (optional)
+    :type name: string
 
     :returns: the updated infrastructure (unless 'return_id_only' is set to True
               in the context, in which case just the infrastructure id will be returned)
@@ -195,6 +212,8 @@ def metadata_collection_update(context, data_dict):
 
     :param id: the id or name of the metadata collection to update
     :type id: string
+    :param name: the name of the metadata collection (optional)
+    :type name: string
 
     :returns: the updated metadata collection (unless 'return_id_only' is set to True
               in the context, in which case just the collection id will be returned)
@@ -239,6 +258,8 @@ def metadata_record_update(context, data_dict):
 
     :param id: the id of the metadata record to update
     :type id: string
+    :param name: the name of the metadata record (optional)
+    :type name: string
 
     :returns: the updated metadata record (unless 'return_id_only' is set to True
               in the context, in which case just the record id will be returned)

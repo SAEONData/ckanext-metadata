@@ -5,6 +5,7 @@ import uuid
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
+import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
 
 
@@ -27,10 +28,38 @@ def _convert_missing(value, default=None):
 
 # region General validators
 
+def not_missing(key, data, errors, context):
+    """
+    Replaces the built-in CKAN validator not_missing, so that we can distinguish
+    between missing and empty values.
+    """
+    value = data.get(key)
+    if value is tk.missing:
+        errors.setdefault(key, [])
+        errors[key].append(_('Missing parameter'))
+        raise tk.StopOnError
+
+
+def not_empty(key, data, errors, context):
+    """
+    Replaces the built-in CKAN validator not_empty, so that we can distinguish
+    between missing and empty values. This checks not_missing as well.
+    """
+    not_missing(key, data, errors, context)
+    value = data.get(key)
+    if not value:
+        errors.setdefault(key, [])
+        errors[key].append(_('Missing value'))
+        raise tk.StopOnError
+
+
 def json_dict_validator(value):
     """
     Checks for well-formed JSON, and that the supplied JSON represents a dictionary.
     """
+    if not value:
+        return None
+
     try:
         obj = json.loads(value)
     except ValueError, e:
@@ -47,6 +76,9 @@ def xsd_validator(value):
     TODO
     Check for well-formed XSD.
     """
+    if not value:
+        return None
+
     return value
 
 # endregion
@@ -59,10 +91,14 @@ def organization_exists(group_id_or_name, context):
     Checks that a group of type 'organization' exists with the given name/id,
     and converts name to id if applicable.
     """
+    if not group_id_or_name:
+        return None
+
     model = context['model']
     group = model.Group.get(group_id_or_name)
     if not group or group.type != 'organization':
         raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Organization'), group_id_or_name))
+
     return group.id
 
 
@@ -71,10 +107,14 @@ def infrastructure_exists(group_id_or_name, context):
     Checks that a group of type 'infrastructure' exists with the given name/id,
     and converts name to id if applicable.
     """
+    if not group_id_or_name:
+        return None
+
     model = context['model']
     group = model.Group.get(group_id_or_name)
     if not group or group.type != 'infrastructure':
         raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Infrastructure'), group_id_or_name))
+
     return group.id
 
 
@@ -83,10 +123,14 @@ def metadata_collection_exists(group_id_or_name, context):
     Checks that a group of type 'metadata_collection' exists with the given name/id,
     and converts name to id if applicable.
     """
+    if not group_id_or_name:
+        return None
+
     model = context['model']
     group = model.Group.get(group_id_or_name)
     if not group or group.type != 'metadata_collection':
         raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Metadata Collection'), group_id_or_name))
+
     return group.id
 
 
@@ -104,6 +148,7 @@ def owner_org_owns_metadata_collection(key, data, errors, context):
 
     id_ = _convert_missing(data.get(key[:-1] + ('id',)))
     obj = model.Package.get(id_) if id_ else None
+
     # if we're updating, missing value(s) in the input data imply a partial update, so get the
     # existing value(s) and check that the updated combination satisfies our condition
     organization_id = _convert_missing(organization_id, obj.owner_org if obj else None)
@@ -125,6 +170,7 @@ def metadata_record_schema_selector(key, data, errors, context):
     """
     schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)))
     schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
+
     if schema_name and schema_version:
         metadata_schema = ckanext_model.MetadataSchema.by_name_and_version(schema_name, schema_version)
         if not metadata_schema:
@@ -158,32 +204,69 @@ def metadata_record_id_name_generator(key, data, errors, context):
         data[key[:-1] + ('name',)] = name
 
 
+def metadata_record_infrastructures_not_missing(key, data, errors, context):
+    """
+    Checks that the infrastructures list is not missing.
+    For use with the '__before' schema key; CKAN puts empty lists into __extras,
+    so we check that and pop as necessary.
+    """
+    unflattened = df.unflatten(data)
+    infrastructures = unflattened.get('infrastructures')
+    if infrastructures is not None:
+        return
+
+    extras = data.get(key[:-1] + ('__extras',), {})
+    infrastructures = extras.get('infrastructures')
+    if infrastructures is not None:
+        extras.pop('infrastructures')
+        return
+
+    errors.setdefault(key[:-1] + ('infrastructures',), [])
+    errors[key[:-1] + ('infrastructures',)].append(_('Missing parameter'))
+
+
 def group_does_not_exist(group_id_or_name, context):
+    if not group_id_or_name:
+        return None
+
     model = context['model']
     result = model.Group.get(group_id_or_name)
     if result:
         raise tk.Invalid('%s: %s %s' % (_('Already exists'), _('Group'), group_id_or_name))
+
     return group_id_or_name
 
 
 def metadata_model_does_not_exist(metadata_model_id, context):
+    if not metadata_model_id:
+        return None
+
     result = ckanext_model.MetadataModel.get(metadata_model_id)
     if result:
         raise tk.Invalid('%s: %s %s' % (_('Already exists'), _('Metadata Model'), metadata_model_id))
+
     return metadata_model_id
 
 
 def metadata_schema_exists(metadata_schema_id, context):
+    if not metadata_schema_id:
+        return None
+
     result = ckanext_model.MetadataSchema.get(metadata_schema_id)
     if not result:
         raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Metadata Schema'), metadata_schema_id))
+
     return metadata_schema_id
 
 
 def metadata_schema_does_not_exist(metadata_schema_id, context):
+    if not metadata_schema_id:
+        return None
+
     result = ckanext_model.MetadataSchema.get(metadata_schema_id)
     if result:
         raise tk.Invalid('%s: %s %s' % (_('Already exists'), _('Metadata Schema'), metadata_schema_id))
+
     return metadata_schema_id
 
 
@@ -194,20 +277,11 @@ def unique_metadata_schema_name_and_version(key, data, errors, context):
     id_ = data.get(key[:-1] + ('id',))
     schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)))
     schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
+
     if schema_name and schema_version:
         metadata_schema = ckanext_model.MetadataSchema.by_name_and_version(schema_name, schema_version)
         if metadata_schema and metadata_schema.id != id_:
             raise tk.Invalid(_("Unique constraint violation: %s") % '(schema_name, schema_version)')
-
-
-def both_metadata_schema_name_and_version(key, data, errors, context):
-    """
-    For use with the '__after' schema key.
-    """
-    schema_name_supplied = _convert_missing(data.get(key[:-1] + ('schema_name',))) is not None
-    schema_version_supplied = _convert_missing(data.get(key[:-1] + ('schema_version',))) is not None
-    if schema_name_supplied != schema_version_supplied:
-        raise tk.Invalid(_("Either both or neither schema_name and schema_version must be specified."))
 
 
 def no_loops_in_metadata_schema_hierarchy(key, data, errors, context):
@@ -241,6 +315,7 @@ def metadata_model_unique_schema_organization_infrastructure(key, data, errors, 
 
     id_ = _convert_missing(data.get(key[:-1] + ('id',)))
     obj = ckanext_model.MetadataModel.get(id_) if id_ else None
+
     # if we're updating, missing value(s) in the input data imply a partial update, so get the
     # existing value(s) and check that the updated key does not violate uniqueness
     metadata_schema_id = _convert_missing(metadata_schema_id, obj.metadata_schema_id if obj else None)
@@ -262,13 +337,14 @@ def metadata_model_check_organization_infrastructure(key, data, errors, context)
 
     id_ = _convert_missing(data.get(key[:-1] + ('id',)))
     obj = ckanext_model.MetadataModel.get(id_) if id_ else None
+
     # if we're updating, missing value(s) in the input data imply a partial update, so get the
     # existing value(s) and check that the updated combination does not violate the check constraint
     organization_id = _convert_missing(organization_id, obj.organization_id if obj else None)
     infrastructure_id = _convert_missing(infrastructure_id, obj.infrastructure_id if obj else None)
 
     if organization_id and infrastructure_id:
-        raise tk.Invalid(_("A metadata model may be associated with either an organization or an infrastructure "
-                           "but not both."))
+        raise tk.Invalid(_("A metadata model may be associated with either an organization or an "
+                           "infrastructure but not both."))
 
 # endregion

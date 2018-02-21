@@ -11,13 +11,8 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
     """
     Modified from ckan.lib.dictization.model_save.package_membership_list_save
     """
-    # We allow partial updates unconditionally because this is consistent with
-    # how updating of "native" fields is done in CKAN. In order to clear the
-    # infrastructures associated with a metadata record, you have to pass in
-    # an empty infrastructure list.
-
-    # allow_partial_update = context.get("allow_partial_update", False)
-    if infrastructure_dicts is None:  # and allow_partial_update:
+    allow_partial_update = context.get("allow_partial_update", False)
+    if infrastructure_dicts is None and allow_partial_update:
         return
 
     model = context['model']
