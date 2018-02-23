@@ -28,11 +28,11 @@ def metadata_schema_show(context, data_dict):
     id_ = tk.get_or_bust(data_dict, 'id')
     obj = ckanext_model.MetadataSchema.get(id_)
     if obj is None:
-        raise tk.ObjectNotFound('%s: %s %s' % (_('Not found'), _('Metadata Schema'), id_))
-    context['metadata_schema'] = obj
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
     tk.check_access('metadata_schema_show', context, data_dict)
 
+    context['metadata_schema'] = obj
     metadata_schema_dict = model_dictize.metadata_schema_dictize(obj, context)
 
     result_dict, errors = tk.navl_validate(metadata_schema_dict, schema.metadata_schema_show_schema(), context)
@@ -56,11 +56,11 @@ def metadata_model_show(context, data_dict):
     id_ = tk.get_or_bust(data_dict, 'id')
     obj = ckanext_model.MetadataModel.get(id_)
     if obj is None:
-        raise tk.ObjectNotFound('%s: %s %s' % (_('Not found'), _('Metadata Model'), id_))
-    context['metadata_model'] = obj
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
 
     tk.check_access('metadata_model_show', context, data_dict)
 
+    context['metadata_model'] = obj
     metadata_model_dict = model_dictize.metadata_model_dictize(obj, context)
 
     result_dict, errors = tk.navl_validate(metadata_model_dict, schema.metadata_model_show_schema(), context)
@@ -80,6 +80,13 @@ def infrastructure_show(context, data_dict):
     :rtype: dictionary
     """
     log.info("Retrieving infrastructure: %r", data_dict)
+
+    model = context['model']
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Group.get(id_)
+    if obj is None or obj.type != 'infrastructure':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+
     tk.check_access('infrastructure_show', context, data_dict)
 
     data_dict['type'] = 'infrastructure'
@@ -102,6 +109,13 @@ def metadata_collection_show(context, data_dict):
     :rtype: dictionary
     """
     log.info("Retrieving metadata collection: %r", data_dict)
+
+    model = context['model']
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Group.get(id_)
+    if obj is None or obj.type != 'metadata_collection':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
+
     tk.check_access('metadata_collection_show', context, data_dict)
 
     data_dict.update({
@@ -131,6 +145,13 @@ def metadata_record_show(context, data_dict):
     :rtype: dictionary
     """
     log.info("Retrieving metadata record: %r", data_dict)
+
+    model = context['model']
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Package.get(id_)
+    if obj is None or obj.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
     tk.check_access('metadata_record_show', context, data_dict)
 
     data_dict['type'] = 'metadata_record'

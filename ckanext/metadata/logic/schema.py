@@ -81,13 +81,13 @@ def metadata_record_create_schema():
         'name': [ignore_missing, unicode, name_validator, package_name_validator],
         'title': [ignore_missing, unicode],
         'state': [ignore_not_package_admin, ignore_missing],
-        'owner_org': [v.not_empty, owner_org_validator, unicode],
+        'owner_org': [v.not_empty, v.group_exists('organization'), owner_org_validator, unicode],
         'type': [],
 
         # extension-specific fields
-        'metadata_collection_id': [v.not_empty, unicode, v.metadata_collection_exists, convert_to_extras],
+        'metadata_collection_id': [v.not_empty, unicode, v.group_exists('metadata_collection'), convert_to_extras],
         'infrastructures': {
-            'id': [v.not_empty, unicode, v.infrastructure_exists],
+            'id': [v.not_empty, unicode, v.group_exists('infrastructure')],
         },
         'schema_name': [v.not_empty, unicode],
         'schema_version': [v.not_empty, unicode],
@@ -139,7 +139,7 @@ def metadata_collection_create_schema():
         'is_organization': [],
 
         # extension-specific fields
-        'organization_id': [v.not_empty, unicode, v.organization_exists, convert_to_extras],
+        'organization_id': [v.not_empty, unicode, v.group_exists('organization'), convert_to_extras],
     }
     _make_create_schema(schema)
     return schema
@@ -231,8 +231,8 @@ def metadata_model_create_schema():
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists],
-        'organization_id': [v.not_missing, unicode, v.organization_exists],
-        'infrastructure_id': [v.not_missing, unicode, v.infrastructure_exists],
+        'organization_id': [v.not_missing, unicode, v.group_exists('organization')],
+        'infrastructure_id': [v.not_missing, unicode, v.group_exists('infrastructure')],
         'model_json': [v.not_missing, unicode, v.json_dict_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 

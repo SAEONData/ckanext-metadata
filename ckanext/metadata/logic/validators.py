@@ -26,6 +26,10 @@ def _convert_missing(value, default=None):
     return value
 
 
+def _group_desc(group_type):
+    return group_type.replace('_', ' ').title()
+
+
 # region General validators
 
 def not_missing(key, data, errors, context):
@@ -86,52 +90,26 @@ def xsd_validator(value):
 
 # region Framework validators
 
-def organization_exists(group_id_or_name, context):
+def group_exists(group_type):
     """
-    Checks that a group of type 'organization' exists with the given name/id,
+    Checks that a group exists, is of the specified type and is not deleted,
     and converts name to id if applicable.
     """
-    if not group_id_or_name:
-        return None
+    def callable_(key, data, errors, context):
+        group_id_or_name = data.get(key)
+        if not group_id_or_name:
+            data[key] = None
+            raise tk.StopOnError
 
-    model = context['model']
-    group = model.Group.get(group_id_or_name)
-    if not group or group.type != 'organization':
-        raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Organization'), group_id_or_name))
+        model = context['model']
+        group = model.Group.get(group_id_or_name)
+        if not group or group.type != group_type or group.state == 'deleted':
+            errors[key].append('%s: %s' % (_('Not found'), _(_group_desc(group_type))))
+            raise tk.StopOnError
 
-    return group.id
+        data[key] = group.id
 
-
-def infrastructure_exists(group_id_or_name, context):
-    """
-    Checks that a group of type 'infrastructure' exists with the given name/id,
-    and converts name to id if applicable.
-    """
-    if not group_id_or_name:
-        return None
-
-    model = context['model']
-    group = model.Group.get(group_id_or_name)
-    if not group or group.type != 'infrastructure':
-        raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Infrastructure'), group_id_or_name))
-
-    return group.id
-
-
-def metadata_collection_exists(group_id_or_name, context):
-    """
-    Checks that a group of type 'metadata_collection' exists with the given name/id,
-    and converts name to id if applicable.
-    """
-    if not group_id_or_name:
-        return None
-
-    model = context['model']
-    group = model.Group.get(group_id_or_name)
-    if not group or group.type != 'metadata_collection':
-        raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Metadata Collection'), group_id_or_name))
-
-    return group.id
+    return callable_
 
 
 def owner_org_owns_metadata_collection(key, data, errors, context):
@@ -173,7 +151,7 @@ def metadata_record_schema_selector(key, data, errors, context):
 
     if schema_name and schema_version:
         metadata_schema = ckanext_model.MetadataSchema.by_name_and_version(schema_name, schema_version)
-        if not metadata_schema:
+        if not metadata_schema or metadata_schema.state == 'deleted':
             raise tk.Invalid(_("Could not find a metadata schema with schema_name='%s'"
                                " and schema_version='%s'") % (schema_name, schema_version))
 
@@ -232,7 +210,7 @@ def group_does_not_exist(group_id_or_name, context):
     model = context['model']
     result = model.Group.get(group_id_or_name)
     if result:
-        raise tk.Invalid('%s: %s %s' % (_('Already exists'), _('Group'), group_id_or_name))
+        raise tk.Invalid('%s: %s' % (_('Already exists'), _('Group')))
 
     return group_id_or_name
 
@@ -243,7 +221,7 @@ def metadata_model_does_not_exist(metadata_model_id, context):
 
     result = ckanext_model.MetadataModel.get(metadata_model_id)
     if result:
-        raise tk.Invalid('%s: %s %s' % (_('Already exists'), _('Metadata Model'), metadata_model_id))
+        raise tk.Invalid('%s: %s' % (_('Already exists'), _('Metadata Model')))
 
     return metadata_model_id
 
@@ -253,8 +231,8 @@ def metadata_schema_exists(metadata_schema_id, context):
         return None
 
     result = ckanext_model.MetadataSchema.get(metadata_schema_id)
-    if not result:
-        raise tk.Invalid('%s: %s %s' % (_('Not found'), _('Metadata Schema'), metadata_schema_id))
+    if not result or result.state == 'deleted':
+        raise tk.Invalid('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
     return metadata_schema_id
 
@@ -265,7 +243,7 @@ def metadata_schema_does_not_exist(metadata_schema_id, context):
 
     result = ckanext_model.MetadataSchema.get(metadata_schema_id)
     if result:
-        raise tk.Invalid('%s: %s %s' % (_('Already exists'), _('Metadata Schema'), metadata_schema_id))
+        raise tk.Invalid('%s: %s' % (_('Already exists'), _('Metadata Schema')))
 
     return metadata_schema_id
 

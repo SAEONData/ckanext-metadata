@@ -62,12 +62,12 @@ def metadata_schema_update(context, data_dict):
     id_ = tk.get_or_bust(data_dict, 'id')
     obj = ckanext_model.MetadataSchema.get(id_)
     if obj is None:
-        raise tk.ObjectNotFound('%s: %s %s' % (_('Not found'), _('Metadata Schema'), id_))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
+
+    tk.check_access('metadata_schema_update', context, data_dict)
 
     context['metadata_schema'] = obj
     context['allow_partial_update'] = True
-
-    tk.check_access('metadata_schema_update', context, data_dict)
 
     data, errors = tk.navl_validate(data_dict, schema.metadata_schema_update_schema(), context)
     if errors:
@@ -122,12 +122,12 @@ def metadata_model_update(context, data_dict):
     id_ = tk.get_or_bust(data_dict, 'id')
     obj = ckanext_model.MetadataModel.get(id_)
     if obj is None:
-        raise tk.ObjectNotFound('%s: %s %s' % (_('Not found'), _('Metadata Model'), id_))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
+
+    tk.check_access('metadata_model_update', context, data_dict)
 
     context['metadata_model'] = obj
     context['allow_partial_update'] = True
-
-    tk.check_access('metadata_model_update', context, data_dict)
 
     data, errors = tk.navl_validate(data_dict, schema.metadata_model_update_schema(), context)
     if errors:
@@ -174,11 +174,17 @@ def infrastructure_update(context, data_dict):
     :rtype: dictionary
     """
     log.info("Updating infrastructure: %r", data_dict)
-    tk.check_access('infrastructure_update', context, data_dict)
 
     model = context['model']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Group.get(id_)
+    if obj is None or obj.type != 'infrastructure':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+
+    tk.check_access('infrastructure_update', context, data_dict)
 
     data_dict['type'] = 'infrastructure'
     data_dict['is_organization'] = False
@@ -220,11 +226,17 @@ def metadata_collection_update(context, data_dict):
     :rtype: dictionary
     """
     log.info("Updating metadata collection: %r", data_dict)
-    tk.check_access('metadata_collection_update', context, data_dict)
 
     model = context['model']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Group.get(id_)
+    if obj is None or obj.type != 'metadata_collection':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
+
+    tk.check_access('metadata_collection_update', context, data_dict)
 
     data_dict['type'] = 'metadata_collection'
     data_dict['is_organization'] = False
@@ -266,11 +278,17 @@ def metadata_record_update(context, data_dict):
     :rtype: dictionary
     """
     log.info("Updating metadata record: %r", data_dict)
-    tk.check_access('metadata_record_update', context, data_dict)
 
     model = context['model']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Package.get(id_)
+    if obj is None or obj.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_update', context, data_dict)
 
     data_dict['type'] = 'metadata_record'
     context['schema'] = schema.metadata_record_update_schema()
