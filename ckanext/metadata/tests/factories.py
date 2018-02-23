@@ -37,6 +37,10 @@ class MetadataRecord(factory.Factory):
 
     name = factory.Sequence(lambda n: 'test_record_{0:02d}'.format(n))
     title = 'Test Metadata Record'
+    content_json = '{ "testkey": "testvalue" }'
+    content_raw = '<xml/>'
+    content_url = 'http://example.net/'
+    infrastructures = []
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):
@@ -53,7 +57,7 @@ class MetadataRecord(factory.Factory):
             metadata_schema = ckanext_model.MetadataSchema.by_name_and_version(
                 kwargs.pop('schema_name'), kwargs.pop('schema_version'))
         else:
-            metadata_schema = MetadataSchema()
+            metadata_schema = ckanext_model.MetadataSchema.get(MetadataSchema()['id'])
 
         organization_id = kwargs.pop('owner_org', None) or ckan_factories.Organization()['id']
         metadata_collection_id = kwargs.pop('metadata_collection_id', None) \
@@ -63,9 +67,8 @@ class MetadataRecord(factory.Factory):
                                            context=context,
                                            owner_org=organization_id,
                                            metadata_collection_id=metadata_collection_id,
-                                           schema_name=metadata_schema['schema_name'],
-                                           schema_version=metadata_schema['schema_version'],
-                                           content_json='{ "testkey": "testvalue" }',
+                                           schema_name=metadata_schema.schema_name,
+                                           schema_version=metadata_schema.schema_version,
                                            **kwargs)
         return package_dict
 
@@ -76,6 +79,7 @@ class MetadataSchema(factory.Factory):
     schema_name = factory.Sequence(lambda n: 'test_schema_{0:02d}'.format(n))
     schema_version = '1.0'
     schema_xsd = '<xsd/>'
+    base_schema_id = ''
     title = factory.LazyAttribute(lambda obj: obj.schema_name.replace('_', ' ').title())
     description = 'A test description for this test metadata schema.'
 
@@ -99,6 +103,8 @@ class MetadataModel(factory.Factory):
     title = factory.Sequence(lambda n: 'Test Metadata Model {0:02d}'.format(n))
     description = 'A test description for this test metadata model.'
     model_json = '{ "testkey": "testvalue" }'
+    organization_id = ''
+    infrastructure_id = ''
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):
