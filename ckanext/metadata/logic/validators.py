@@ -378,17 +378,17 @@ def metadata_schema_name_generator(key, data, errors, context):
     """
     Generates the name for a metadata schema if not supplied. For use with the '__after' schema key.
     """
-    id_ = _convert_missing(data.get(key[:-1] + ('id',)))
-    if id_:
-        metadata_schema = ckanext_model.MetadataSchema.get(id_)
-        if metadata_schema:
-            # for updates we want to re-generate the name only if it was previously auto-generated
-            autoname = _generate_name(metadata_schema.schema_name, metadata_schema.schema_version)
-            if metadata_schema.name != autoname:
-                return
-
     name = _convert_missing(data.get(key[:-1] + ('name',)))
     if not name:
+        id_ = _convert_missing(data.get(key[:-1] + ('id',)))
+        if id_:
+            metadata_schema = ckanext_model.MetadataSchema.get(id_)
+            if metadata_schema:
+                # for updates we want to re-generate the name only if it was previously auto-generated
+                autoname = _generate_name(metadata_schema.schema_name, metadata_schema.schema_version)
+                if metadata_schema.name != autoname:
+                    return
+
         schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)), '')
         schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)), '')
         name = _generate_name(schema_name, schema_version)
@@ -400,7 +400,6 @@ def metadata_model_name_generator(key, data, errors, context):
     Generates the name for a metadata model if not supplied. For use with the '__after' schema key.
     """
     model = context['model']
-    name = _convert_missing(data.get(key[:-1] + ('name',)))
 
     def get_name_components(metadata_schema_id, organization_id, infrastructure_id):
         metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
@@ -413,21 +412,22 @@ def metadata_model_name_generator(key, data, errors, context):
 
         return metadata_schema_name, organization_name, infrastructure_name
 
-    id_ = _convert_missing(data.get(key[:-1] + ('id',)))
-    if id_:
-        metadata_model = ckanext_model.MetadataModel.get(id_)
-        if metadata_model:
-            # for updates we want to re-generate the name only if it was previously auto-generated
-            metadata_schema_name, organization_name, infrastructure_name = get_name_components(
-                metadata_model.metadata_schema_id,
-                metadata_model.organization_id,
-                metadata_model.infrastructure_id
-            )
-            autoname = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
-            if metadata_model.name != autoname:
-                return
- 
+    name = _convert_missing(data.get(key[:-1] + ('name',)))
     if not name:
+        id_ = _convert_missing(data.get(key[:-1] + ('id',)))
+        if id_:
+            metadata_model = ckanext_model.MetadataModel.get(id_)
+            if metadata_model:
+                # for updates we want to re-generate the name only if it was previously auto-generated
+                metadata_schema_name, organization_name, infrastructure_name = get_name_components(
+                    metadata_model.metadata_schema_id,
+                    metadata_model.organization_id,
+                    metadata_model.infrastructure_id
+                )
+                autoname = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
+                if metadata_model.name != autoname:
+                    return
+
         metadata_schema_name, organization_name, infrastructure_name = get_name_components(
             _convert_missing(data.get(key[:-1] + ('metadata_schema_id',))),
             _convert_missing(data.get(key[:-1] + ('organization_id',))),
