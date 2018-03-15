@@ -54,7 +54,7 @@ class MetadataRecord(factory.Factory):
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
 
         if {'schema_name', 'schema_version'}.issubset(kwargs):
-            metadata_schema = ckanext_model.MetadataSchema.by_name_and_version(
+            metadata_schema = ckanext_model.MetadataSchema.lookup(
                 kwargs.pop('schema_name'), kwargs.pop('schema_version'))
         else:
             metadata_schema = ckanext_model.MetadataSchema.get(MetadataSchema()['id'])

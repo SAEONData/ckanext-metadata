@@ -2,6 +2,7 @@
 
 import json
 import uuid
+import re
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -27,7 +28,21 @@ def _convert_missing(value, default=None):
 
 
 def _group_desc(group_type):
+    """
+    Returns the descriptive form of a group type (for e.g. error/log messages).
+    """
     return group_type.replace('_', ' ').title()
+
+
+def _generate_name(*strings):
+    """
+    Converts the given string(s) into a form suitable for an object name.
+    """
+    strings = list(strings)
+    while '' in strings:
+        strings.remove('')
+    text = '_'.join(strings)
+    return re.sub('[^a-z0-9_\-]+', '-', text.lower())
 
 
 # region General validators
@@ -150,7 +165,7 @@ def metadata_record_schema_selector(key, data, errors, context):
     schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
 
     if schema_name and schema_version:
-        metadata_schema = ckanext_model.MetadataSchema.by_name_and_version(schema_name, schema_version)
+        metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
         if not metadata_schema or metadata_schema.state == 'deleted':
             raise tk.Invalid(_("Could not find a metadata schema with schema_name='%s'"
                                " and schema_version='%s'") % (schema_name, schema_version))
@@ -226,15 +241,22 @@ def metadata_model_does_not_exist(metadata_model_id, context):
     return metadata_model_id
 
 
-def metadata_schema_exists(metadata_schema_id, context):
-    if not metadata_schema_id:
-        return None
+def metadata_schema_exists(key, data, errors, context):
+    """
+    Checks that a metadata schema exists and is not deleted,
+    and converts name to id if applicable.
+    """
+    metadata_schema_id_or_name = data.get(key)
+    if not metadata_schema_id_or_name:
+        data[key] = None
+        raise tk.StopOnError
 
-    result = ckanext_model.MetadataSchema.get(metadata_schema_id)
-    if not result or result.state == 'deleted':
-        raise tk.Invalid('%s: %s' % (_('Not found'), _('Metadata Schema')))
+    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id_or_name)
+    if not metadata_schema or metadata_schema.state == 'deleted':
+        errors[key].append('%s: %s' % (_('Not found'), _('Metadata Schema')))
+        raise tk.StopOnError
 
-    return metadata_schema_id
+    data[key] = metadata_schema.id
 
 
 def metadata_schema_does_not_exist(metadata_schema_id, context):
@@ -257,7 +279,7 @@ def unique_metadata_schema_name_and_version(key, data, errors, context):
     schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
 
     if schema_name and schema_version:
-        metadata_schema = ckanext_model.MetadataSchema.by_name_and_version(schema_name, schema_version)
+        metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
         if metadata_schema and metadata_schema.id != id_:
             raise tk.Invalid(_("Unique constraint violation: %s") % '(schema_name, schema_version)')
 
@@ -324,5 +346,94 @@ def metadata_model_check_organization_infrastructure(key, data, errors, context)
     if organization_id and infrastructure_id:
         raise tk.Invalid(_("A metadata model may be associated with either an organization or an "
                            "infrastructure but not both."))
+
+
+def metadata_schema_name_validator(key, data, errors, context):
+    session = context['session']
+    metadata_schema = context.get('metadata_schema')
+
+    query = session.query(ckanext_model.MetadataSchema.name).filter_by(name=data[key])
+    metadata_schema_id = metadata_schema.id if metadata_schema else _convert_missing(data.get(key[:-1] + ('id',)))
+    if metadata_schema_id:
+        query = query.filter(ckanext_model.MetadataSchema.id != metadata_schema_id)
+    result = query.first()
+    if result:
+        errors[key].append('%s: %s' % (_('Duplicate name'), _('Metadata Schema')))
+
+
+def metadata_model_name_validator(key, data, errors, context):
+    session = context['session']
+    metadata_model = context.get('metadata_model')
+
+    query = session.query(ckanext_model.MetadataModel.name).filter_by(name=data[key])
+    metadata_model_id = metadata_model.id if metadata_model else _convert_missing(data.get(key[:-1] + ('id',)))
+    if metadata_model_id:
+        query = query.filter(ckanext_model.MetadataModel.id != metadata_model_id)
+    result = query.first()
+    if result:
+        errors[key].append('%s: %s' % (_('Duplicate name'), _('Metadata Model')))
+
+
+def metadata_schema_name_generator(key, data, errors, context):
+    """
+    Generates the name for a metadata schema if not supplied. For use with the '__after' schema key.
+    """
+    id_ = _convert_missing(data.get(key[:-1] + ('id',)))
+    if id_:
+        metadata_schema = ckanext_model.MetadataSchema.get(id_)
+        if metadata_schema:
+            # for updates we want to re-generate the name only if it was previously auto-generated
+            autoname = _generate_name(metadata_schema.schema_name, metadata_schema.schema_version)
+            if metadata_schema.name != autoname:
+                return
+
+    name = _convert_missing(data.get(key[:-1] + ('name',)))
+    if not name:
+        schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)), '')
+        schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)), '')
+        name = _generate_name(schema_name, schema_version)
+        data[key[:-1] + ('name',)] = name
+
+
+def metadata_model_name_generator(key, data, errors, context):
+    """
+    Generates the name for a metadata model if not supplied. For use with the '__after' schema key.
+    """
+    model = context['model']
+    name = _convert_missing(data.get(key[:-1] + ('name',)))
+
+    def get_name_components(metadata_schema_id, organization_id, infrastructure_id):
+        metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+        organization = model.Group.get(organization_id) if organization_id else None
+        infrastructure = model.Group.get(infrastructure_id) if infrastructure_id else None
+
+        metadata_schema_name = metadata_schema.name if metadata_schema else ''
+        organization_name = organization.name if organization else ''
+        infrastructure_name = infrastructure.name if infrastructure else ''
+
+        return metadata_schema_name, organization_name, infrastructure_name
+
+    id_ = _convert_missing(data.get(key[:-1] + ('id',)))
+    if id_:
+        metadata_model = ckanext_model.MetadataModel.get(id_)
+        if metadata_model:
+            # for updates we want to re-generate the name only if it was previously auto-generated
+            metadata_schema_name, organization_name, infrastructure_name = get_name_components(
+                metadata_model.metadata_schema_id,
+                metadata_model.organization_id,
+                metadata_model.infrastructure_id
+            )
+            autoname = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
+            if metadata_model.name != autoname:
+                return
+ 
+    if not name:
+        metadata_schema_name, organization_name, infrastructure_name = get_name_components(
+            _convert_missing(data.get(key[:-1] + ('metadata_schema_id',))),
+            _convert_missing(data.get(key[:-1] + ('organization_id',))),
+            _convert_missing(data.get(key[:-1] + ('infrastructure_id',)))
+        )
+        name = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
+        data[key[:-1] + ('name',)] = name
 
 # endregion

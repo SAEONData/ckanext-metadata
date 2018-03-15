@@ -197,6 +197,7 @@ def infrastructure_show_schema():
 def metadata_schema_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.metadata_schema_does_not_exist],
+        'name': [ignore_missing, unicode, name_validator, v.metadata_schema_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'schema_name': [v.not_empty, unicode],
@@ -206,7 +207,9 @@ def metadata_schema_create_schema():
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
-        '__after': [v.unique_metadata_schema_name_and_version, ignore],
+        '__after': [v.metadata_schema_name_generator,
+                    v.unique_metadata_schema_name_and_version,
+                    ignore],
     }
     _make_create_schema(schema)
     return schema
@@ -228,6 +231,7 @@ def metadata_schema_show_schema():
 def metadata_model_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.metadata_model_does_not_exist],
+        'name': [ignore_missing, unicode, name_validator, v.metadata_model_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists],
@@ -237,7 +241,8 @@ def metadata_model_create_schema():
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
-        '__after': [v.metadata_model_check_organization_infrastructure,
+        '__after': [v.metadata_model_name_generator,
+                    v.metadata_model_check_organization_infrastructure,
                     v.metadata_model_unique_schema_organization_infrastructure,
                     ignore],
     }

@@ -1,11 +1,10 @@
 # encoding: utf-8
 
 import uuid
-import json
 import re
 
 from ckan.tests import factories as ckan_factories
-from ckan.tests.helpers import FunctionalTestBase, call_action, _get_test_app
+from ckan.tests.helpers import FunctionalTestBase, call_action
 import ckan.plugins.toolkit as tk
 import ckan.model as ckan_model
 import ckanext.metadata.model as ckanext_model
@@ -13,40 +12,19 @@ import ckanext.metadata.model.setup as ckanext_setup
 import ckanext.metadata.tests.factories as ckanext_factories
 
 
-def call_action_api(action, apikey=None, **kwargs):
-    """
-    POST an HTTP request to the CKAN API and return the result.
-
-    Any additional keyword arguments that you pass to this function as **kwargs
-    are posted as params to the API.
-
-    Usage:
-        success, package_dict = call_action_api('package_create', apikey=apikey, name='my_package')
-        assert success and package_dict['name'] == 'my_package'
-
-    :param action: the action to post to, e.g. 'package_create'
-    :type action: string
-    :param apikey: the API key to put in the Authorization header of the post (optional, default: None)
-    :type apikey: string
-    :param kwargs: any other keyword arguments passed to this function will be posted to the API as params
-
-    :returns: success (True/False), and the 'result' or 'error' dictionary from the CKAN API response
-    :rtype: tuple(bool, dict)
-    """
-    app = _get_test_app()
-    params = json.dumps(kwargs)
-    response = app.post('/api/action/{0}'.format(action), params=params,
-                        extra_environ={'Authorization': str(apikey)}, status='*')
-
-    success = response.json.get('success')
-    assert type(success) is bool, "Invalid API response"
-    result = response.json.get('result') if success else response.json.get('error')
-
-    return success, result
-
-
 def make_uuid():
     return unicode(uuid.uuid4())
+
+
+def generate_name(*strings):
+    """
+    Converts the given string(s) into a form suitable for an object name.
+    """
+    strings = list(strings)
+    while '' in strings:
+        strings.remove('')
+    text = '_'.join(strings)
+    return re.sub('[^a-z0-9_\-]+', '-', text.lower())
 
 
 def assert_object_matches_dict(object_, dict_):
@@ -562,6 +540,19 @@ class TestMetadataSchemaActions(ActionTestBase):
         result, obj = self._call_action('create', 'metadata_schema',
                                         model_class=ckanext_model.MetadataSchema, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+        assert obj.name == generate_name(input_dict['schema_name'], input_dict['schema_version'])
+
+    def test_create_valid_setname(self):
+        input_dict = {
+            'name': 'test-metadata-schema',
+            'schema_name': 'DataCite',
+            'schema_version': '1.0',
+            'schema_xsd': '<xsd/>',
+            'base_schema_id': '',
+        }
+        result, obj = self._call_action('create', 'metadata_schema',
+                                        model_class=ckanext_model.MetadataSchema, **input_dict)
+        assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_with_parent(self):
         metadata_schema = ckanext_factories.MetadataSchema()
@@ -573,6 +564,19 @@ class TestMetadataSchemaActions(ActionTestBase):
         }
         result, obj = self._call_action('create', 'metadata_schema',
                                         model_class=ckanext_model.MetadataSchema, **input_dict)
+        assert_object_matches_dict(obj, input_dict)
+
+    def test_create_valid_with_parent_byname(self):
+        metadata_schema = ckanext_factories.MetadataSchema()
+        input_dict = {
+            'schema_name': 'DataCite',
+            'schema_version': '1.0',
+            'schema_xsd': '<xsd/>',
+            'base_schema_id': metadata_schema['name'],
+        }
+        result, obj = self._call_action('create', 'metadata_schema',
+                                        model_class=ckanext_model.MetadataSchema, **input_dict)
+        input_dict['base_schema_id'] = metadata_schema['id']
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_sysadmin_setid(self):
@@ -611,6 +615,13 @@ class TestMetadataSchemaActions(ActionTestBase):
         result, obj = self._call_action('create', 'metadata_schema',
                                         model_class=ckanext_model.MetadataSchema, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+
+    def test_create_invalid_duplicate_name(self):
+        metadata_schema = ckanext_factories.MetadataSchema()
+        result, obj = self._call_action('create', 'metadata_schema',
+                                        exception_class=tk.ValidationError,
+                                        name=metadata_schema['name'])
+        assert_error(result, 'name', 'Duplicate name: Metadata Schema')
 
     def test_create_invalid_missing_params(self):
         result, obj = self._call_action('create', 'metadata_schema',
@@ -690,11 +701,13 @@ class TestMetadataSchemaActions(ActionTestBase):
         result, obj = self._call_action('update', 'metadata_schema',
                                         model_class=ckanext_model.MetadataSchema, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+        assert obj.name == generate_name(input_dict['schema_name'], input_dict['schema_version'])
 
     def test_update_valid_partial(self):
         metadata_schema = ckanext_factories.MetadataSchema()
         input_dict = {
             'id': metadata_schema['id'],
+            'name': 'updated-test-metadata-schema',
             'schema_name': metadata_schema['schema_name'],
             'schema_version': metadata_schema['schema_name'],
             'schema_xsd': '<updated_xsd/>',
@@ -734,6 +747,17 @@ class TestMetadataSchemaActions(ActionTestBase):
         result, obj = self._call_action('update', 'metadata_schema',
                                         model_class=ckanext_model.MetadataSchema, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+
+    def test_update_invalid_duplicate_name(self):
+        metadata_schema1 = ckanext_factories.MetadataSchema()
+        metadata_schema2 = ckanext_factories.MetadataSchema()
+        input_dict = {
+            'id': metadata_schema1['id'],
+            'name': metadata_schema2['name'],
+        }
+        result, obj = self._call_action('update', 'metadata_schema',
+                                        exception_class=tk.ValidationError, **input_dict)
+        assert_error(result, 'name', 'Duplicate name: Metadata Schema')
 
     def test_update_invalid_missing_params(self):
         metadata_schema = ckanext_factories.MetadataSchema()
@@ -864,32 +888,52 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self._call_action('create', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+        assert obj.name == generate_name(metadata_schema['name'], '', '')
 
-    def test_create_valid_with_organization(self):
+    def test_create_valid_setname(self):
+        metadata_schema = ckanext_factories.MetadataSchema()
+        input_dict = {
+            'name': 'test-metadata-model',
+            'metadata_schema_id': metadata_schema['id'],
+            'organization_id': '',
+            'infrastructure_id': '',
+            'model_json': '{ "testkey": "testvalue" }',
+        }
+        result, obj = self._call_action('create', 'metadata_model',
+                                        model_class=ckanext_model.MetadataModel, **input_dict)
+        assert_object_matches_dict(obj, input_dict)
+
+    def test_create_valid_with_organization_byname(self):
         metadata_schema = ckanext_factories.MetadataSchema()
         organization = ckan_factories.Organization()
         input_dict = {
-            'metadata_schema_id': metadata_schema['id'],
-            'organization_id': organization['id'],
+            'metadata_schema_id': metadata_schema['name'],
+            'organization_id': organization['name'],
             'infrastructure_id': '',
             'model_json': '',
         }
         result, obj = self._call_action('create', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
-        assert_object_matches_dict(obj, input_dict)
+        assert obj.metadata_schema_id == metadata_schema['id']
+        assert obj.organization_id == organization['id']
+        assert obj.infrastructure_id is None
+        assert obj.name == generate_name(metadata_schema['name'], organization['name'], '')
 
-    def test_create_valid_with_infrastructure(self):
+    def test_create_valid_with_infrastructure_byname(self):
         metadata_schema = ckanext_factories.MetadataSchema()
         infrastructure = ckanext_factories.Infrastructure()
         input_dict = {
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_schema_id': metadata_schema['name'],
             'organization_id': '',
-            'infrastructure_id': infrastructure['id'],
+            'infrastructure_id': infrastructure['name'],
             'model_json': '',
         }
         result, obj = self._call_action('create', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
-        assert_object_matches_dict(obj, input_dict)
+        assert obj.metadata_schema_id == metadata_schema['id']
+        assert obj.organization_id is None
+        assert obj.infrastructure_id == infrastructure['id']
+        assert obj.name == generate_name(metadata_schema['name'], '', infrastructure['name'])
 
     def test_create_valid_sysadmin_setid(self):
         metadata_schema = ckanext_factories.MetadataSchema()
@@ -960,6 +1004,13 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self._call_action('create', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+
+    def test_create_invalid_duplicate_name(self):
+        metadata_model = ckanext_factories.MetadataModel()
+        result, obj = self._call_action('create', 'metadata_model',
+                                        exception_class=tk.ValidationError,
+                                        name=metadata_model['name'])
+        assert_error(result, 'name', 'Duplicate name: Metadata Model')
 
     def test_create_invalid_duplicate_schema(self):
         metadata_model = ckanext_factories.MetadataModel()
@@ -1077,11 +1128,13 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self._call_action('update', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+        assert obj.name == generate_name(metadata_schema['name'], '', '')
 
     def test_update_valid_partial(self):
         metadata_model = ckanext_factories.MetadataModel()
         input_dict = {
             'id': metadata_model['id'],
+            'name': 'updated-test-metadata-model',
             'metadata_schema_id': metadata_model['metadata_schema_id'],
             'organization_id': '',
             'infrastructure_id': '',
@@ -1106,6 +1159,8 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self._call_action('update', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+        metadata_schema = ckanext_model.MetadataSchema.get(metadata_model['metadata_schema_id'])
+        assert obj.name == generate_name(metadata_schema.name, organization['name'], '')
 
     def test_update_valid_set_infrastructure(self):
         metadata_model = ckanext_factories.MetadataModel()
@@ -1120,6 +1175,19 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self._call_action('update', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+        metadata_schema = ckanext_model.MetadataSchema.get(metadata_model['metadata_schema_id'])
+        assert obj.name == generate_name(metadata_schema.name, '', infrastructure['name'])
+
+    def test_update_invalid_duplicate_name(self):
+        metadata_model1 = ckanext_factories.MetadataModel()
+        metadata_model2 = ckanext_factories.MetadataModel()
+        input_dict = {
+            'id': metadata_model1['id'],
+            'name': metadata_model2['name'],
+        }
+        result, obj = self._call_action('update', 'metadata_model',
+                                        exception_class=tk.ValidationError, **input_dict)
+        assert_error(result, 'name', 'Duplicate name: Metadata Model')
 
     def test_update_invalid_missing_params(self):
         metadata_model = ckanext_factories.MetadataModel()

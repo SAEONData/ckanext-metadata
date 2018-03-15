@@ -9,3 +9,8 @@ A metadata management framework for CKAN.
 
 This extension requires CKAN v2.7 or later.
 
+### Database setup
+
+    . /usr/lib/ckan/default/bin/activate
+    cd /usr/lib/ckan/default/src/ckanext-metadata
+    paster metadata initdb -c /etc/ckan/default/development.ini

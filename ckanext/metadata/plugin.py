@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 import logging
-
 import ckan.plugins as p
 
 log = logging.getLogger(__name__)
@@ -11,32 +10,8 @@ class MetadataFrameworkPlugin(p.SingletonPlugin):
     """
     Plugin providing CRUDs and APIs for metadata framework entities.
     """
-    # p.implements(p.IDatasetForm)
-    # p.implements(p.IGroupForm)
-    # p.implements(p.IPackageController)
     p.implements(p.IActions)
     p.implements(p.IAuthFunctions)
-
-    # region IDatasetForm / IGroupForm
-
-    def is_fallback(self):
-        return False
-
-    def package_types(self):
-        return (
-            'metadata_record',
-        )
-
-    def group_types(self):
-        return (
-            'infrastructure',
-            'metadata_collection',
-            'validation_set',
-        )
-
-    # endregion
-
-    # region IActions & IAuthFunctions
 
     def get_actions(self):
         return self._get_logic_functions('ckanext.metadata.logic.action')
@@ -60,5 +35,3 @@ class MetadataFrameworkPlugin(p.SingletonPlugin):
                     logic_functions[key] = value
 
         return logic_functions
-
-    # endregion

@@ -10,6 +10,7 @@ from ckanext.metadata.model.metadata_schema import MetadataSchema
 metadata_model_table = Table(
     'metadata_model', meta.metadata,
     Column('id', types.UnicodeText, primary_key=True, default=_types.make_uuid),
+    Column('name', types.UnicodeText, nullable=False, unique=True),
     Column('title', types.UnicodeText),
     Column('description', types.UnicodeText),
     Column('metadata_schema_id', types.UnicodeText, ForeignKey('metadata_schema.id'), nullable=False),
@@ -33,10 +34,22 @@ class MetadataModel(vdm.sqlalchemy.RevisionedObjectMixin,
 
     @classmethod
     def get(cls, reference):
-        return meta.Session.query(cls).filter(cls.id == reference).first()
+        """
+        Returns a metadata_model object referenced by its id or name.
+        """
+        if not reference:
+            return None
+
+        metadata_model = meta.Session.query(cls).get(reference)
+        if metadata_model is None:
+            metadata_model = cls.by_name(reference)
+        return metadata_model
 
     @classmethod
     def lookup(cls, metadata_schema_id, organization_id, infrastructure_id):
+        """
+        Returns a metadata_model object by metadata_schema, organization, infrastructure.
+        """
         return meta.Session.query(cls) \
             .filter(cls.metadata_schema_id == metadata_schema_id) \
             .filter(cls.organization_id == organization_id) \

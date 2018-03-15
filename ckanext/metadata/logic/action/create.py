@@ -22,6 +22,9 @@ def metadata_schema_create(context, data_dict):
 
     :param id: the id of the metadata schema (optional - only sysadmins can set this)
     :type id: string
+    :param name: the name of the new metadata schema (optional - auto-generated if not supplied);
+        must conform to standard naming rules
+    :type name: string
     :param title: the title of the metadata schema (optional)
     :type title: string
     :param description: the description of the metadata schema (optional)
@@ -32,7 +35,7 @@ def metadata_schema_create(context, data_dict):
     :type schema_version: string
     :param schema_xsd: the XSD document defining the schema (nullable)
     :type schema_xsd: string
-    :param base_schema_id: the id of the metadata schema from which this schema is derived (nullable)
+    :param base_schema_id: the id or name of the metadata schema from which this schema is derived (nullable)
     :type base_schema_id: string
 
     :returns: the newly created metadata schema (unless 'return_id_only' is set to True
@@ -83,11 +86,14 @@ def metadata_model_create(context, data_dict):
 
     :param id: the id of the metadata model (optional - only sysadmins can set this)
     :type id: string
+    :param name: the name of the new metadata model (optional - auto-generated if not supplied);
+        must conform to standard naming rules
+    :type name: string
     :param title: the title of the metadata model (optional)
     :type title: string
     :param description: the description of the metadata model (optional)
     :type description: string
-    :param metadata_schema_id: the id of the metadata schema from which this model is derived
+    :param metadata_schema_id: the id or name of the metadata schema from which this model is derived
     :type metadata_schema_id: string
     :param model_json: the JSON dictionary defining the model (nullable)
     :type model_json: string
