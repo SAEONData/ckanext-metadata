@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from sqlalchemy import types, orm, Table, Column, ForeignKey, CheckConstraint, UniqueConstraint
+from sqlalchemy import types, orm, Table, Column, ForeignKey, UniqueConstraint
 import vdm.sqlalchemy
 
 from ckan.model import meta, core, types as _types, domain_object
@@ -17,9 +17,6 @@ metadata_model_table = Table(
     Column('organization_id', types.UnicodeText, ForeignKey('group.id')),
     Column('infrastructure_id', types.UnicodeText, ForeignKey('group.id')),
     Column('model_json', types.UnicodeText),
-    # can optionally reference either an organization or an infrastructure but not both
-    CheckConstraint('organization_id is null or infrastructure_id is null'),
-    # each organization & infrastructure may only define one model per metadata schema;
     # null organization & infrastructure indicates the default model for the given schema
     UniqueConstraint('metadata_schema_id', 'organization_id', 'infrastructure_id')
 )
