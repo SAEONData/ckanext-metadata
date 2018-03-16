@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import logging
+from paste.deploy.converters import asbool
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -23,7 +24,7 @@ def metadata_schema_show(context, data_dict):
 
     :rtype: dictionary
     """
-    log.info("Retrieving metadata schema: %r", data_dict)
+    log.debug("Retrieving metadata schema: %r", data_dict)
 
     id_ = tk.get_or_bust(data_dict, 'id')
     obj = ckanext_model.MetadataSchema.get(id_)
@@ -40,6 +41,36 @@ def metadata_schema_show(context, data_dict):
 
 
 @tk.side_effect_free
+def metadata_schema_list(context, data_dict):
+    """
+    Return a list of names of the site's metadata schemas.
+    
+    You must be authorized to list metadata schemas.
+    
+    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving metadata schema list: %r", data_dict)
+    tk.check_access('metadata_schema_list', context, data_dict)
+    
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+    
+    metadata_schemas = session.query(ckanext_model.MetadataSchema).filter_by(state='active').all()
+    result = []
+    for metadata_schema in metadata_schemas:
+        if all_fields:
+            data_dict['id'] = metadata_schema.id
+            result += [tk.get_action('metadata_schema_show')(context, data_dict)]
+        else:
+            result += [metadata_schema.name]
+
+    return result
+
+
+@tk.side_effect_free
 def metadata_model_show(context, data_dict):
     """
     Return the details of a metadata model.
@@ -51,7 +82,7 @@ def metadata_model_show(context, data_dict):
 
     :rtype: dictionary
     """
-    log.info("Retrieving metadata model: %r", data_dict)
+    log.debug("Retrieving metadata model: %r", data_dict)
 
     id_ = tk.get_or_bust(data_dict, 'id')
     obj = ckanext_model.MetadataModel.get(id_)
@@ -68,6 +99,36 @@ def metadata_model_show(context, data_dict):
 
 
 @tk.side_effect_free
+def metadata_model_list(context, data_dict):
+    """
+    Return a list of names of the site's metadata models.
+
+    You must be authorized to list metadata models.
+
+    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving metadata model list: %r", data_dict)
+    tk.check_access('metadata_model_list', context, data_dict)
+
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    metadata_models = session.query(ckanext_model.MetadataModel).filter_by(state='active').all()
+    result = []
+    for metadata_model in metadata_models:
+        if all_fields:
+            data_dict['id'] = metadata_model.id
+            result += [tk.get_action('metadata_model_show')(context, data_dict)]
+        else:
+            result += [metadata_model.name]
+
+    return result
+
+
+@tk.side_effect_free
 def infrastructure_show(context, data_dict):
     """
     Return the details of an infrastructure.
@@ -79,7 +140,7 @@ def infrastructure_show(context, data_dict):
 
     :rtype: dictionary
     """
-    log.info("Retrieving infrastructure: %r", data_dict)
+    log.debug("Retrieving infrastructure: %r", data_dict)
 
     model = context['model']
     id_ = tk.get_or_bust(data_dict, 'id')
@@ -89,11 +150,48 @@ def infrastructure_show(context, data_dict):
 
     tk.check_access('infrastructure_show', context, data_dict)
 
-    data_dict['type'] = 'infrastructure'
+    data_dict.update({
+        'type': 'infrastructure',
+        'include_datasets': False,
+        'include_dataset_count': True,
+        'include_extras': True,
+        'include_tags': False,
+        'include_users': False,
+        'include_groups': False,
+        'include_followers': False,
+    })
     context['schema'] = schema.infrastructure_show_schema()
     context['invoked_api'] = 'infrastructure_show'
 
     return tk.get_action('group_show')(context, data_dict)
+
+
+@tk.side_effect_free
+def infrastructure_list(context, data_dict):
+    """
+    Return a list of the names of the site's infrastructures.
+
+    You must be authorized to list infrastructures.
+
+    :param all_fields: return group dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving infrastructure list: %r", data_dict)
+    tk.check_access('infrastructure_list', context, data_dict)
+
+    data_dict.update({
+        'type': 'infrastructure',
+        'include_dataset_count': True,
+        'include_extras': True,
+        'include_tags': False,
+        'include_users': False,
+        'include_groups': False,
+    })
+    context['invoked_api'] = 'infrastructure_list'
+    
+    return tk.get_action('group_list')(context, data_dict)
 
 
 @tk.side_effect_free
@@ -108,7 +206,7 @@ def metadata_collection_show(context, data_dict):
 
     :rtype: dictionary
     """
-    log.info("Retrieving metadata collection: %r", data_dict)
+    log.debug("Retrieving metadata collection: %r", data_dict)
 
     model = context['model']
     id_ = tk.get_or_bust(data_dict, 'id')
@@ -120,6 +218,8 @@ def metadata_collection_show(context, data_dict):
 
     data_dict.update({
         'type': 'metadata_collection',
+        'include_datasets': False,
+        'include_dataset_count': True,
         'include_extras': True,
         'include_tags': False,
         'include_users': False,
@@ -130,6 +230,34 @@ def metadata_collection_show(context, data_dict):
     context['invoked_api'] = 'metadata_collection_show'
 
     return tk.get_action('group_show')(context, data_dict)
+
+
+@tk.side_effect_free
+def metadata_collection_list(context, data_dict):
+    """
+    Return a list of the names of the site's metadata collections.
+
+    You must be authorized to list metadata collections.
+
+    :param all_fields: return group dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving metadata collection list: %r", data_dict)
+    tk.check_access('metadata_collection_list', context, data_dict)
+
+    data_dict.update({
+        'type': 'metadata_collection',
+        'include_dataset_count': True,
+        'include_extras': True,
+        'include_tags': False,
+        'include_users': False,
+        'include_groups': False,
+    })
+    context['invoked_api'] = 'metadata_collection_list'
+
+    return tk.get_action('group_list')(context, data_dict)
 
 
 @tk.side_effect_free
@@ -144,7 +272,7 @@ def metadata_record_show(context, data_dict):
 
     :rtype: dictionary
     """
-    log.info("Retrieving metadata record: %r", data_dict)
+    log.debug("Retrieving metadata record: %r", data_dict)
 
     model = context['model']
     id_ = tk.get_or_bust(data_dict, 'id')
