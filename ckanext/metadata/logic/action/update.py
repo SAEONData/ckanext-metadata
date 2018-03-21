@@ -44,7 +44,7 @@ def metadata_schema_update(context, data_dict):
     For further parameters see
     :py:func:`~ckanext.metadata.logic.action.create.metadata_schema_create`.
 
-    :param id: the id of the metadata schema to update
+    :param id: the id or name of the metadata schema to update
     :type id: string
 
     :returns: the updated metadata schema (unless 'return_id_only' is set to True
@@ -66,6 +66,7 @@ def metadata_schema_update(context, data_dict):
 
     tk.check_access('metadata_schema_update', context, data_dict)
 
+    data_dict['id'] = obj.id
     context['metadata_schema'] = obj
     context['allow_partial_update'] = True
 
@@ -104,7 +105,7 @@ def metadata_model_update(context, data_dict):
     For further parameters see
     :py:func:`~ckanext.metadata.logic.action.create.metadata_model_create`.
 
-    :param id: the id of the metadata model to update
+    :param id: the id or name of the metadata model to update
     :type id: string
 
     :returns: the updated metadata model (unless 'return_id_only' is set to True
@@ -126,6 +127,7 @@ def metadata_model_update(context, data_dict):
 
     tk.check_access('metadata_model_update', context, data_dict)
 
+    data_dict['id'] = obj.id
     context['metadata_model'] = obj
     context['allow_partial_update'] = True
 
@@ -186,6 +188,7 @@ def infrastructure_update(context, data_dict):
 
     tk.check_access('infrastructure_update', context, data_dict)
 
+    data_dict['id'] = obj.id
     data_dict['type'] = 'infrastructure'
     data_dict['is_organization'] = False
     context['schema'] = schema.infrastructure_update_schema()
@@ -238,6 +241,7 @@ def metadata_collection_update(context, data_dict):
 
     tk.check_access('metadata_collection_update', context, data_dict)
 
+    data_dict['id'] = obj.id
     data_dict['type'] = 'metadata_collection'
     data_dict['is_organization'] = False
     context['schema'] = schema.metadata_collection_update_schema()
@@ -268,7 +272,7 @@ def metadata_record_update(context, data_dict):
     For further parameters see
     :py:func:`~ckanext.metadata.logic.action.create.metadata_record_create`.
 
-    :param id: the id of the metadata record to update
+    :param id: the id or name of the metadata record to update
     :type id: string
     :param name: the name of the metadata record (optional)
     :type name: string
@@ -290,6 +294,7 @@ def metadata_record_update(context, data_dict):
 
     tk.check_access('metadata_record_update', context, data_dict)
 
+    data_dict['id'] = obj.id
     data_dict['type'] = 'metadata_record'
     context['schema'] = schema.metadata_record_update_schema()
     context['invoked_api'] = 'metadata_record_update'

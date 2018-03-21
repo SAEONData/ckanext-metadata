@@ -280,7 +280,7 @@ def unique_metadata_schema_name_and_version(key, data, errors, context):
 
     if schema_name and schema_version:
         metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
-        if metadata_schema and metadata_schema.id != id_:
+        if metadata_schema and metadata_schema.state != 'deleted' and metadata_schema.id != id_:
             raise tk.Invalid(_("Unique constraint violation: %s") % '(schema_name, schema_version)')
 
 
@@ -323,7 +323,7 @@ def metadata_model_unique_schema_organization_infrastructure(key, data, errors, 
     infrastructure_id = _convert_missing(infrastructure_id, obj.infrastructure_id if obj else None)
 
     metadata_model = ckanext_model.MetadataModel.lookup(metadata_schema_id, organization_id, infrastructure_id)
-    if metadata_model and metadata_model.id != id_:
+    if metadata_model and metadata_model.state != 'deleted' and metadata_model.id != id_:
         raise tk.Invalid(_("Unique constraint violation: %s") % '(metadata_schema_id, organization_id, infrastructure_id)')
 
 

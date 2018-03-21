@@ -73,14 +73,17 @@ def metadata_model_dict_save(metadata_model_dict, context):
     if obj:
         metadata_model_dict['id'] = obj.id
     else:
-        # we handle unique constraints explicitly here because CKAN sidesteps unique key violations
-        # on create by doing an update instead (why??? *smh*)
+        # in case of a unique constraint collision with an existing deleted record,
+        # we undelete the record and update it
         unique_constraints = d.get_unique_constraints(ckanext_model.metadata_model_table, context)
         for constraint in unique_constraints:
             params = dict((key, metadata_model_dict.get(key)) for key in constraint)
             obj = session.query(ckanext_model.MetadataModel).filter_by(**params).first()
             if obj:
-                raise tk.Invalid(_("Unique constraint violation: %s") % constraint)
+                if obj.state != 'deleted' or metadata_model_dict.get('id', obj.id) != obj.id:
+                    raise tk.Invalid(_("Unique constraint violation: %s") % constraint)
+                metadata_model_dict['id'] = obj.id
+                metadata_model_dict['state'] = 'active'
 
     metadata_model = d.table_dict_save(metadata_model_dict, ckanext_model.MetadataModel, context)
     return metadata_model
@@ -92,14 +95,17 @@ def metadata_schema_dict_save(metadata_schema_dict, context):
     if obj:
         metadata_schema_dict['id'] = obj.id
     else:
-        # we handle unique constraints explicitly here because CKAN sidesteps unique key violations
-        # on create by doing an update instead (why??? *smh*)
+        # in case of a unique constraint collision with an existing deleted record,
+        # we undelete the record and update it
         unique_constraints = d.get_unique_constraints(ckanext_model.metadata_schema_table, context)
         for constraint in unique_constraints:
             params = dict((key, metadata_schema_dict.get(key)) for key in constraint)
             obj = session.query(ckanext_model.MetadataSchema).filter_by(**params).first()
             if obj:
-                raise tk.Invalid(_("Unique constraint violation: %s") % constraint)
+                if obj.state != 'deleted' or metadata_schema_dict.get('id', obj.id) != obj.id:
+                    raise tk.Invalid(_("Unique constraint violation: %s") % constraint)
+                metadata_schema_dict['id'] = obj.id
+                metadata_schema_dict['state'] = 'active'
 
     metadata_schema = d.table_dict_save(metadata_schema_dict, ckanext_model.MetadataSchema, context)
     return metadata_schema

@@ -15,7 +15,7 @@ def metadata_schema_delete(context, data_dict):
 
     You must be authorized to delete the metadata schema.
 
-    :param id: the id of the metadata schema to delete
+    :param id: the id or name of the metadata schema to delete
     :type id: string
     """
     log.info("Deleting metadata schema: %r", data_dict)
@@ -30,6 +30,7 @@ def metadata_schema_delete(context, data_dict):
     if obj is None:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
+    id_ = obj.id
     tk.check_access('metadata_schema_delete', context, data_dict)
 
     errors = []
@@ -59,7 +60,7 @@ def metadata_schema_delete(context, data_dict):
 
     rev = model.repo.new_revision()
     rev.author = user
-    rev.message = _(u'REST API: Delete metadata schema %s') % obj.id
+    rev.message = _(u'REST API: Delete metadata schema %s') % id_
 
     obj.delete()
     if not defer_commit:
@@ -72,7 +73,7 @@ def metadata_model_delete(context, data_dict):
 
     You must be authorized to delete the metadata model.
 
-    :param id: the id of the metadata model to delete
+    :param id: the id or name of the metadata model to delete
     :type id: string
     """
     log.info("Deleting metadata model: %r", data_dict)
@@ -87,13 +88,14 @@ def metadata_model_delete(context, data_dict):
     if obj is None:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
 
+    id_ = obj.id
     tk.check_access('metadata_model_delete', context, data_dict)
 
     # TODO: check for dependent validation objects here
 
     rev = model.repo.new_revision()
     rev.author = user
-    rev.message = _(u'REST API: Delete metadata model %s') % obj.id
+    rev.message = _(u'REST API: Delete metadata model %s') % id_
 
     obj.delete()
     if not defer_commit:
@@ -106,7 +108,7 @@ def infrastructure_delete(context, data_dict):
 
     You must be authorized to delete the infrastructure.
 
-    :param id: the id of the infrastructure to delete
+    :param id: the id or name of the infrastructure to delete
     :type id: string
     """
     log.info("Deleting infrastructure: %r", data_dict)
@@ -120,6 +122,7 @@ def infrastructure_delete(context, data_dict):
     if obj is None or obj.type != 'infrastructure':
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
 
+    id_ = obj.id
     tk.check_access('infrastructure_delete', context, data_dict)
 
     if session.query(model.Member) \
@@ -158,7 +161,7 @@ def metadata_collection_delete(context, data_dict):
 
     You must be authorized to delete the metadata collection.
 
-    :param id: the id of the metadata collection to delete
+    :param id: the id or name of the metadata collection to delete
     :type id: string
     """
     log.info("Deleting metadata collection: %r", data_dict)
@@ -171,6 +174,7 @@ def metadata_collection_delete(context, data_dict):
     if obj is None or obj.type != 'metadata_collection':
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
 
+    id_ = obj.id
     tk.check_access('metadata_collection_delete', context, data_dict)
 
     if session.query(model.Package) \
@@ -194,7 +198,7 @@ def metadata_record_delete(context, data_dict):
 
     You must be authorized to delete the metadata record.
 
-    :param id: the id of the metadata record to delete
+    :param id: the id or name of the metadata record to delete
     :type id: string
     """
     log.info("Deleting metadata record: %r", data_dict)
@@ -206,6 +210,7 @@ def metadata_record_delete(context, data_dict):
     if obj is None or obj.type != 'metadata_record':
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
+    id_ = obj.id
     tk.check_access('metadata_record_delete', context, data_dict)
 
     data_dict['type'] = 'metadata_record'
@@ -222,7 +227,7 @@ def metadata_record_delete(context, data_dict):
 #
 #     You must be authorized to delete the organization.
 #
-#     :param id: the id of the organization to delete
+#     :param id: the id or name of the organization to delete
 #     :type id: string
 #     """
 #     log.info("Deleting organization: %r", data_dict)
@@ -236,6 +241,7 @@ def metadata_record_delete(context, data_dict):
 #     if obj is None or obj.type != 'organization':
 #         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Organization')))
 #
+#     id_ = obj.id
 #     tk.check_access('organization_delete', context, data_dict)
 #
 #     if session.query(model.Package) \
