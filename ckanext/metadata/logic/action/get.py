@@ -19,7 +19,7 @@ def metadata_schema_show(context, data_dict):
 
     You must be authorized to view the metadata schema.
 
-    :param id: the id of the metadata schema
+    :param id: the id or name of the metadata schema
     :type id: string
 
     :rtype: dictionary
@@ -77,7 +77,7 @@ def metadata_model_show(context, data_dict):
 
     You must be authorized to view the metadata model.
 
-    :param id: the id of the metadata model
+    :param id: the id or name of the metadata model
     :type id: string
 
     :rtype: dictionary
@@ -169,7 +169,7 @@ def infrastructure_show(context, data_dict):
 @tk.side_effect_free
 def infrastructure_list(context, data_dict):
     """
-    Return a list of the names of the site's infrastructures.
+    Return a list of names of the site's infrastructures.
 
     You must be authorized to list infrastructures.
 
@@ -235,7 +235,7 @@ def metadata_collection_show(context, data_dict):
 @tk.side_effect_free
 def metadata_collection_list(context, data_dict):
     """
-    Return a list of the names of the site's metadata collections.
+    Return a list of names of the site's metadata collections.
 
     You must be authorized to list metadata collections.
 
@@ -267,7 +267,7 @@ def metadata_record_show(context, data_dict):
 
     You must be authorized to view the metadata record.
 
-    :param id: the id of the metadata record
+    :param id: the id or name of the metadata record
     :type id: string
 
     :rtype: dictionary
@@ -282,8 +282,26 @@ def metadata_record_show(context, data_dict):
 
     tk.check_access('metadata_record_show', context, data_dict)
 
-    data_dict['type'] = 'metadata_record'
-    context['schema'] = schema.metadata_record_show_schema()
-    context['invoked_api'] = 'metadata_record_show'
+    context['package'] = obj
+    metadata_record_dict = model_dictize.metadata_record_dictize(obj, context)
 
-    return tk.get_action('package_show')(context, data_dict)
+    result_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(), context)
+    return result_dict
+
+
+@tk.side_effect_free
+def metadata_record_list(context, data_dict):
+    """
+    Return a list of names of the site's metadata records.
+
+    You must be authorized to list metadata records.
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving metadata record list: %r", data_dict)
+    tk.check_access('metadata_record_list', context, data_dict)
+
+    data_dict['type'] = 'metadata_record'
+    context['invoked_api'] = 'metadata_record_list'
+
+    return tk.get_action('package_list')(context, data_dict)
