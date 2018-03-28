@@ -45,7 +45,7 @@ def _generate_name(*strings):
     return re.sub('[^a-z0-9_\-]+', '-', text.lower())
 
 
-# region General validators
+# region General validators / converters
 
 def not_missing(key, data, errors, context):
     """
@@ -76,16 +76,14 @@ def json_dict_validator(value):
     """
     Checks for well-formed JSON, and that the supplied JSON represents a dictionary.
     """
-    if not value:
-        return None
+    if value:
+        try:
+            obj = json.loads(value)
+        except ValueError, e:
+            raise tk.Invalid(_("JSON decode error: %s") % e.message)
 
-    try:
-        obj = json.loads(value)
-    except ValueError, e:
-        raise tk.Invalid(_("JSON decode error: %s") % e.message)
-
-    if type(obj) is not dict:
-        raise tk.Invalid(_("Expecting a JSON dictionary"))
+        if type(obj) is not dict:
+            raise tk.Invalid(_("Expecting a JSON dictionary"))
 
     return value
 
@@ -95,15 +93,24 @@ def xsd_validator(value):
     TODO
     Check for well-formed XSD.
     """
-    if not value:
-        return None
-
     return value
+
+
+def deserialize_json(value):
+    """
+    Converts a JSON-format string to an object - for use in "show" schemas
+    enabling JSON fields to be nicely embedded in output dicts. If it cannot
+    be deserialized, just return the value itself.
+    """
+    try:
+        return json.loads(value)
+    except:
+        return value
 
 # endregion
 
 
-# region Framework validators
+# region Framework validators / converters
 
 def group_exists(group_type):
     """

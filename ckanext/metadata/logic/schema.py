@@ -116,7 +116,7 @@ def metadata_record_show_schema():
     _make_show_schema(schema)
     schema.update({
         'metadata_schema_id': [convert_from_extras],
-        'content_json': [convert_from_extras],
+        'content_json': [convert_from_extras, v.deserialize_json],
         'content_raw': [convert_from_extras],
         'content_url': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras],
@@ -259,4 +259,5 @@ def metadata_model_update_schema():
 def metadata_model_show_schema():
     schema = metadata_model_create_schema()
     _make_show_schema(schema)
+    schema['model_json'] = [v.deserialize_json]
     return schema
