@@ -31,7 +31,7 @@ def metadata_schema_create(context, data_dict):
     :type description: string
     :param schema_name: the name of the metadata schema
     :type schema_name: string
-    :param schema_version: the version of the metadata schema
+    :param schema_version: the version of the metadata schema (nullable)
     :type schema_version: string
     :param schema_xsd: the XSD document defining the schema (nullable)
     :type schema_xsd: string
@@ -257,7 +257,7 @@ def metadata_record_create(context, data_dict):
     :type infrastructures: list of dictionaries
     :param schema_name: the name of the metadata schema, used to look up a metadata_schema object
     :type schema_name: string
-    :param schema_version: the version of the metadata schema, used to look up a metadata_schema object
+    :param schema_version: the version of the metadata schema, used to look up a metadata_schema object (nullable)
     :type schema_version: string
     :param content_json: JSON dictionary of metadata content (nullable)
     :type content_json: string

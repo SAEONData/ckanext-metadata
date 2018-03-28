@@ -164,14 +164,13 @@ def metadata_record_schema_selector(key, data, errors, context):
     schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)))
     schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
 
-    if schema_name and schema_version:
-        metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
-        if not metadata_schema or metadata_schema.state == 'deleted':
-            raise tk.Invalid(_("Could not find a metadata schema with schema_name='%s'"
-                               " and schema_version='%s'") % (schema_name, schema_version))
+    metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
+    if not metadata_schema or metadata_schema.state == 'deleted':
+        raise tk.Invalid(_("Could not find a metadata schema with schema_name='%s'"
+                           " and schema_version='%s'") % (schema_name, schema_version))
 
-        data[key[:-1] + ('metadata_schema_id',)] = metadata_schema.id
-        convert_to_extras(key[:-1] + ('metadata_schema_id',), data, errors, context)
+    data[key[:-1] + ('metadata_schema_id',)] = metadata_schema.id
+    convert_to_extras(key[:-1] + ('metadata_schema_id',), data, errors, context)
 
 
 def metadata_record_id_name_generator(key, data, errors, context):
@@ -278,10 +277,9 @@ def unique_metadata_schema_name_and_version(key, data, errors, context):
     schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)))
     schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
 
-    if schema_name and schema_version:
-        metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
-        if metadata_schema and metadata_schema.state != 'deleted' and metadata_schema.id != id_:
-            raise tk.Invalid(_("Unique constraint violation: %s") % '(schema_name, schema_version)')
+    metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
+    if metadata_schema and metadata_schema.state != 'deleted' and metadata_schema.id != id_:
+        raise tk.Invalid(_("Unique constraint violation: %s") % '(schema_name, schema_version)')
 
 
 def no_loops_in_metadata_schema_hierarchy(key, data, errors, context):
