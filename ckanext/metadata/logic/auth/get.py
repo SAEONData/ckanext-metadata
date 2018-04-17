@@ -87,3 +87,15 @@ def metadata_collection_list(context, data_dict):
 
 def metadata_record_list(context, data_dict):
     return {'success': True}
+
+
+def metadata_record_validation_model_list(context, data_dict):
+    return {'success': True}
+
+
+def metadata_record_validation_activity_show(context, data_dict):
+    return {'success': True}
+
+
+def metadata_validity_check(context, data_dict):
+    return {'success': True}

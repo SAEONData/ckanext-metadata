@@ -311,3 +311,90 @@ def metadata_record_update(context, data_dict):
     output = metadata_record_id if return_id_only \
         else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
     return output
+
+
+def metadata_record_validate(context, data_dict):
+    """
+    Validate a metadata record (if not already validated), and log the result to
+    the metadata record's activity stream.
+
+    :param id: the id or name of the metadata record to validate
+    :type id: string
+
+    :rtype: validation activity dictionary
+    """
+    log.info("Validating metadata record: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is None or metadata_record.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_validate', context, data_dict)
+
+    context['metadata_record'] = metadata_record
+    metadata_record_id = metadata_record.id
+
+    # we are validating a specific revision (the latest) of the metadata record
+    metadata_record_revision_id = session.query(model.PackageRevision.revision_id) \
+        .filter(model.PackageRevision.id == metadata_record_id) \
+        .order_by(model.PackageRevision.revision_timestamp.desc()) \
+        .first().scalar()
+
+    # we are validating using specific revisions (the latest) of the relevant metadata models
+    current_validation_models = tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id})
+    if current_validation_models:
+        current_validation_model_set = {metadata_model['revision_id'] for metadata_model in current_validation_models}
+    else:
+        raise tk.ObjectNotFound(_('Could not find any metadata models for validating this metadata record'))
+
+    # check whether we've already validated this revision of the metadata record against the
+    # latest metadata model revisions
+    last_validation_activity = tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
+    if last_validation_activity is None or last_validation_activity['revision_id'] != metadata_record_revision_id:
+        is_validation_required = True
+    else:
+        last_validation_model_set = {activity_detail['revision_id'] for activity_detail in last_validation_activity['details']}
+        is_validation_required = last_validation_model_set != current_validation_model_set
+
+    if not is_validation_required:
+        return last_validation_activity
+
+    # log validation results using CKAN's activity stream model; CKAN doesn't provide a way
+    # to hook into activity detail creation, so we work directly with the model objects here
+    activity = model.Activity(
+        user_id=model.User.by_name(user.decode('utf8')).id,
+        object_id=metadata_record_id,
+        revision_id=metadata_record_revision_id,
+        activity_type='validate_metadata'
+    )
+
+    # delegate the actual validation work to the pluggable action metadata_validity_check
+    activity_details = []
+    for metadata_model in current_validation_models:
+        validation_result = tk.get_action('metadata_validity_check')(context, {
+            'content_json': metadata_record['content_json'],
+            'model_json': metadata_model['model_json'],
+        })
+        activity_detail = model.ActivityDetail(
+            activity_id=activity.id,
+            object_id=metadata_model['revision_id'],
+            object_type=ckanext_model.MetadataModelRevision,
+            activity_type=validation_result['status'],
+            data=validation_result['errors']
+        )
+        activity_details += [activity_detail]
+
+    session.add(activity)
+    for activity_detail in activity_details:
+        session.add(activity_detail)
+
+    if not defer_commit:
+        model.repo.commit()
+
+    return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})

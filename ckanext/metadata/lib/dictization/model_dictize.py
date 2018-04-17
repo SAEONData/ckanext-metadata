@@ -62,6 +62,17 @@ def metadata_record_dictize(pkg, context):
     return result_dict
 
 
+def metadata_record_validation_activity_dictize(activity, context):
+    model = context['model']
+    session = context['session']
+    activity_dict = ckan_model_dictize.activity_dictize(activity, context)
+    activity_details = session.query(model.ActivityDetail) \
+        .filter(model.ActivityDetail.activity_id == activity.id) \
+        .all()
+    activity_dict['details'] = ckan_model_dictize.activity_detail_list_dictize(activity_details, context)
+    return activity_dict
+
+
 def metadata_model_dictize(metadata_model, context):
     is_latest_revision = not(context.get('revision_id') or
                              context.get('revision_date'))
