@@ -11,6 +11,7 @@ class MetadataValidationState(object):
     INVALID = u'invalid'
     PARTIALLY_VALID = u'partially valid'
     VALID = u'valid'
+    all = (NOT_VALIDATED, INVALID, PARTIALLY_VALID, VALID)
 
     @staticmethod
     def net_state(partial_states):

@@ -326,7 +326,7 @@ def metadata_record_update(context, data_dict):
     old_infrastructures = {infra['name'] for infra in extra(old_dict, 'infrastructures')}
     old_metadata_schema_id = extra(old_dict, 'metadata_schema_id')
     old_content_json = extra(old_dict, 'content_json')
-    
+
     data_dict['id'] = id_
     data_dict['type'] = 'metadata_record'
 
@@ -366,6 +366,8 @@ def metadata_record_invalidate(context, data_dict):
     """
     Mark a metadata record as not validated.
 
+    You must be authorized to invalidate the metadata record.
+
     :param id: the id or name of the metadata record to invalidate
     :type id: string
     """
@@ -391,6 +393,8 @@ def metadata_record_validate(context, data_dict):
     """
     Validate a metadata record (if not already validated), and log the result to
     the metadata record's activity stream.
+
+    You must be authorized to validate the metadata record.
 
     :param id: the id or name of the metadata record to validate
     :type id: string
@@ -461,3 +465,45 @@ def metadata_record_validate(context, data_dict):
         model.repo.commit()
 
     return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
+
+
+def metadata_record_validation_state_update(context, data_dict):
+    """
+    Update a metadata record's validation state.
+
+    You must be authorized to change the metadata record's validation state.
+    This should normally only be allowed for sysadmins.
+
+    :param id: the id or name of the metadata record to update
+    :type id: string
+    :param validation_state: a permitted value as per MetadataValidationState
+    :type validation_state: string
+    """
+    log.info("Updating validation state of metadata record: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Package.get(id_)
+    if obj is None or obj.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_validation_state_update', context, data_dict)
+
+    validation_state = tk.get_or_bust(data_dict, 'validation_state')
+    if validation_state not in MetadataValidationState.all:
+        raise tk.Invalid(_('Invalid validation state'))
+
+    obj.extras['validation_state'] = validation_state
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Update metadata record %s') % obj.id
+
+    if not defer_commit:
+        model.repo.commit()
