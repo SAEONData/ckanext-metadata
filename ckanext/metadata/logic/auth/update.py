@@ -51,3 +51,7 @@ def metadata_record_update(context, data_dict):
 
 def metadata_record_validate(context, data_dict):
     return {'success': True}
+
+
+def metadata_record_invalidate(context, data_dict):
+    return {'success': True}

@@ -7,6 +7,8 @@ from ckan.common import _
 from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
+from ckanext.metadata import MetadataValidationState, METADATA_VALIDATION_ACTIVITY_TYPE
+from ckanext.metadata.lib.dictization import model_dictize
 
 log = logging.getLogger(__name__)
 
@@ -98,6 +100,10 @@ def metadata_model_update(context, data_dict):
 
     You must be authorized to edit the metadata model.
 
+    Changes to the model_json will cause dependent metadata records to be invalidated.
+    If any of metadata_schema_id, organization_id or infrastructure_id change, then
+    ex-dependent and newly-dependent metadata records will also be invalidated.
+
     It is recommended to call
     :py:func:`ckan.logic.action.get.metadata_model_show`, make the desired changes to
     the result, and then call ``metadata_model_update()`` with it.
@@ -127,7 +133,11 @@ def metadata_model_update(context, data_dict):
 
     tk.check_access('metadata_model_update', context, data_dict)
 
-    data_dict['id'] = obj.id
+    id_ = obj.id
+    old_dict = model_dictize.metadata_model_dictize(obj, context)
+    old_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
+
+    data_dict['id'] = id_
     context['metadata_model'] = obj
     context['allow_partial_update'] = True
 
@@ -137,6 +147,18 @@ def metadata_model_update(context, data_dict):
         raise tk.ValidationError(errors)
 
     metadata_model = model_save.metadata_model_dict_save(data, context)
+    new_dict = model_dictize.metadata_model_dictize(metadata_model, context)
+    new_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
+
+    if old_dict['model_json'] != new_dict['model_json']:
+        affected_record_ids = set(old_dependent_record_list) | set(new_dependent_record_list)
+    else:
+        affected_record_ids = set(old_dependent_record_list) ^ set(new_dependent_record_list)
+
+    invalidate_context = context
+    invalidate_context['defer_commit'] = True
+    for metadata_record_id in affected_record_ids:
+        tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -281,6 +303,10 @@ def metadata_record_update(context, data_dict):
               in the context, in which case just the record id will be returned)
     :rtype: dictionary
     """
+
+    def extra(dict_, key):
+        return next((x['value'] for x in dict_['extras'] if x['key'] == key), None)
+    
     log.info("Updating metadata record: %r", data_dict)
 
     model = context['model']
@@ -294,23 +320,71 @@ def metadata_record_update(context, data_dict):
 
     tk.check_access('metadata_record_update', context, data_dict)
 
-    data_dict['id'] = obj.id
+    id_ = obj.id
+    old_dict = model_dictize.metadata_record_dictize(obj, context)
+    old_owner_org = old_dict['owner_org']
+    old_infrastructures = {infra['name'] for infra in extra(old_dict, 'infrastructures')}
+    old_metadata_schema_id = extra(old_dict, 'metadata_schema_id')
+    old_content_json = extra(old_dict, 'content_json')
+    
+    data_dict['id'] = id_
     data_dict['type'] = 'metadata_record'
+
     context['schema'] = schema.metadata_record_update_schema()
     context['invoked_api'] = 'metadata_record_update'
     context['defer_commit'] = True
     context['return_id_only'] = True
     context['allow_partial_update'] = True
 
-    metadata_record_id = tk.get_action('package_update')(context, data_dict)
+    # XXX: is the existing validation state persisted as is?
+    tk.get_action('package_update')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
+
+    # XXX: is obj up to date here?
+    new_dict = model_dictize.metadata_record_dictize(obj, context)
+    new_owner_org = new_dict['owner_org']
+    new_infrastructures = {infra['name'] for infra in extra(new_dict, 'infrastructures')}
+    new_metadata_schema_id = extra(new_dict, 'metadata_schema_id')
+    new_content_json = extra(new_dict, 'content_json')
+
+    # if any of the following have changed, then the existing validation state is no longer valid
+    if old_owner_org != new_owner_org or \
+            old_infrastructures != new_infrastructures or \
+            old_metadata_schema_id != new_metadata_schema_id or \
+            old_content_json != new_content_json:
+        new_dict['validation_state'] = obj.extras['validation_state'] = MetadataValidationState.NOT_VALIDATED
 
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_record_id if return_id_only \
-        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
+    output = id_ if return_id_only \
+        else tk.get_action('metadata_record_show')(context, {'id': id_})
     return output
+
+
+def metadata_record_invalidate(context, data_dict):
+    """
+    Mark a metadata record as not validated.
+
+    :param id: the id or name of the metadata record to invalidate
+    :type id: string
+    """
+    log.info("Invalidating metadata record: %r", data_dict)
+
+    model = context['model']
+    defer_commit = context.get('defer_commit', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Package.get(id_)
+    if obj is None or obj.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_invalidate', context, data_dict)
+
+    obj.extras['validation_state'] = MetadataValidationState.NOT_VALIDATED
+
+    if not defer_commit:
+        model.repo.commit()
 
 
 def metadata_record_validate(context, data_dict):
@@ -337,58 +411,47 @@ def metadata_record_validate(context, data_dict):
 
     tk.check_access('metadata_record_validate', context, data_dict)
 
-    context['metadata_record'] = metadata_record
     metadata_record_id = metadata_record.id
+    context['metadata_record'] = metadata_record
 
-    # we are validating a specific revision (the latest) of the metadata record
-    metadata_record_revision_id = session.query(model.PackageRevision.revision_id) \
-        .filter(model.PackageRevision.id == metadata_record_id) \
-        .order_by(model.PackageRevision.revision_timestamp.desc()) \
-        .first().scalar()
+    # already validated -> return the last validation result
+    if metadata_record.extras['validation_state'] != MetadataValidationState.NOT_VALIDATED:
+        return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
 
-    # we are validating using specific revisions (the latest) of the relevant metadata models
-    current_validation_models = tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id})
-    if current_validation_models:
-        current_validation_model_set = {metadata_model['revision_id'] for metadata_model in current_validation_models}
-    else:
+    validation_models = tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id})
+    if not validation_models:
         raise tk.ObjectNotFound(_('Could not find any metadata models for validating this metadata record'))
-
-    # check whether we've already validated this revision of the metadata record against the
-    # latest metadata model revisions
-    last_validation_activity = tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
-    if last_validation_activity is None or last_validation_activity['revision_id'] != metadata_record_revision_id:
-        is_validation_required = True
-    else:
-        last_validation_model_set = {activity_detail['revision_id'] for activity_detail in last_validation_activity['details']}
-        is_validation_required = last_validation_model_set != current_validation_model_set
-
-    if not is_validation_required:
-        return last_validation_activity
 
     # log validation results using CKAN's activity stream model; CKAN doesn't provide a way
     # to hook into activity detail creation, so we work directly with the model objects here
     activity = model.Activity(
         user_id=model.User.by_name(user.decode('utf8')).id,
         object_id=metadata_record_id,
-        revision_id=metadata_record_revision_id,
-        activity_type='validate_metadata'
+        revision_id=metadata_record.revision_id,
+        activity_type=METADATA_VALIDATION_ACTIVITY_TYPE
     )
 
     # delegate the actual validation work to the pluggable action metadata_validity_check
     activity_details = []
-    for metadata_model in current_validation_models:
+    partial_states = set()
+    for metadata_model in validation_models:
         validation_result = tk.get_action('metadata_validity_check')(context, {
             'content_json': metadata_record['content_json'],
             'model_json': metadata_model['model_json'],
         })
+        partial_state = validation_result['status']
+        partial_states |= {partial_state}
         activity_detail = model.ActivityDetail(
             activity_id=activity.id,
-            object_id=metadata_model['revision_id'],
-            object_type=ckanext_model.MetadataModelRevision,
-            activity_type=validation_result['status'],
+            object_id=metadata_model['id'],
+            object_type=ckanext_model.MetadataModel,
+            activity_type=partial_state,
             data=validation_result['errors']
         )
         activity_details += [activity_detail]
+
+    # the resultant validation state of the metadata record is the 'worst' of the results from all the models
+    metadata_record.extras['validation_state'] = MetadataValidationState.net_state(partial_states)
 
     session.add(activity)
     for activity_detail in activity_details:

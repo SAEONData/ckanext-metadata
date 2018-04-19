@@ -73,6 +73,8 @@ def metadata_model_delete(context, data_dict):
 
     You must be authorized to delete the metadata model.
 
+    Any metadata records that were dependent on this model are invalidated.
+
     :param id: the id or name of the metadata model to delete
     :type id: string
     """
@@ -91,7 +93,11 @@ def metadata_model_delete(context, data_dict):
     id_ = obj.id
     tk.check_access('metadata_model_delete', context, data_dict)
 
-    # TODO: check for dependent validation objects here
+    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
+    invalidate_context = context
+    invalidate_context['defer_commit'] = True
+    for metadata_record_id in dependent_record_list:
+        tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
     rev = model.repo.new_revision()
     rev.author = user

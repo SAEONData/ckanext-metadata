@@ -6,6 +6,7 @@ import ckan.plugins.toolkit as tk
 from ckan.common import _
 from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_save
+from ckanext.metadata import MetadataValidationState
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +85,8 @@ def metadata_model_create(context, data_dict):
     - associated with an organization
     - associated with an infrastructure
 
+    Any metadata records that are now dependent on this model are invalidated.
+
     :param id: the id of the metadata model (optional - only sysadmins can set this)
     :type id: string
     :param name: the name of the new metadata model (optional - auto-generated if not supplied);
@@ -121,6 +124,12 @@ def metadata_model_create(context, data_dict):
         raise tk.ValidationError(errors)
 
     metadata_model = model_save.metadata_model_dict_save(data, context)
+    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model.id})
+
+    invalidate_context = context
+    invalidate_context['defer_commit'] = True
+    for metadata_record_id in dependent_record_list:
+        tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -278,6 +287,8 @@ def metadata_record_create(context, data_dict):
     return_id_only = context.get('return_id_only', False)
 
     data_dict['type'] = 'metadata_record'
+    data_dict['validation_state'] = MetadataValidationState.NOT_VALIDATED
+
     context['schema'] = schema.metadata_record_create_schema()
     context['invoked_api'] = 'metadata_record_create'
     context['defer_commit'] = True

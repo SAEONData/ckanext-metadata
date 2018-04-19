@@ -94,6 +94,7 @@ def metadata_record_create_schema():
         'content_json': [v.not_missing, unicode, v.json_dict_validator, convert_to_extras],
         'content_raw': [v.not_missing, unicode, convert_to_extras],
         'content_url': [v.not_missing, unicode, convert_to_extras],
+        'validation_state': [],
 
         # post-validation
         '__after': [v.metadata_record_id_name_generator,
@@ -120,6 +121,7 @@ def metadata_record_show_schema():
         'content_raw': [convert_from_extras],
         'content_url': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras],
+        'validation_state': [convert_from_extras],
         'private': [],
         'extras': _extras_schema(),
     })

@@ -77,6 +77,10 @@ def metadata_model_list(context, data_dict):
     return {'success': True}
 
 
+def metadata_model_dependent_record_list(context, data_dict):
+    return {'success': True}
+
+
 def infrastructure_list(context, data_dict):
     return {'success': True}
 

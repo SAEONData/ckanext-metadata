@@ -9,6 +9,7 @@ from ckan.common import _
 from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_dictize
 import ckanext.metadata.model as ckanext_model
+from ckanext.metadata import METADATA_VALIDATION_ACTIVITY_TYPE
 
 log = logging.getLogger(__name__)
 
@@ -119,6 +120,49 @@ def metadata_model_list(context, data_dict):
             result += [metadata_model.name]
 
     return result
+
+
+@tk.side_effect_free
+def metadata_model_dependent_record_list(context, data_dict):
+    """
+    Return a list of ids of metadata records that are dependent on the given
+    metadata model for validation.
+
+    :param id: the id or name of the metadata model
+    :type id: string
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving list of metadata records dependent on metadata model: %r", data_dict)
+
+    session = context['session']
+    model = context['model']
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.MetadataModel.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
+
+    tk.check_access('metadata_model_dependent_record_list', context, data_dict)
+
+    q = session.query(model.Package.id) \
+        .join(model.PackageExtra) \
+        .filter(model.Package.state == 'active') \
+        .filter(model.PackageExtra.key == 'metadata_schema_id') \
+        .filter(model.PackageExtra.value == obj.metadata_schema_id)
+
+    if obj.organization_id:
+        q = q.filter(model.Package.owner_org == obj.organization_id)
+
+    if obj.infrastructure_id:
+        q = q.join(model.Member, model.Member.table_id == model.Package.id) \
+            .filter(model.Member.table_name == 'package') \
+            .filter(model.Member.state == 'active') \
+            .join(model.Group, model.Group.id == model.Member.group_id) \
+            .filter(model.Group.type == 'infrastructure') \
+            .filter(model.Group.state == 'active') \
+            .filter(model.Group.id == obj.infrastructure_id)
+
+    return [metadata_record_id for (metadata_record_id,) in q.all()]
 
 
 @tk.side_effect_free
@@ -301,7 +345,7 @@ def metadata_record_validation_model_list(context, data_dict):
     :param id: the id or name of the metadata record
     :type id: string
 
-    :rtype: list of dictionaries of metadata models, including the latest revision id of each
+    :rtype: list of dictionaries of metadata models
     """
     log.debug("Retrieving metadata models for metadata record validation: %r", data_dict)
 
@@ -331,23 +375,14 @@ def metadata_record_validation_model_list(context, data_dict):
         .filter_by(package_id=id_, key='metadata_schema_id').scalar()
 
     MetadataModel = ckanext_model.MetadataModel
-    MetadataModelRevision = ckanext_model.MetadataModelRevision
-
     metadata_model_ids = session.query(MetadataModel.id) \
         .filter_by(metadata_schema_id=metadata_schema_id, state='active') \
         .filter(or_(MetadataModel.organization_id == organization_id, MetadataModel.organization_id == None)) \
         .filter(or_(MetadataModel.infrastructure_id == infra_id for infra_id in infrastructure_ids)) \
         .all()
 
-    result = []
-    for (metadata_model_id,) in metadata_model_ids:
-        metadata_model_dict = tk.get_action('metadata_model_show')(context, {'id': metadata_model_id})
-        metadata_model_dict['revision_id'] = session.query(MetadataModelRevision.revision_id) \
-            .filter(MetadataModelRevision.id == metadata_model_id) \
-            .order_by(MetadataModelRevision.revision_timestamp.desc()) \
-            .first().scalar()
-        result += [metadata_model_dict]
-
+    result = [tk.get_action('metadata_model_show')(context, {'id': metadata_model_id})
+              for (metadata_model_id,) in metadata_model_ids]
     return result
 
 
@@ -378,7 +413,7 @@ def metadata_record_validation_activity_show(context, data_dict):
     id_ = obj.id
     activity = session.query(model.Activity) \
         .filter(model.Activity.object_id == id_) \
-        .filter(model.Activity.activity_type == 'validate_metadata') \
+        .filter(model.Activity.activity_type == METADATA_VALIDATION_ACTIVITY_TYPE) \
         .order_by(model.Activity.timestamp.desc()) \
         .first()
     if not activity:
@@ -398,7 +433,7 @@ def metadata_validity_check(context, data_dict):
     :type model_json: string
 
     :rtype: dictionary {
-        'status': 'valid' | 'partially_valid' | 'invalid' | 'config_error'
+        'status': MetadataValidationState
         'errors': dictionary
     }
     """
