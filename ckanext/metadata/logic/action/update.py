@@ -304,7 +304,7 @@ def metadata_record_update(context, data_dict):
     :rtype: dictionary
     """
 
-    def extra(dict_, key):
+    def get_extra(dict_, key):
         return next((x['value'] for x in dict_['extras'] if x['key'] == key), None)
     
     log.info("Updating metadata record: %r", data_dict)
@@ -321,11 +321,10 @@ def metadata_record_update(context, data_dict):
     tk.check_access('metadata_record_update', context, data_dict)
 
     id_ = obj.id
+    context['metadata_record'] = obj
     old_dict = model_dictize.metadata_record_dictize(obj, context)
-    old_owner_org = old_dict['owner_org']
-    old_infrastructures = {infra['name'] for infra in extra(old_dict, 'infrastructures')}
-    old_metadata_schema_id = extra(old_dict, 'metadata_schema_id')
-    old_content_json = extra(old_dict, 'content_json')
+    old_content_json = get_extra(old_dict, 'content_json')
+    old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
     data_dict['id'] = id_
     data_dict['type'] = 'metadata_record'
@@ -342,16 +341,12 @@ def metadata_record_update(context, data_dict):
 
     # XXX: is obj up to date here?
     new_dict = model_dictize.metadata_record_dictize(obj, context)
-    new_owner_org = new_dict['owner_org']
-    new_infrastructures = {infra['name'] for infra in extra(new_dict, 'infrastructures')}
-    new_metadata_schema_id = extra(new_dict, 'metadata_schema_id')
-    new_content_json = extra(new_dict, 'content_json')
+    new_content_json = get_extra(new_dict, 'content_json')
+    new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
-    # if any of the following have changed, then the existing validation state is no longer valid
-    if old_owner_org != new_owner_org or \
-            old_infrastructures != new_infrastructures or \
-            old_metadata_schema_id != new_metadata_schema_id or \
-            old_content_json != new_content_json:
+    # if either the metadata content or the set of validation models for the record has changed,
+    # then the record must be invalidated
+    if old_content_json != new_content_json or old_validation_models != new_validation_models:
         new_dict['validation_state'] = obj.extras['validation_state'] = MetadataValidationState.NOT_VALIDATED
 
     if not defer_commit:
