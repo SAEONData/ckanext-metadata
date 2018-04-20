@@ -66,6 +66,8 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
                                           state='active')
             session.add(member_obj)
 
+    session.flush()
+
 
 def metadata_model_dict_save(metadata_model_dict, context):
     session = context['session']
@@ -86,6 +88,7 @@ def metadata_model_dict_save(metadata_model_dict, context):
                 metadata_model_dict['state'] = 'active'
 
     metadata_model = d.table_dict_save(metadata_model_dict, ckanext_model.MetadataModel, context)
+    session.flush()
     return metadata_model
 
 
@@ -108,4 +111,5 @@ def metadata_schema_dict_save(metadata_schema_dict, context):
                 metadata_schema_dict['state'] = 'active'
 
     metadata_schema = d.table_dict_save(metadata_schema_dict, ckanext_model.MetadataSchema, context)
+    session.flush()
     return metadata_schema

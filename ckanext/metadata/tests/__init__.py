@@ -2,6 +2,7 @@
 
 import uuid
 import re
+import json
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action
@@ -36,7 +37,7 @@ def assert_object_matches_dict(object_, dict_):
         assert dict_value == object_value
 
 
-def assert_package_has_extra(package_id, key, value, state='active'):
+def assert_package_has_extra(package_id, key, value, state='active', is_json=False):
     """
     Check that a package has the specified extra key-value pair.
     """
@@ -46,8 +47,14 @@ def assert_package_has_extra(package_id, key, value, state='active'):
         .first()
 
     assert extra
-    assert extra.value == value
     assert extra.state == state
+    if is_json:
+        if isinstance(value, basestring):
+            value = json.loads(value)
+        extra_value = json.loads(extra.value)
+    else:
+        extra_value = extra.value
+    assert extra_value == value
 
 
 def assert_group_has_extra(group_id, key, value, state='active'):
@@ -146,5 +153,7 @@ class ActionTestBase(FunctionalTestBase):
             elif method == 'delete':
                 obj = model_class.get(kwargs['id'])
                 assert obj.state == 'deleted'
+            else:
+                obj = model_class.get(kwargs['id'])
 
         return result, obj

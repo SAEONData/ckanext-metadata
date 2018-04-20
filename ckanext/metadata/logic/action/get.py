@@ -344,8 +344,11 @@ def metadata_record_validation_model_list(context, data_dict):
 
     :param id: the id or name of the metadata record
     :type id: string
+    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
 
-    :rtype: list of dictionaries of metadata models
+
+    :rtype: list of names (dictionaries if all_fields) of metadata models
     """
     log.debug("Retrieving metadata models for metadata record validation: %r", data_dict)
 
@@ -375,14 +378,20 @@ def metadata_record_validation_model_list(context, data_dict):
         .filter_by(package_id=id_, key='metadata_schema_id').scalar()
 
     MetadataModel = ckanext_model.MetadataModel
-    metadata_model_ids = session.query(MetadataModel.id) \
+    metadata_model_names = session.query(MetadataModel.name) \
         .filter_by(metadata_schema_id=metadata_schema_id, state='active') \
         .filter(or_(MetadataModel.organization_id == organization_id, MetadataModel.organization_id == None)) \
         .filter(or_(MetadataModel.infrastructure_id == infra_id for infra_id in infrastructure_ids)) \
         .all()
 
-    result = [tk.get_action('metadata_model_show')(context, {'id': metadata_model_id})
-              for (metadata_model_id,) in metadata_model_ids]
+    result = []
+    all_fields = asbool(data_dict.get('all_fields'))
+    for (metadata_model_name,) in metadata_model_names:
+        if all_fields:
+            result += [tk.get_action('metadata_model_show')(context, {'id': metadata_model_name})]
+        else:
+            result += [metadata_model_name]
+
     return result
 
 

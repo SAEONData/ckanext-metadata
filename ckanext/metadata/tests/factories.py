@@ -56,6 +56,8 @@ class MetadataRecord(factory.Factory):
         if {'schema_name', 'schema_version'}.issubset(kwargs):
             metadata_schema = ckanext_model.MetadataSchema.lookup(
                 kwargs.pop('schema_name'), kwargs.pop('schema_version'))
+        elif 'metadata_schema_id' in kwargs:
+            metadata_schema = ckanext_model.MetadataSchema.get(kwargs.pop('metadata_schema_id'))
         else:
             metadata_schema = ckanext_model.MetadataSchema.get(MetadataSchema()['id'])
 

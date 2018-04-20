@@ -26,9 +26,9 @@ def _make_create_schema(schema):
     Add some defaults to a "create" schema.
     """
     schema.update({
-        # disallow anything not in the schema
-        '__extras': [empty],
-        '__junk': [empty],
+        # ignore anything not in the schema
+        '__extras': [ignore],
+        '__junk': [ignore],
     })
 
 
@@ -49,18 +49,14 @@ def _make_show_schema(schema):
     """
     Modify a "create" schema to be suitable for a "show" action.
     """
+    schema['revision_id'] = []
+
     # recursively clear all validator lists
     for key, value in schema.iteritems():
         if type(value) is list:
             schema[key] = []
         elif type(value) is dict:
             _make_show_schema(schema[key])
-
-    schema.update({
-        'revision_id': [],
-        '__extras': [ignore],
-        '__junk': [ignore],
-    })
 
 
 def _extras_schema():
@@ -94,7 +90,7 @@ def metadata_record_create_schema():
         'content_json': [v.not_missing, unicode, v.json_dict_validator, convert_to_extras],
         'content_raw': [v.not_missing, unicode, convert_to_extras],
         'content_url': [v.not_missing, unicode, convert_to_extras],
-        'validation_state': [],
+        'validation_state': [convert_to_extras],
 
         # post-validation
         '__after': [v.metadata_record_id_name_generator,

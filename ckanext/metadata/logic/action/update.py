@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import logging
+import json
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -323,11 +324,12 @@ def metadata_record_update(context, data_dict):
     id_ = obj.id
     context['metadata_record'] = obj
     old_dict = model_dictize.metadata_record_dictize(obj, context)
-    old_content_json = get_extra(old_dict, 'content_json')
+    old_content_json = json.loads(get_extra(old_dict, 'content_json'))
     old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
     data_dict['id'] = id_
     data_dict['type'] = 'metadata_record'
+    data_dict['validation_state'] = get_extra(old_dict, 'validation_state')
 
     context['schema'] = schema.metadata_record_update_schema()
     context['invoked_api'] = 'metadata_record_update'
@@ -335,13 +337,11 @@ def metadata_record_update(context, data_dict):
     context['return_id_only'] = True
     context['allow_partial_update'] = True
 
-    # XXX: is the existing validation state persisted as is?
     tk.get_action('package_update')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
 
-    # XXX: is obj up to date here?
     new_dict = model_dictize.metadata_record_dictize(obj, context)
-    new_content_json = get_extra(new_dict, 'content_json')
+    new_content_json = json.loads(get_extra(new_dict, 'content_json'))
     new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
     # if either the metadata content or the set of validation models for the record has changed,
@@ -417,7 +417,8 @@ def metadata_record_validate(context, data_dict):
     if metadata_record.extras['validation_state'] != MetadataValidationState.NOT_VALIDATED:
         return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
 
-    validation_models = tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id})
+    validation_models = tk.get_action('metadata_record_validation_model_list')\
+        (context, {'id': metadata_record_id, 'all_fields': True})
     if not validation_models:
         raise tk.ObjectNotFound(_('Could not find any metadata models for validating this metadata record'))
 
@@ -489,7 +490,7 @@ def metadata_record_validation_state_update(context, data_dict):
 
     validation_state = tk.get_or_bust(data_dict, 'validation_state')
     if validation_state not in MetadataValidationState.all:
-        raise tk.Invalid(_('Invalid validation state'))
+        raise tk.ValidationError(_('Invalid validation state'))
 
     obj.extras['validation_state'] = validation_state
 
