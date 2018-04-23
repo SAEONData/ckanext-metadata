@@ -56,14 +56,16 @@ def metadata_schema_list(context, data_dict):
     session = context['session']
     all_fields = asbool(data_dict.get('all_fields'))
     
-    metadata_schemas = session.query(ckanext_model.MetadataSchema).filter_by(state='active').all()
+    metadata_schemas = session.query(ckanext_model.MetadataSchema.id, ckanext_model.MetadataSchema.name) \
+        .filter_by(state='active') \
+        .all()
     result = []
-    for metadata_schema in metadata_schemas:
+    for (id_, name) in metadata_schemas:
         if all_fields:
-            data_dict['id'] = metadata_schema.id
+            data_dict['id'] = id_
             result += [tk.get_action('metadata_schema_show')(context, data_dict)]
         else:
-            result += [metadata_schema.name]
+            result += [name]
 
     return result
 
@@ -110,14 +112,16 @@ def metadata_model_list(context, data_dict):
     session = context['session']
     all_fields = asbool(data_dict.get('all_fields'))
 
-    metadata_models = session.query(ckanext_model.MetadataModel).filter_by(state='active').all()
+    metadata_models = session.query(ckanext_model.MetadataModel.id, ckanext_model.MetadataModel.name) \
+        .filter_by(state='active') \
+        .all()
     result = []
-    for metadata_model in metadata_models:
+    for (id_, name) in metadata_models:
         if all_fields:
-            data_dict['id'] = metadata_model.id
+            data_dict['id'] = id_
             result += [tk.get_action('metadata_model_show')(context, data_dict)]
         else:
-            result += [metadata_model.name]
+            result += [name]
 
     return result
 

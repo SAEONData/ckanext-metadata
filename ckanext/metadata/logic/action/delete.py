@@ -53,18 +53,18 @@ def metadata_schema_delete(context, data_dict):
         raise tk.ValidationError(' '.join(errors))
 
     # cascade delete to dependent metadata models
-    metadata_models = session.query(ckanext_model.MetadataModel) \
+    metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
         .filter(ckanext_model.MetadataModel.metadata_schema_id == id_) \
         .filter(ckanext_model.MetadataModel.state != 'deleted') \
         .all()
-    for metadata_model in metadata_models:
+    for (metadata_model_id,) in metadata_model_ids:
         metadata_model_delete_context = {
             'model': model,
             'user': user,
             'session': session,
             'defer_commit': True,
         }
-        tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model.id})
+        tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model_id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -150,18 +150,18 @@ def infrastructure_delete(context, data_dict):
         raise tk.ValidationError(_('Infrastructure has dependent metadata records'))
 
     # cascade delete to dependent metadata models
-    metadata_models = session.query(ckanext_model.MetadataModel) \
+    metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
         .filter(ckanext_model.MetadataModel.infrastructure_id == id_) \
         .filter(ckanext_model.MetadataModel.state != 'deleted') \
         .all()
-    for metadata_model in metadata_models:
+    for (metadata_model_id,) in metadata_model_ids:
         metadata_model_delete_context = {
             'model': model,
             'user': user,
             'session': session,
             'defer_commit': True,
         }
-        tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model.id})
+        tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model_id})
 
     data_dict['type'] = 'infrastructure'
     context['invoked_api'] = 'infrastructure_delete'
@@ -273,23 +273,23 @@ def metadata_record_delete(context, data_dict):
 #     }
 #
 #     # cascade delete to dependent metadata collections
-#     metadata_collections = session.query(model.Group) \
+#     metadata_collection_ids = session.query(model.Group.id) \
 #         .join(model.GroupExtra, model.Group.id == model.GroupExtra.group_id) \
 #         .filter(model.Group.type == 'metadata_collection') \
 #         .filter(model.Group.state != 'deleted') \
 #         .filter(model.GroupExtra.key == 'organization_id') \
 #         .filter(model.GroupExtra.value == id_) \
 #         .all()
-#     for metadata_collection in metadata_collections:
-#         tk.get_action('metadata_collection_delete')(delete_context, {'id': metadata_collection.id})
+#     for (metadata_collection_id,) in metadata_collection_ids:
+#         tk.get_action('metadata_collection_delete')(delete_context, {'id': metadata_collection_id})
 #
 #     # cascade delete to dependent metadata models
-#     metadata_models = session.query(ckanext_model.MetadataModel) \
+#     metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
 #         .filter(ckanext_model.MetadataModel.organization_id == id_) \
 #         .filter(ckanext_model.MetadataModel.state != 'deleted') \
 #         .all()
-#     for metadata_model in metadata_models:
-#         tk.get_action('metadata_model_delete')(delete_context, {'id': metadata_model.id})
+#     for (metadata_model_id,) in metadata_model_ids:
+#         tk.get_action('metadata_model_delete')(delete_context, {'id': metadata_model_id})
 #
 #     data_dict['type'] = 'organization'
 #     original_action(context, data_dict)

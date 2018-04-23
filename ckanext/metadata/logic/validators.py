@@ -152,11 +152,11 @@ def owner_org_owns_metadata_collection(key, data, errors, context):
     # existing value(s) and check that the updated combination satisfies our condition
     organization_id = _convert_missing(organization_id, obj.owner_org if obj else None)
     if obj and not metadata_collection_id:
-        extra = session.query(model.PackageExtra).filter_by(package_id=id_, key='metadata_collection_id').first()
-        metadata_collection_id = extra.value if extra else None
+        metadata_collection_id = session.query(model.PackageExtra.value) \
+            .filter_by(package_id=id_, key='metadata_collection_id').scalar()
 
-    extra = session.query(model.GroupExtra).filter_by(group_id=metadata_collection_id, key='organization_id').first()
-    metadata_collection_organization_id = extra.value if extra else None
+    metadata_collection_organization_id = session.query(model.GroupExtra.value) \
+        .filter_by(group_id=metadata_collection_id, key='organization_id').scalar()
 
     if organization_id != metadata_collection_organization_id:
         raise tk.Invalid(_("owner_org must be the same organization that owns the metadata collection"))
