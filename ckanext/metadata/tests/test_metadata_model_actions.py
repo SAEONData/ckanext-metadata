@@ -379,6 +379,64 @@ class TestMetadataModelActions(ActionTestBase):
         metadata_schema = ckanext_model.MetadataSchema.get(metadata_model['metadata_schema_id'])
         assert obj.name == generate_name(metadata_schema.name, '', infrastructure['name'])
 
+    def test_update_with_dependent_records(self):
+        metadata_schema = ckanext_factories.MetadataSchema()
+        organization = ckan_factories.Organization()
+        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        metadata_record_1 = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'])
+        metadata_record_2 = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'], owner_org=organization['id'])
+        metadata_record_3 = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'], owner_org=organization['id'], infrastructures=[{'id': infrastructure['id']}])
+
+        metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_schema['id'])
+        dependent_records = call_action('metadata_model_dependent_record_list', id=metadata_model['id'])
+        assert set(dependent_records) == {metadata_record_1['id'], metadata_record_2['id'], metadata_record_3['id']}
+
+        # change the model_json - invalidate all dependents
+        call_action('metadata_record_validation_state_update', id=metadata_record_1['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_update', id=metadata_record_2['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_update', id=metadata_record_3['id'], validation_state='partially valid')
+        call_action('metadata_model_update',
+                    id=metadata_model['id'],
+                    metadata_schema_id=metadata_schema['id'],
+                    organization_id='',
+                    infrastructure_id='',
+                    model_json='{ "newtestkey": "newtestvalue" }')
+        assert_package_has_extra(metadata_record_1['id'], 'validation_state', 'not validated')
+        assert_package_has_extra(metadata_record_2['id'], 'validation_state', 'not validated')
+        assert_package_has_extra(metadata_record_3['id'], 'validation_state', 'not validated')
+
+        # set the infrastructure - invalidate the records that are no longer dependent
+        call_action('metadata_record_validation_state_update', id=metadata_record_1['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_update', id=metadata_record_2['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_update', id=metadata_record_3['id'], validation_state='partially valid')
+        call_action('metadata_model_update',
+                    id=metadata_model['id'],
+                    metadata_schema_id=metadata_schema['id'],
+                    organization_id='',
+                    infrastructure_id=infrastructure['id'],
+                    model_json='{ "newtestkey": "newtestvalue" }')
+        dependent_records = call_action('metadata_model_dependent_record_list', id=metadata_model['id'])
+        assert set(dependent_records) == {metadata_record_3['id']}
+        assert_package_has_extra(metadata_record_1['id'], 'validation_state', 'not validated')
+        assert_package_has_extra(metadata_record_2['id'], 'validation_state', 'not validated')
+        assert_package_has_extra(metadata_record_3['id'], 'validation_state', 'partially valid')
+
+        # set the organization - invalidate the record that is newly dependent
+        call_action('metadata_record_validation_state_update', id=metadata_record_1['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_update', id=metadata_record_2['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_update', id=metadata_record_3['id'], validation_state='partially valid')
+        call_action('metadata_model_update',
+                    id=metadata_model['id'],
+                    metadata_schema_id=metadata_schema['id'],
+                    organization_id=organization['id'],
+                    infrastructure_id='',
+                    model_json='{ "newtestkey": "newtestvalue" }')
+        dependent_records = call_action('metadata_model_dependent_record_list', id=metadata_model['id'])
+        assert set(dependent_records) == {metadata_record_2['id'], metadata_record_3['id']}
+        assert_package_has_extra(metadata_record_1['id'], 'validation_state', 'valid')
+        assert_package_has_extra(metadata_record_2['id'], 'validation_state', 'not validated')
+        assert_package_has_extra(metadata_record_3['id'], 'validation_state', 'partially valid')
+
     def test_update_invalid_duplicate_name(self):
         metadata_model1 = ckanext_factories.MetadataModel()
         metadata_model2 = ckanext_factories.MetadataModel()

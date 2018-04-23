@@ -153,7 +153,7 @@ class ActionTestBase(FunctionalTestBase):
             elif method == 'delete':
                 obj = model_class.get(kwargs['id'])
                 assert obj.state == 'deleted'
-            else:
+            elif 'id' in kwargs:
                 obj = model_class.get(kwargs['id'])
 
         return result, obj

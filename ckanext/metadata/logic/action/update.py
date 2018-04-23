@@ -136,6 +136,9 @@ def metadata_model_update(context, data_dict):
 
     id_ = obj.id
     old_dict = model_dictize.metadata_model_dictize(obj, context)
+    old_model_json = old_dict['model_json']
+    if old_model_json:
+        old_model_json = json.loads(old_model_json)
     old_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
 
     data_dict['id'] = id_
@@ -149,9 +152,12 @@ def metadata_model_update(context, data_dict):
 
     metadata_model = model_save.metadata_model_dict_save(data, context)
     new_dict = model_dictize.metadata_model_dictize(metadata_model, context)
+    new_model_json = new_dict['model_json']
+    if new_model_json:
+        new_model_json = json.loads(new_model_json)
     new_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
 
-    if old_dict['model_json'] != new_dict['model_json']:
+    if old_model_json != new_model_json:
         affected_record_ids = set(old_dependent_record_list) | set(new_dependent_record_list)
     else:
         affected_record_ids = set(old_dependent_record_list) ^ set(new_dependent_record_list)
@@ -325,7 +331,9 @@ def metadata_record_update(context, data_dict):
     id_ = obj.id
     context['metadata_record'] = obj
     old_dict = model_dictize.metadata_record_dictize(obj, context)
-    old_content_json = json.loads(get_extra(old_dict, 'content_json'))
+    old_content_json = get_extra(old_dict, 'content_json')
+    if old_content_json:
+        old_content_json = json.loads(old_content_json)
     old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
     data_dict['id'] = id_
@@ -345,7 +353,9 @@ def metadata_record_update(context, data_dict):
     session.flush()
 
     new_dict = model_dictize.metadata_record_dictize(obj, context)
-    new_content_json = json.loads(get_extra(new_dict, 'content_json'))
+    new_content_json = get_extra(new_dict, 'content_json')
+    if new_content_json:
+        new_content_json = json.loads(new_content_json)
     new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
     # if either the metadata content or the set of validation models for the record has changed,

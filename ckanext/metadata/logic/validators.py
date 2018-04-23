@@ -19,10 +19,9 @@ def _make_uuid():
 
 def _convert_missing(value, default=None):
     """
-    Instead of having to check values for both None and Missing, call this function to
-    convert Missing to None (or some other default).
+    Convert Missing to None or some other default.
     """
-    if value is None or value is tk.missing:
+    if value is tk.missing:
         return default
     return value
 
