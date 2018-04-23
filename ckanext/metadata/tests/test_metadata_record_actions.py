@@ -159,12 +159,10 @@ class TestMetadataRecordActions(ActionTestBase):
                                         exception_class=tk.ValidationError,
                                         owner_org='',
                                         metadata_collection_id='',
-                                        schema_name='',
-                                        schema_version='')
+                                        schema_name='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
         assert_error(result, 'schema_name', 'Missing value')
-        assert_error(result, 'schema_version', 'Missing value')
 
     def test_create_invalid_duplicate_name(self):
         metadata_record = self._generate_metadata_record()
@@ -214,6 +212,13 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
         assert_error(result, '__after', 'Could not find a metadata schema')
         assert_error(result['infrastructures'][0], 'id', 'Not found: Infrastructure')
+
+    def test_create_invalid_owner_org_collection_mismatch(self):
+        result, obj = self._call_action('create', 'metadata_record',
+                                        exception_class=tk.ValidationError,
+                                        owner_org=self.owner_org['id'],
+                                        metadata_collection_id=ckanext_factories.MetadataCollection()['id'])
+        assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
 
     def test_update_valid(self):
         infrastructure1 = self._generate_infrastructure()
@@ -449,12 +454,10 @@ class TestMetadataRecordActions(ActionTestBase):
                                         id=metadata_record['id'],
                                         owner_org='',
                                         metadata_collection_id='',
-                                        schema_name='',
-                                        schema_version='')
+                                        schema_name='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
         assert_error(result, 'schema_name', 'Missing value')
-        assert_error(result, 'schema_version', 'Missing value')
 
     def test_update_invalid_not_json(self):
         metadata_record = self._generate_metadata_record()
@@ -515,6 +518,15 @@ class TestMetadataRecordActions(ActionTestBase):
                                         id=metadata_record['id'],
                                         validation_state='foo')
         assert_error(result, 'message', 'Invalid validation state')
+
+    def test_update_invalid_owner_org_collection_mismatch(self):
+        metadata_record = self._generate_metadata_record()
+        result, obj = self._call_action('update', 'metadata_record',
+                                        exception_class=tk.ValidationError,
+                                        id=metadata_record['id'],
+                                        owner_org=self.owner_org['id'],
+                                        metadata_collection_id=ckanext_factories.MetadataCollection()['id'])
+        assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
 
     def test_delete_valid(self):
         metadata_record = self._generate_metadata_record()
