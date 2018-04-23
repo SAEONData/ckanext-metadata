@@ -311,6 +311,7 @@ def metadata_record_update(context, data_dict):
     log.info("Updating metadata record: %r", data_dict)
 
     model = context['model']
+    session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
@@ -339,6 +340,9 @@ def metadata_record_update(context, data_dict):
 
     tk.get_action('package_update')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
+
+    # ensure new validation model list sees infrastructure list changes
+    session.flush()
 
     new_dict = model_dictize.metadata_record_dictize(obj, context)
     new_content_json = json.loads(get_extra(new_dict, 'content_json'))

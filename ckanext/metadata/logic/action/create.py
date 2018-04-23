@@ -124,19 +124,20 @@ def metadata_model_create(context, data_dict):
         raise tk.ValidationError(errors)
 
     metadata_model = model_save.metadata_model_dict_save(data, context)
-    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model.id})
 
-    invalidate_context = context
-    invalidate_context['defer_commit'] = True
-    for metadata_record_id in dependent_record_list:
-        tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
-
+    # creating the revision also flushes the session which gives us the new object id
     rev = model.repo.new_revision()
     rev.author = user
     if 'message' in context:
         rev.message = context['message']
     else:
         rev.message = _(u'REST API: Create metadata model %s') % metadata_model.id
+
+    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model.id})
+    invalidate_context = context
+    invalidate_context['defer_commit'] = True
+    for metadata_record_id in dependent_record_list:
+        tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
     if not defer_commit:
         model.repo.commit()

@@ -522,7 +522,7 @@ class TestMetadataRecordActions(ActionTestBase):
                           model_class=ckan_model.Package,
                           id=metadata_record['id'])
 
-    def test_invalidate_valid(self):
+    def test_invalidate(self):
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
         call_action('metadata_record_validation_state_update', id=input_dict['id'], validation_state='valid')

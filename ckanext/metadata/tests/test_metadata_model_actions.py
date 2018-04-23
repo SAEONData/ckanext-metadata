@@ -11,6 +11,7 @@ from ckanext.metadata.tests import (
     generate_name,
     assert_object_matches_dict,
     assert_error,
+    assert_package_has_extra,
     factories as ckanext_factories,
 )
 
@@ -146,6 +147,64 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self._call_action('create', 'metadata_model',
                                         model_class=ckanext_model.MetadataModel, **input_dict)
         assert_object_matches_dict(obj, input_dict)
+
+    def test_create_valid_invalidate_records(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id='',
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
+
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id=metadata_record['owner_org'],
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
+
+        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id='',
+                    infrastructure_id=infrastructure['id'],
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
+
+    def test_create_valid_no_invalidate_records(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=ckanext_factories.MetadataSchema()['id'],
+                    organization_id='',
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'partially valid')
+
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id=ckan_factories.Organization()['id'],
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'invalid')
+
+        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id='',
+                    infrastructure_id=ckanext_factories.Infrastructure()['id'],
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'valid')
 
     def test_create_invalid_duplicate_name(self):
         metadata_model = ckanext_factories.MetadataModel()
@@ -455,17 +514,60 @@ class TestMetadataModelActions(ActionTestBase):
                           model_class=ckanext_model.MetadataModel,
                           id=metadata_model['id'])
 
-    def test_delete_with_dependencies(self):
-        # TODO: this test will work once we have metadata models being referenced for validation
-        metadata_model = ckanext_factories.MetadataModel()
+    def test_delete_valid_invalidate_records(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id='',
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
 
-        # add validation objects here
-        result, obj = self._call_action('delete', 'metadata_model',
-                                        exception_class=tk.ValidationError,
-                                        id=metadata_model['id'])
-        assert_error(result, 'message', 'Metadata model has dependent validation records')
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id=metadata_record['owner_org'],
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
 
-        # delete validation objects here
-        self._call_action('delete', 'metadata_model',
-                          model_class=ckanext_model.MetadataModel,
-                          id=metadata_model['id'])
+        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id='',
+                    infrastructure_id=infrastructure['id'],
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
+
+    def test_delete_valid_no_invalidate_records(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=ckanext_factories.MetadataSchema()['id'],
+                    organization_id='',
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'partially valid')
+
+        metadata_record = ckanext_factories.MetadataRecord()
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id=ckan_factories.Organization()['id'],
+                    infrastructure_id='',
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'invalid')
+
+        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
+        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_model_create',
+                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    organization_id='',
+                    infrastructure_id=ckanext_factories.Infrastructure()['id'],
+                    model_json='')
+        assert_package_has_extra(metadata_record['id'], 'validation_state', 'valid')
