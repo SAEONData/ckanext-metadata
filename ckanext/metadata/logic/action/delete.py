@@ -265,19 +265,31 @@ def metadata_record_delete(context, data_dict):
 #             .count() > 0:
 #         raise tk.ValidationError(_('Organization has dependent metadata records'))
 #
+#     delete_context = {
+#         'model': model,
+#         'user': user,
+#         'session': session,
+#         'defer_commit': True,
+#     }
+#
+#     # cascade delete to dependent metadata collections
+#     metadata_collections = session.query(model.Group) \
+#         .join(model.GroupExtra, model.Group.id == model.GroupExtra.group_id) \
+#         .filter(model.Group.type == 'metadata_collection') \
+#         .filter(model.Group.state != 'deleted') \
+#         .filter(model.GroupExtra.key == 'organization_id') \
+#         .filter(model.GroupExtra.value == id_) \
+#         .all()
+#     for metadata_collection in metadata_collections:
+#         tk.get_action('metadata_collection_delete')(delete_context, {'id': metadata_collection.id})
+#
 #     # cascade delete to dependent metadata models
 #     metadata_models = session.query(ckanext_model.MetadataModel) \
 #         .filter(ckanext_model.MetadataModel.organization_id == id_) \
 #         .filter(ckanext_model.MetadataModel.state != 'deleted') \
 #         .all()
 #     for metadata_model in metadata_models:
-#         metadata_model_delete_context = {
-#             'model': model,
-#             'user': user,
-#             'session': session,
-#             'defer_commit': True,
-#         }
-#         tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model.id})
+#         tk.get_action('metadata_model_delete')(delete_context, {'id': metadata_model.id})
 #
 #     data_dict['type'] = 'organization'
 #     original_action(context, data_dict)
