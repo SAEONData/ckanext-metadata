@@ -349,13 +349,13 @@ class TestMetadataSchemaActions(ActionTestBase):
                                         id=metadata_schema1['id'])
 
         assert_error(result, 'message', 'Metadata schema has dependent metadata schemas')
-        assert_error(result, 'message', 'Metadata schema has dependent metadata models')
         assert_error(result, 'message', 'Metadata schema has dependent metadata records')
+        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
 
         call_action('metadata_schema_delete', id=metadata_schema2['id'])
-        call_action('metadata_model_delete', id=metadata_model['id'])
         call_action('metadata_record_delete', id=metadata_record['id'])
 
         self._call_action('delete', 'metadata_schema',
                           model_class=ckanext_model.MetadataSchema,
                           id=metadata_schema1['id'])
+        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'

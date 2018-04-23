@@ -116,41 +116,18 @@ class TestInfrastructureActions(ActionTestBase):
                           model_class=ckan_model.Group,
                           id=infrastructure['id'])
 
-    def test_delete_valid_cascade_metadata_models(self):
+    def test_delete_with_dependencies(self):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
-
-        self._call_action('delete', 'infrastructure',
-                          model_class=ckan_model.Group,
-                          id=infrastructure['id'])
-        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
-
-    def test_delete_with_dependent_metadata_records(self):
-        infrastructure = ckanext_factories.Infrastructure()
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
 
         result, obj = self._call_action('delete', 'infrastructure',
                                         exception_class=tk.ValidationError,
                                         id=infrastructure['id'])
         assert_error(result, 'message', 'Infrastructure has dependent metadata records')
+        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
 
         call_action('metadata_record_delete', id=metadata_record['id'])
-        self._call_action('delete', 'infrastructure',
-                          model_class=ckan_model.Group,
-                          id=infrastructure['id'])
-
-    def test_delete_with_dependent_metadata_models(self):
-        # TODO: this test will work once we have metadata models being referenced for validation
-        infrastructure = ckanext_factories.Infrastructure()
-        metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
-
-        # add validation objects here
-        result, obj = self._call_action('delete', 'infrastructure',
-                                        exception_class=tk.ValidationError,
-                                        id=infrastructure['id'])
-        assert_error(result, 'message', 'Infrastructure has dependent metadata models that are in use')
-
-        # delete validation objects here
         self._call_action('delete', 'infrastructure',
                           model_class=ckan_model.Group,
                           id=infrastructure['id'])

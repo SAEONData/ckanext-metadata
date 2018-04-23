@@ -40,12 +40,6 @@ def metadata_schema_delete(context, data_dict):
             .count() > 0:
         errors += [_('Metadata schema has dependent metadata schemas.')]
 
-    if session.query(ckanext_model.MetadataModel) \
-            .filter(ckanext_model.MetadataModel.metadata_schema_id == id_) \
-            .filter(ckanext_model.MetadataModel.state != 'deleted') \
-            .count() > 0:
-        errors += [_('Metadata schema has dependent metadata models.')]
-
     if session.query(model.Package) \
             .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
             .filter(model.PackageExtra.key == 'metadata_schema_id') \
@@ -57,6 +51,20 @@ def metadata_schema_delete(context, data_dict):
 
     if errors:
         raise tk.ValidationError(' '.join(errors))
+
+    # cascade delete to dependent metadata models
+    metadata_models = session.query(ckanext_model.MetadataModel) \
+        .filter(ckanext_model.MetadataModel.metadata_schema_id == id_) \
+        .filter(ckanext_model.MetadataModel.state != 'deleted') \
+        .all()
+    for metadata_model in metadata_models:
+        metadata_model_delete_context = {
+            'model': model,
+            'user': user,
+            'session': session,
+            'defer_commit': True,
+        }
+        tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model.id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -141,7 +149,7 @@ def infrastructure_delete(context, data_dict):
             .count() > 0:
         raise tk.ValidationError(_('Infrastructure has dependent metadata records'))
 
-    # cascade delete to dependent metadata models (which will check their own dependencies)
+    # cascade delete to dependent metadata models
     metadata_models = session.query(ckanext_model.MetadataModel) \
         .filter(ckanext_model.MetadataModel.infrastructure_id == id_) \
         .filter(ckanext_model.MetadataModel.state != 'deleted') \
@@ -257,7 +265,7 @@ def metadata_record_delete(context, data_dict):
 #             .count() > 0:
 #         raise tk.ValidationError(_('Organization has dependent metadata records'))
 #
-#     # cascade delete to dependent metadata models (which will check their own dependencies)
+#     # cascade delete to dependent metadata models
 #     metadata_models = session.query(ckanext_model.MetadataModel) \
 #         .filter(ckanext_model.MetadataModel.organization_id == id_) \
 #         .filter(ckanext_model.MetadataModel.state != 'deleted') \
