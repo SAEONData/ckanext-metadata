@@ -122,10 +122,8 @@ class TestMetadataSchemaActions(ActionTestBase):
     def test_create_invalid_missing_values(self):
         result, obj = self._call_action('create', 'metadata_schema',
                                         exception_class=tk.ValidationError,
-                                        schema_name='',
-                                        schema_version='')
+                                        schema_name='')
         assert_error(result, 'schema_name', 'Missing value')
-        assert_error(result, 'schema_version', 'Missing value')
 
     def test_create_invalid_duplicate(self):
         metadata_schema = ckanext_factories.MetadataSchema()
@@ -262,10 +260,8 @@ class TestMetadataSchemaActions(ActionTestBase):
         result, obj = self._call_action('update', 'metadata_schema',
                                         exception_class=tk.ValidationError,
                                         id=metadata_schema['id'],
-                                        schema_name='',
-                                        schema_version='')
+                                        schema_name='')
         assert_error(result, 'schema_name', 'Missing value')
-        assert_error(result, 'schema_version', 'Missing value')
 
     def test_update_invalid_duplicate(self):
         metadata_schema1 = ckanext_factories.MetadataSchema()

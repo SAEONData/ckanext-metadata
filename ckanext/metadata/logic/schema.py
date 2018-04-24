@@ -26,9 +26,10 @@ def _make_create_schema(schema):
     Add some defaults to a "create" schema.
     """
     schema.update({
-        # ignore anything not in the schema
+        # native CKAN fields that we're not interested in can end up in __extras; ignore them
         '__extras': [ignore],
-        '__junk': [ignore],
+        # disallow anything else that's not in our schema
+        '__junk': [empty],
     })
 
 
@@ -49,14 +50,18 @@ def _make_show_schema(schema):
     """
     Modify a "create" schema to be suitable for a "show" action.
     """
-    schema['revision_id'] = []
-
     # recursively clear all validator lists
     for key, value in schema.iteritems():
         if type(value) is list:
             schema[key] = []
         elif type(value) is dict:
             _make_show_schema(schema[key])
+
+    schema.update({
+        'revision_id': [],
+        '__extras': [ignore],
+        '__junk': [ignore],
+    })
 
 
 def _extras_schema():
