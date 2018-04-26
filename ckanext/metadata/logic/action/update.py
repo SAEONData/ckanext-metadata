@@ -575,7 +575,8 @@ def metadata_record_workflow_state_transition(context, data_dict):
         user_id=model.User.by_name(user.decode('utf8')).id,
         object_id=metadata_record_id,
         revision_id=metadata_record.revision_id,
-        activity_type=METADATA_WORKFLOW_ACTIVITY_TYPE
+        activity_type=METADATA_WORKFLOW_ACTIVITY_TYPE,
+        data={'workflow_transition_id': workflow_transition.id}
     )
 
     # delegate the actual evaluation work to the pluggable action metadata_workflow_rule_evaluate
