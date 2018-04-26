@@ -62,7 +62,7 @@ def metadata_record_dictize(pkg, context):
     return result_dict
 
 
-def metadata_record_validation_activity_dictize(activity, context):
+def metadata_record_activity_dictize(activity, context):
     model = context['model']
     session = context['session']
     activity_dict = ckan_model_dictize.activity_dictize(activity, context)
@@ -104,6 +104,82 @@ def metadata_schema_dictize(metadata_schema, context):
         metadata_schema_rev = ckanext_model.metadata_schema_revision_table
         q = select([metadata_schema_rev]).where(metadata_schema_rev.c.id == metadata_schema.id)
         result = execute(q, metadata_schema_rev, context).first()
+    if not result:
+        raise tk.ObjectNotFound
+
+    result_dict = d.table_dictize(result, context)
+    return result_dict
+
+
+def workflow_state_dictize(workflow_state, context):
+    is_latest_revision = not(context.get('revision_id') or
+                             context.get('revision_date'))
+    execute = _execute if is_latest_revision else _execute_with_revision
+    if is_latest_revision:
+        if isinstance(workflow_state, ckanext_model.WorkflowStateRevision):
+            workflow_state = ckanext_model.WorkflowState.get(workflow_state.id)
+        result = workflow_state
+    else:
+        workflow_state_rev = ckanext_model.workflow_state_revision_table
+        q = select([workflow_state_rev]).where(workflow_state_rev.c.id == workflow_state.id)
+        result = execute(q, workflow_state_rev, context).first()
+    if not result:
+        raise tk.ObjectNotFound
+
+    result_dict = d.table_dictize(result, context)
+    return result_dict
+
+
+def workflow_transition_dictize(workflow_transition, context):
+    is_latest_revision = not(context.get('revision_id') or
+                             context.get('revision_date'))
+    execute = _execute if is_latest_revision else _execute_with_revision
+    if is_latest_revision:
+        if isinstance(workflow_transition, ckanext_model.WorkflowTransitionRevision):
+            workflow_transition = ckanext_model.WorkflowTransition.get(workflow_transition.id)
+        result = workflow_transition
+    else:
+        workflow_transition_rev = ckanext_model.workflow_transition_revision_table
+        q = select([workflow_transition_rev]).where(workflow_transition_rev.c.id == workflow_transition.id)
+        result = execute(q, workflow_transition_rev, context).first()
+    if not result:
+        raise tk.ObjectNotFound
+
+    result_dict = d.table_dictize(result, context)
+    return result_dict
+
+
+def workflow_metric_dictize(workflow_metric, context):
+    is_latest_revision = not(context.get('revision_id') or
+                             context.get('revision_date'))
+    execute = _execute if is_latest_revision else _execute_with_revision
+    if is_latest_revision:
+        if isinstance(workflow_metric, ckanext_model.WorkflowMetricRevision):
+            workflow_metric = ckanext_model.WorkflowMetric.get(workflow_metric.id)
+        result = workflow_metric
+    else:
+        workflow_metric_rev = ckanext_model.workflow_metric_revision_table
+        q = select([workflow_metric_rev]).where(workflow_metric_rev.c.id == workflow_metric.id)
+        result = execute(q, workflow_metric_rev, context).first()
+    if not result:
+        raise tk.ObjectNotFound
+
+    result_dict = d.table_dictize(result, context)
+    return result_dict
+
+
+def workflow_rule_dictize(workflow_rule, context):
+    is_latest_revision = not(context.get('revision_id') or
+                             context.get('revision_date'))
+    execute = _execute if is_latest_revision else _execute_with_revision
+    if is_latest_revision:
+        if isinstance(workflow_rule, ckanext_model.WorkflowRuleRevision):
+            workflow_rule = ckanext_model.WorkflowRule.get(workflow_rule.id)
+        result = workflow_rule
+    else:
+        workflow_rule_rev = ckanext_model.workflow_rule_revision_table
+        q = select([workflow_rule_rev]).where(workflow_rule_rev.c.id == workflow_rule.id)
+        result = execute(q, workflow_rule_rev, context).first()
     if not result:
         raise tk.ObjectNotFound
 

@@ -8,7 +8,7 @@ from ckan.common import _
 from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata import MetadataValidationState, METADATA_VALIDATION_ACTIVITY_TYPE
+from ckanext.metadata import MetadataValidationState, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_dictize
 
 log = logging.getLogger(__name__)
@@ -517,3 +517,94 @@ def metadata_record_validation_state_update(context, data_dict):
 
     if not defer_commit:
         model.repo.commit()
+
+
+def metadata_record_workflow_state_transition(context, data_dict):
+    """
+    Transition a metadata record to a different workflow state, and log the result
+    to the metadata record's activity stream.
+
+    You must be authorized to change the metadata record's workflow state.
+
+    :param id: the id or name of the metadata record to transition
+    :type id: string
+    :param workflow_state_id: the id or name of the target workflow state
+    :type workflow_state_id: string
+
+    :rtype: workflow activity dictionary
+    """
+    log.info("Transitioning workflow state of metadata record: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_record_id, target_workflow_state_id = tk.get_or_bust(data_dict, ['id', 'workflow_state_id'])
+
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is None or metadata_record.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    target_workflow_state = ckanext_model.WorkflowState.get(target_workflow_state_id)
+    if target_workflow_state is None or target_workflow_state.state != 'active':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
+
+    tk.check_access('metadata_record_workflow_state_transition', context, data_dict)
+
+    metadata_record_id = metadata_record.id
+    target_workflow_state_id = target_workflow_state.id
+    context['metadata_record'] = metadata_record
+    context['workflow_state'] = target_workflow_state
+
+    current_workflow_state_id = session.query(model.PackageExtra.value) \
+        .filter_by(package_id=metadata_record_id, key='workflow_state_id').scalar()
+
+    if current_workflow_state_id == target_workflow_state_id:
+        return None
+
+    workflow_transition = ckanext_model.WorkflowTransition.lookup(current_workflow_state_id, target_workflow_state_id)
+    if not workflow_transition or workflow_transition.state != 'active':
+        raise tk.ValidationError(_("Invalid workflow state transition"))
+
+    workflow_rules = tk.get_action('workflow_state_rule_list')(context, {'id': target_workflow_state_id})
+
+    # log results of rule evaluation using CKAN's activity stream model; CKAN doesn't provide a way
+    # to hook into activity detail creation, so we work directly with the model objects here
+    activity = model.Activity(
+        user_id=model.User.by_name(user.decode('utf8')).id,
+        object_id=metadata_record_id,
+        revision_id=metadata_record.revision_id,
+        activity_type=METADATA_WORKFLOW_ACTIVITY_TYPE
+    )
+
+    # delegate the actual evaluation work to the pluggable action metadata_workflow_rule_evaluate
+    activity_details = []
+    success = True  # if there are no rules associated with a state, the transition is allowed
+    for workflow_rule in workflow_rules:
+        rule_success = tk.get_action('metadata_workflow_rule_evaluate')(context, {
+            'content_json': metadata_record.extras['content_json'],
+            'evaluator_uri': workflow_rule['evaluator_uri'],
+            'min_value': workflow_rule['min_value'],
+            'max_value': workflow_rule['max_value'],
+        })
+        success = success and rule_success
+        activity_detail = model.ActivityDetail(
+            activity_id=activity.id,
+            object_id=workflow_rule['rule_id'],
+            object_type=ckanext_model.WorkflowRule,
+            activity_type='pass' if rule_success else 'fail',
+        )
+        activity_details += [activity_detail]
+
+    if success:
+        metadata_record.extras['workflow_state_id'] = target_workflow_state_id
+
+    session.add(activity)
+    for activity_detail in activity_details:
+        session.add(activity_detail)
+
+    if not defer_commit:
+        model.repo.commit()
+
+    return tk.get_action('metadata_record_workflow_activity_show')(context, {'id': metadata_record_id})

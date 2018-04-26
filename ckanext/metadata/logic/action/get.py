@@ -9,7 +9,7 @@ from ckan.common import _
 from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_dictize
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata import METADATA_VALIDATION_ACTIVITY_TYPE
+from ckanext.metadata import METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 
 log = logging.getLogger(__name__)
 
@@ -425,14 +425,13 @@ def metadata_record_validation_activity_show(context, data_dict):
 
     id_ = obj.id
     activity = session.query(model.Activity) \
-        .filter(model.Activity.object_id == id_) \
-        .filter(model.Activity.activity_type == METADATA_VALIDATION_ACTIVITY_TYPE) \
+        .filter_by(object_id=id_, activity_type=METADATA_VALIDATION_ACTIVITY_TYPE) \
         .order_by(model.Activity.timestamp.desc()) \
         .first()
     if not activity:
         return None
 
-    return model_dictize.metadata_record_validation_activity_dictize(activity, context)
+    return model_dictize.metadata_record_activity_dictize(activity, context)
 
 
 @tk.side_effect_free
@@ -446,9 +445,9 @@ def metadata_validity_check(context, data_dict):
     :type model_json: string
 
     :rtype: dictionary {
-        'status': MetadataValidationState
-        'errors': dictionary
-    }
+            'status': MetadataValidationState
+            'errors': dictionary
+        }
     """
     log.debug("Checking metadata validity")
     tk.check_access('metadata_validity_check', context, data_dict)
@@ -459,3 +458,236 @@ def metadata_validity_check(context, data_dict):
     content_json, model_json = tk.get_or_bust(data_dict, ['content_json', 'model_json'])
 
     raise NotImplementedError
+
+
+@tk.side_effect_free
+def metadata_workflow_rule_evaluate(context, data_dict):
+    """
+    Evaluate whether a metadata dictionary passes a workflow rule.
+
+    :param content_json: JSON dictionary of metadata record content
+    :type content_json: string
+    :param evaluator_uri: URI of the metric evaluation service
+    :type evaluator_uri: string
+    :param min_value: minimum accepted return value from the evaluator
+    :type min_value: integer
+    :param max_value: maximum accepted return value from the evaluator
+    :type max_value: integer
+
+    :rtype: boolean (pass/fail)
+    """
+    log.debug("Evaluating metadata against workflow rule", data_dict)
+    tk.check_access('metadata_workflow_rule_evaluate', context, data_dict)
+
+    model = context['model']
+    session = context['session']
+
+    content_json, evaluator_uri, min_value, max_value = tk.get_or_bust(
+        data_dict, ['content_json', 'evaluator_uri', 'min_value', 'max_value'])
+
+    raise NotImplementedError
+
+
+@tk.side_effect_free
+def metadata_record_workflow_activity_show(context, data_dict):
+    """
+    Return the latest workflow activity for a metadata record.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+
+    :rtype: dictionary including activity detail list under 'details',
+        or None if the record has not yet been assigned a workflow state
+    """
+    log.debug("Retrieving metadata record workflow activity: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+    obj = context.get('metadata_record')
+    if not obj:
+        id_ = tk.get_or_bust(data_dict, 'id')
+        obj = model.Package.get(id_)
+        if obj is None or obj.type != 'metadata_record':
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_workflow_activity_show', context, data_dict)
+
+    id_ = obj.id
+    activity = session.query(model.Activity) \
+        .filter_by(object_id=id_, activity_type=METADATA_WORKFLOW_ACTIVITY_TYPE) \
+        .order_by(model.Activity.timestamp.desc()) \
+        .first()
+    if not activity:
+        return None
+
+    return model_dictize.metadata_record_activity_dictize(activity, context)
+
+
+@tk.side_effect_free
+def workflow_state_show(context, data_dict):
+    """
+    Return a workflow state definition.
+
+    :param id: the id or name of the workflow state
+    :type id: string
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving workflow state: %r", data_dict)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowState.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
+
+    tk.check_access('workflow_state_show', context, data_dict)
+
+    context['workflow_state'] = obj
+    workflow_state_dict = model_dictize.workflow_state_dictize(obj, context)
+
+    result_dict, errors = tk.navl_validate(workflow_state_dict, schema.workflow_state_show_schema(), context)
+    return result_dict
+
+
+@tk.side_effect_free
+def workflow_state_list(context, data_dict):
+    """
+    Return a list of names of the site's workflow states.
+
+    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving workflow state list: %r", data_dict)
+    tk.check_access('workflow_state_list', context, data_dict)
+
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    workflow_states = session.query(ckanext_model.WorkflowState.id, ckanext_model.WorkflowState.name) \
+        .filter_by(state='active') \
+        .all()
+    result = []
+    for (id_, name) in workflow_states:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('workflow_state_show')(context, data_dict)]
+        else:
+            result += [name]
+
+    return result
+
+
+@tk.side_effect_free
+def workflow_state_rule_list(context, data_dict):
+    """
+    Return a list of rules for a workflow state.
+
+    :param id: the id or name of the workflow state
+    :type id: string
+
+    :rtype: list of dictionaries combining rule and metric information {
+            rule_id
+            metric_name
+            metric_title
+            metric_description
+            evaluator_uri
+            min_value
+            max_value
+        }
+    """
+    log.debug("Retrieving list of rules for workflow state: %r", data_dict)
+
+    session = context['session']
+    obj = context.get('workflow_state')
+    if not obj:
+        id_ = tk.get_or_bust(data_dict, 'id')
+        obj = ckanext_model.WorkflowState.get(id_)
+        if obj is None:
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
+
+    tk.check_access('workflow_state_rule_list', context, data_dict)
+
+    context['workflow_state'] = obj
+    id_ = obj.id
+
+    rules = session.query(ckanext_model.WorkflowRule) \
+        .join(ckanext_model.WorkflowMetric) \
+        .filter(ckanext_model.WorkflowRule.workflow_state_id == id_) \
+        .all()
+
+    return [{
+        'rule_id': rule.id,
+        'metric_name': rule.name,
+        'metric_title': rule.title,
+        'metric_description': rule.description,
+        'evaluator_uri': rule.evaluator_uri,
+        'min_value': rule.min_value,
+        'max_value': rule.max_value,
+    } for rule in rules]
+
+
+@tk.side_effect_free
+def workflow_transition_list(context, data_dict):
+    """
+    Return a list of allowed workflow transitions.
+
+    :rtype: list of dictionaries
+    """
+
+
+@tk.side_effect_free
+def workflow_metric_show(context, data_dict):
+    """
+    Return a workflow metric definition.
+
+    :param id: the id or name of the workflow metric
+    :type id: string
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving workflow metric: %r", data_dict)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowMetric.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
+
+    tk.check_access('workflow_metric_show', context, data_dict)
+
+    context['workflow_metric'] = obj
+    workflow_metric_dict = model_dictize.workflow_metric_dictize(obj, context)
+
+    result_dict, errors = tk.navl_validate(workflow_metric_dict, schema.workflow_metric_show_schema(), context)
+    return result_dict
+
+
+@tk.side_effect_free
+def workflow_metric_list(context, data_dict):
+    """
+    Return a list of names of the site's workflow metrics.
+
+    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving workflow metric list: %r", data_dict)
+    tk.check_access('workflow_metric_list', context, data_dict)
+
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    workflow_metrics = session.query(ckanext_model.WorkflowMetric.id, ckanext_model.WorkflowMetric.name) \
+        .filter_by(state='active') \
+        .all()
+    result = []
+    for (id_, name) in workflow_metrics:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('workflow_metric_show')(context, data_dict)]
+        else:
+            result += [name]
+
+    return result

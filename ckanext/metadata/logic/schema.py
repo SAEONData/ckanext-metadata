@@ -19,6 +19,8 @@ ignore_not_group_admin = tk.get_validator('ignore_not_group_admin')
 owner_org_validator = tk.get_validator('owner_org_validator')
 convert_to_extras = tk.get_validator('convert_to_extras')
 convert_from_extras = tk.get_validator('convert_from_extras')
+boolean_validator = tk.get_validator('boolean_validator')
+int_validator = tk.get_validator('int_validator')
 
 
 def _make_create_schema(schema):
@@ -263,4 +265,111 @@ def metadata_model_show_schema():
     schema = metadata_model_create_schema()
     _make_show_schema(schema)
     schema['model_json'] = [v.deserialize_json]
+    return schema
+
+
+def workflow_state_create_schema():
+    schema = {
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_state_does_not_exist],
+        'name': [v.not_empty, unicode, name_validator, v.workflow_state_name_validator],
+        'title': [ignore_missing, unicode],
+        'description': [ignore_missing, unicode],
+        'revert_state_id': [v.not_missing, unicode, v.workflow_state_exists, v.workflow_revert_state_validator],
+        'state': [ignore_not_sysadmin, ignore_missing],
+    }
+    _make_create_schema(schema)
+    return schema
+
+
+def workflow_state_update_schema():
+    schema = workflow_state_create_schema()
+    _make_update_schema(schema)
+    return schema
+
+
+def workflow_state_show_schema():
+    schema = workflow_state_create_schema()
+    _make_show_schema(schema)
+    return schema
+
+
+def workflow_transition_create_schema():
+    schema = {
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_transition_does_not_exist],
+        'from_state_id': [v.not_empty, unicode, v.workflow_state_exists],
+        'to_state_id': [v.not_empty, unicode, v.workflow_state_exists],
+        'state': [ignore_not_sysadmin, ignore_missing],
+
+        # post-validation
+        '__after': [v.workflow_transition_check,
+                    v.workflow_transition_unique,
+                    v.workflow_state_graph_validator,
+                    ignore],
+    }
+    _make_create_schema(schema)
+    return schema
+
+
+def workflow_transition_update_schema():
+    schema = workflow_transition_create_schema()
+    _make_update_schema(schema)
+    return schema
+
+
+def workflow_transition_show_schema():
+    schema = workflow_transition_create_schema()
+    _make_show_schema(schema)
+    return schema
+
+
+def workflow_metric_create_schema():
+    schema = {
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_metric_does_not_exist],
+        'name': [v.not_empty, unicode, name_validator, v.workflow_metric_name_validator],
+        'title': [ignore_missing, unicode],
+        'description': [ignore_missing, unicode],
+        'evaluator_uri': [v.not_empty, unicode, v.uri_validator],
+        'state': [ignore_not_sysadmin, ignore_missing],
+    }
+    _make_create_schema(schema)
+    return schema
+
+
+def workflow_metric_update_schema():
+    schema = workflow_metric_create_schema()
+    _make_update_schema(schema)
+    return schema
+
+
+def workflow_metric_show_schema():
+    schema = workflow_metric_create_schema()
+    _make_show_schema(schema)
+    return schema
+
+
+def workflow_rule_create_schema():
+    schema = {
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_rule_does_not_exist],
+        'workflow_state_id': [v.not_empty, unicode, v.workflow_state_exists],
+        'workflow_metric_id': [v.not_empty, unicode, v.workflow_metric_exists],
+        'min_value': [v.not_empty, int_validator],
+        'max_value': [v.not_empty, int_validator],
+        'state': [ignore_not_sysadmin, ignore_missing],
+
+        # post-validation
+        '__after': [v.workflow_rule_unique, ignore],
+    }
+    _make_create_schema(schema)
+    return schema
+
+
+def workflow_rule_update_schema():
+    schema = workflow_rule_create_schema()
+    _make_update_schema(schema)
+    return schema
+
+
+def workflow_rule_show_schema():
+    schema = workflow_rule_create_schema()
+    _make_show_schema(schema)
     return schema
