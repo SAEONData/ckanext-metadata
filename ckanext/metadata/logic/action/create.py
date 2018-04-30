@@ -289,6 +289,7 @@ def metadata_record_create(context, data_dict):
 
     data_dict['type'] = 'metadata_record'
     data_dict['validation_state'] = MetadataValidationState.NOT_VALIDATED
+    data_dict['workflow_state_id'] = None
 
     context['schema'] = schema.metadata_record_create_schema()
     context['invoked_api'] = 'metadata_record_create'
@@ -303,4 +304,210 @@ def metadata_record_create(context, data_dict):
 
     output = metadata_record_id if return_id_only \
         else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
+    return output
+
+
+def workflow_state_create(context, data_dict):
+    """
+    Create a new workflow state.
+
+    You must be authorized to create workflow states.
+
+    :param id: the id of the workflow state (optional - only sysadmins can set this)
+    :type id: string
+    :param name: the name of the new workflow state; must conform to standard naming rules
+    :type name: string
+    :param title: the title of the workflow state (optional)
+    :type title: string
+    :param description: the description of the workflow state (optional)
+    :type description: string
+    :param revert_state_id: the id or name of the state to which a metadata record is
+        reverted in case it no longer fulfils the rules for this state (nullable)
+    :type revert_state_id: string
+
+    :returns: the newly created workflow state (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow state id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Creating workflow state: %r", data_dict)
+    tk.check_access('workflow_state_create', context, data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_state_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_state = model_save.workflow_state_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Create workflow state %s') % workflow_state.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_state.id if return_id_only \
+        else tk.get_action('workflow_state_show')(context, {'id': workflow_state.id})
+    return output
+
+
+def workflow_transition_create(context, data_dict):
+    """
+    Create a new workflow transition.
+
+    You must be authorized to create workflow transitions.
+
+    :param id: the id of the workflow transition (optional - only sysadmins can set this)
+    :type id: string
+    :param from_state_id: the id or name of the source workflow state (nullable - null implies
+        that the target state is an initial workflow state)
+    :type from_state_id: string
+    :param to_state_id: the id or name of the target workflow state
+    :type to_state_id: string
+
+    :returns: the newly created workflow transition (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow transition id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Creating workflow transition: %r", data_dict)
+    tk.check_access('workflow_transition_create', context, data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_transition_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_transition = model_save.workflow_transition_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Create workflow transition %s') % workflow_transition.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_transition.id if return_id_only \
+        else tk.get_action('workflow_transition_show')(context, {'id': workflow_transition.id})
+    return output
+
+
+def workflow_metric_create(context, data_dict):
+    """
+    Create a new workflow metric.
+
+    You must be authorized to create workflow metrics.
+
+    :param id: the id of the workflow metric (optional - only sysadmins can set this)
+    :type id: string
+    :param name: the name of the new workflow metric; must conform to standard naming rules
+    :type name: string
+    :param title: the title of the workflow metric (optional)
+    :type title: string
+    :param description: the description of the workflow metric (optional)
+    :type description: string
+    :param evaluator_uri: URI of the service that will evaluate rules linked to this metric
+    :type evaluator_uri: string
+
+    :returns: the newly created workflow metric (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow metric id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Creating workflow metric: %r", data_dict)
+    tk.check_access('workflow_metric_create', context, data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_metric_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_metric = model_save.workflow_metric_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Create workflow metric %s') % workflow_metric.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_metric.id if return_id_only \
+        else tk.get_action('workflow_metric_show')(context, {'id': workflow_metric.id})
+    return output
+
+
+def workflow_rule_create(context, data_dict):
+    """
+    Create a new workflow rule.
+
+    You must be authorized to create workflow rules.
+
+    :param id: the id of the workflow rule (optional - only sysadmins can set this)
+    :type id: string
+    :param workflow_state_id: the id or name of the workflow state to which this rule applies
+    :type workflow_state_id: string
+    :param workflow_metric_id: the id or name of the workflow metric to be evaluated
+    :type workflow_metric_id: string
+    :param min_value: minimum permitted return value from metric evaluation to pass this rule
+    :type min_value: integer (for boolean metric use 0 or 1)
+    :param max_value: maximum permitted return value from metric evaluation to pass this rule
+    :type max_value: integer (for boolean metric use 0 or 1)
+
+    :returns: the newly created workflow rule (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow rule id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Creating workflow rule: %r", data_dict)
+    tk.check_access('workflow_rule_create', context, data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_rule_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_rule = model_save.workflow_rule_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Create workflow rule %s') % workflow_rule.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_rule.id if return_id_only \
+        else tk.get_action('workflow_rule_show')(context, {'id': workflow_rule.id})
     return output

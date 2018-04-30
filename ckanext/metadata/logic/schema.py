@@ -98,6 +98,7 @@ def metadata_record_create_schema():
         'content_raw': [v.not_missing, unicode, convert_to_extras],
         'content_url': [v.not_missing, unicode, convert_to_extras],
         'validation_state': [convert_to_extras],
+        'workflow_state_id': [convert_to_extras],
 
         # post-validation
         '__after': [v.metadata_record_id_name_generator,
@@ -125,6 +126,7 @@ def metadata_record_show_schema():
         'content_url': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras],
         'validation_state': [convert_from_extras],
+        'workflow_state_id': [convert_from_extras],
         'private': [],
         'extras': _extras_schema(),
     })
@@ -274,7 +276,7 @@ def workflow_state_create_schema():
         'name': [v.not_empty, unicode, name_validator, v.workflow_state_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
-        'revert_state_id': [v.not_missing, unicode, v.workflow_state_exists, v.workflow_revert_state_validator],
+        'revert_state_id': [v.not_missing, unicode, v.workflow_state_exists],
         'state': [ignore_not_sysadmin, ignore_missing],
     }
     _make_create_schema(schema)
@@ -283,6 +285,7 @@ def workflow_state_create_schema():
 
 def workflow_state_update_schema():
     schema = workflow_state_create_schema()
+    schema['revert_state_id'].append(v.workflow_revert_state_validator)
     _make_update_schema(schema)
     return schema
 
@@ -296,7 +299,7 @@ def workflow_state_show_schema():
 def workflow_transition_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_transition_does_not_exist],
-        'from_state_id': [v.not_empty, unicode, v.workflow_state_exists],
+        'from_state_id': [v.not_missing, unicode, v.workflow_state_exists],
         'to_state_id': [v.not_empty, unicode, v.workflow_state_exists],
         'state': [ignore_not_sysadmin, ignore_missing],
 
@@ -307,12 +310,6 @@ def workflow_transition_create_schema():
                     ignore],
     }
     _make_create_schema(schema)
-    return schema
-
-
-def workflow_transition_update_schema():
-    schema = workflow_transition_create_schema()
-    _make_update_schema(schema)
     return schema
 
 
@@ -365,6 +362,8 @@ def workflow_rule_create_schema():
 
 def workflow_rule_update_schema():
     schema = workflow_rule_create_schema()
+    # cannot change the associated state or metric
+    del schema['workflow_state_id'], schema['workflow_metric_id']
     _make_update_schema(schema)
     return schema
 

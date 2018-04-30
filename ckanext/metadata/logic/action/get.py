@@ -629,12 +629,59 @@ def workflow_state_rule_list(context, data_dict):
 
 
 @tk.side_effect_free
+def workflow_transition_show(context, data_dict):
+    """
+    Return a workflow transition definition.
+
+    :param id: the id of the workflow transition
+    :type id: string
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving workflow transition: %r", data_dict)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowTransition.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Transition')))
+
+    tk.check_access('workflow_transition_show', context, data_dict)
+
+    context['workflow_transition'] = obj
+    workflow_transition_dict = model_dictize.workflow_transition_dictize(obj, context)
+
+    result_dict, errors = tk.navl_validate(workflow_transition_dict, schema.workflow_transition_show_schema(), context)
+    return result_dict
+
+
+@tk.side_effect_free
 def workflow_transition_list(context, data_dict):
     """
-    Return a list of allowed workflow transitions.
+    Return a list of ids of the site's workflow transitions.
 
-    :rtype: list of dictionaries
+    :param all_fields: return dictionaries instead of just ids (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
     """
+    log.debug("Retrieving workflow transition list: %r", data_dict)
+    tk.check_access('workflow_transition_list', context, data_dict)
+
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    workflow_transitions = session.query(ckanext_model.WorkflowTransition.id) \
+        .filter_by(state='active') \
+        .all()
+    result = []
+    for (id_,) in workflow_transitions:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('workflow_transition_show')(context, data_dict)]
+        else:
+            result += [id_]
+
+    return result
 
 
 @tk.side_effect_free

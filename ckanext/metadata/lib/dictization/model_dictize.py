@@ -74,117 +74,49 @@ def metadata_record_activity_dictize(activity, context):
 
 
 def metadata_model_dictize(metadata_model, context):
-    is_latest_revision = not(context.get('revision_id') or
-                             context.get('revision_date'))
-    execute = _execute if is_latest_revision else _execute_with_revision
-    if is_latest_revision:
-        if isinstance(metadata_model, ckanext_model.MetadataModelRevision):
-            metadata_model = ckanext_model.MetadataModel.get(metadata_model.id)
-        result = metadata_model
-    else:
-        metadata_model_rev = ckanext_model.metadata_model_revision_table
-        q = select([metadata_model_rev]).where(metadata_model_rev.c.id == metadata_model.id)
-        result = execute(q, metadata_model_rev, context).first()
-    if not result:
-        raise tk.ObjectNotFound
-
-    result_dict = d.table_dictize(result, context)
-    return result_dict
+    return _object_dictize(metadata_model, ckanext_model.MetadataModel, ckanext_model.MetadataModelRevision,
+                           ckanext_model.metadata_model_revision_table, context)
 
 
 def metadata_schema_dictize(metadata_schema, context):
-    is_latest_revision = not(context.get('revision_id') or
-                             context.get('revision_date'))
-    execute = _execute if is_latest_revision else _execute_with_revision
-    if is_latest_revision:
-        if isinstance(metadata_schema, ckanext_model.MetadataSchemaRevision):
-            metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema.id)
-        result = metadata_schema
-    else:
-        metadata_schema_rev = ckanext_model.metadata_schema_revision_table
-        q = select([metadata_schema_rev]).where(metadata_schema_rev.c.id == metadata_schema.id)
-        result = execute(q, metadata_schema_rev, context).first()
-    if not result:
-        raise tk.ObjectNotFound
-
-    result_dict = d.table_dictize(result, context)
-    return result_dict
+    return _object_dictize(metadata_schema, ckanext_model.MetadataSchema, ckanext_model.MetadataSchemaRevision,
+                           ckanext_model.metadata_schema_revision_table, context)
 
 
 def workflow_state_dictize(workflow_state, context):
-    is_latest_revision = not(context.get('revision_id') or
-                             context.get('revision_date'))
-    execute = _execute if is_latest_revision else _execute_with_revision
-    if is_latest_revision:
-        if isinstance(workflow_state, ckanext_model.WorkflowStateRevision):
-            workflow_state = ckanext_model.WorkflowState.get(workflow_state.id)
-        result = workflow_state
-    else:
-        workflow_state_rev = ckanext_model.workflow_state_revision_table
-        q = select([workflow_state_rev]).where(workflow_state_rev.c.id == workflow_state.id)
-        result = execute(q, workflow_state_rev, context).first()
-    if not result:
-        raise tk.ObjectNotFound
-
-    result_dict = d.table_dictize(result, context)
-    return result_dict
+    return _object_dictize(workflow_state, ckanext_model.WorkflowState, ckanext_model.WorkflowStateRevision,
+                           ckanext_model.workflow_state_revision_table, context)
 
 
 def workflow_transition_dictize(workflow_transition, context):
-    is_latest_revision = not(context.get('revision_id') or
-                             context.get('revision_date'))
-    execute = _execute if is_latest_revision else _execute_with_revision
-    if is_latest_revision:
-        if isinstance(workflow_transition, ckanext_model.WorkflowTransitionRevision):
-            workflow_transition = ckanext_model.WorkflowTransition.get(workflow_transition.id)
-        result = workflow_transition
-    else:
-        workflow_transition_rev = ckanext_model.workflow_transition_revision_table
-        q = select([workflow_transition_rev]).where(workflow_transition_rev.c.id == workflow_transition.id)
-        result = execute(q, workflow_transition_rev, context).first()
-    if not result:
-        raise tk.ObjectNotFound
-
-    result_dict = d.table_dictize(result, context)
-    return result_dict
+    return _object_dictize(workflow_transition, ckanext_model.WorkflowTransition, ckanext_model.WorkflowTransitionRevision,
+                           ckanext_model.workflow_transition_revision_table, context)
 
 
 def workflow_metric_dictize(workflow_metric, context):
-    is_latest_revision = not(context.get('revision_id') or
-                             context.get('revision_date'))
-    execute = _execute if is_latest_revision else _execute_with_revision
-    if is_latest_revision:
-        if isinstance(workflow_metric, ckanext_model.WorkflowMetricRevision):
-            workflow_metric = ckanext_model.WorkflowMetric.get(workflow_metric.id)
-        result = workflow_metric
-    else:
-        workflow_metric_rev = ckanext_model.workflow_metric_revision_table
-        q = select([workflow_metric_rev]).where(workflow_metric_rev.c.id == workflow_metric.id)
-        result = execute(q, workflow_metric_rev, context).first()
-    if not result:
-        raise tk.ObjectNotFound
-
-    result_dict = d.table_dictize(result, context)
-    return result_dict
+    return _object_dictize(workflow_metric, ckanext_model.WorkflowMetric, ckanext_model.WorkflowMetricRevision,
+                           ckanext_model.workflow_metric_revision_table, context)
 
 
 def workflow_rule_dictize(workflow_rule, context):
-    is_latest_revision = not(context.get('revision_id') or
-                             context.get('revision_date'))
+    return _object_dictize(workflow_rule, ckanext_model.WorkflowRule, ckanext_model.WorkflowRuleRevision,
+                           ckanext_model.workflow_rule_revision_table, context)
+
+
+def _object_dictize(obj, model_class, rev_model_class, rev_table, context):
+    is_latest_revision = not(context.get('revision_id') or context.get('revision_date'))
     execute = _execute if is_latest_revision else _execute_with_revision
     if is_latest_revision:
-        if isinstance(workflow_rule, ckanext_model.WorkflowRuleRevision):
-            workflow_rule = ckanext_model.WorkflowRule.get(workflow_rule.id)
-        result = workflow_rule
+        if isinstance(obj, rev_model_class):
+            obj = model_class.get(obj.id)
+        result = obj
     else:
-        workflow_rule_rev = ckanext_model.workflow_rule_revision_table
-        q = select([workflow_rule_rev]).where(workflow_rule_rev.c.id == workflow_rule.id)
-        result = execute(q, workflow_rule_rev, context).first()
+        q = select([(rev_table)]).where(rev_table.c.id == obj.id)
+        result = execute(q, rev_table, context).first()
     if not result:
         raise tk.ObjectNotFound
 
-    result_dict = d.table_dictize(result, context)
-    return result_dict
+    return d.table_dictize(result, context)
 
 
 def _execute(q, table, context):

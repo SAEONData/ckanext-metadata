@@ -34,6 +34,16 @@ class WorkflowRule(vdm.sqlalchemy.RevisionedObjectMixin,
 
         return meta.Session.query(cls).get(reference)
 
+    @classmethod
+    def lookup(cls, workflow_state_id, workflow_metric_id):
+        """
+        Returns a workflow_rule object for the given state and metric.
+        """
+        return meta.Session.query(cls) \
+            .filter(cls.workflow_state_id == workflow_state_id) \
+            .filter(cls.workflow_metric_id == workflow_metric_id) \
+            .first()
+
 
 meta.mapper(WorkflowRule, workflow_rule_table,
             extension=[vdm.sqlalchemy.Revisioner(workflow_rule_revision_table)])

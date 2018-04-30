@@ -43,6 +43,23 @@ class WorkflowTransition(vdm.sqlalchemy.RevisionedObjectMixin,
             .filter(cls.to_state_id == to_state_id) \
             .first()
 
+    @classmethod
+    def path_exists(cls, from_state_id, to_state_id):
+        """
+        Determines whether a transition path connecting the given states exists.
+        """
+        if cls.lookup(from_state_id, to_state_id) is not None:
+            return True
+
+        transitions = meta.Session.query(cls) \
+            .filter(cls.from_state_id == from_state_id) \
+            .all()
+        for transition in transitions:
+            if cls.path_exists(transition.to_state_id, to_state_id):
+                return True
+
+        return False
+
 
 meta.mapper(WorkflowTransition, workflow_transition_table,
             extension=[vdm.sqlalchemy.Revisioner(workflow_transition_revision_table)])

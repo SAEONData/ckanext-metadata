@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import logging
+from sqlalchemy import or_
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -231,6 +232,186 @@ def metadata_record_delete(context, data_dict):
     context['invoked_api'] = 'metadata_record_delete'
 
     tk.get_action('package_delete')(context, data_dict)
+
+
+def workflow_state_delete(context, data_dict):
+    """
+    Delete a workflow state.
+
+    You must be authorized to delete the workflow state.
+
+    :param id: the id or name of the workflow state to delete
+    :type id: string
+    """
+    log.info("Deleting workflow state: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowState.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
+
+    id_ = obj.id
+    tk.check_access('workflow_state_delete', context, data_dict)
+
+    errors = []
+    if session.query(model.Package) \
+            .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
+            .filter(model.PackageExtra.key == 'workflow_state_id') \
+            .filter(model.PackageExtra.value == id_) \
+            .filter(model.Package.type == 'metadata_record') \
+            .filter(model.Package.state != 'deleted') \
+            .count() > 0:
+        errors += [_('Workflow state has dependent metadata records.')]
+
+    # TODO: just reset the revert_state_id on the referencing workflow state
+    # (implying that reverting from that state would take a metadata record to the 'null' state
+    # instead of this one)
+    if session.query(ckanext_model.WorkflowState) \
+            .filter(ckanext_model.WorkflowState.revert_state_id == id_) \
+            .filter(ckanext_model.WorkflowState.state != 'deleted') \
+            .count() > 0:
+        errors += [_('Workflow state has dependent workflow states.')]
+
+    # TODO: just delete the referencing transitions
+    if session.query(ckanext_model.WorkflowTransition) \
+            .filter(or_(ckanext_model.WorkflowTransition.from_state_id == id_,
+                        ckanext_model.WorkflowTransition.to_state_id == id_)) \
+            .filter(ckanext_model.WorkflowTransition.state != 'deleted') \
+            .count() > 0:
+        errors += [_('Workflow state has dependent workflow transitions.')]
+
+    # TODO: just delete the referencing rules
+    if session.query(ckanext_model.WorkflowRule) \
+            .filter(ckanext_model.WorkflowRule.workflow_state_id == id_) \
+            .filter(ckanext_model.WorkflowRule.state != 'deleted') \
+            .count() > 0:
+        errors += [_('Workflow state has dependent workflow rules.')]
+
+    if errors:
+        raise tk.ValidationError(' '.join(errors))
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    rev.message = _(u'REST API: Delete workflow state %s') % id_
+
+    obj.delete()
+    if not defer_commit:
+        model.repo.commit()
+
+
+def workflow_transition_delete(context, data_dict):
+    """
+    Delete a workflow transition.
+
+    You must be authorized to delete the workflow transition.
+
+    :param id: the id or name of the workflow transition to delete
+    :type id: string
+    """
+    log.info("Deleting workflow transition: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowTransition.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Transition')))
+
+    id_ = obj.id
+    tk.check_access('workflow_transition_delete', context, data_dict)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    rev.message = _(u'REST API: Delete workflow transition %s') % id_
+
+    obj.delete()
+    if not defer_commit:
+        model.repo.commit()
+
+
+def workflow_metric_delete(context, data_dict):
+    """
+    Delete a workflow metric.
+
+    You must be authorized to delete the workflow metric.
+
+    :param id: the id or name of the workflow metric to delete
+    :type id: string
+    """
+    log.info("Deleting workflow metric: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowMetric.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
+
+    id_ = obj.id
+    tk.check_access('workflow_metric_delete', context, data_dict)
+
+    errors = []
+    # TODO: just delete the referencing rules
+    if session.query(ckanext_model.WorkflowRule) \
+            .filter(ckanext_model.WorkflowRule.workflow_metric_id == id_) \
+            .filter(ckanext_model.WorkflowRule.state != 'deleted') \
+            .count() > 0:
+        errors += [_('Workflow metric has dependent workflow rules.')]
+
+    if errors:
+        raise tk.ValidationError(' '.join(errors))
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    rev.message = _(u'REST API: Delete workflow metric %s') % id_
+
+    obj.delete()
+    if not defer_commit:
+        model.repo.commit()
+
+
+def workflow_rule_delete(context, data_dict):
+    """
+    Delete a workflow rule.
+
+    You must be authorized to delete the workflow rule.
+
+    :param id: the id or name of the workflow rule to delete
+    :type id: string
+    """
+    log.info("Deleting workflow rule: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowRule.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
+
+    id_ = obj.id
+    tk.check_access('workflow_rule_delete', context, data_dict)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    rev.message = _(u'REST API: Delete workflow rule %s') % id_
+
+    obj.delete()
+    if not defer_commit:
+        model.repo.commit()
 
 
 # # TODO: chaining of action functions does not currently work

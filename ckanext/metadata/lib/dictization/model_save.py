@@ -68,44 +68,51 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
 
 
 def metadata_model_dict_save(metadata_model_dict, context):
-    session = context['session']
-    obj = context.get('metadata_model')
-    if obj:
-        metadata_model_dict['id'] = obj.id
-    else:
-        # in case of a unique constraint collision with an existing deleted record,
-        # we undelete the record and update it
-        unique_constraints = d.get_unique_constraints(ckanext_model.metadata_model_table, context)
-        for constraint in unique_constraints:
-            params = dict((key, metadata_model_dict.get(key)) for key in constraint)
-            obj = session.query(ckanext_model.MetadataModel).filter_by(**params).first()
-            if obj:
-                if obj.state != 'deleted' or metadata_model_dict.get('id', obj.id) != obj.id:
-                    raise tk.Invalid(_("Unique constraint violation: %s") % constraint)
-                metadata_model_dict['id'] = obj.id
-                metadata_model_dict['state'] = 'active'
-
-    metadata_model = d.table_dict_save(metadata_model_dict, ckanext_model.MetadataModel, context)
-    return metadata_model
+    return _object_dict_save(metadata_model_dict, 'metadata_model', ckanext_model.MetadataModel,
+                             ckanext_model.metadata_model_table, context)
 
 
 def metadata_schema_dict_save(metadata_schema_dict, context):
+    return _object_dict_save(metadata_schema_dict, 'metadata_schema', ckanext_model.MetadataSchema,
+                             ckanext_model.metadata_schema_table, context)
+
+
+def workflow_state_dict_save(workflow_state_dict, context):
+    return _object_dict_save(workflow_state_dict, 'workflow_state', ckanext_model.WorkflowState,
+                             ckanext_model.workflow_state_table, context)
+
+
+def workflow_transition_dict_save(workflow_transition_dict, context):
+    return _object_dict_save(workflow_transition_dict, 'workflow_transition', ckanext_model.WorkflowTransition,
+                             ckanext_model.workflow_transition_table, context)
+
+
+def workflow_metric_dict_save(workflow_metric_dict, context):
+    return _object_dict_save(workflow_metric_dict, 'workflow_metric', ckanext_model.WorkflowMetric,
+                             ckanext_model.workflow_metric_table, context)
+
+
+def workflow_rule_dict_save(workflow_rule_dict, context):
+    return _object_dict_save(workflow_rule_dict, 'workflow_rule', ckanext_model.WorkflowRule,
+                             ckanext_model.workflow_rule_table, context)
+
+
+def _object_dict_save(object_dict, model_name, model_class, table, context):
     session = context['session']
-    obj = context.get('metadata_schema')
+    obj = context.get(model_name)
     if obj:
-        metadata_schema_dict['id'] = obj.id
+        object_dict['id'] = obj.id
     else:
         # in case of a unique constraint collision with an existing deleted record,
         # we undelete the record and update it
-        unique_constraints = d.get_unique_constraints(ckanext_model.metadata_schema_table, context)
+        unique_constraints = d.get_unique_constraints(table, context)
         for constraint in unique_constraints:
-            params = dict((key, metadata_schema_dict.get(key)) for key in constraint)
-            obj = session.query(ckanext_model.MetadataSchema).filter_by(**params).first()
+            params = dict((key, object_dict.get(key)) for key in constraint)
+            obj = session.query(model_class).filter_by(**params).first()
             if obj:
-                if obj.state != 'deleted' or metadata_schema_dict.get('id', obj.id) != obj.id:
+                if obj.state != 'deleted' or object_dict.get('id', obj.id) != obj.id:
                     raise tk.Invalid(_("Unique constraint violation: %s") % constraint)
-                metadata_schema_dict['id'] = obj.id
-                metadata_schema_dict['state'] = 'active'
+                object_dict['id'] = obj.id
+                object_dict['state'] = 'active'
 
-    metadata_schema = d.table_dict_save(metadata_schema_dict, ckanext_model.MetadataSchema, context)
-    return metadata_schema
+    return d.table_dict_save(object_dict, model_class, context)

@@ -47,3 +47,19 @@ def metadata_collection_delete(context, data_dict):
 
 def metadata_record_delete(context, data_dict):
     return {'success': True}
+
+
+def workflow_state_delete(context, data_dict):
+    return {'success': True}
+
+
+def workflow_transition_delete(context, data_dict):
+    return {'success': True}
+
+
+def workflow_metric_delete(context, data_dict):
+    return {'success': True}
+
+
+def workflow_rule_delete(context, data_dict):
+    return {'success': True}

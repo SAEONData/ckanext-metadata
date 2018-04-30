@@ -125,6 +125,10 @@ def workflow_state_rule_list(context, data_dict):
     return {'success': True}
 
 
+def workflow_transition_show(context, data_dict):
+    return {'success': True}
+
+
 def workflow_transition_list(context, data_dict):
     return {'success': True}
 

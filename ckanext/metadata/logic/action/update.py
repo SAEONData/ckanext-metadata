@@ -339,6 +339,7 @@ def metadata_record_update(context, data_dict):
     data_dict['id'] = id_
     data_dict['type'] = 'metadata_record'
     data_dict['validation_state'] = get_extra(old_dict, 'validation_state')
+    data_dict['workflow_state_id'] = get_extra(old_dict, 'workflow_state_id')
 
     context['schema'] = schema.metadata_record_update_schema()
     context['invoked_api'] = 'metadata_record_update'
@@ -517,6 +518,186 @@ def metadata_record_validation_state_update(context, data_dict):
 
     if not defer_commit:
         model.repo.commit()
+
+
+def workflow_state_update(context, data_dict):
+    """
+    Update a workflow state.
+
+    You must be authorized to edit the workflow state.
+
+    It is recommended to call
+    :py:func:`ckan.logic.action.get.workflow_state_show`, make the desired changes to
+    the result, and then call ``workflow_state_update()`` with it.
+
+    For further parameters see
+    :py:func:`~ckanext.metadata.logic.action.create.workflow_state_create`.
+
+    :param id: the id or name of the workflow state to update
+    :type id: string
+
+    :returns: the updated workflow state (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow state id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Updating workflow state: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowState.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
+
+    tk.check_access('workflow_state_update', context, data_dict)
+
+    data_dict['id'] = obj.id
+    context['workflow_state'] = obj
+    context['allow_partial_update'] = True
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_state_update_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_state = model_save.workflow_state_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Update workflow state %s') % workflow_state.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_state.id if return_id_only \
+        else tk.get_action('workflow_state_show')(context, {'id': workflow_state.id})
+    return output
+
+
+def workflow_metric_update(context, data_dict):
+    """
+    Update a workflow metric.
+
+    You must be authorized to edit the workflow metric.
+
+    It is recommended to call
+    :py:func:`ckan.logic.action.get.workflow_metric_show`, make the desired changes to
+    the result, and then call ``workflow_metric_update()`` with it.
+
+    For further parameters see
+    :py:func:`~ckanext.metadata.logic.action.create.workflow_metric_create`.
+
+    :param id: the id or name of the workflow metric to update
+    :type id: string
+
+    :returns: the updated workflow metric (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow metric id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Updating workflow metric: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowMetric.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
+
+    tk.check_access('workflow_metric_update', context, data_dict)
+
+    data_dict['id'] = obj.id
+    context['workflow_metric'] = obj
+    context['allow_partial_update'] = True
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_metric_update_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_metric = model_save.workflow_metric_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Update workflow metric %s') % workflow_metric.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_metric.id if return_id_only \
+        else tk.get_action('workflow_metric_show')(context, {'id': workflow_metric.id})
+    return output
+
+
+def workflow_rule_update(context, data_dict):
+    """
+    Update a workflow rule. Only the min and max values may be edited.
+
+    You must be authorized to edit the workflow rule.
+
+    :param id: the id or name of the workflow rule to update
+    :type id: string
+    :param min_value: minimum permitted return value from metric evaluation to pass this rule
+    :type min_value: integer (for boolean metric use 0 or 1)
+    :param max_value: maximum permitted return value from metric evaluation to pass this rule
+    :type max_value: integer (for boolean metric use 0 or 1)
+
+    :returns: the updated workflow rule (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow rule id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Updating workflow rule: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowRule.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
+
+    tk.check_access('workflow_rule_update', context, data_dict)
+
+    data_dict['id'] = obj.id
+    context['workflow_rule'] = obj
+    context['allow_partial_update'] = True
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_rule_update_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_rule = model_save.workflow_rule_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Update workflow rule %s') % workflow_rule.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_rule.id if return_id_only \
+        else tk.get_action('workflow_rule_show')(context, {'id': workflow_rule.id})
+    return output
 
 
 def metadata_record_workflow_state_transition(context, data_dict):

@@ -44,6 +44,51 @@ def _generate_name(*strings):
     return re.sub('[^a-z0-9_\-]+', '-', text.lower())
 
 
+def _object_does_not_exist(object_id_or_name, model_class, model_desc):
+    """
+    Checks that an object id/name is not already in use.
+    """
+    if not object_id_or_name:
+        return None
+
+    result = model_class.get(object_id_or_name)
+    if result:
+        raise tk.Invalid('%s: %s' % (_('Already exists'), _(model_desc)))
+
+    return object_id_or_name
+
+
+def _object_exists(key, data, errors, model_class, model_desc):
+    """
+    Checks that an object exists and is not deleted,
+    and converts name to id if applicable.
+    """
+    object_id_or_name = data.get(key)
+    if not object_id_or_name:
+        data[key] = None
+        raise tk.StopOnError
+
+    obj = model_class.get(object_id_or_name)
+    if not obj or obj.state == 'deleted':
+        errors[key].append('%s: %s' % (_('Not found'), _(model_desc)))
+        raise tk.StopOnError
+
+    data[key] = obj.id
+
+
+def _name_validator(key, data, errors, context, model_name, model_class, model_desc):
+    session = context['session']
+    obj = context.get(model_name)
+
+    query = session.query(model_class.name).filter_by(name=data[key])
+    id_ = obj.id if obj else _convert_missing(data.get(key[:-1] + ('id',)))
+    if id_:
+        query = query.filter(model_class.id != id_)
+    result = query.first()
+    if result:
+        errors[key].append('%s: %s' % (_('Duplicate name'), _(model_desc)))
+
+
 # region General validators / converters
 
 def not_missing(key, data, errors, context):
@@ -105,6 +150,14 @@ def deserialize_json(value):
         return json.loads(value)
     except:
         return value
+
+
+def uri_validator(value):
+    """
+    TODO
+    Check for a well-formed URI.
+    """
+    return value
 
 # endregion
 
@@ -235,44 +288,16 @@ def group_does_not_exist(group_id_or_name, context):
     return group_id_or_name
 
 
-def metadata_model_does_not_exist(metadata_model_id, context):
-    if not metadata_model_id:
-        return None
-
-    result = ckanext_model.MetadataModel.get(metadata_model_id)
-    if result:
-        raise tk.Invalid('%s: %s' % (_('Already exists'), _('Metadata Model')))
-
-    return metadata_model_id
+def metadata_model_does_not_exist(metadata_model_id_or_name, context):
+    return _object_does_not_exist(metadata_model_id_or_name, ckanext_model.MetadataModel, 'Metadata Model')
 
 
 def metadata_schema_exists(key, data, errors, context):
-    """
-    Checks that a metadata schema exists and is not deleted,
-    and converts name to id if applicable.
-    """
-    metadata_schema_id_or_name = data.get(key)
-    if not metadata_schema_id_or_name:
-        data[key] = None
-        raise tk.StopOnError
-
-    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id_or_name)
-    if not metadata_schema or metadata_schema.state == 'deleted':
-        errors[key].append('%s: %s' % (_('Not found'), _('Metadata Schema')))
-        raise tk.StopOnError
-
-    data[key] = metadata_schema.id
+    _object_exists(key, data, errors, ckanext_model.MetadataSchema, 'Metadata Schema')
 
 
-def metadata_schema_does_not_exist(metadata_schema_id, context):
-    if not metadata_schema_id:
-        return None
-
-    result = ckanext_model.MetadataSchema.get(metadata_schema_id)
-    if result:
-        raise tk.Invalid('%s: %s' % (_('Already exists'), _('Metadata Schema')))
-
-    return metadata_schema_id
+def metadata_schema_does_not_exist(metadata_schema_id_or_name, context):
+    return _object_does_not_exist(metadata_schema_id_or_name, ckanext_model.MetadataSchema, 'Metadata Schema')
 
 
 def unique_metadata_schema_name_and_version(key, data, errors, context):
@@ -353,29 +378,11 @@ def metadata_model_check_organization_infrastructure(key, data, errors, context)
 
 
 def metadata_schema_name_validator(key, data, errors, context):
-    session = context['session']
-    metadata_schema = context.get('metadata_schema')
-
-    query = session.query(ckanext_model.MetadataSchema.name).filter_by(name=data[key])
-    metadata_schema_id = metadata_schema.id if metadata_schema else _convert_missing(data.get(key[:-1] + ('id',)))
-    if metadata_schema_id:
-        query = query.filter(ckanext_model.MetadataSchema.id != metadata_schema_id)
-    result = query.first()
-    if result:
-        errors[key].append('%s: %s' % (_('Duplicate name'), _('Metadata Schema')))
+    _name_validator(key, data, errors, context, 'metadata_schema', ckanext_model.MetadataSchema, 'Metadata Schema')
 
 
 def metadata_model_name_validator(key, data, errors, context):
-    session = context['session']
-    metadata_model = context.get('metadata_model')
-
-    query = session.query(ckanext_model.MetadataModel.name).filter_by(name=data[key])
-    metadata_model_id = metadata_model.id if metadata_model else _convert_missing(data.get(key[:-1] + ('id',)))
-    if metadata_model_id:
-        query = query.filter(ckanext_model.MetadataModel.id != metadata_model_id)
-    result = query.first()
-    if result:
-        errors[key].append('%s: %s' % (_('Duplicate name'), _('Metadata Model')))
+    _name_validator(key, data, errors, context, 'metadata_model', ckanext_model.MetadataModel, 'Metadata Model')
 
 
 def metadata_schema_name_generator(key, data, errors, context):
@@ -439,5 +446,114 @@ def metadata_model_name_generator(key, data, errors, context):
         )
         name = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
         data[key[:-1] + ('name',)] = name
+
+
+def workflow_state_does_not_exist(workflow_state_id_or_name, context):
+    return _object_does_not_exist(workflow_state_id_or_name, ckanext_model.WorkflowState, 'Workflow State')
+
+
+def workflow_transition_does_not_exist(workflow_transition_id, context):
+    return _object_does_not_exist(workflow_transition_id, ckanext_model.WorkflowTransition, 'Workflow Transition')
+
+
+def workflow_metric_does_not_exist(workflow_metric_id_or_name, context):
+    return _object_does_not_exist(workflow_metric_id_or_name, ckanext_model.WorkflowMetric, 'Workflow Metric')
+
+
+def workflow_rule_does_not_exist(workflow_rule_id, context):
+    return _object_does_not_exist(workflow_rule_id, ckanext_model.WorkflowRule, 'Workflow Rule')
+
+
+def workflow_state_exists(key, data, errors, context):
+    _object_exists(key, data, errors, ckanext_model.WorkflowState, 'Workflow State')
+
+
+def workflow_metric_exists(key, data, errors, context):
+    _object_exists(key, data, errors, ckanext_model.WorkflowMetric, 'Workflow Metric')
+
+
+def workflow_state_name_validator(key, data, errors, context):
+    _name_validator(key, data, errors, context, 'workflow_state', ckanext_model.WorkflowState, 'Workflow State')
+
+
+def workflow_metric_name_validator(key, data, errors, context):
+    _name_validator(key, data, errors, context, 'workflow_metric', ckanext_model.WorkflowMetric, 'Workflow Metric')
+
+
+def workflow_revert_state_validator(key, data, errors, context):
+    """
+    Checks that the revert state specified in the data would not cause
+    a loop in the workflow state graph.
+    """
+    workflow_state = context.get('workflow_state')
+    if not workflow_state:
+        # it's a new state - no other state reverts to this one, and no transitions
+        # involving this state exist, yet
+        return
+
+    revert_state_id = data.get(key[:-1] + ('revert_state_id',))
+    target_state = ckanext_model.WorkflowState.get(revert_state_id) \
+        if revert_state_id is not None else None
+
+    if target_state is None:
+        return
+
+    if ckanext_model.WorkflowTransition.path_exists(workflow_state.id, target_state.id):
+        raise tk.Invalid(_("Loop in workflow state graph"))
+
+    while target_state is not None:
+        if target_state == workflow_state:
+            raise tk.Invalid(_("Loop in workflow state graph"))
+        target_state = ckanext_model.WorkflowState.get(target_state.revert_state_id) \
+            if target_state.revert_state_id is not None else None
+
+
+def workflow_transition_check(key, data, errors, context):
+    """
+    Checks that the from and to states are not the same. For use with the '__after' schema key.
+    """
+    from_state_id = data.get(key[:-1] + ('from_state_id',))
+    to_state_id = data.get(key[:-1] + ('to_state_id',))
+
+    if from_state_id == to_state_id:
+        raise tk.Invalid(_("The from- and to-state of a workflow transition cannot be the same."))
+
+
+def workflow_transition_unique(key, data, errors, context):
+    """
+    For use with the '__after' schema key.
+    """
+    id_ = data.get(key[:-1] + ('id',))
+    from_state_id = data.get(key[:-1] + ('from_state_id',))
+    to_state_id = data.get(key[:-1] + ('to_state_id',))
+
+    workflow_transition = ckanext_model.WorkflowTransition.lookup(from_state_id, to_state_id)
+    if workflow_transition and workflow_transition.state != 'deleted' and workflow_transition.id != id_:
+        raise tk.Invalid(_("Unique constraint violation: %s") % '(from_state_id, to_state_id)')
+
+
+def workflow_state_graph_validator(key, data, errors, context):
+    """
+    Checks that the specified workflow transition would not cause
+    a loop in the workflow state graph.
+    """
+    from_state_id = data.get(key[:-1] + ('from_state_id',))
+    to_state_id = data.get(key[:-1] + ('to_state_id',))
+    
+    if ckanext_model.WorkflowTransition.path_exists(to_state_id, from_state_id):
+        raise tk.Invalid(_("Loop in workflow state graph"))
+
+
+def workflow_rule_unique(key, data, errors, context):
+    """
+    For use with the '__after' schema key.
+    """
+    id_ = data.get(key[:-1] + ('id',))
+    workflow_state_id = data.get(key[:-1] + ('workflow_state_id',))
+    workflow_metric_id = data.get(key[:-1] + ('workflow_metric_id',))
+
+    workflow_rule = ckanext_model.WorkflowRule.lookup(workflow_state_id, workflow_metric_id)
+    if workflow_rule and workflow_rule.state != 'deleted' and workflow_rule.id != id_:
+        raise tk.Invalid(_("Unique constraint violation: %s") % '(workflow_state_id, workflow_metric_id)')
 
 # endregion
