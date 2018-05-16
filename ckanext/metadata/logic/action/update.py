@@ -520,6 +520,49 @@ def metadata_record_validation_state_update(context, data_dict):
         model.repo.commit()
 
 
+def metadata_record_workflow_state_override(context, data_dict):
+    """
+    Override a metadata record's workflow state, bypassing workflow rule evaluation.
+
+    You must be authorized to override the metadata record's workflow state.
+    This should normally only be allowed for sysadmins.
+
+    :param id: the id or name of the metadata record to update
+    :type id: string
+    :param workflow_state_id: the id or name of the workflow state to assign to the record
+    :type workflow_state_id: string
+    """
+    log.info("Overriding workflow state of metadata record: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_record_id, workflow_state_id = tk.get_or_bust(data_dict, ['id', 'workflow_state_id'])
+
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is None or metadata_record.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
+    if workflow_state is None or workflow_state.state != 'active':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
+
+    tk.check_access('metadata_record_workflow_state_override', context, data_dict)
+
+    metadata_record.extras['workflow_state_id'] = workflow_state.id
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Override workflow state of metadata record %s') % metadata_record.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+
 def workflow_state_update(context, data_dict):
     """
     Update a workflow state.
