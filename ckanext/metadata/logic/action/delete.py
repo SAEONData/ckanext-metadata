@@ -6,6 +6,7 @@ from sqlalchemy import or_
 import ckan.plugins.toolkit as tk
 from ckan.common import _
 import ckanext.metadata.model as ckanext_model
+from ckanext.metadata.lib.dictization import model_dictize
 
 log = logging.getLogger(__name__)
 
@@ -54,18 +55,18 @@ def metadata_schema_delete(context, data_dict):
         raise tk.ValidationError(' '.join(errors))
 
     # cascade delete to dependent metadata models
+    cascade_context = {
+        'model': model,
+        'user': user,
+        'session': session,
+        'defer_commit': True,
+    }
     metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
         .filter(ckanext_model.MetadataModel.metadata_schema_id == id_) \
         .filter(ckanext_model.MetadataModel.state != 'deleted') \
         .all()
     for (metadata_model_id,) in metadata_model_ids:
-        metadata_model_delete_context = {
-            'model': model,
-            'user': user,
-            'session': session,
-            'defer_commit': True,
-        }
-        tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model_id})
+        tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -151,18 +152,18 @@ def infrastructure_delete(context, data_dict):
         raise tk.ValidationError(_('Infrastructure has dependent metadata records'))
 
     # cascade delete to dependent metadata models
+    cascade_context = {
+        'model': model,
+        'user': user,
+        'session': session,
+        'defer_commit': True,
+    }
     metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
         .filter(ckanext_model.MetadataModel.infrastructure_id == id_) \
         .filter(ckanext_model.MetadataModel.state != 'deleted') \
         .all()
     for (metadata_model_id,) in metadata_model_ids:
-        metadata_model_delete_context = {
-            'model': model,
-            'user': user,
-            'session': session,
-            'defer_commit': True,
-        }
-        tk.get_action('metadata_model_delete')(metadata_model_delete_context, {'id': metadata_model_id})
+        tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
 
     data_dict['type'] = 'infrastructure'
     context['invoked_api'] = 'infrastructure_delete'
@@ -258,7 +259,6 @@ def workflow_state_delete(context, data_dict):
     id_ = obj.id
     tk.check_access('workflow_state_delete', context, data_dict)
 
-    errors = []
     if session.query(model.Package) \
             .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
             .filter(model.PackageExtra.key == 'workflow_state_id') \
@@ -266,34 +266,43 @@ def workflow_state_delete(context, data_dict):
             .filter(model.Package.type == 'metadata_record') \
             .filter(model.Package.state != 'deleted') \
             .count() > 0:
-        errors += [_('Workflow state has dependent metadata records.')]
+        raise tk.ValidationError(_('Workflow state has dependent metadata records.'))
 
-    # TODO: just reset the revert_state_id on the referencing workflow state
-    # (implying that reverting from that state would take a metadata record to the 'null' state
-    # instead of this one)
-    if session.query(ckanext_model.WorkflowState) \
-            .filter(ckanext_model.WorkflowState.revert_state_id == id_) \
-            .filter(ckanext_model.WorkflowState.state != 'deleted') \
-            .count() > 0:
-        errors += [_('Workflow state has dependent workflow states.')]
+    cascade_context = {
+        'model': model,
+        'user': user,
+        'session': session,
+        'defer_commit': True,
+    }
 
-    # TODO: just delete the referencing transitions
-    if session.query(ckanext_model.WorkflowTransition) \
-            .filter(or_(ckanext_model.WorkflowTransition.from_state_id == id_,
-                        ckanext_model.WorkflowTransition.to_state_id == id_)) \
-            .filter(ckanext_model.WorkflowTransition.state != 'deleted') \
-            .count() > 0:
-        errors += [_('Workflow state has dependent workflow transitions.')]
+    # clear the revert_state_id on any referencing workflow states - this implies that
+    # reverting from such states would now take a metadata record to the 'null' state
+    # instead of this one
+    workflow_states = session.query(ckanext_model.WorkflowState) \
+        .filter(ckanext_model.WorkflowState.revert_state_id == id_) \
+        .filter(ckanext_model.WorkflowState.state != 'deleted') \
+        .all()
+    for workflow_state in workflow_states:
+        workflow_state_dict = model_dictize.workflow_state_dictize(workflow_state, cascade_context)
+        workflow_state_dict['revert_state_id'] = ''
+        tk.get_action('workflow_state_update')(cascade_context, workflow_state_dict)
 
-    # TODO: just delete the referencing rules
-    if session.query(ckanext_model.WorkflowRule) \
-            .filter(ckanext_model.WorkflowRule.workflow_state_id == id_) \
-            .filter(ckanext_model.WorkflowRule.state != 'deleted') \
-            .count() > 0:
-        errors += [_('Workflow state has dependent workflow rules.')]
+    # cascade delete to dependent workflow transitions
+    workflow_transition_ids = session.query(ckanext_model.WorkflowTransition.id) \
+        .filter(or_(ckanext_model.WorkflowTransition.from_state_id == id_,
+                    ckanext_model.WorkflowTransition.to_state_id == id_)) \
+        .filter(ckanext_model.WorkflowTransition.state != 'deleted') \
+        .all()
+    for (workflow_transition_id,) in workflow_transition_ids:
+        tk.get_action('workflow_transition_delete')(cascade_context, {'id': workflow_transition_id})
 
-    if errors:
-        raise tk.ValidationError(' '.join(errors))
+    # cascade delete to dependent workflow rules
+    workflow_rule_ids = session.query(ckanext_model.WorkflowRule.id) \
+        .filter(ckanext_model.WorkflowRule.workflow_state_id == id_) \
+        .filter(ckanext_model.WorkflowRule.state != 'deleted') \
+        .all()
+    for (workflow_rule_id,) in workflow_rule_ids:
+        tk.get_action('workflow_rule_delete')(cascade_context, {'id': workflow_rule_id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -361,16 +370,19 @@ def workflow_metric_delete(context, data_dict):
     id_ = obj.id
     tk.check_access('workflow_metric_delete', context, data_dict)
 
-    errors = []
-    # TODO: just delete the referencing rules
-    if session.query(ckanext_model.WorkflowRule) \
-            .filter(ckanext_model.WorkflowRule.workflow_metric_id == id_) \
-            .filter(ckanext_model.WorkflowRule.state != 'deleted') \
-            .count() > 0:
-        errors += [_('Workflow metric has dependent workflow rules.')]
-
-    if errors:
-        raise tk.ValidationError(' '.join(errors))
+    # cascade delete to dependent workflow rules
+    cascade_context = {
+        'model': model,
+        'user': user,
+        'session': session,
+        'defer_commit': True,
+    }
+    workflow_rule_ids = session.query(ckanext_model.WorkflowRule.id) \
+        .filter(ckanext_model.WorkflowRule.workflow_metric_id == id_) \
+        .filter(ckanext_model.WorkflowRule.state != 'deleted') \
+        .all()
+    for (workflow_rule_id,) in workflow_rule_ids:
+        tk.get_action('workflow_rule_delete')(cascade_context, {'id': workflow_rule_id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -446,7 +458,7 @@ def workflow_rule_delete(context, data_dict):
 #             .count() > 0:
 #         raise tk.ValidationError(_('Organization has dependent metadata records'))
 #
-#     delete_context = {
+#     cascade_context = {
 #         'model': model,
 #         'user': user,
 #         'session': session,
@@ -462,7 +474,7 @@ def workflow_rule_delete(context, data_dict):
 #         .filter(model.GroupExtra.value == id_) \
 #         .all()
 #     for (metadata_collection_id,) in metadata_collection_ids:
-#         tk.get_action('metadata_collection_delete')(delete_context, {'id': metadata_collection_id})
+#         tk.get_action('metadata_collection_delete')(cascade_context, {'id': metadata_collection_id})
 #
 #     # cascade delete to dependent metadata models
 #     metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
@@ -470,7 +482,7 @@ def workflow_rule_delete(context, data_dict):
 #         .filter(ckanext_model.MetadataModel.state != 'deleted') \
 #         .all()
 #     for (metadata_model_id,) in metadata_model_ids:
-#         tk.get_action('metadata_model_delete')(delete_context, {'id': metadata_model_id})
+#         tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
 #
 #     data_dict['type'] = 'organization'
 #     original_action(context, data_dict)
