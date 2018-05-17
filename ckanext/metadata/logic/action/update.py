@@ -478,11 +478,11 @@ def metadata_record_validate(context, data_dict):
     return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
 
 
-def metadata_record_validation_state_update(context, data_dict):
+def metadata_record_validation_state_override(context, data_dict):
     """
-    Update a metadata record's validation state.
+    Override a metadata record's validation state.
 
-    You must be authorized to change the metadata record's validation state.
+    You must be authorized to override the metadata record's validation state.
     This should normally only be allowed for sysadmins.
 
     :param id: the id or name of the metadata record to update
@@ -490,7 +490,7 @@ def metadata_record_validation_state_update(context, data_dict):
     :param validation_state: a permitted value as per MetadataValidationState
     :type validation_state: string
     """
-    log.info("Updating validation state of metadata record: %r", data_dict)
+    log.info("Overriding validation state of metadata record: %r", data_dict)
 
     model = context['model']
     user = context['user']
@@ -501,7 +501,7 @@ def metadata_record_validation_state_update(context, data_dict):
     if obj is None or obj.type != 'metadata_record':
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
-    tk.check_access('metadata_record_validation_state_update', context, data_dict)
+    tk.check_access('metadata_record_validation_state_override', context, data_dict)
 
     validation_state = tk.get_or_bust(data_dict, 'validation_state')
     if validation_state not in MetadataValidationState.all:
@@ -514,7 +514,7 @@ def metadata_record_validation_state_update(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update metadata record %s') % obj.id
+        rev.message = _(u'REST API: Override validation state of metadata record %s') % obj.id
 
     if not defer_commit:
         model.repo.commit()

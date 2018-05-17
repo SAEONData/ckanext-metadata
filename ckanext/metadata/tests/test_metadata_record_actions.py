@@ -316,7 +316,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert validation_model_names == [metadata_model['name']]
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        call_action('metadata_record_validation_state_update', id=input_dict['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
         input_dict['content_json'] = '{ "newtestkey": "newtestvalue" }'
         result, obj = self._call_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
@@ -324,7 +324,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                         name=input_dict['name'],
                                         validation_state='not validated')
 
-        call_action('metadata_record_validation_state_update', id=input_dict['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='invalid')
         new_metadata_schema = ckanext_factories.MetadataSchema()
         input_dict.update({
             'schema_name': new_metadata_schema['schema_name'],
@@ -352,7 +352,7 @@ class TestMetadataRecordActions(ActionTestBase):
         new_metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'],
                                                              organization_id=new_organization['id'])
 
-        call_action('metadata_record_validation_state_update', id=input_dict['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
         input_dict.update({
             'owner_org': new_organization['id'],
             'metadata_collection_id': new_metadata_collection['id'],
@@ -380,7 +380,7 @@ class TestMetadataRecordActions(ActionTestBase):
         new_metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'],
                                                              infrastructure_id=new_infrastructure['id'])
 
-        call_action('metadata_record_validation_state_update', id=input_dict['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
         result, obj = self._call_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
@@ -397,7 +397,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert validation_model_names == [metadata_model['name']]
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        call_action('metadata_record_validation_state_update', id=input_dict['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='partially valid')
         new_infrastructure = self._generate_infrastructure()
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
         result, obj = self._call_action('update', 'metadata_record',
@@ -537,7 +537,7 @@ class TestMetadataRecordActions(ActionTestBase):
     def test_invalidate(self):
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
-        call_action('metadata_record_validation_state_update', id=input_dict['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
 
         result, obj = self._call_action('invalidate', 'metadata_record',
                                         model_class=ckan_model.Package,

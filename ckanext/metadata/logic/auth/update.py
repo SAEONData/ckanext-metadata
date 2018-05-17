@@ -57,7 +57,7 @@ def metadata_record_invalidate(context, data_dict):
     return {'success': True}
 
 
-def metadata_record_validation_state_update(context, data_dict):
+def metadata_record_validation_state_override(context, data_dict):
     return {'success': True}
 
 

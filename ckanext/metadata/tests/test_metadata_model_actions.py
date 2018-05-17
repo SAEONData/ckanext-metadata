@@ -150,7 +150,7 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_valid_invalidate_records(self):
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='partially valid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
@@ -159,7 +159,7 @@ class TestMetadataModelActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
 
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='invalid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id=metadata_record['owner_org'],
@@ -169,7 +169,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
@@ -179,7 +179,7 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_valid_no_invalidate_records(self):
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='partially valid')
         call_action('metadata_model_create',
                     metadata_schema_id=ckanext_factories.MetadataSchema()['id'],
                     organization_id='',
@@ -188,7 +188,7 @@ class TestMetadataModelActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'partially valid')
 
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='invalid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id=ckan_factories.Organization()['id'],
@@ -198,7 +198,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
@@ -392,9 +392,9 @@ class TestMetadataModelActions(ActionTestBase):
         assert set(dependent_records) == {metadata_record_1['id'], metadata_record_2['id'], metadata_record_3['id']}
 
         # change the model_json - invalidate all dependents
-        call_action('metadata_record_validation_state_update', id=metadata_record_1['id'], validation_state='valid')
-        call_action('metadata_record_validation_state_update', id=metadata_record_2['id'], validation_state='invalid')
-        call_action('metadata_record_validation_state_update', id=metadata_record_3['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_1['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_2['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_3['id'], validation_state='partially valid')
         call_action('metadata_model_update',
                     id=metadata_model['id'],
                     metadata_schema_id=metadata_schema['id'],
@@ -406,9 +406,9 @@ class TestMetadataModelActions(ActionTestBase):
         assert_package_has_extra(metadata_record_3['id'], 'validation_state', 'not validated')
 
         # set the infrastructure - invalidate the records that are no longer dependent
-        call_action('metadata_record_validation_state_update', id=metadata_record_1['id'], validation_state='valid')
-        call_action('metadata_record_validation_state_update', id=metadata_record_2['id'], validation_state='invalid')
-        call_action('metadata_record_validation_state_update', id=metadata_record_3['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_1['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_2['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_3['id'], validation_state='partially valid')
         call_action('metadata_model_update',
                     id=metadata_model['id'],
                     metadata_schema_id=metadata_schema['id'],
@@ -422,9 +422,9 @@ class TestMetadataModelActions(ActionTestBase):
         assert_package_has_extra(metadata_record_3['id'], 'validation_state', 'partially valid')
 
         # set the organization - invalidate the record that is newly dependent
-        call_action('metadata_record_validation_state_update', id=metadata_record_1['id'], validation_state='valid')
-        call_action('metadata_record_validation_state_update', id=metadata_record_2['id'], validation_state='invalid')
-        call_action('metadata_record_validation_state_update', id=metadata_record_3['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_1['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_2['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=metadata_record_3['id'], validation_state='partially valid')
         call_action('metadata_model_update',
                     id=metadata_model['id'],
                     metadata_schema_id=metadata_schema['id'],
@@ -574,7 +574,7 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_delete_valid_invalidate_records(self):
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='partially valid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
@@ -583,7 +583,7 @@ class TestMetadataModelActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
 
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='invalid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id=metadata_record['owner_org'],
@@ -593,7 +593,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
@@ -603,7 +603,7 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_delete_valid_no_invalidate_records(self):
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='partially valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='partially valid')
         call_action('metadata_model_create',
                     metadata_schema_id=ckanext_factories.MetadataSchema()['id'],
                     organization_id='',
@@ -612,7 +612,7 @@ class TestMetadataModelActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'partially valid')
 
         metadata_record = ckanext_factories.MetadataRecord()
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='invalid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='invalid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id=ckan_factories.Organization()['id'],
@@ -622,7 +622,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
-        call_action('metadata_record_validation_state_update', id=metadata_record['id'], validation_state='valid')
+        call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
