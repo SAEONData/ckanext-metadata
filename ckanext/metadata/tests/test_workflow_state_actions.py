@@ -167,6 +167,21 @@ class TestWorkflowStateActions(ActionTestBase):
                                         model_class=ckanext_model.WorkflowState, **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
+    def test_update_valid_change_revert_3(self):
+        workflow_state1 = ckanext_factories.WorkflowState()
+        workflow_state2 = ckanext_factories.WorkflowState(revert_state_id=workflow_state1['id'])
+        workflow_state3 = ckanext_factories.WorkflowState(revert_state_id=workflow_state2['id'])
+        ckanext_factories.WorkflowTransition(from_state_id=workflow_state1['id'], to_state_id=workflow_state2['id'])
+        ckanext_factories.WorkflowTransition(from_state_id=workflow_state2['id'], to_state_id=workflow_state3['id'])
+        input_dict = {
+            'id': workflow_state3['id'],
+            'name': workflow_state3['name'],
+            'revert_state_id': workflow_state1['id'],
+        }
+        result, obj = self._test_action('update', 'workflow_state',
+                                        model_class=ckanext_model.WorkflowState, **input_dict)
+        assert_object_matches_dict(obj, input_dict)
+
     def test_update_invalid_duplicate_name(self):
         workflow_state1 = ckanext_factories.WorkflowState()
         workflow_state2 = ckanext_factories.WorkflowState()
@@ -206,6 +221,25 @@ class TestWorkflowStateActions(ActionTestBase):
         }
         result, obj = self._test_action('update', 'workflow_state',
                                         exception_class=tk.ValidationError, **input_dict)
+        assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
+
+    def test_update_invalid_circular_ref_3(self):
+        workflow_state1 = ckanext_factories.WorkflowState()
+        workflow_state2 = ckanext_factories.WorkflowState()
+        workflow_state3 = ckanext_factories.WorkflowState()
+        ckanext_factories.WorkflowTransition(from_state_id=workflow_state1['id'], to_state_id=workflow_state2['id'])
+        ckanext_factories.WorkflowTransition(from_state_id=workflow_state2['id'], to_state_id=workflow_state3['id'])
+
+        result, obj = self._test_action('update', 'workflow_state',
+                                        exception_class=tk.ValidationError,
+                                        id=workflow_state1['id'],
+                                        revert_state_id=workflow_state2['id'])
+        assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
+
+        result, obj = self._test_action('update', 'workflow_state',
+                                        exception_class=tk.ValidationError,
+                                        id=workflow_state1['id'],
+                                        revert_state_id=workflow_state3['id'])
         assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
 
     def test_update_invalid_self_revert(self):
