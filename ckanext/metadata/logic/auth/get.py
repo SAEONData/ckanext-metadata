@@ -139,3 +139,11 @@ def workflow_metric_show(context, data_dict):
 
 def workflow_metric_list(context, data_dict):
     return {'success': True}
+
+
+def workflow_rule_show(context, data_dict):
+    return {'success': True}
+
+
+def workflow_rule_list(context, data_dict):
+    return {'success': True}

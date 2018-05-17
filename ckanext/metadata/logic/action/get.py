@@ -738,3 +738,59 @@ def workflow_metric_list(context, data_dict):
             result += [name]
 
     return result
+
+
+@tk.side_effect_free
+def workflow_rule_show(context, data_dict):
+    """
+    Return a workflow rule definition.
+
+    :param id: the id of the workflow rule
+    :type id: string
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving workflow rule: %r", data_dict)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = ckanext_model.WorkflowRule.get(id_)
+    if obj is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
+
+    tk.check_access('workflow_rule_show', context, data_dict)
+
+    context['workflow_rule'] = obj
+    workflow_rule_dict = model_dictize.workflow_rule_dictize(obj, context)
+
+    result_dict, errors = tk.navl_validate(workflow_rule_dict, schema.workflow_rule_show_schema(), context)
+    return result_dict
+
+
+@tk.side_effect_free
+def workflow_rule_list(context, data_dict):
+    """
+    Return a list of ids of the site's workflow rules.
+
+    :param all_fields: return dictionaries instead of just ids (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving workflow rule list: %r", data_dict)
+    tk.check_access('workflow_rule_list', context, data_dict)
+
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    workflow_rules = session.query(ckanext_model.WorkflowRule.id) \
+        .filter_by(state='active') \
+        .all()
+    result = []
+    for (id_,) in workflow_rules:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('workflow_rule_show')(context, data_dict)]
+        else:
+            result += [id_]
+
+    return result
