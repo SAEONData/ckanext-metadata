@@ -73,6 +73,10 @@ def workflow_state_update(context, data_dict):
     return {'success': True}
 
 
+def workflow_transition_update(context, data_dict):
+    return {'success': True}
+
+
 def workflow_metric_update(context, data_dict):
     return {'success': True}
 

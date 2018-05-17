@@ -624,6 +624,17 @@ def workflow_state_update(context, data_dict):
     return output
 
 
+def workflow_transition_update(context, data_dict):
+    """
+    Update a workflow transition.
+
+    Note: this action will always fail; workflow_transition is an association table which
+    does not define any properties of its own; to "update" a transition, delete it and
+    create a new one.
+    """
+    raise tk.ValidationError("A workflow transition cannot be updated. Delete it and create a new one instead.")
+
+
 def workflow_metric_update(context, data_dict):
     """
     Update a workflow metric.
