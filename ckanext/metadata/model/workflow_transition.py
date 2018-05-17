@@ -46,13 +46,15 @@ class WorkflowTransition(vdm.sqlalchemy.RevisionedObjectMixin,
     @classmethod
     def path_exists(cls, from_state_id, to_state_id):
         """
-        Determines whether a transition path connecting the given states exists.
+        Determines whether an active transition path connecting the given states exists.
         """
-        if cls.lookup(from_state_id, to_state_id) is not None:
+        transition = cls.lookup(from_state_id, to_state_id)
+        if transition is not None and transition.state == 'active':
             return True
 
         transitions = meta.Session.query(cls) \
             .filter(cls.from_state_id == from_state_id) \
+            .filter(cls.state == 'active') \
             .all()
         for transition in transitions:
             if cls.path_exists(transition.to_state_id, to_state_id):
