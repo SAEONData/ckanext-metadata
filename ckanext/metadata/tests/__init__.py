@@ -93,7 +93,7 @@ def assert_error(error_dict, key, pattern):
     errors = error_dict.get(key)
     if type(errors) is list:
         assert next((True for error in errors if re.search(pattern, error) is not None), False)
-    elif type(errors) is unicode:
+    elif isinstance(errors, basestring):
         assert re.search(pattern, errors) is not None
     else:
         assert False

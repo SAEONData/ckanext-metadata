@@ -524,8 +524,8 @@ def workflow_transition_unique(key, data, errors, context):
     For use with the '__after' schema key.
     """
     id_ = data.get(key[:-1] + ('id',))
-    from_state_id = data.get(key[:-1] + ('from_state_id',))
-    to_state_id = data.get(key[:-1] + ('to_state_id',))
+    from_state_id = _convert_missing(data.get(key[:-1] + ('from_state_id',)))
+    to_state_id = _convert_missing(data.get(key[:-1] + ('to_state_id',)))
 
     workflow_transition = ckanext_model.WorkflowTransition.lookup(from_state_id, to_state_id)
     if workflow_transition and workflow_transition.state != 'deleted' and workflow_transition.id != id_:
@@ -537,8 +537,8 @@ def workflow_state_graph_validator(key, data, errors, context):
     Checks that the specified workflow transition would not cause
     a loop in the workflow state graph.
     """
-    from_state_id = data.get(key[:-1] + ('from_state_id',))
-    to_state_id = data.get(key[:-1] + ('to_state_id',))
+    from_state_id = _convert_missing(data.get(key[:-1] + ('from_state_id',)))
+    to_state_id = _convert_missing(data.get(key[:-1] + ('to_state_id',)))
     
     if ckanext_model.WorkflowTransition.path_exists(to_state_id, from_state_id):
         raise tk.Invalid(_("Loop in workflow state graph"))
@@ -549,8 +549,8 @@ def workflow_rule_unique(key, data, errors, context):
     For use with the '__after' schema key.
     """
     id_ = data.get(key[:-1] + ('id',))
-    workflow_state_id = data.get(key[:-1] + ('workflow_state_id',))
-    workflow_metric_id = data.get(key[:-1] + ('workflow_metric_id',))
+    workflow_state_id = _convert_missing(data.get(key[:-1] + ('workflow_state_id',)))
+    workflow_metric_id = _convert_missing(data.get(key[:-1] + ('workflow_metric_id',)))
 
     workflow_rule = ckanext_model.WorkflowRule.lookup(workflow_state_id, workflow_metric_id)
     if workflow_rule and workflow_rule.state != 'deleted' and workflow_rule.id != id_:

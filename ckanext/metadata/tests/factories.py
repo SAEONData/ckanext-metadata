@@ -182,7 +182,10 @@ class WorkflowTransition(factory.Factory):
             assert False, "Positional args aren't supported, use keyword args."
 
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
-        from_state_id = kwargs.pop('from_state_id', None) or WorkflowState()['id']
+        # don't do shortcut evaluation for from_state_id because it can be ''
+        from_state_id = kwargs.pop('from_state_id', None)
+        if from_state_id is None:
+            from_state_id = WorkflowState()['id']
         to_state_id = kwargs.pop('to_state_id', None) or WorkflowState()['id']
 
         return helpers.call_action('workflow_transition_create',
