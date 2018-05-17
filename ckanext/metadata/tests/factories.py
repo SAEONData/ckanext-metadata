@@ -145,3 +145,96 @@ class Infrastructure(factory.Factory):
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
 
         return helpers.call_action('infrastructure_create', context=context, **kwargs)
+
+
+class WorkflowState(factory.Factory):
+    FACTORY_FOR = ckanext_model.WorkflowState
+
+    name = factory.Sequence(lambda n: 'test_workflow_state_{0:02d}'.format(n))
+    title = factory.LazyAttribute(lambda obj: obj.name.replace('_', ' ').title())
+    description = 'A test description for this test workflow state.'
+    revert_state_id = ''
+
+    @classmethod
+    def _build(cls, target_class, *args, **kwargs):
+        raise NotImplementedError(".build() isn't supported in CKAN")
+
+    @classmethod
+    def _create(cls, target_class, *args, **kwargs):
+        if args:
+            assert False, "Positional args aren't supported, use keyword args."
+
+        context = {'user': ckan_factories._get_action_user_name(kwargs)}
+
+        return helpers.call_action('workflow_state_create', context=context, **kwargs)
+
+
+class WorkflowTransition(factory.Factory):
+    FACTORY_FOR = ckanext_model.WorkflowTransition
+
+    @classmethod
+    def _build(cls, target_class, *args, **kwargs):
+        raise NotImplementedError(".build() isn't supported in CKAN")
+
+    @classmethod
+    def _create(cls, target_class, *args, **kwargs):
+        if args:
+            assert False, "Positional args aren't supported, use keyword args."
+
+        context = {'user': ckan_factories._get_action_user_name(kwargs)}
+        from_state_id = kwargs.pop('from_state_id', None) or WorkflowState()['id']
+        to_state_id = kwargs.pop('to_state_id', None) or WorkflowState()['id']
+
+        return helpers.call_action('workflow_transition_create',
+                                   context=context,
+                                   from_state_id=from_state_id,
+                                   to_state_id=to_state_id,
+                                   **kwargs)
+
+
+class WorkflowMetric(factory.Factory):
+    FACTORY_FOR = ckanext_model.WorkflowMetric
+
+    name = factory.Sequence(lambda n: 'test_workflow_metric_{0:02d}'.format(n))
+    title = factory.LazyAttribute(lambda obj: obj.name.replace('_', ' ').title())
+    description = 'A test description for this test workflow metric.'
+    evaluator_uri = 'http://example.net/'
+
+    @classmethod
+    def _build(cls, target_class, *args, **kwargs):
+        raise NotImplementedError(".build() isn't supported in CKAN")
+
+    @classmethod
+    def _create(cls, target_class, *args, **kwargs):
+        if args:
+            assert False, "Positional args aren't supported, use keyword args."
+
+        context = {'user': ckan_factories._get_action_user_name(kwargs)}
+
+        return helpers.call_action('workflow_metric_create', context=context, **kwargs)
+
+
+class WorkflowRule(factory.Factory):
+    FACTORY_FOR = ckanext_model.WorkflowRule
+
+    min_value = 1
+    max_value = 2
+
+    @classmethod
+    def _build(cls, target_class, *args, **kwargs):
+        raise NotImplementedError(".build() isn't supported in CKAN")
+
+    @classmethod
+    def _create(cls, target_class, *args, **kwargs):
+        if args:
+            assert False, "Positional args aren't supported, use keyword args."
+
+        context = {'user': ckan_factories._get_action_user_name(kwargs)}
+        workflow_state_id = kwargs.pop('workflow_state_id', None) or WorkflowState()['id']
+        workflow_metric_id = kwargs.pop('workflow_metric_id', None) or WorkflowMetric()['id']
+
+        return helpers.call_action('workflow_rule_create',
+                                   context=context,
+                                   workflow_state_id=workflow_state_id,
+                                   workflow_metric_id=workflow_metric_id,
+                                   **kwargs)
