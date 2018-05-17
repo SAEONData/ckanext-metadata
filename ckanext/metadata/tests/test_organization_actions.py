@@ -20,7 +20,7 @@ class TestOrganizationActions(ActionTestBase):
 
     def test_delete_valid(self):
         organization = ckan_factories.Organization()
-        self._call_action('delete', 'organization',
+        self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
 
@@ -28,7 +28,7 @@ class TestOrganizationActions(ActionTestBase):
         organization = ckan_factories.Organization()
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
 
-        self._call_action('delete', 'organization',
+        self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
         assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
@@ -37,7 +37,7 @@ class TestOrganizationActions(ActionTestBase):
         organization = ckan_factories.Organization()
         metadata_collection = ckanext_factories.MetadataCollection(organization_id=organization['id'])
 
-        self._call_action('delete', 'organization',
+        self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
         assert ckan_model.Group.get(metadata_collection['id']).state == 'deleted'
@@ -48,13 +48,13 @@ class TestOrganizationActions(ActionTestBase):
         metadata_record = ckanext_factories.MetadataRecord(owner_org=organization['id'],
                                                            metadata_collection_id=metadata_collection['id'])
 
-        result, obj = self._call_action('delete', 'organization',
+        result, obj = self._test_action('delete', 'organization',
                                         exception_class=tk.ValidationError,
                                         id=organization['id'])
         assert_error(result, 'message', 'Organization has dependent metadata records')
 
         call_action('metadata_record_delete', id=metadata_record['id'])
-        self._call_action('delete', 'organization',
+        self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
         assert ckan_model.Group.get(metadata_collection['id']).state == 'deleted'
@@ -65,13 +65,13 @@ class TestOrganizationActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
 
         # add validation objects here
-        result, obj = self._call_action('delete', 'organization',
+        result, obj = self._test_action('delete', 'organization',
                                         exception_class=tk.ValidationError,
                                         id=organization['id'])
         assert_error(result, 'message', 'Organization has dependent metadata models that are in use')
 
         # delete validation objects here
-        self._call_action('delete', 'organization',
+        self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
         assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'

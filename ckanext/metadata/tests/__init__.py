@@ -117,7 +117,7 @@ class ActionTestBase(FunctionalTestBase):
         self.normal_user = ckan_factories.User()
         self.sysadmin_user = ckan_factories.Sysadmin()
 
-    def _call_action(self, method, model_name, model_class=None, exception_class=None, sysadmin=False, check_auth=False, **kwargs):
+    def _test_action(self, method, model_name, model_class=None, exception_class=None, sysadmin=False, check_auth=False, **kwargs):
 
         method_name = model_name + '_' + method
         user = self.sysadmin_user if sysadmin else self.normal_user

@@ -25,7 +25,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'description': 'This is a test metadata collection',
             'organization_id': organization['id'],
         }
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         model_class=ckan_model.Group, **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
@@ -39,7 +39,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'name': 'test-metadata-collection',
             'organization_id': organization['name'],
         }
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         model_class=ckan_model.Group, **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
@@ -53,7 +53,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'name': 'test-metadata-collection',
             'organization_id': organization['id'],
         }
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         model_class=ckan_model.Group,
                                         sysadmin=True, check_auth=True, **input_dict)
         assert obj.type == 'metadata_collection'
@@ -64,26 +64,26 @@ class TestMetadataCollectionActions(ActionTestBase):
 
     def test_create_invalid_duplicate_name(self):
         metadata_collection = ckanext_factories.MetadataCollection()
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         exception_class=tk.ValidationError,
                                         name=metadata_collection['name'])
         assert_error(result, 'name', 'Group name already exists in database')
 
     def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         exception_class=tk.ValidationError, check_auth=True,
                                         id=make_uuid())
         assert_error(result, 'id', 'The input field id was not expected.')
 
     def test_create_invalid_sysadmin_duplicate_id(self):
         metadata_collection = ckanext_factories.MetadataCollection()
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         exception_class=tk.ValidationError, sysadmin=True, check_auth=True,
                                         id=metadata_collection['id'])
         assert_error(result, 'id', 'Already exists: Group')
 
     def test_create_invalid_bad_organization(self):
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         exception_class=tk.ValidationError,
                                         organization_id='foo')
         assert_error(result, 'organization_id', 'Not found: Organization')
@@ -91,7 +91,7 @@ class TestMetadataCollectionActions(ActionTestBase):
     def test_create_invalid_deleted_organization(self):
         organization = ckan_factories.Organization()
         call_action('organization_delete', id=organization['id'])
-        result, obj = self._call_action('create', 'metadata_collection',
+        result, obj = self._test_action('create', 'metadata_collection',
                                         exception_class=tk.ValidationError,
                                         organization_id=organization['id'])
         assert_error(result, 'organization_id', 'Not found: Organization')
@@ -104,7 +104,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'title': 'Updated Test Metadata Collection',
             'description': 'Updated test metadata collection',
         }
-        result, obj = self._call_action('update', 'metadata_collection',
+        result, obj = self._test_action('update', 'metadata_collection',
                                         model_class=ckan_model.Group, **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
@@ -117,7 +117,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'id': metadata_collection['id'],
             'title': 'Updated Test Metadata Collection',
         }
-        result, obj = self._call_action('update', 'metadata_collection',
+        result, obj = self._test_action('update', 'metadata_collection',
                                         model_class=ckan_model.Group, **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
@@ -133,7 +133,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'id': metadata_collection1['id'],
             'name': metadata_collection2['name'],
         }
-        result, obj = self._call_action('update', 'metadata_collection',
+        result, obj = self._test_action('update', 'metadata_collection',
                                         exception_class=tk.ValidationError, **input_dict)
         assert_error(result, 'name', 'Group name already exists in database')
 
@@ -144,7 +144,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'id': metadata_collection1['id'],
             'groups': [{'name': metadata_collection2['name']}],
         }
-        result, obj = self._call_action('update', 'metadata_collection',
+        result, obj = self._test_action('update', 'metadata_collection',
                                         exception_class=tk.ValidationError, **input_dict)
         assert_error(result, '__junk', 'The input field .*groups.* was not expected.')
 
@@ -155,13 +155,13 @@ class TestMetadataCollectionActions(ActionTestBase):
             'id': metadata_collection['id'],
             'organization_id': organization['id'],
         }
-        result, obj = self._call_action('update', 'metadata_collection',
+        result, obj = self._test_action('update', 'metadata_collection',
                                         exception_class=tk.ValidationError, **input_dict)
         assert_error(result, 'organization_id', 'The input field organization_id was not expected.')
 
     def test_delete_valid(self):
         metadata_collection = ckanext_factories.MetadataCollection()
-        self._call_action('delete', 'metadata_collection',
+        self._test_action('delete', 'metadata_collection',
                           model_class=ckan_model.Group,
                           id=metadata_collection['id'])
 
@@ -171,12 +171,12 @@ class TestMetadataCollectionActions(ActionTestBase):
             owner_org=metadata_collection['organization_id'],
             metadata_collection_id=metadata_collection['id'])
 
-        result, obj = self._call_action('delete', 'metadata_collection',
+        result, obj = self._test_action('delete', 'metadata_collection',
                                         exception_class=tk.ValidationError,
                                         id=metadata_collection['id'])
         assert_error(result, 'message', 'Metadata collection has dependent metadata records')
 
         call_action('metadata_record_delete', id=metadata_record['id'])
-        self._call_action('delete', 'metadata_collection',
+        self._test_action('delete', 'metadata_collection',
                           model_class=ckan_model.Group,
                           id=metadata_collection['id'])
