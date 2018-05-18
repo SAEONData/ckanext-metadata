@@ -220,8 +220,7 @@ class WorkflowMetric(factory.Factory):
 class WorkflowRule(factory.Factory):
     FACTORY_FOR = ckanext_model.WorkflowRule
 
-    min_value = 1
-    max_value = 2
+    rule_json = '{ "testkey": "testvalue" }'
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):

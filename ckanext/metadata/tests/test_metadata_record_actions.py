@@ -285,7 +285,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record()
         assert metadata_record['validation_state'] == 'not validated'
 
-        result, obj = self._test_action('validation_state_update', 'metadata_record',
+        result, obj = self._test_action('validation_state_override', 'metadata_record',
                                         model_class=ckan_model.Package,
                                         id=metadata_record['id'],
                                         validation_state='valid')
@@ -293,7 +293,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                         name=metadata_record['name'],
                                         validation_state='valid')
 
-        result, obj = self._test_action('validation_state_update', 'metadata_record',
+        result, obj = self._test_action('validation_state_override', 'metadata_record',
                                         model_class=ckan_model.Package,
                                         id=metadata_record['id'],
                                         validation_state='partially valid')
@@ -301,7 +301,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                         name=metadata_record['name'],
                                         validation_state='partially valid')
 
-        result, obj = self._test_action('validation_state_update', 'metadata_record',
+        result, obj = self._test_action('validation_state_override', 'metadata_record',
                                         model_class=ckan_model.Package,
                                         id=metadata_record['id'],
                                         validation_state='invalid')
@@ -513,7 +513,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record()
         assert metadata_record['validation_state'] == 'not validated'
 
-        result, obj = self._test_action('validation_state_update', 'metadata_record',
+        result, obj = self._test_action('validation_state_override', 'metadata_record',
                                         exception_class=tk.ValidationError,
                                         id=metadata_record['id'],
                                         validation_state='foo')

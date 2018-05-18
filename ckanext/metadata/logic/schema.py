@@ -361,7 +361,8 @@ def workflow_rule_create_schema():
 def workflow_rule_update_schema():
     schema = workflow_rule_create_schema()
     # cannot change the associated state or metric
-    del schema['workflow_state_id'], schema['workflow_metric_id']
+    schema['workflow_state_id'] = [empty]
+    schema['workflow_metric_id'] = [empty]
     _make_update_schema(schema)
     return schema
 
