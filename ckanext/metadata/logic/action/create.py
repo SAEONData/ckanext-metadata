@@ -473,10 +473,9 @@ def workflow_rule_create(context, data_dict):
     :type workflow_state_id: string
     :param workflow_metric_id: the id or name of the workflow metric to be evaluated
     :type workflow_metric_id: string
-    :param min_value: minimum permitted return value from metric evaluation to pass this rule
-    :type min_value: integer (for boolean metric use 0 or 1)
-    :param max_value: maximum permitted return value from metric evaluation to pass this rule
-    :type max_value: integer (for boolean metric use 0 or 1)
+    :param rule_json: JSON object defining acceptable return value/range from metric
+        evaluation to pass this rule
+    :type rule_json: string
 
     :returns: the newly created workflow rule (unless 'return_id_only' is set to True
               in the context, in which case just the workflow rule id will be returned)

@@ -698,16 +698,15 @@ def workflow_metric_update(context, data_dict):
 
 def workflow_rule_update(context, data_dict):
     """
-    Update a workflow rule. Only the min and max values may be edited.
+    Update a workflow rule. Only the JSON rule definition can be modified.
 
     You must be authorized to edit the workflow rule.
 
     :param id: the id or name of the workflow rule to update
     :type id: string
-    :param min_value: minimum permitted return value from metric evaluation to pass this rule
-    :type min_value: integer (for boolean metric use 0 or 1)
-    :param max_value: maximum permitted return value from metric evaluation to pass this rule
-    :type max_value: integer (for boolean metric use 0 or 1)
+    :param rule_json: JSON object defining acceptable return value/range from metric
+        evaluation to pass this rule
+    :type rule_json: string
 
     :returns: the updated workflow rule (unless 'return_id_only' is set to True
               in the context, in which case just the workflow rule id will be returned)
@@ -826,8 +825,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
         rule_success = tk.get_action('metadata_workflow_rule_evaluate')(context, {
             'content_json': metadata_record.extras['content_json'],
             'evaluator_uri': workflow_rule['evaluator_uri'],
-            'min_value': workflow_rule['min_value'],
-            'max_value': workflow_rule['max_value'],
+            'rule_json': workflow_rule['rule_json'],
         })
         success = success and rule_success
         activity_detail = model.ActivityDetail(

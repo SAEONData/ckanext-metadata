@@ -469,10 +469,8 @@ def metadata_workflow_rule_evaluate(context, data_dict):
     :type content_json: string
     :param evaluator_uri: URI of the metric evaluation service
     :type evaluator_uri: string
-    :param min_value: minimum accepted return value from the evaluator
-    :type min_value: integer
-    :param max_value: maximum accepted return value from the evaluator
-    :type max_value: integer
+    :param rule_json: JSON dictionary defining a workflow rule
+    :type rule_json: string
 
     :rtype: boolean (pass/fail)
     """
@@ -482,8 +480,8 @@ def metadata_workflow_rule_evaluate(context, data_dict):
     model = context['model']
     session = context['session']
 
-    content_json, evaluator_uri, min_value, max_value = tk.get_or_bust(
-        data_dict, ['content_json', 'evaluator_uri', 'min_value', 'max_value'])
+    content_json, evaluator_uri, rule_json = tk.get_or_bust(
+        data_dict, ['content_json', 'evaluator_uri', 'rule_json'])
 
     raise NotImplementedError
 
@@ -593,8 +591,7 @@ def workflow_state_rule_list(context, data_dict):
             metric_title
             metric_description
             evaluator_uri
-            min_value
-            max_value
+            rule_json
         }
     """
     log.debug("Retrieving list of rules for workflow state: %r", data_dict)
@@ -623,8 +620,7 @@ def workflow_state_rule_list(context, data_dict):
         'metric_title': rule.title,
         'metric_description': rule.description,
         'evaluator_uri': rule.evaluator_uri,
-        'min_value': rule.min_value,
-        'max_value': rule.max_value,
+        'rule_json': rule.rule_json,
     } for rule in rules]
 
 

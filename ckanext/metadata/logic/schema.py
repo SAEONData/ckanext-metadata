@@ -20,7 +20,6 @@ owner_org_validator = tk.get_validator('owner_org_validator')
 convert_to_extras = tk.get_validator('convert_to_extras')
 convert_from_extras = tk.get_validator('convert_from_extras')
 boolean_validator = tk.get_validator('boolean_validator')
-int_validator = tk.get_validator('int_validator')
 
 
 def _make_create_schema(schema):
@@ -349,8 +348,7 @@ def workflow_rule_create_schema():
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_rule_does_not_exist],
         'workflow_state_id': [v.not_empty, unicode, v.workflow_state_exists],
         'workflow_metric_id': [v.not_empty, unicode, v.workflow_metric_exists],
-        'min_value': [v.not_empty, int_validator],
-        'max_value': [v.not_empty, int_validator],
+        'rule_json': [v.not_empty, unicode, v.json_dict_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
@@ -371,4 +369,5 @@ def workflow_rule_update_schema():
 def workflow_rule_show_schema():
     schema = workflow_rule_create_schema()
     _make_show_schema(schema)
+    schema['rule_json'] = [v.deserialize_json]
     return schema

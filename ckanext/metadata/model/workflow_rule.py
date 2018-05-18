@@ -11,8 +11,7 @@ workflow_rule_table = Table(
     Column('id', types.UnicodeText, primary_key=True, default=_types.make_uuid),
     Column('workflow_state_id', types.UnicodeText, ForeignKey('workflow_state.id'), nullable=False),
     Column('workflow_metric_id', types.UnicodeText, ForeignKey('workflow_metric.id'), nullable=False),
-    Column('min_value', types.Integer, nullable=False),
-    Column('max_value', types.Integer, nullable=False),
+    Column('rule_json', types.UnicodeText, nullable=False),
     UniqueConstraint('workflow_state_id', 'workflow_metric_id'),
 )
 
