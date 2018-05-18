@@ -543,6 +543,7 @@ def workflow_transition_graph_validator(key, data, errors, context):
     if ckanext_model.WorkflowState.revert_path_exists(from_state_id, to_state_id):
         raise tk.Invalid(_("Backward transition in workflow state graph"))
 
+
 def workflow_rule_unique(key, data, errors, context):
     """
     For use with the '__after' schema key.

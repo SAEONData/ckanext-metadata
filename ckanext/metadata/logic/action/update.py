@@ -767,6 +767,11 @@ def metadata_record_workflow_state_transition(context, data_dict):
     :type workflow_state_id: string
 
     :rtype: workflow activity dictionary
+
+    TODO: we must log complete details of the transition, metrics and rules involved
+    because later on these might be changed and it won't otherwise be clear how a record
+    got into the state it's in... alternative would be to revert all records in a particular
+    state if the rules for that state change, but this might cause even more problems...
     """
     log.info("Transitioning workflow state of metadata record: %r", data_dict)
 
