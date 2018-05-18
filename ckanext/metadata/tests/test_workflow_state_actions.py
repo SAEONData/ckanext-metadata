@@ -200,30 +200,24 @@ class TestWorkflowStateActions(ActionTestBase):
                                         id=workflow_state['id'])
         assert_error(result, 'revert_state_id', 'Missing parameter')
 
-    def test_update_invalid_circular_ref_1(self):
-        workflow_state1 = ckanext_factories.WorkflowState()
-        workflow_state2 = ckanext_factories.WorkflowState(revert_state_id=workflow_state1['id'])
-        input_dict = {
-            'id': workflow_state1['id'],
-            'revert_state_id': workflow_state2['id'],
-        }
-        result, obj = self._test_action('update', 'workflow_state',
-                                        exception_class=tk.ValidationError, **input_dict)
-        assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
-
-    def test_update_invalid_circular_ref_2(self):
+    def test_update_invalid_circular_revert(self):
         workflow_state1 = ckanext_factories.WorkflowState()
         workflow_state2 = ckanext_factories.WorkflowState(revert_state_id=workflow_state1['id'])
         workflow_state3 = ckanext_factories.WorkflowState(revert_state_id=workflow_state2['id'])
-        input_dict = {
-            'id': workflow_state1['id'],
-            'revert_state_id': workflow_state3['id'],
-        }
-        result, obj = self._test_action('update', 'workflow_state',
-                                        exception_class=tk.ValidationError, **input_dict)
-        assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
 
-    def test_update_invalid_circular_ref_3(self):
+        result, obj = self._test_action('update', 'workflow_state',
+                                        exception_class=tk.ValidationError,
+                                        id=workflow_state1['id'],
+                                        revert_state_id=workflow_state2['id'])
+        assert_error(result, 'revert_state_id', 'Revert loop in workflow state graph')
+
+        result, obj = self._test_action('update', 'workflow_state',
+                                        exception_class=tk.ValidationError,
+                                        id=workflow_state1['id'],
+                                        revert_state_id=workflow_state3['id'])
+        assert_error(result, 'revert_state_id', 'Revert loop in workflow state graph')
+
+    def test_update_invalid_forward_revert(self):
         workflow_state1 = ckanext_factories.WorkflowState()
         workflow_state2 = ckanext_factories.WorkflowState()
         workflow_state3 = ckanext_factories.WorkflowState()
@@ -234,13 +228,13 @@ class TestWorkflowStateActions(ActionTestBase):
                                         exception_class=tk.ValidationError,
                                         id=workflow_state1['id'],
                                         revert_state_id=workflow_state2['id'])
-        assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
+        assert_error(result, 'revert_state_id', 'Forward revert in workflow state graph')
 
         result, obj = self._test_action('update', 'workflow_state',
                                         exception_class=tk.ValidationError,
                                         id=workflow_state1['id'],
                                         revert_state_id=workflow_state3['id'])
-        assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
+        assert_error(result, 'revert_state_id', 'Forward revert in workflow state graph')
 
     def test_update_invalid_self_revert(self):
         workflow_state = ckanext_factories.WorkflowState()
@@ -250,7 +244,7 @@ class TestWorkflowStateActions(ActionTestBase):
         }
         result, obj = self._test_action('update', 'workflow_state',
                                         exception_class=tk.ValidationError, **input_dict)
-        assert_error(result, 'revert_state_id', 'Loop in workflow state graph')
+        assert_error(result, 'revert_state_id', 'A workflow state cannot revert to itself')
 
     def test_update_invalid_bad_revert(self):
         workflow_state = ckanext_factories.WorkflowState()

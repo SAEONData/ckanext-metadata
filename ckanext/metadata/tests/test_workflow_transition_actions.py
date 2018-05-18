@@ -131,15 +131,7 @@ class TestWorkflowTransitionActions(ActionTestBase):
                                         to_state_id=workflow_transition['to_state_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
-    def test_create_invalid_circular_ref_1(self):
-        workflow_transition = ckanext_factories.WorkflowTransition()
-        result, obj = self._test_action('create', 'workflow_transition',
-                                        exception_class=tk.ValidationError,
-                                        from_state_id=workflow_transition['to_state_id'],
-                                        to_state_id=workflow_transition['from_state_id'])
-        assert_error(result, '__after', 'Loop in workflow state graph')
-
-    def test_create_invalid_circular_ref_2(self):
+    def test_create_invalid_circular_transition(self):
         workflow_state1 = ckanext_factories.WorkflowState()
         workflow_state2 = ckanext_factories.WorkflowState()
         workflow_state3 = ckanext_factories.WorkflowState()
@@ -148,9 +140,32 @@ class TestWorkflowTransitionActions(ActionTestBase):
 
         result, obj = self._test_action('create', 'workflow_transition',
                                         exception_class=tk.ValidationError,
+                                        from_state_id=workflow_state2['id'],
+                                        to_state_id=workflow_state1['id'])
+        assert_error(result, '__after', 'Transition loop in workflow state graph')
+
+        result, obj = self._test_action('create', 'workflow_transition',
+                                        exception_class=tk.ValidationError,
                                         from_state_id=workflow_state3['id'],
                                         to_state_id=workflow_state1['id'])
-        assert_error(result, '__after', 'Loop in workflow state graph')
+        assert_error(result, '__after', 'Transition loop in workflow state graph')
+
+    def test_create_invalid_backward_transition(self):
+        workflow_state1 = ckanext_factories.WorkflowState()
+        workflow_state2 = ckanext_factories.WorkflowState(revert_state_id=workflow_state1['id'])
+        workflow_state3 = ckanext_factories.WorkflowState(revert_state_id=workflow_state2['id'])
+
+        result, obj = self._test_action('create', 'workflow_transition',
+                                        exception_class=tk.ValidationError,
+                                        from_state_id=workflow_state2['id'],
+                                        to_state_id=workflow_state1['id'])
+        assert_error(result, '__after', 'Backward transition in workflow state graph')
+
+        result, obj = self._test_action('create', 'workflow_transition',
+                                        exception_class=tk.ValidationError,
+                                        from_state_id=workflow_state3['id'],
+                                        to_state_id=workflow_state1['id'])
+        assert_error(result, '__after', 'Backward transition in workflow state graph')
 
     def test_update_invalid(self):
         workflow_transition = ckanext_factories.WorkflowTransition()

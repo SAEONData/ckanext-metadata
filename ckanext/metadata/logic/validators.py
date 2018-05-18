@@ -491,21 +491,18 @@ def workflow_revert_state_validator(key, data, errors, context):
         # involving this state exist, yet
         return
 
-    revert_state_id = data.get(key[:-1] + ('revert_state_id',))
-    target_state = ckanext_model.WorkflowState.get(revert_state_id) \
-        if revert_state_id is not None else None
-
-    if target_state is None:
+    revert_state_id = _convert_missing(data.get(key[:-1] + ('revert_state_id',)))
+    if not revert_state_id:
         return
 
-    if ckanext_model.WorkflowTransition.path_exists(workflow_state.id, target_state.id):
-        raise tk.Invalid(_("Loop in workflow state graph"))
+    if revert_state_id == workflow_state.id:
+        raise tk.Invalid(_("A workflow state cannot revert to itself"))
 
-    while target_state is not None:
-        if target_state == workflow_state:
-            raise tk.Invalid(_("Loop in workflow state graph"))
-        target_state = ckanext_model.WorkflowState.get(target_state.revert_state_id) \
-            if target_state.revert_state_id is not None else None
+    if ckanext_model.WorkflowState.revert_path_exists(revert_state_id, workflow_state.id):
+        raise tk.Invalid(_("Revert loop in workflow state graph"))
+
+    if ckanext_model.WorkflowTransition.path_exists(workflow_state.id, revert_state_id):
+        raise tk.Invalid(_("Forward revert in workflow state graph"))
 
 
 def workflow_transition_check(key, data, errors, context):
@@ -532,7 +529,7 @@ def workflow_transition_unique(key, data, errors, context):
         raise tk.Invalid(_("Unique constraint violation: %s") % '(from_state_id, to_state_id)')
 
 
-def workflow_state_graph_validator(key, data, errors, context):
+def workflow_transition_graph_validator(key, data, errors, context):
     """
     Checks that the specified workflow transition would not cause
     a loop in the workflow state graph.
@@ -541,8 +538,10 @@ def workflow_state_graph_validator(key, data, errors, context):
     to_state_id = _convert_missing(data.get(key[:-1] + ('to_state_id',)))
     
     if ckanext_model.WorkflowTransition.path_exists(to_state_id, from_state_id):
-        raise tk.Invalid(_("Loop in workflow state graph"))
+        raise tk.Invalid(_("Transition loop in workflow state graph"))
 
+    if ckanext_model.WorkflowState.revert_path_exists(from_state_id, to_state_id):
+        raise tk.Invalid(_("Backward transition in workflow state graph"))
 
 def workflow_rule_unique(key, data, errors, context):
     """

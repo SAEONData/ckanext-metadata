@@ -38,6 +38,38 @@ class WorkflowState(vdm.sqlalchemy.RevisionedObjectMixin,
             workflow_state = cls.by_name(reference)
         return workflow_state
 
+    @classmethod
+    def revert_path_exists(cls, from_state_id, to_state_id):
+        """
+        Determines whether it is possible to change from from_state_id to to_state_id
+        by a series of successive reverts.
+        Note 1: all states in the path must be active.
+        Note 2: this only considers explicit reverts, not the implicit revert to null
+            when revert_state_id is empty.
+        """
+        if not from_state_id or not to_state_id:
+            return False
+        if from_state_id == to_state_id:
+            return False
+
+        from_state = meta.Session.query(cls) \
+            .filter(cls.id == from_state_id) \
+            .filter(cls.state == 'active') \
+            .first()
+        to_state = meta.Session.query(cls) \
+            .filter(cls.id == to_state_id) \
+            .filter(cls.state == 'active') \
+            .first()
+
+        if not from_state or not to_state:
+            return False
+        if from_state.revert_state_id == to_state_id:
+            return True
+        if cls.revert_path_exists(from_state.revert_state_id, to_state_id):
+            return True
+
+        return False
+
 
 meta.mapper(WorkflowState, workflow_state_table,
             extension=[vdm.sqlalchemy.Revisioner(workflow_state_revision_table)])

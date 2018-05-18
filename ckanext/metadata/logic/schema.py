@@ -306,7 +306,7 @@ def workflow_transition_create_schema():
         # post-validation
         '__after': [v.workflow_transition_check,
                     v.workflow_transition_unique,
-                    v.workflow_state_graph_validator,
+                    v.workflow_transition_graph_validator,
                     ignore],
     }
     _make_create_schema(schema)
