@@ -120,7 +120,7 @@ class TestWorkflowStateActions(ActionTestBase):
         workflow_state = ckanext_factories.WorkflowState()
         input_dict = {
             'id': workflow_state['id'],
-            'name': 'test-workflow-state',
+            'name': 'updated-test-workflow-state',
             'title': 'Updated Test Workflow State',
             'description': 'Updated test workflow state description',
             'revert_state_id': '',
