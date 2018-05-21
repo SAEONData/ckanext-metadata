@@ -8,6 +8,7 @@ from ckanext.metadata.logic import validators as v
 empty = tk.get_validator('empty')
 ignore = tk.get_validator('ignore')
 ignore_missing = tk.get_validator('ignore_missing')
+default = tk.get_validator('default')
 package_id_does_not_exist = tk.get_validator('package_id_does_not_exist')
 name_validator = tk.get_validator('name_validator')
 package_name_validator = tk.get_validator('package_name_validator')
@@ -125,7 +126,7 @@ def metadata_record_show_schema():
         'content_url': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras],
         'validation_state': [convert_from_extras],
-        'workflow_state_id': [convert_from_extras],
+        'workflow_state_id': [convert_from_extras, default(None)],
         'private': [],
         'extras': _extras_schema(),
     })
