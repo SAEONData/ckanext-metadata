@@ -201,7 +201,7 @@ class WorkflowMetric(factory.Factory):
     name = factory.Sequence(lambda n: 'test_workflow_metric_{0:02d}'.format(n))
     title = factory.LazyAttribute(lambda obj: obj.name.replace('_', ' ').title())
     description = 'A test description for this test workflow metric.'
-    evaluator_uri = 'http://example.net/'
+    evaluator_url = 'http://example.net/'
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):

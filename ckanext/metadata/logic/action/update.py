@@ -824,7 +824,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
     for workflow_rule in workflow_rules:
         rule_success = tk.get_action('metadata_workflow_rule_evaluate')(context, {
             'content_json': metadata_record.extras['content_json'],
-            'evaluator_uri': workflow_rule['evaluator_uri'],
+            'evaluator_url': workflow_rule['evaluator_url'],
             'rule_json': workflow_rule['rule_json'],
         })
         success = success and rule_success

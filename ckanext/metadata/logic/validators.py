@@ -3,6 +3,7 @@
 import json
 import uuid
 import re
+import urlparse
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -152,11 +153,19 @@ def deserialize_json(value):
         return value
 
 
-def uri_validator(value):
+def url_validator(value):
     """
-    TODO
-    Check for a well-formed URI.
+    Check for well-formed URL.
     """
+    try:
+        urlparts = urlparse.urlparse(value)
+        if not urlparts.scheme:
+            raise ValueError("Missing scheme")
+        if not urlparts.netloc:
+            raise ValueError("Missing netloc")
+    except ValueError, e:
+        raise tk.Invalid(_("Invalid URL: %s") % e.message)
+
     return value
 
 # endregion

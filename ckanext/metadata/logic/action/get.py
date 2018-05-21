@@ -467,8 +467,8 @@ def metadata_workflow_rule_evaluate(context, data_dict):
 
     :param content_json: JSON dictionary of metadata record content
     :type content_json: string
-    :param evaluator_uri: URI of the metric evaluation service
-    :type evaluator_uri: string
+    :param evaluator_url: URI of the metric evaluation service
+    :type evaluator_url: string
     :param rule_json: JSON dictionary defining a workflow rule
     :type rule_json: string
 
@@ -480,8 +480,8 @@ def metadata_workflow_rule_evaluate(context, data_dict):
     model = context['model']
     session = context['session']
 
-    content_json, evaluator_uri, rule_json = tk.get_or_bust(
-        data_dict, ['content_json', 'evaluator_uri', 'rule_json'])
+    content_json, evaluator_url, rule_json = tk.get_or_bust(
+        data_dict, ['content_json', 'evaluator_url', 'rule_json'])
 
     raise NotImplementedError
 
@@ -590,7 +590,7 @@ def workflow_state_rule_list(context, data_dict):
             metric_name
             metric_title
             metric_description
-            evaluator_uri
+            evaluator_url
             rule_json
         }
     """
@@ -619,7 +619,7 @@ def workflow_state_rule_list(context, data_dict):
         'metric_name': rule.name,
         'metric_title': rule.title,
         'metric_description': rule.description,
-        'evaluator_uri': rule.evaluator_uri,
+        'evaluator_url': rule.evaluator_url,
         'rule_json': rule.rule_json,
     } for rule in rules]
 

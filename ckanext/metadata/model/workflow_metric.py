@@ -12,7 +12,7 @@ workflow_metric_table = Table(
     Column('name', types.UnicodeText, nullable=False, unique=True),
     Column('title', types.UnicodeText),
     Column('description', types.UnicodeText),
-    Column('evaluator_uri', types.UnicodeText, nullable=False),
+    Column('evaluator_url', types.UnicodeText, nullable=False),
 )
 
 vdm.sqlalchemy.make_table_stateful(workflow_metric_table)

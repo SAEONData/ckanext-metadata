@@ -19,7 +19,7 @@ class TestWorkflowMetricActions(ActionTestBase):
             'name': 'test-workflow-metric',
             'title': 'Test Workflow Metric',
             'description': 'This is a test workflow metric',
-            'evaluator_uri': 'http://example.net/',
+            'evaluator_url': 'http://example.net/',
         }
         result, obj = self._test_action('create', 'workflow_metric',
                                         model_class=ckanext_model.WorkflowMetric, **input_dict)
@@ -29,7 +29,7 @@ class TestWorkflowMetricActions(ActionTestBase):
         input_dict = {
             'id': make_uuid(),
             'name': 'test-workflow-metric',
-            'evaluator_uri': 'http://example.net/',
+            'evaluator_url': 'http://example.net/',
         }
         result, obj = self._test_action('create', 'workflow_metric',
                                         model_class=ckanext_model.WorkflowMetric,
@@ -47,15 +47,15 @@ class TestWorkflowMetricActions(ActionTestBase):
         result, obj = self._test_action('create', 'workflow_metric',
                                         exception_class=tk.ValidationError)
         assert_error(result, 'name', 'Missing parameter')
-        assert_error(result, 'evaluator_uri', 'Missing parameter')
+        assert_error(result, 'evaluator_url', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
         result, obj = self._test_action('create', 'workflow_metric',
                                         exception_class=tk.ValidationError,
                                         name='',
-                                        evaluator_uri='')
+                                        evaluator_url='')
         assert_error(result, 'name', 'Missing value')
-        assert_error(result, 'evaluator_uri', 'Missing value')
+        assert_error(result, 'evaluator_url', 'Missing value')
 
     def test_create_invalid_nonsysadmin_setid(self):
         result, obj = self._test_action('create', 'workflow_metric',
@@ -77,7 +77,7 @@ class TestWorkflowMetricActions(ActionTestBase):
             'name': 'updated-test-workflow-metric',
             'title': 'Updated Test Workflow Metric',
             'description': 'Updated test workflow metric description',
-            'evaluator_uri': 'http://updated.example.net/',
+            'evaluator_url': 'http://updated.example.net/',
         }
         result, obj = self._test_action('update', 'workflow_metric',
                                         model_class=ckanext_model.WorkflowMetric, **input_dict)
@@ -88,7 +88,7 @@ class TestWorkflowMetricActions(ActionTestBase):
         input_dict = {
             'id': workflow_metric['id'],
             'name': 'updated-test-workflow-metric',
-            'evaluator_uri': 'http://updated.example.net/',
+            'evaluator_url': 'http://updated.example.net/',
         }
         result, obj = self._test_action('update', 'workflow_metric',
                                         model_class=ckanext_model.WorkflowMetric, **input_dict)
@@ -112,15 +112,15 @@ class TestWorkflowMetricActions(ActionTestBase):
         result, obj = self._test_action('update', 'workflow_metric',
                                         exception_class=tk.ValidationError,
                                         id=workflow_metric['id'])
-        assert_error(result, 'evaluator_uri', 'Missing parameter')
+        assert_error(result, 'evaluator_url', 'Missing parameter')
 
     def test_update_invalid_missing_values(self):
         workflow_metric = ckanext_factories.WorkflowMetric()
         result, obj = self._test_action('update', 'workflow_metric',
                                         exception_class=tk.ValidationError,
                                         id=workflow_metric['id'],
-                                        evaluator_uri='')
-        assert_error(result, 'evaluator_uri', 'Missing value')
+                                        evaluator_url='')
+        assert_error(result, 'evaluator_url', 'Missing value')
 
     def test_delete_valid(self):
         workflow_metric = ckanext_factories.WorkflowMetric()

@@ -423,8 +423,8 @@ def workflow_metric_create(context, data_dict):
     :type title: string
     :param description: the description of the workflow metric (optional)
     :type description: string
-    :param evaluator_uri: URI of the service that will evaluate rules linked to this metric
-    :type evaluator_uri: string
+    :param evaluator_url: URI of the service that will evaluate rules linked to this metric
+    :type evaluator_url: string
 
     :returns: the newly created workflow metric (unless 'return_id_only' is set to True
               in the context, in which case just the workflow metric id will be returned)

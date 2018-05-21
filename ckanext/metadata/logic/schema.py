@@ -95,7 +95,7 @@ def metadata_record_create_schema():
         'schema_version': [v.not_missing, unicode],
         'content_json': [v.not_missing, unicode, v.json_dict_validator, convert_to_extras],
         'content_raw': [v.not_missing, unicode, convert_to_extras],
-        'content_url': [v.not_missing, unicode, convert_to_extras],
+        'content_url': [v.not_missing, unicode, v.url_validator, convert_to_extras],
         'validation_state': [convert_to_extras],
         'workflow_state_id': [convert_to_extras],
 
@@ -324,7 +324,7 @@ def workflow_metric_create_schema():
         'name': [v.not_empty, unicode, name_validator, v.workflow_metric_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
-        'evaluator_uri': [v.not_empty, unicode, v.uri_validator],
+        'evaluator_url': [v.not_empty, unicode, v.url_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
     }
     _make_create_schema(schema)
