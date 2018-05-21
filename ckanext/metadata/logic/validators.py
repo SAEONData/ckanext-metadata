@@ -157,14 +157,15 @@ def url_validator(value):
     """
     Check for well-formed URL.
     """
-    try:
-        urlparts = urlparse.urlparse(value)
-        if not urlparts.scheme:
-            raise ValueError("Missing scheme")
-        if not urlparts.netloc:
-            raise ValueError("Missing netloc")
-    except ValueError, e:
-        raise tk.Invalid(_("Invalid URL: %s") % e.message)
+    if value:
+        try:
+            urlparts = urlparse.urlparse(value)
+            if not urlparts.scheme:
+                raise ValueError("Missing scheme")
+            if not urlparts.netloc:
+                raise ValueError("Missing netloc")
+        except ValueError, e:
+            raise tk.Invalid(_("Invalid URL: %s") % e.message)
 
     return value
 
