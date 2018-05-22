@@ -331,9 +331,9 @@ def metadata_record_update(context, data_dict):
     id_ = obj.id
     context['metadata_record'] = obj
     old_dict = model_dictize.metadata_record_dictize(obj, context)
-    old_content_json = get_extra(old_dict, 'content_json')
-    if old_content_json:
-        old_content_json = json.loads(old_content_json)
+    old_metadata_json = get_extra(old_dict, 'metadata_json')
+    if old_metadata_json:
+        old_metadata_json = json.loads(old_metadata_json)
     old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
     data_dict['id'] = id_
@@ -354,14 +354,14 @@ def metadata_record_update(context, data_dict):
     session.flush()
 
     new_dict = model_dictize.metadata_record_dictize(obj, context)
-    new_content_json = get_extra(new_dict, 'content_json')
-    if new_content_json:
-        new_content_json = json.loads(new_content_json)
+    new_metadata_json = get_extra(new_dict, 'metadata_json')
+    if new_metadata_json:
+        new_metadata_json = json.loads(new_metadata_json)
     new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
 
-    # if either the metadata content or the set of validation models for the record has changed,
+    # if either the metadata record content or the set of validation models for the record has changed,
     # then the record must be invalidated
-    if old_content_json != new_content_json or old_validation_models != new_validation_models:
+    if old_metadata_json != new_metadata_json or old_validation_models != new_validation_models:
         new_dict['validation_state'] = obj.extras['validation_state'] = MetadataValidationState.NOT_VALIDATED
 
     if not defer_commit:
@@ -451,7 +451,7 @@ def metadata_record_validate(context, data_dict):
     partial_states = set()
     for metadata_model in validation_models:
         validation_result = tk.get_action('metadata_validity_check')(context, {
-            'content_json': metadata_record['content_json'],
+            'metadata_json': metadata_record['metadata_json'],
             'model_json': metadata_model['model_json'],
         })
         partial_state = validation_result['status']
@@ -823,7 +823,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
     success = True  # if there are no rules associated with a state, the transition is allowed
     for workflow_rule in workflow_rules:
         rule_success = tk.get_action('metadata_workflow_rule_evaluate')(context, {
-            'content_json': metadata_record.extras['content_json'],
+            'metadata_json': metadata_record.extras['metadata_json'],
             'evaluator_url': workflow_rule['evaluator_url'],
             'rule_json': workflow_rule['rule_json'],
         })

@@ -439,8 +439,8 @@ def metadata_validity_check(context, data_dict):
     """
     Check the validity of a metadata dictionary against a metadata model.
 
-    :param content_json: JSON dictionary of metadata record content
-    :type content_json: string
+    :param metadata_json: JSON dictionary of metadata record content
+    :type metadata_json: string
     :param model_json: JSON dictionary defining a metadata model
     :type model_json: string
 
@@ -455,7 +455,7 @@ def metadata_validity_check(context, data_dict):
     model = context['model']
     session = context['session']
 
-    content_json, model_json = tk.get_or_bust(data_dict, ['content_json', 'model_json'])
+    metadata_json, model_json = tk.get_or_bust(data_dict, ['metadata_json', 'model_json'])
 
     raise NotImplementedError
 
@@ -465,8 +465,8 @@ def metadata_workflow_rule_evaluate(context, data_dict):
     """
     Evaluate whether a metadata dictionary passes a workflow rule.
 
-    :param content_json: JSON dictionary of metadata record content
-    :type content_json: string
+    :param metadata_json: JSON dictionary of metadata record content
+    :type metadata_json: string
     :param evaluator_url: URI of the metric evaluation service
     :type evaluator_url: string
     :param rule_json: JSON dictionary defining a workflow rule
@@ -480,8 +480,8 @@ def metadata_workflow_rule_evaluate(context, data_dict):
     model = context['model']
     session = context['session']
 
-    content_json, evaluator_url, rule_json = tk.get_or_bust(
-        data_dict, ['content_json', 'evaluator_url', 'rule_json'])
+    metadata_json, evaluator_url, rule_json = tk.get_or_bust(
+        data_dict, ['metadata_json', 'evaluator_url', 'rule_json'])
 
     raise NotImplementedError
 

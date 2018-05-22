@@ -37,9 +37,9 @@ class MetadataRecord(factory.Factory):
 
     name = factory.Sequence(lambda n: 'test_record_{0:02d}'.format(n))
     title = 'Test Metadata Record'
-    content_json = '{ "testkey": "testvalue" }'
-    content_raw = '<xml/>'
-    content_url = 'http://example.net/'
+    metadata_json = '{ "testkey": "testvalue" }'
+    metadata_raw = '<xml/>'
+    metadata_url = 'http://example.net/'
     infrastructures = []
 
     @classmethod

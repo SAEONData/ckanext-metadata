@@ -269,12 +269,12 @@ def metadata_record_create(context, data_dict):
     :type schema_name: string
     :param schema_version: the version of the metadata schema, used to look up a metadata_schema object (nullable)
     :type schema_version: string
-    :param content_json: JSON dictionary of metadata content (nullable)
-    :type content_json: string
-    :param content_raw: original unmodified metadata (nullable)
-    :type content_raw: string
-    :param content_url: URL pointing to original unmodified metadata (nullable)
-    :type content_url: string
+    :param metadata_json: JSON dictionary of metadata record content (nullable)
+    :type metadata_json: string
+    :param metadata_raw: original unmodified metadata (nullable)
+    :type metadata_raw: string
+    :param metadata_url: URL pointing to original unmodified metadata (nullable)
+    :type metadata_url: string
 
     :returns: the newly created metadata record (unless 'return_id_only' is set to True
               in the context, in which case just the metadata record id will be returned)
