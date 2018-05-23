@@ -52,8 +52,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'owner_org': self.owner_org['id'],
             'metadata_collection_id': self.metadata_collection['id'],
             'infrastructures': [],
-            'schema_name': self.metadata_schema['schema_name'],
-            'schema_version': self.metadata_schema['schema_version'],
+            'metadata_schema_id': self.metadata_schema['id'],
             'metadata_json': '{ "testkey": "testvalue" }',
             'metadata_raw': '<xml/>',
             'metadata_url': 'http://example.net/',
@@ -62,10 +61,6 @@ class TestMetadataRecordActions(ActionTestBase):
     @staticmethod
     def _make_input_dict_from_output_dict(output_dict):
         input_dict = output_dict.copy()
-        metadata_schema_id = input_dict.pop('metadata_schema_id')
-        metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
-        input_dict['schema_name'] = metadata_schema.schema_name
-        input_dict['schema_version'] = metadata_schema.schema_version
         input_dict['metadata_json'] = json.dumps(input_dict['metadata_json'])
         return input_dict
 
@@ -150,8 +145,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
         assert_error(result, 'infrastructures', 'Missing parameter')
-        assert_error(result, 'schema_name', 'Missing parameter')
-        assert_error(result, 'schema_version', 'Missing parameter')
+        assert_error(result, 'metadata_schema_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
         assert_error(result, 'metadata_raw', 'Missing parameter')
         assert_error(result, 'metadata_url', 'Missing parameter')
@@ -161,10 +155,10 @@ class TestMetadataRecordActions(ActionTestBase):
                                         exception_class=tk.ValidationError,
                                         owner_org='',
                                         metadata_collection_id='',
-                                        schema_name='')
+                                        metadata_schema_id='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
-        assert_error(result, 'schema_name', 'Missing value')
+        assert_error(result, 'metadata_schema_id', 'Missing value')
 
     def test_create_invalid_duplicate_name(self):
         metadata_record = self._generate_metadata_record()
@@ -190,12 +184,11 @@ class TestMetadataRecordActions(ActionTestBase):
                                         exception_class=tk.ValidationError,
                                         owner_org='a',
                                         metadata_collection_id='b',
-                                        schema_name='c',
-                                        schema_version='d',
-                                        infrastructures=[{'id': 'e'}])
+                                        metadata_schema_id='c',
+                                        infrastructures=[{'id': 'd'}])
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
-        assert_error(result, '__after', 'Could not find a metadata schema')
+        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result['infrastructures'][0], 'id', 'Not found: Infrastructure')
 
     def test_create_invalid_deleted_references(self):
@@ -212,7 +205,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
-        assert_error(result, '__after', 'Could not find a metadata schema')
+        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result['infrastructures'][0], 'id', 'Not found: Infrastructure')
 
     def test_create_invalid_owner_org_collection_mismatch(self):
@@ -238,8 +231,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'title': 'Updated Test Metadata Record',
             'owner_org': self.owner_org['id'],
             'metadata_collection_id': new_metadata_collection['id'],
-            'schema_name': new_metadata_schema['schema_name'],
-            'schema_version': new_metadata_schema['schema_version'],
+            'metadata_schema_id': new_metadata_schema['id'],
             'metadata_json': '{ "newtestkey": "newtestvalue" }',
             'metadata_raw': '<updated_xml/>',
             'metadata_url': 'http://updated.example.net/',
@@ -328,10 +320,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='invalid')
         new_metadata_schema = ckanext_factories.MetadataSchema()
-        input_dict.update({
-            'schema_name': new_metadata_schema['schema_name'],
-            'schema_version': new_metadata_schema['schema_version'],
-        })
+        input_dict['metadata_schema_id'] = new_metadata_schema['id']
         result, obj = self._test_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
@@ -443,8 +432,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
         assert_error(result, 'infrastructures', 'Missing parameter')
-        assert_error(result, 'schema_name', 'Missing parameter')
-        assert_error(result, 'schema_version', 'Missing parameter')
+        assert_error(result, 'metadata_schema_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
         assert_error(result, 'metadata_raw', 'Missing parameter')
         assert_error(result, 'metadata_url', 'Missing parameter')
@@ -456,10 +444,10 @@ class TestMetadataRecordActions(ActionTestBase):
                                         id=metadata_record['id'],
                                         owner_org='',
                                         metadata_collection_id='',
-                                        schema_name='')
+                                        metadata_schema_id='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
-        assert_error(result, 'schema_name', 'Missing value')
+        assert_error(result, 'metadata_schema_id', 'Missing value')
 
     def test_update_invalid_not_json(self):
         metadata_record = self._generate_metadata_record()
@@ -484,12 +472,11 @@ class TestMetadataRecordActions(ActionTestBase):
                                         id=metadata_record['id'],
                                         owner_org='a',
                                         metadata_collection_id='b',
-                                        schema_name='c',
-                                        schema_version='d',
-                                        infrastructures=[{'id': 'e'}])
+                                        metadata_schema_id='c',
+                                        infrastructures=[{'id': 'd'}])
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
-        assert_error(result, '__after', 'Could not find a metadata schema')
+        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result['infrastructures'][0], 'id', 'Not found: Infrastructure')
 
     def test_update_invalid_deleted_references(self):
@@ -505,13 +492,12 @@ class TestMetadataRecordActions(ActionTestBase):
                                         id=metadata_record['id'],
                                         owner_org=organization['id'],
                                         metadata_collection_id=metadata_collection['id'],
-                                        schema_name=metadata_schema['schema_name'],
-                                        schema_version=metadata_schema['schema_version'],
+                                        metadata_schema_id=metadata_schema['id'],
                                         infrastructures=[{'id': infrastructure['id']}])
 
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
-        assert_error(result, '__after', 'Could not find a metadata schema')
+        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result['infrastructures'][0], 'id', 'Not found: Infrastructure')
 
     def test_update_invalid_bad_validation_state(self):

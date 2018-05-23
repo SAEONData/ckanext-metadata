@@ -336,9 +336,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         metadata_schema1 = ckanext_factories.MetadataSchema()
         metadata_schema2 = ckanext_factories.MetadataSchema(base_schema_id=metadata_schema1['id'])
         metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_schema1['id'])
-        metadata_record = ckanext_factories.MetadataRecord(
-            schema_name=metadata_schema1['schema_name'],
-            schema_version=metadata_schema1['schema_version'])
+        metadata_record = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema1['id'])
 
         result, obj = self._test_action('delete', 'metadata_schema',
                                         exception_class=tk.ValidationError,

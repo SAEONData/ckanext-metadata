@@ -52,25 +52,16 @@ class MetadataRecord(factory.Factory):
             assert False, "Positional args aren't supported, use keyword args."
 
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
-
-        if {'schema_name', 'schema_version'}.issubset(kwargs):
-            metadata_schema = ckanext_model.MetadataSchema.lookup(
-                kwargs.pop('schema_name'), kwargs.pop('schema_version'))
-        elif 'metadata_schema_id' in kwargs:
-            metadata_schema = ckanext_model.MetadataSchema.get(kwargs.pop('metadata_schema_id'))
-        else:
-            metadata_schema = ckanext_model.MetadataSchema.get(MetadataSchema()['id'])
-
         organization_id = kwargs.pop('owner_org', None) or ckan_factories.Organization()['id']
         metadata_collection_id = kwargs.pop('metadata_collection_id', None) \
                                  or MetadataCollection(organization_id=organization_id)['id']
+        metadata_schema_id = kwargs.pop('metadata_schema_id', None) or MetadataSchema()['id']
 
         package_dict = helpers.call_action('metadata_record_create',
                                            context=context,
                                            owner_org=organization_id,
                                            metadata_collection_id=metadata_collection_id,
-                                           schema_name=metadata_schema.schema_name,
-                                           schema_version=metadata_schema.schema_version,
+                                           metadata_schema_id=metadata_schema_id,
                                            **kwargs)
         return package_dict
 

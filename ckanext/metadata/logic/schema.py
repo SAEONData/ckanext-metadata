@@ -92,8 +92,7 @@ def metadata_record_create_schema():
         'infrastructures': {
             'id': [v.not_empty, unicode, v.group_exists('infrastructure')],
         },
-        'schema_name': [v.not_empty, unicode],
-        'schema_version': [v.not_missing, unicode],
+        'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists, convert_to_extras],
         'metadata_json': [v.not_missing, unicode, v.json_dict_validator, convert_to_extras],
         'metadata_raw': [v.not_missing, unicode, convert_to_extras],
         'metadata_url': [v.not_missing, unicode, v.url_validator, convert_to_extras],
@@ -103,7 +102,6 @@ def metadata_record_create_schema():
         # post-validation
         '__after': [v.metadata_record_id_name_generator,
                     v.owner_org_owns_metadata_collection,
-                    v.metadata_record_schema_selector,
                     ignore],
     }
     _make_create_schema(schema)
@@ -130,7 +128,6 @@ def metadata_record_show_schema():
         'private': [],
         'extras': _extras_schema(),
     })
-    del schema['schema_name'], schema['schema_version']
     return schema
 
 

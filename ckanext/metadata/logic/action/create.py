@@ -262,13 +262,11 @@ def metadata_record_create(context, data_dict):
     :type owner_org: string
     :param metadata_collection_id: the id or name of the metadata collection to which this record will be added
     :type metadata_collection_id: string
-    :param infrastructures: the infrastructures associated with the metadata record (nullable - may be an
-        empty list); list of dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
+    :param infrastructures: the infrastructures associated with the record (nullable - may be an empty list);
+        list of dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
     :type infrastructures: list of dictionaries
-    :param schema_name: the name of the metadata schema, used to look up a metadata_schema object
-    :type schema_name: string
-    :param schema_version: the version of the metadata schema, used to look up a metadata_schema object (nullable)
-    :type schema_version: string
+    :param metadata_schema_id: the id or name of the metadata schema that describes the record's structure
+    :type metadata_schema_id: string
     :param metadata_json: JSON dictionary of metadata record content (nullable)
     :type metadata_json: string
     :param metadata_raw: original unmodified metadata (nullable)

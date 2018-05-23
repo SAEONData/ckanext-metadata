@@ -225,23 +225,6 @@ def owner_org_owns_metadata_collection(key, data, errors, context):
         raise tk.Invalid(_("owner_org must be the same organization that owns the metadata collection"))
 
 
-def metadata_record_schema_selector(key, data, errors, context):
-    """
-    Sets the metadata_schema_id of a metadata record given the schema name and version
-    supplied as input. For use with the '__after' schema key.
-    """
-    schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)))
-    schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
-
-    metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
-    if not metadata_schema or metadata_schema.state == 'deleted':
-        raise tk.Invalid(_("Could not find a metadata schema with schema_name='%s'"
-                           " and schema_version='%s'") % (schema_name, schema_version))
-
-    data[key[:-1] + ('metadata_schema_id',)] = metadata_schema.id
-    convert_to_extras(key[:-1] + ('metadata_schema_id',), data, errors, context)
-
-
 def metadata_record_id_name_generator(key, data, errors, context):
     """
     Generates id and name for a new metadata record where these values have not been supplied.
