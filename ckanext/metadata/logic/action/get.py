@@ -325,15 +325,56 @@ def metadata_record_list(context, data_dict):
     """
     Return a list of names of the site's metadata records.
 
+    :param ids: a list of ids and/or names of metadata records to return (optional filter)
+    :type ids: list of strings
+    :param metadata_collection_id: the id or name of the metadata collection (optional filter)
+    :type metadata_collection_id: string
+    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
     :rtype: list of strings
     """
     log.debug("Retrieving metadata record list: %r", data_dict)
     tk.check_access('metadata_record_list', context, data_dict)
 
-    data_dict['type'] = 'metadata_record'
-    context['invoked_api'] = 'metadata_record_list'
+    model = context['model']
+    session = context['session']
 
-    return tk.get_action('package_list')(context, data_dict)
+    # if this is a GET request and exactly one id has been provided, then ids arrives
+    # as a string instead of a single-element list containing the id string
+    ids = data_dict.get('ids')
+    if ids and isinstance(ids, basestring):
+        ids = [ids]
+
+    metadata_collection_id = data_dict.get('metadata_collection_id')
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    metadata_records_q = session.query(model.Package.id, model.Package.name) \
+        .filter_by(type='metadata_record', state='active')
+
+    if ids:
+        metadata_records_q = metadata_records_q.filter(or_(
+            model.Package.id.in_(ids), model.Package.name.in_(ids)))
+
+    if metadata_collection_id:
+        metadata_collection = model.Group.get(metadata_collection_id)
+        if metadata_collection is None or metadata_collection.type != 'metadata_collection':
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
+        metadata_collection_id = metadata_collection.id
+        metadata_records_q = metadata_records_q.join(model.PackageExtra) \
+            .filter(model.PackageExtra.key == 'metadata_collection_id') \
+            .filter(model.PackageExtra.value == metadata_collection_id)
+
+    metadata_records = metadata_records_q.all()
+    result = []
+    for (id_, name) in metadata_records:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('metadata_record_show')(context, data_dict)]
+        else:
+            result += [name]
+
+    return result
 
 
 @tk.side_effect_free
