@@ -1,12 +1,13 @@
 language: python
-python:
-    - "2.7"
-env:
-    - PGVERSION=9.5 CKAN_RELEASE=2.7.4
 sudo: required
-install:
-    - bash bin/travis-build.bash
-    - pip install coveralls
-script: sh bin/travis-run.sh
-after_success:
-    - coveralls
+addons:
+  postgresql: "9.5"
+
+python:
+  - "2.7"
+env:
+  - CKANVERSION=2.7.4
+
+install: bash bin/travis-build.bash
+script: bash bin/travis-run.sh
+after_success: coveralls
