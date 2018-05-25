@@ -63,3 +63,7 @@ def workflow_metric_delete(context, data_dict):
 
 def workflow_rule_delete(context, data_dict):
     return {'success': True}
+
+
+def organization_delete(context, data_dict):
+    return {'success': True}

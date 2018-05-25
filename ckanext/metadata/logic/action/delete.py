@@ -426,63 +426,81 @@ def workflow_rule_delete(context, data_dict):
         model.repo.commit()
 
 
-# # TODO: chaining of action functions does not currently work
-# @tk.chained_action
-# def organization_delete(original_action, context, data_dict):
-#     """
-#     Delete an organization.
-#
-#     You must be authorized to delete the organization.
-#
-#     :param id: the id or name of the organization to delete
-#     :type id: string
-#     """
-#     log.info("Deleting organization: %r", data_dict)
-#
-#     session = context['session']
-#     model = context['model']
-#     user = context['user']
-#
-#     id_ = tk.get_or_bust(data_dict, 'id')
-#     obj = model.Group.get(id_)
-#     if obj is None or obj.type != 'organization':
-#         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Organization')))
-#
-#     id_ = obj.id
-#     tk.check_access('organization_delete', context, data_dict)
-#
-#     if session.query(model.Package) \
-#             .filter(model.Package.owner_org == id_) \
-#             .filter(model.Package.type == 'metadata_record') \
-#             .filter(model.Package.state != 'deleted') \
-#             .count() > 0:
-#         raise tk.ValidationError(_('Organization has dependent metadata records'))
-#
-#     cascade_context = {
-#         'model': model,
-#         'user': user,
-#         'session': session,
-#         'defer_commit': True,
-#     }
-#
-#     # cascade delete to dependent metadata collections
-#     metadata_collection_ids = session.query(model.Group.id) \
-#         .join(model.GroupExtra, model.Group.id == model.GroupExtra.group_id) \
-#         .filter(model.Group.type == 'metadata_collection') \
-#         .filter(model.Group.state != 'deleted') \
-#         .filter(model.GroupExtra.key == 'organization_id') \
-#         .filter(model.GroupExtra.value == id_) \
-#         .all()
-#     for (metadata_collection_id,) in metadata_collection_ids:
-#         tk.get_action('metadata_collection_delete')(cascade_context, {'id': metadata_collection_id})
-#
-#     # cascade delete to dependent metadata models
-#     metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
-#         .filter(ckanext_model.MetadataModel.organization_id == id_) \
-#         .filter(ckanext_model.MetadataModel.state != 'deleted') \
-#         .all()
-#     for (metadata_model_id,) in metadata_model_ids:
-#         tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
-#
-#     data_dict['type'] = 'organization'
-#     original_action(context, data_dict)
+def organization_delete(context, data_dict):
+    """
+    Delete an organization.
+
+    You must be authorized to delete the organization.
+
+    :param id: the id or name of the organization to delete
+    :type id: string
+    """
+    log.info("Deleting organization: %r", data_dict)
+
+    session = context['session']
+    model = context['model']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    obj = model.Group.get(id_)
+    if obj is None or obj.type != 'organization':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Organization')))
+
+    id_ = obj.id
+    tk.check_access('organization_delete', context, data_dict)
+
+    if session.query(model.Package) \
+            .filter(model.Package.owner_org == id_) \
+            .filter(model.Package.type == 'metadata_record') \
+            .filter(model.Package.state != 'deleted') \
+            .count() > 0:
+        raise tk.ValidationError(_('Organization has dependent metadata records'))
+
+    cascade_context = {
+        'model': model,
+        'user': user,
+        'session': session,
+        'defer_commit': True,
+    }
+
+    # cascade delete to dependent metadata collections
+    metadata_collection_ids = session.query(model.Group.id) \
+        .join(model.GroupExtra, model.Group.id == model.GroupExtra.group_id) \
+        .filter(model.Group.type == 'metadata_collection') \
+        .filter(model.Group.state != 'deleted') \
+        .filter(model.GroupExtra.key == 'organization_id') \
+        .filter(model.GroupExtra.value == id_) \
+        .all()
+    for (metadata_collection_id,) in metadata_collection_ids:
+        tk.get_action('metadata_collection_delete')(cascade_context, {'id': metadata_collection_id})
+
+    # cascade delete to dependent metadata models
+    metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
+        .filter(ckanext_model.MetadataModel.organization_id == id_) \
+        .filter(ckanext_model.MetadataModel.state != 'deleted') \
+        .all()
+    for (metadata_model_id,) in metadata_model_ids:
+        tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
+
+    # delete membership relations
+    for member in session.query(model.Member) \
+            .filter(or_(model.Member.table_id == id_, model.Member.group_id == id_)) \
+            .filter(model.Member.state == 'active') \
+            .all():
+        member.delete()
+
+    # delete non-metadata packages (could potentially leave orphaned packages
+    # behind - see comment in ckan.logic.action.delete._group_or_org_delete)
+    package_q = obj.packages(with_private=True, return_query=True)
+    package_q = package_q.filter(model.Package.type != 'metadata_record')
+    for pkg in package_q.all():
+        tk.get_action('package_delete')(cascade_context, {'id': pkg.id})
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    rev.message = _(u'REST API: Delete organization %s') % id_
+
+    obj.delete()
+    if not defer_commit:
+        model.repo.commit()

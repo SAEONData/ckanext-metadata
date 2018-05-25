@@ -7,7 +7,6 @@ from ckan.tests.helpers import call_action
 import ckan.plugins.toolkit as tk
 import ckan.model as ckan_model
 
-from ckanext.metadata import model as ckanext_model
 from ckanext.metadata.tests import (
     ActionTestBase,
     make_uuid,
@@ -23,20 +22,17 @@ class TestMetadataRecordActions(ActionTestBase):
     def setup(self):
         super(TestMetadataRecordActions, self).setup()
         self.owner_org = self._generate_organization()
-        self.metadata_collection = ckanext_factories.MetadataCollection(organization_id=self.owner_org['id'])
+        self.metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'])
         self.metadata_schema = ckanext_factories.MetadataSchema()
 
     def _generate_organization(self, **kwargs):
-        return ckan_factories.Organization(
-            users=[{'name': self.normal_user['name'], 'capacity': 'editor'}],
-            **kwargs
-        )
+        return ckan_factories.Organization(user=self.normal_user, **kwargs)
+
+    def _generate_metadata_collection(self, **kwargs):
+        return ckanext_factories.MetadataCollection(user=self.normal_user, **kwargs)
 
     def _generate_infrastructure(self, **kwargs):
-        return ckanext_factories.Infrastructure(
-            users=[{'name': self.normal_user['name'], 'capacity': 'member'}],
-            **kwargs
-        )
+        return ckanext_factories.Infrastructure(user=self.normal_user, **kwargs)
 
     def _generate_metadata_record(self, **kwargs):
         return ckanext_factories.MetadataRecord(
@@ -193,7 +189,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_create_invalid_deleted_references(self):
         infrastructure = self._generate_infrastructure()
-        call_action('organization_delete', id=self.owner_org['id'])
+        call_action('organization_delete', context={'user': self.normal_user['name']}, id=self.owner_org['id'])
         call_action('metadata_collection_delete', id=self.metadata_collection['id'])
         call_action('metadata_schema_delete', id=self.metadata_schema['id'])
         call_action('infrastructure_delete', id=infrastructure['id'])
@@ -212,7 +208,7 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self._test_action('create', 'metadata_record',
                                         exception_class=tk.ValidationError,
                                         owner_org=self.owner_org['id'],
-                                        metadata_collection_id=ckanext_factories.MetadataCollection()['id'])
+                                        metadata_collection_id=self._generate_metadata_collection()['id'])
         assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
 
     def test_update_valid(self):
@@ -221,7 +217,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record(infrastructures=[
             {'id': infrastructure1['id']}, {'id': infrastructure2['id']}])
 
-        new_metadata_collection = ckanext_factories.MetadataCollection(organization_id=self.owner_org['id'])
+        new_metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'])
         new_metadata_schema = ckanext_factories.MetadataSchema()
         new_infrastructure = self._generate_infrastructure()
 
@@ -339,7 +335,7 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
         new_organization = self._generate_organization()
-        new_metadata_collection = ckanext_factories.MetadataCollection(organization_id=new_organization['id'])
+        new_metadata_collection = self._generate_metadata_collection(organization_id=new_organization['id'])
         new_metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'],
                                                              organization_id=new_organization['id'])
 
@@ -400,7 +396,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert validation_model_names == [metadata_model['name']]
 
         new_organization = self._generate_organization()
-        new_metadata_collection = ckanext_factories.MetadataCollection(organization_id=new_organization['id'])
+        new_metadata_collection = self._generate_metadata_collection(organization_id=new_organization['id'])
         input_dict.update({
             'owner_org': new_organization['id'],
             'metadata_collection_id': new_metadata_collection['id'],
@@ -481,11 +477,14 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_update_invalid_deleted_references(self):
         metadata_record = self._generate_metadata_record()
-        infrastructure = self._generate_infrastructure(state='deleted')
+        infrastructure = self._generate_infrastructure()
         organization = self._generate_organization()
-        metadata_collection = ckanext_factories.MetadataCollection(organization_id=organization['id'], state='deleted')
-        metadata_schema = ckanext_factories.MetadataSchema(state='deleted')
-        call_action('organization_delete', id=organization['id'])
+        metadata_collection = self._generate_metadata_collection(organization_id=organization['id'])
+        metadata_schema = ckanext_factories.MetadataSchema()
+        call_action('organization_delete', context={'user': self.normal_user['name']}, id=organization['id'])
+        call_action('metadata_collection_delete', id=metadata_collection['id'])
+        call_action('metadata_schema_delete', id=metadata_schema['id'])
+        call_action('infrastructure_delete', id=infrastructure['id'])
 
         result, obj = self._test_action('update', 'metadata_record',
                                         exception_class=tk.ValidationError,
@@ -516,7 +515,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                         exception_class=tk.ValidationError,
                                         id=metadata_record['id'],
                                         owner_org=self.owner_org['id'],
-                                        metadata_collection_id=ckanext_factories.MetadataCollection()['id'])
+                                        metadata_collection_id=self._generate_metadata_collection()['id'])
         assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
 
     def test_delete_valid(self):

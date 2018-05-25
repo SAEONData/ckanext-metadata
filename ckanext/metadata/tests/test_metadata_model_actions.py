@@ -167,7 +167,7 @@ class TestMetadataModelActions(ActionTestBase):
                     model_json='')
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
 
-        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        infrastructure = ckanext_factories.Infrastructure()
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
         call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',
@@ -196,7 +196,7 @@ class TestMetadataModelActions(ActionTestBase):
                     model_json='')
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'invalid')
 
-        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        infrastructure = ckanext_factories.Infrastructure()
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
         call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',
@@ -382,7 +382,7 @@ class TestMetadataModelActions(ActionTestBase):
     def test_update_with_dependent_records(self):
         metadata_schema = ckanext_factories.MetadataSchema()
         organization = ckan_factories.Organization()
-        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        infrastructure = ckanext_factories.Infrastructure()
         metadata_record_1 = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'])
         metadata_record_2 = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'], owner_org=organization['id'])
         metadata_record_3 = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'], owner_org=organization['id'], infrastructures=[{'id': infrastructure['id']}])
@@ -591,7 +591,7 @@ class TestMetadataModelActions(ActionTestBase):
                     model_json='')
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'not validated')
 
-        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        infrastructure = ckanext_factories.Infrastructure()
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
         call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',
@@ -620,7 +620,7 @@ class TestMetadataModelActions(ActionTestBase):
                     model_json='')
         assert_package_has_extra(metadata_record['id'], 'validation_state', 'invalid')
 
-        infrastructure = ckanext_factories.Infrastructure(users=[{'name': self.normal_user['name'], 'capacity': 'member'}])
+        infrastructure = ckanext_factories.Infrastructure()
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
         call_action('metadata_record_validation_state_override', id=metadata_record['id'], validation_state='valid')
         call_action('metadata_model_create',

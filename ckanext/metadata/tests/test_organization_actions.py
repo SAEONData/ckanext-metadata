@@ -15,17 +15,20 @@ from ckanext.metadata.tests import (
 
 class TestOrganizationActions(ActionTestBase):
 
-    # TODO: most of these tests will not work, as chaining of action functions is broken in CKAN
-    # and therefore we cannot correctly implement our organization_delete override
+    def _generate_organization(self, **kwargs):
+        return ckan_factories.Organization(user=self.normal_user, **kwargs)
+
+    def _generate_metadata_collection(self, **kwargs):
+        return ckanext_factories.MetadataCollection(user=self.normal_user, **kwargs)
 
     def test_delete_valid(self):
-        organization = ckan_factories.Organization()
+        organization = self._generate_organization()
         self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
 
     def test_delete_valid_cascade_metadata_models(self):
-        organization = ckan_factories.Organization()
+        organization = self._generate_organization()
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
 
         self._test_action('delete', 'organization',
@@ -34,17 +37,18 @@ class TestOrganizationActions(ActionTestBase):
         assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
 
     def test_delete_valid_cascade_metadata_collections(self):
-        organization = ckan_factories.Organization()
-        metadata_collection = ckanext_factories.MetadataCollection(organization_id=organization['id'])
+        organization = self._generate_organization()
+        metadata_collection = self._generate_metadata_collection(organization_id=organization['id'])
 
         self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
         assert ckan_model.Group.get(metadata_collection['id']).state == 'deleted'
 
-    def test_delete_with_dependent_metadata_records(self):
-        organization = ckan_factories.Organization()
-        metadata_collection = ckanext_factories.MetadataCollection(organization_id=organization['id'])
+    def test_delete_with_dependencies(self):
+        organization = self._generate_organization()
+        metadata_collection = self._generate_metadata_collection(organization_id=organization['id'])
+        metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
         metadata_record = ckanext_factories.MetadataRecord(owner_org=organization['id'],
                                                            metadata_collection_id=metadata_collection['id'])
 
@@ -52,26 +56,12 @@ class TestOrganizationActions(ActionTestBase):
                                         exception_class=tk.ValidationError,
                                         id=organization['id'])
         assert_error(result, 'message', 'Organization has dependent metadata records')
+        assert ckan_model.Group.get(metadata_collection['id']).state == 'active'
+        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
 
         call_action('metadata_record_delete', id=metadata_record['id'])
         self._test_action('delete', 'organization',
                           model_class=ckan_model.Group,
                           id=organization['id'])
         assert ckan_model.Group.get(metadata_collection['id']).state == 'deleted'
-
-    def test_delete_with_dependent_metadata_models(self):
-        # TODO: this test will work once we have metadata models being referenced for validation
-        organization = ckan_factories.Organization()
-        metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
-
-        # add validation objects here
-        result, obj = self._test_action('delete', 'organization',
-                                        exception_class=tk.ValidationError,
-                                        id=organization['id'])
-        assert_error(result, 'message', 'Organization has dependent metadata models that are in use')
-
-        # delete validation objects here
-        self._test_action('delete', 'organization',
-                          model_class=ckan_model.Group,
-                          id=organization['id'])
         assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
