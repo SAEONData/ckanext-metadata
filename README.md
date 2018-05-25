@@ -1,13 +1,15 @@
 # ckanext-metadata
 
-A metadata management framework for CKAN.
+A metadata management framework for [CKAN](https://ckan.org).
 
 [![Travis CI](https://travis-ci.org/SAEONData/ckanext-metadata.svg?branch=master)](https://travis-ci.org/SAEONData/ckanext-metadata)
 [![Coverage](https://coveralls.io/repos/SAEONData/ckanext-metadata/badge.svg)](https://coveralls.io/r/SAEONData/ckanext-metadata)
 
-## Installation
+## Requirements
 
-This extension requires CKAN v2.7 or later.
+This extension has been developed and tested with CKAN version 2.7.4.
+
+## Installation
 
 ### Database setup
 
