@@ -141,6 +141,11 @@ def metadata_collection_create_schema():
         'state': [ignore_not_group_admin, ignore_missing],
         'type': [],
         'is_organization': [],
+        'users': {
+            "name": [v.not_empty, unicode],
+            "capacity": [ignore_missing],
+            "__extras": [ignore]
+        },
 
         # extension-specific fields
         'organization_id': [v.not_empty, unicode, v.group_exists('organization'), convert_to_extras],

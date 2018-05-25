@@ -213,6 +213,10 @@ def metadata_collection_create(context, data_dict):
     :type description: string
     :param organization_id: the id or name of the organization to which this collection belongs
     :type organization_id: string
+    :param users: the users associated with the collection (optional); a list of dictionaries
+        each with key ``'name'`` (string, the id or name of the user) and optionally ``'capacity'``
+        (string, the capacity in which the user is a member of the collection)
+    :type users: list of dictionaries
 
     :returns: the newly created metadata collection (unless 'return_id_only' is set to True
               in the context, in which case just the metadata collection id will be returned)
