@@ -1,7 +1,6 @@
 language: python
 sudo: required
-addons:
-  postgresql: "9.5"
+services: postgresql
 
 python:
   - "2.7"
