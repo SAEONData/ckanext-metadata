@@ -13,7 +13,7 @@ tar xzf ckan-$CKANVERSION.tar.gz
 mv ckan-ckan-$CKANVERSION ckan
 cd ckan
 pip install -e .
-sed -i 's/psycopg2.*/psycopg2==2.7.3.2' requirements.txt
+sed -i 's/psycopg2.*/psycopg2==2.7.3.2/' requirements.txt
 pip install -r requirements.txt --allow-all-external
 pip install -r dev-requirements.txt --allow-all-external
 cd -
