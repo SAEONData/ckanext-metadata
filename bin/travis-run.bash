@@ -8,4 +8,5 @@ nosetests --ckan \
           --cover-package=ckanext.metadata \
           --cover-inclusive \
           --cover-erase \
-          --cover-tests
+          --cover-tests \
+          ckanext/metadata/tests
