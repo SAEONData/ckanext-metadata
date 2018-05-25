@@ -2,8 +2,7 @@ language: python
 python:
     - "2.7"
 env:
-    - PGVERSION=9.5
-    - CKAN_RELEASE=2.7.4
+    - PGVERSION=9.5 CKAN_RELEASE=2.7.4
 sudo: required
 install:
     - bash bin/travis-build.bash
