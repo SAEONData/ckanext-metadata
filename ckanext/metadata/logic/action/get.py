@@ -327,8 +327,13 @@ def metadata_record_list(context, data_dict):
 
     :param ids: a list of ids and/or names of metadata records to return (optional filter)
     :type ids: list of strings
-    :param metadata_collection_id: the id or name of the metadata collection (optional filter)
+    :param owner_org: the id or name of the organization that owns the records (optional filter)
+    :type owner_org: string
+    :param metadata_collection_id: the id or name of the metadata collection to which the records
+        belong (optional filter; if specified, owner_org must also be supplied)
     :type metadata_collection_id: string
+    :param infrastructure_id: the id or name of an associated infrastructure (optional filter)
+    :type infrastructure_id: string
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
 
@@ -346,7 +351,9 @@ def metadata_record_list(context, data_dict):
     if ids and isinstance(ids, basestring):
         ids = [ids]
 
+    owner_org = data_dict.get('owner_org')
     metadata_collection_id = data_dict.get('metadata_collection_id')
+    infrastructure_id = data_dict.get('infrastructure_id')
     all_fields = asbool(data_dict.get('all_fields'))
 
     metadata_records_q = session.query(model.Package.id, model.Package.name) \
@@ -356,14 +363,44 @@ def metadata_record_list(context, data_dict):
         metadata_records_q = metadata_records_q.filter(or_(
             model.Package.id.in_(ids), model.Package.name.in_(ids)))
 
+    if owner_org:
+        organization = model.Group.get(owner_org)
+        if organization is None or \
+                organization.type != 'organization' or \
+                organization.state != 'active':
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Organization')))
+        owner_org = organization.id
+        metadata_records_q = metadata_records_q.filter_by(owner_org=owner_org)
+
     if metadata_collection_id:
         metadata_collection = model.Group.get(metadata_collection_id)
-        if metadata_collection is None or metadata_collection.type != 'metadata_collection':
+        if metadata_collection is None or \
+                metadata_collection.type != 'metadata_collection' or \
+                metadata_collection.state != 'active':
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
         metadata_collection_id = metadata_collection.id
+
+        metadata_collection_organization_id = session.query(model.GroupExtra.value) \
+            .filter_by(group_id=metadata_collection_id, key='organization_id').scalar()
+        if owner_org != metadata_collection_organization_id:
+            raise tk.ValidationError(_("owner_org must be the same organization that owns the metadata collection"))
+
         metadata_records_q = metadata_records_q.join(model.PackageExtra) \
             .filter(model.PackageExtra.key == 'metadata_collection_id') \
             .filter(model.PackageExtra.value == metadata_collection_id)
+
+    if infrastructure_id:
+        infrastructure = model.Group.get(infrastructure_id)
+        if infrastructure is None or \
+                infrastructure.type != 'infrastructure' or \
+                infrastructure.state != 'active':
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+        infrastructure_id = infrastructure.id
+
+        metadata_records_q = metadata_records_q.join(model.Member, model.Package.id==model.Member.table_id) \
+            .filter(model.Member.group_id == infrastructure_id) \
+            .filter(model.Member.table_name == 'package') \
+            .filter(model.Member.state == 'active')
 
     metadata_records = metadata_records_q.all()
     result = []
