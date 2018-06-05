@@ -6,10 +6,9 @@ from sqlalchemy import or_
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
-from ckanext.metadata.logic import schema
+from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_dictize
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata import METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 
 log = logging.getLogger(__name__)
 

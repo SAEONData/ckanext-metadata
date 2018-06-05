@@ -4,9 +4,8 @@ import logging
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
-from ckanext.metadata.logic import schema
+from ckanext.metadata.logic import schema, MetadataValidationState
 from ckanext.metadata.lib.dictization import model_save
-from ckanext.metadata import MetadataValidationState
 
 log = logging.getLogger(__name__)
 
