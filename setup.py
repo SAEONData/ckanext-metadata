@@ -7,7 +7,7 @@ version = '0.2'
 setup(
     name='ckanext-metadata',
     version=version,
-    description='SAEON Metadata Framework & API',
+    description='A metadata management framework for CKAN',
     url='https://github.com/SAEONData/ckanext-metadata',
     author='Mark Jacobson',
     author_email='mark@saeon.ac.za',
@@ -17,7 +17,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
     ],
-    keywords='CKAN SAEON Metadata',
+    keywords='CKAN Metadata',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     namespace_packages=['ckanext'],
     install_requires=[
