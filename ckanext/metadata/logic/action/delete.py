@@ -35,13 +35,6 @@ def metadata_schema_delete(context, data_dict):
     id_ = obj.id
     tk.check_access('metadata_schema_delete', context, data_dict)
 
-    errors = []
-    if session.query(ckanext_model.MetadataSchema) \
-            .filter(ckanext_model.MetadataSchema.base_schema_id == id_) \
-            .filter(ckanext_model.MetadataSchema.state != 'deleted') \
-            .count() > 0:
-        errors += [_('Metadata schema has dependent metadata schemas.')]
-
     if session.query(model.Package) \
             .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
             .filter(model.PackageExtra.key == 'metadata_schema_id') \
@@ -49,18 +42,27 @@ def metadata_schema_delete(context, data_dict):
             .filter(model.Package.type == 'metadata_record') \
             .filter(model.Package.state != 'deleted') \
             .count() > 0:
-        errors += [_('Metadata schema has dependent metadata records.')]
+        raise tk.ValidationError(_('Metadata schema has dependent metadata records'))
 
-    if errors:
-        raise tk.ValidationError(' '.join(errors))
-
-    # cascade delete to dependent metadata models
     cascade_context = {
         'model': model,
         'user': user,
         'session': session,
         'defer_commit': True,
     }
+
+    # clear the base_schema_id on any referencing metadata schemas - implying that
+    # such schemas are now 'root' schemas, no longer derived from this one
+    metadata_schemas = session.query(ckanext_model.MetadataSchema) \
+        .filter(ckanext_model.MetadataSchema.base_schema_id == id_) \
+        .filter(ckanext_model.MetadataSchema.state != 'deleted') \
+        .all()
+    for metadata_schema in metadata_schemas:
+        metadata_schema_dict = model_dictize.metadata_schema_dictize(metadata_schema, cascade_context)
+        metadata_schema_dict['base_schema_id'] = ''
+        tk.get_action('metadata_schema_update')(cascade_context, metadata_schema_dict)
+
+    # cascade delete to dependent metadata models
     metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
         .filter(ckanext_model.MetadataModel.metadata_schema_id == id_) \
         .filter(ckanext_model.MetadataModel.state != 'deleted') \

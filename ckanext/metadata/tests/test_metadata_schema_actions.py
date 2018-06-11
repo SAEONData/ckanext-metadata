@@ -332,24 +332,32 @@ class TestMetadataSchemaActions(ActionTestBase):
                           model_class=ckanext_model.MetadataSchema,
                           id=metadata_schema['id'])
 
-    def test_delete_with_dependencies(self):
+    def test_delete_with_child_schemas(self):
         metadata_schema1 = ckanext_factories.MetadataSchema()
         metadata_schema2 = ckanext_factories.MetadataSchema(base_schema_id=metadata_schema1['id'])
-        metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_schema1['id'])
-        metadata_record = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema1['id'])
-
-        result, obj = self._test_action('delete', 'metadata_schema',
-                                        exception_class=tk.ValidationError,
-                                        id=metadata_schema1['id'])
-
-        assert_error(result, 'message', 'Metadata schema has dependent metadata schemas')
-        assert_error(result, 'message', 'Metadata schema has dependent metadata records')
-        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
-
-        call_action('metadata_schema_delete', id=metadata_schema2['id'])
-        call_action('metadata_record_delete', id=metadata_record['id'])
+        assert metadata_schema2['base_schema_id'] == metadata_schema1['id']
 
         self._test_action('delete', 'metadata_schema',
                           model_class=ckanext_model.MetadataSchema,
                           id=metadata_schema1['id'])
+        metadata_schema2['base_schema_id'] = None
+        del metadata_schema2['revision_id']
+        assert_object_matches_dict(ckanext_model.MetadataSchema.get(metadata_schema2['id']), metadata_schema2)
+
+    def test_delete_with_dependencies(self):
+        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_schema['id'])
+        metadata_record = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'])
+
+        result, obj = self._test_action('delete', 'metadata_schema',
+                                        exception_class=tk.ValidationError,
+                                        id=metadata_schema['id'])
+
+        assert_error(result, 'message', 'Metadata schema has dependent metadata records')
+        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
+
+        call_action('metadata_record_delete', id=metadata_record['id'])
+        self._test_action('delete', 'metadata_schema',
+                          model_class=ckanext_model.MetadataSchema,
+                          id=metadata_schema['id'])
         assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
