@@ -4,7 +4,7 @@ import logging
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
-from ckanext.metadata.logic import schema, MetadataValidationState
+from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_save
 
 log = logging.getLogger(__name__)
@@ -133,8 +133,12 @@ def metadata_model_create(context, data_dict):
         rev.message = _(u'REST API: Create metadata model %s') % metadata_model.id
 
     dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model.id})
-    invalidate_context = context
-    invalidate_context['defer_commit'] = True
+    invalidate_context = context.copy()
+    invalidate_context.update({
+        'defer_commit': True,
+        'trigger_action': 'metadata_model_create',
+        'trigger_object': metadata_model,
+    })
     for metadata_record_id in dependent_record_list:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
@@ -289,7 +293,8 @@ def metadata_record_create(context, data_dict):
     return_id_only = context.get('return_id_only', False)
 
     data_dict['type'] = 'metadata_record'
-    data_dict['validation_state'] = MetadataValidationState.NOT_VALIDATED
+    data_dict['validated'] = False
+    data_dict['errors'] = None
     data_dict['workflow_state_id'] = None
 
     context['schema'] = schema.metadata_record_create_schema()

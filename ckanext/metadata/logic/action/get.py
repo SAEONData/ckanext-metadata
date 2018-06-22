@@ -3,6 +3,7 @@
 import logging
 from paste.deploy.converters import asbool
 from sqlalchemy import or_
+import jsonschema
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -521,20 +522,20 @@ def metadata_validity_check(context, data_dict):
     :param model_json: JSON dictionary defining a metadata model
     :type model_json: string
 
-    :rtype: dictionary {
-            'status': MetadataValidationState
-            'errors': dictionary
-        }
+    :rtype: dictionary of errors; empty dict implies that the metadata is 100% valid
+        against the given model
     """
     log.debug("Checking metadata validity")
     tk.check_access('metadata_validity_check', context, data_dict)
 
-    model = context['model']
-    session = context['session']
-
     metadata_json, model_json = tk.get_or_bust(data_dict, ['metadata_json', 'model_json'])
 
-    raise NotImplementedError
+    errors = {}
+    validator = jsonschema.Draft4Validator(model_json)
+    for error in validator.iter_errors(metadata_json):
+        errors[tuple(error.path)] = error.message
+
+    return errors
 
 
 @tk.side_effect_free

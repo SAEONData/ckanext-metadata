@@ -96,7 +96,8 @@ def metadata_record_create_schema():
         'metadata_json': [v.not_missing, unicode, v.json_dict_validator, convert_to_extras],
         'metadata_raw': [v.not_missing, unicode, convert_to_extras],
         'metadata_url': [v.not_missing, unicode, v.url_validator, convert_to_extras],
-        'validation_state': [convert_to_extras],
+        'validated': [convert_to_extras],
+        'errors': [convert_to_extras],
         'workflow_state_id': [convert_to_extras],
 
         # post-validation
@@ -123,7 +124,8 @@ def metadata_record_show_schema():
         'metadata_raw': [convert_from_extras],
         'metadata_url': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras],
-        'validation_state': [convert_from_extras],
+        'validated': [convert_from_extras],
+        'errors': [convert_from_extras, v.deserialize_json],
         'workflow_state_id': [convert_from_extras, default(None)],
         'private': [],
         'extras': _extras_schema(),

@@ -5,9 +5,7 @@ import json
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
-from ckanext.metadata.logic import (schema, MetadataValidationState,
-                                    METADATA_VALIDATION_ACTIVITY_TYPE,
-                                    METADATA_WORKFLOW_ACTIVITY_TYPE)
+from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.lib.dictization import model_dictize
@@ -128,22 +126,23 @@ def metadata_model_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.MetadataModel.get(id_)
-    if obj is None:
+    metadata_model_id = tk.get_or_bust(data_dict, 'id')
+    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
+    if metadata_model is not None:
+        metadata_model_id = metadata_model.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
 
     tk.check_access('metadata_model_update', context, data_dict)
 
-    id_ = obj.id
-    old_dict = model_dictize.metadata_model_dictize(obj, context)
+    old_dict = model_dictize.metadata_model_dictize(metadata_model, context)
     old_model_json = old_dict['model_json']
     if old_model_json:
         old_model_json = json.loads(old_model_json)
-    old_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
+    old_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
 
-    data_dict['id'] = id_
-    context['metadata_model'] = obj
+    data_dict['id'] = metadata_model_id
+    context['metadata_model'] = metadata_model
     context['allow_partial_update'] = True
 
     data, errors = tk.navl_validate(data_dict, schema.metadata_model_update_schema(), context)
@@ -156,15 +155,19 @@ def metadata_model_update(context, data_dict):
     new_model_json = new_dict['model_json']
     if new_model_json:
         new_model_json = json.loads(new_model_json)
-    new_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
+    new_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
 
     if old_model_json != new_model_json:
         affected_record_ids = set(old_dependent_record_list) | set(new_dependent_record_list)
     else:
         affected_record_ids = set(old_dependent_record_list) ^ set(new_dependent_record_list)
 
-    invalidate_context = context
-    invalidate_context['defer_commit'] = True
+    invalidate_context = context.copy()
+    invalidate_context.update({
+        'defer_commit': True,
+        'trigger_action': 'metadata_model_update',
+        'trigger_object': metadata_model,
+    })
     for metadata_record_id in affected_record_ids:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
@@ -322,24 +325,30 @@ def metadata_record_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Package.get(id_)
-    if obj is None or obj.type != 'metadata_record':
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_update', context, data_dict)
 
-    id_ = obj.id
-    context['metadata_record'] = obj
-    old_dict = model_dictize.metadata_record_dictize(obj, context)
-    old_metadata_json = get_extra(old_dict, 'metadata_json')
-    if old_metadata_json:
-        old_metadata_json = json.loads(old_metadata_json)
-    old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
+    context['metadata_record'] = metadata_record
 
-    data_dict['id'] = id_
+    old_dict = model_dictize.metadata_record_dictize(metadata_record, context)
+
+    # if it's a validated record, get some current state info for checking whether we need to invalidate it
+    if data_dict['validated']:
+        old_metadata_json = get_extra(old_dict, 'metadata_json')
+        if old_metadata_json:
+            old_metadata_json = json.loads(old_metadata_json)
+        old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id}))
+
+    data_dict['id'] = metadata_record_id
     data_dict['type'] = 'metadata_record'
-    data_dict['validation_state'] = get_extra(old_dict, 'validation_state')
+    data_dict['validated'] = get_extra(old_dict, 'validated')
+    data_dict['errors'] = get_extra(old_dict, 'errors')
     data_dict['workflow_state_id'] = get_extra(old_dict, 'workflow_state_id')
 
     context['schema'] = schema.metadata_record_update_schema()
@@ -351,33 +360,48 @@ def metadata_record_update(context, data_dict):
     tk.get_action('package_update')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
 
-    # ensure new validation model list sees infrastructure list changes
-    session.flush()
+    # check if we need to invalidate the record
+    if data_dict['validated']:
+        # ensure new validation model list sees infrastructure list changes
+        session.flush()
 
-    new_dict = model_dictize.metadata_record_dictize(obj, context)
-    new_metadata_json = get_extra(new_dict, 'metadata_json')
-    if new_metadata_json:
-        new_metadata_json = json.loads(new_metadata_json)
-    new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': id_}))
+        new_dict = model_dictize.metadata_record_dictize(metadata_record, context)
+        new_metadata_json = get_extra(new_dict, 'metadata_json')
+        if new_metadata_json:
+            new_metadata_json = json.loads(new_metadata_json)
+        new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id}))
 
-    # if either the metadata record content or the set of validation models for the record has changed,
-    # then the record must be invalidated
-    if old_metadata_json != new_metadata_json or old_validation_models != new_validation_models:
-        new_dict['validation_state'] = obj.extras['validation_state'] = MetadataValidationState.NOT_VALIDATED
+        # if either the metadata record content or the set of validation models for the record has changed,
+        # then the record must be invalidated
+        if old_metadata_json != new_metadata_json or old_validation_models != new_validation_models:
+            invalidate_context = context.copy()
+            invalidate_context.update({
+                'defer_commit': True,
+                'trigger_action': 'metadata_record_update',
+                'trigger_object': metadata_record,
+            })
+            tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
     if not defer_commit:
         model.repo.commit()
 
-    output = id_ if return_id_only \
-        else tk.get_action('metadata_record_show')(context, {'id': id_})
+    output = metadata_record_id if return_id_only \
+        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
     return output
 
 
 def metadata_record_invalidate(context, data_dict):
     """
-    Mark a metadata record as not validated.
+    Mark a metadata record as not validated, and log the change to
+    the metadata record's activity stream.
 
     You must be authorized to invalidate the metadata record.
+
+    Note: this function is typically called from within another action function
+    whose effect triggers invalidation of the given metadata record. In such a
+    case, the calling function should pass 'trigger_action' (its own name, e.g.
+    'metadata_model_update') and 'trigger_object' (the object being modified,
+    e.g. a MetadataModel instance) in the context.
 
     :param id: the id or name of the metadata record to invalidate
     :type id: string
@@ -385,16 +409,53 @@ def metadata_record_invalidate(context, data_dict):
     log.info("Invalidating metadata record: %r", data_dict)
 
     model = context['model']
+    user = context['user']
     defer_commit = context.get('defer_commit', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Package.get(id_)
-    if obj is None or obj.type != 'metadata_record':
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_invalidate', context, data_dict)
 
-    obj.extras['validation_state'] = MetadataValidationState.NOT_VALIDATED
+    # already not validated
+    if not metadata_record.extras['validated']:
+        return
+
+    metadata_record.extras['validated'] = False
+    metadata_record.extras['errors'] = None
+
+    trigger_action = context.get('trigger_action')
+    trigger_object = context.get('trigger_object')
+    trigger_object_id = trigger_object.id if trigger_object else None
+    trigger_revision_id = trigger_object.revision_id if trigger_object else None
+
+    activity_context = context.copy()
+    activity_context.update({
+        'defer_commit': True,
+        'schema': {
+            'user_id': [],
+            'object_id': [],
+            'revision_id': [],
+            'activity_type': [],
+            'data': [],
+        },
+    })
+    activity_dict = {
+        'user_id': user,
+        'object_id': metadata_record_id,
+        'activity_type': METADATA_VALIDATION_ACTIVITY_TYPE,
+        'data': {
+            'action': 'metadata_record_invalidate',
+            'trigger_action': trigger_action,
+            'trigger_object_id': trigger_object_id,
+            'trigger_revision_id': trigger_revision_id,
+        }
+    }
+    tk.get_action('activity_create')(activity_context, activity_dict)
 
     if not defer_commit:
         model.repo.commit()
@@ -415,22 +476,22 @@ def metadata_record_validate(context, data_dict):
     log.info("Validating metadata record: %r", data_dict)
 
     model = context['model']
-    session = context['session']
     user = context['user']
     defer_commit = context.get('defer_commit', False)
 
     metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
-    if metadata_record is None or metadata_record.type != 'metadata_record':
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_validate', context, data_dict)
 
-    metadata_record_id = metadata_record.id
     context['metadata_record'] = metadata_record
 
     # already validated -> return the last validation result
-    if metadata_record.extras['validation_state'] != MetadataValidationState.NOT_VALIDATED:
+    if metadata_record.extras['validated']:
         return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
 
     validation_models = tk.get_action('metadata_record_validation_model_list')\
@@ -438,87 +499,52 @@ def metadata_record_validate(context, data_dict):
     if not validation_models:
         raise tk.ObjectNotFound(_('Could not find any metadata models for validating this metadata record'))
 
-    # log validation results using CKAN's activity stream model; CKAN doesn't provide a way
-    # to hook into activity detail creation, so we work directly with the model objects here
-    activity = model.Activity(
-        user_id=model.User.by_name(user.decode('utf8')).id,
-        object_id=metadata_record_id,
-        revision_id=metadata_record.revision_id,
-        activity_type=METADATA_VALIDATION_ACTIVITY_TYPE
-    )
-
     # delegate the actual validation work to the pluggable action metadata_validity_check
-    activity_details = []
-    partial_states = set()
+    validation_results = []
+    accumulated_errors = {}
     for metadata_model in validation_models:
-        validation_result = tk.get_action('metadata_validity_check')(context, {
-            'metadata_json': metadata_record['metadata_json'],
+        validation_errors = tk.get_action('metadata_validity_check')(context, {
+            'metadata_json': metadata_record.extras['metadata_json'],
             'model_json': metadata_model['model_json'],
         })
-        partial_state = validation_result['status']
-        partial_states |= {partial_state}
-        activity_detail = model.ActivityDetail(
-            activity_id=activity.id,
-            object_id=metadata_model['id'],
-            object_type=ckanext_model.MetadataModel,
-            activity_type=partial_state,
-            data=validation_result['errors']
-        )
-        activity_details += [activity_detail]
+        validation_result = {
+            'metadata_model_id': metadata_model['id'],
+            'metadata_model_revision_id': metadata_model['revision_id'],
+            'errors': validation_errors,
+        }
+        validation_results += [validation_result]
+        accumulated_errors.update(validation_errors)
 
-    # the resultant validation state of the metadata record is the 'worst' of the results from all the models
-    metadata_record.extras['validation_state'] = MetadataValidationState.net_state(partial_states)
+    metadata_record.extras['validated'] = True
+    metadata_record.extras['errors'] = json.dumps(accumulated_errors)
 
-    session.add(activity)
-    for activity_detail in activity_details:
-        session.add(activity_detail)
+    activity_context = context.copy()
+    activity_context.update({
+        'defer_commit': True,
+        'schema': {
+            'user_id': [],
+            'object_id': [],
+            'revision_id': [],
+            'activity_type': [],
+            'data': [],
+        },
+    })
+    activity_dict = {
+        'user_id': model.User.by_name(user.decode('utf8')).id,
+        'object_id': metadata_record_id,
+        'activity_type': METADATA_VALIDATION_ACTIVITY_TYPE,
+        'data': {
+            'action': 'metadata_record_validate',
+            'errors': accumulated_errors,
+            'details': validation_results,
+        }
+    }
+    tk.get_action('activity_create')(activity_context, activity_dict)
 
     if not defer_commit:
         model.repo.commit()
 
     return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
-
-
-def metadata_record_validation_state_override(context, data_dict):
-    """
-    Override a metadata record's validation state.
-
-    You must be authorized to override the metadata record's validation state.
-    This should normally only be allowed for sysadmins.
-
-    :param id: the id or name of the metadata record to update
-    :type id: string
-    :param validation_state: a permitted value as per MetadataValidationState
-    :type validation_state: string
-    """
-    log.info("Overriding validation state of metadata record: %r", data_dict)
-
-    model = context['model']
-    user = context['user']
-    defer_commit = context.get('defer_commit', False)
-
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Package.get(id_)
-    if obj is None or obj.type != 'metadata_record':
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
-
-    tk.check_access('metadata_record_validation_state_override', context, data_dict)
-
-    validation_state = tk.get_or_bust(data_dict, 'validation_state')
-    if validation_state not in MetadataValidationState.all:
-        raise tk.ValidationError(_('Invalid validation state'))
-
-    obj.extras['validation_state'] = validation_state
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
-    else:
-        rev.message = _(u'REST API: Override validation state of metadata record %s') % obj.id
-
-    if not defer_commit:
-        model.repo.commit()
 
 
 def metadata_record_workflow_state_override(context, data_dict):

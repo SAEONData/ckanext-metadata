@@ -94,28 +94,32 @@ def metadata_model_delete(context, data_dict):
 
     model = context['model']
     user = context['user']
-    session = context['session']
     defer_commit = context.get('defer_commit', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.MetadataModel.get(id_)
-    if obj is None:
+    metadata_model_id = tk.get_or_bust(data_dict, 'id')
+    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
+    if metadata_model is not None:
+        metadata_model_id = metadata_model.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
 
-    id_ = obj.id
     tk.check_access('metadata_model_delete', context, data_dict)
 
-    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': id_})
-    invalidate_context = context
-    invalidate_context['defer_commit'] = True
+    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
+    invalidate_context = context.copy()
+    invalidate_context.update({
+        'defer_commit': True,
+        'trigger_action': 'metadata_model_delete',
+        'trigger_object': metadata_model,
+    })
     for metadata_record_id in dependent_record_list:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
     rev = model.repo.new_revision()
     rev.author = user
-    rev.message = _(u'REST API: Delete metadata model %s') % id_
+    rev.message = _(u'REST API: Delete metadata model %s') % metadata_model_id
 
-    obj.delete()
+    metadata_model.delete()
     if not defer_commit:
         model.repo.commit()
 
