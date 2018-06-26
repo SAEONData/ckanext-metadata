@@ -2,13 +2,13 @@
 
 import logging
 import json
+from paste.deploy.converters import asbool
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
 from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata.lib.dictization import model_dictize
 
 log = logging.getLogger(__name__)
 
@@ -135,8 +135,7 @@ def metadata_model_update(context, data_dict):
 
     tk.check_access('metadata_model_update', context, data_dict)
 
-    old_dict = model_dictize.metadata_model_dictize(metadata_model, context)
-    old_model_json = old_dict['model_json']
+    old_model_json = metadata_model.model_json
     if old_model_json:
         old_model_json = json.loads(old_model_json)
     old_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
@@ -151,8 +150,7 @@ def metadata_model_update(context, data_dict):
         raise tk.ValidationError(errors)
 
     metadata_model = model_save.metadata_model_dict_save(data, context)
-    new_dict = model_dictize.metadata_model_dictize(metadata_model, context)
-    new_model_json = new_dict['model_json']
+    new_model_json = metadata_model.model_json
     if new_model_json:
         new_model_json = json.loads(new_model_json)
     new_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
@@ -314,10 +312,6 @@ def metadata_record_update(context, data_dict):
               in the context, in which case just the record id will be returned)
     :rtype: dictionary
     """
-
-    def get_extra(dict_, key):
-        return next((x['value'] for x in dict_['extras'] if x['key'] == key), None)
-    
     log.info("Updating metadata record: %r", data_dict)
 
     model = context['model']
@@ -336,20 +330,18 @@ def metadata_record_update(context, data_dict):
 
     context['metadata_record'] = metadata_record
 
-    old_dict = model_dictize.metadata_record_dictize(metadata_record, context)
-
     # if it's a validated record, get some current state info for checking whether we need to invalidate it
-    if data_dict['validated']:
-        old_metadata_json = get_extra(old_dict, 'metadata_json')
+    if asbool(metadata_record.extras['validated']):
+        old_metadata_json = metadata_record.extras['metadata_json']
         if old_metadata_json:
             old_metadata_json = json.loads(old_metadata_json)
         old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id}))
 
     data_dict['id'] = metadata_record_id
     data_dict['type'] = 'metadata_record'
-    data_dict['validated'] = get_extra(old_dict, 'validated')
-    data_dict['errors'] = get_extra(old_dict, 'errors')
-    data_dict['workflow_state_id'] = get_extra(old_dict, 'workflow_state_id')
+    data_dict['validated'] = asbool(metadata_record.extras['validated'])
+    data_dict['errors'] = metadata_record.extras['errors']
+    data_dict['workflow_state_id'] = metadata_record.extras['workflow_state_id']
 
     context['schema'] = schema.metadata_record_update_schema()
     context['invoked_api'] = 'metadata_record_update'
@@ -361,12 +353,11 @@ def metadata_record_update(context, data_dict):
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
 
     # check if we need to invalidate the record
-    if data_dict['validated']:
+    if asbool(metadata_record.extras['validated']):
         # ensure new validation model list sees infrastructure list changes
         session.flush()
 
-        new_dict = model_dictize.metadata_record_dictize(metadata_record, context)
-        new_metadata_json = get_extra(new_dict, 'metadata_json')
+        new_metadata_json = metadata_record.extras['metadata_json']
         if new_metadata_json:
             new_metadata_json = json.loads(new_metadata_json)
         new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id}))
@@ -422,11 +413,11 @@ def metadata_record_invalidate(context, data_dict):
     tk.check_access('metadata_record_invalidate', context, data_dict)
 
     # already not validated
-    if not metadata_record.extras['validated']:
+    if not asbool(metadata_record.extras['validated']):
         return
 
     metadata_record.extras['validated'] = False
-    metadata_record.extras['errors'] = None
+    metadata_record.extras['errors'] = '{}'
 
     trigger_action = context.get('trigger_action')
     trigger_object = context.get('trigger_object')
@@ -491,7 +482,7 @@ def metadata_record_validate(context, data_dict):
     context['metadata_record'] = metadata_record
 
     # already validated -> return the last validation result
-    if metadata_record.extras['validated']:
+    if asbool(metadata_record.extras['validated']):
         return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
 
     validation_models = tk.get_action('metadata_record_validation_model_list')\

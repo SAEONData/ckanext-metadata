@@ -294,8 +294,8 @@ def metadata_record_create(context, data_dict):
 
     data_dict['type'] = 'metadata_record'
     data_dict['validated'] = False
-    data_dict['errors'] = None
-    data_dict['workflow_state_id'] = None
+    data_dict['errors'] = '{}'
+    data_dict['workflow_state_id'] = ''
 
     context['schema'] = schema.metadata_record_create_schema()
     context['invoked_api'] = 'metadata_record_create'

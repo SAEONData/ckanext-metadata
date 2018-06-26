@@ -42,6 +42,24 @@ class TestMetadataRecordActions(ActionTestBase):
             **kwargs
         )
 
+    def _validate_metadata_record(self, metadata_record):
+        """
+        Create a (trivial) metadata model and validate the given record against it.
+        :param metadata_record: metadata record dict
+        :return: the metadata model (dict) used to validate the record
+        """
+        metadata_model = ckanext_factories.MetadataModel(
+            metadata_schema_id=metadata_record['metadata_schema_id'],
+            infrastructure_id=metadata_record['infrastructures'][0]['id'] if metadata_record['infrastructures'] else ''
+        )
+        call_action('metadata_record_validate', id=metadata_record['id'], context={'user': self.normal_user['name']})
+        assert_package_has_extra(metadata_record['id'], 'validated', True)
+
+        validation_model_names = call_action('metadata_record_validation_model_list', id=metadata_record['id'])
+        assert validation_model_names == [metadata_model['name']]
+
+        return metadata_model
+
     def _make_input_dict(self):
         return {
             'title': 'Test Metadata Record',
@@ -74,12 +92,16 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(obj.id, 'metadata_json', input_dict['metadata_json'], is_json=True)
         assert_package_has_extra(obj.id, 'metadata_raw', input_dict['metadata_raw'])
         assert_package_has_extra(obj.id, 'metadata_url', input_dict['metadata_url'])
-        assert_package_has_extra(obj.id, 'validation_state', kwargs.pop('validation_state', 'not validated'))
+        assert_package_has_extra(obj.id, 'validated', kwargs.pop('validated', False))
+        assert_package_has_extra(obj.id, 'errors', kwargs.pop('errors', {}), is_json=True)
+        assert_package_has_extra(obj.id, 'workflow_state_id', kwargs.pop('workflow_state_id', ''))
 
     def test_create_valid(self):
         input_dict = self._make_input_dict()
-        input_dict['type'] = 'ignore this'
-        input_dict['validation_state'] = 'ignore this too'
+        input_dict['type'] = 'ignore'
+        input_dict['validated'] = 'ignore'
+        input_dict['errors'] = 'ignore'
+        input_dict['workflow_state_id'] = 'ignore'
         result, obj = self._test_action('create', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
@@ -235,8 +257,10 @@ class TestMetadataRecordActions(ActionTestBase):
                 {'id': infrastructure2['name']},
                 {'id': new_infrastructure['name']},
             ],
-            'type': 'ignore this',
-            'validation_state': 'ignore this too',
+            'type': 'ignore',
+            'validated': 'ignore',
+            'errors': 'ignore',
+            'workflow_state_id': 'ignore',
         }
         result, obj = self._test_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
@@ -271,75 +295,51 @@ class TestMetadataRecordActions(ActionTestBase):
                                         title=metadata_record['title'])
         assert_group_has_member(infrastructure['id'], obj.id, 'package')
 
-    def test_update_valid_set_validation_state(self):
+    def test_update_json_invalidate(self):
         metadata_record = self._generate_metadata_record()
-        assert metadata_record['validation_state'] == 'not validated'
+        metadata_model = self._validate_metadata_record(metadata_record)
 
-        result, obj = self._test_action('validation_state_override', 'metadata_record',
-                                        model_class=ckan_model.Package,
-                                        id=metadata_record['id'],
-                                        validation_state='valid')
-        self._assert_metadata_record_ok(obj, metadata_record,
-                                        name=metadata_record['name'],
-                                        validation_state='valid')
-
-        result, obj = self._test_action('validation_state_override', 'metadata_record',
-                                        model_class=ckan_model.Package,
-                                        id=metadata_record['id'],
-                                        validation_state='partially valid')
-        self._assert_metadata_record_ok(obj, metadata_record,
-                                        name=metadata_record['name'],
-                                        validation_state='partially valid')
-
-        result, obj = self._test_action('validation_state_override', 'metadata_record',
-                                        model_class=ckan_model.Package,
-                                        id=metadata_record['id'],
-                                        validation_state='invalid')
-        self._assert_metadata_record_ok(obj, metadata_record,
-                                        name=metadata_record['name'],
-                                        validation_state='invalid')
-
-    def test_update_valid_invalidate(self):
-        metadata_record = self._generate_metadata_record()
-        metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'])
-        validation_model_names = call_action('metadata_record_validation_model_list', id=metadata_record['id'])
-        assert validation_model_names == [metadata_model['name']]
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
-
-        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
         input_dict['metadata_json'] = '{ "newtestkey": "newtestvalue" }'
+
         result, obj = self._test_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
-                                        validation_state='not validated')
+                                        validated=False)
 
-        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='invalid')
+        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
+        assert validation_model_names == [metadata_model['name']]
+
+    def test_update_schema_invalidate(self):
+        metadata_record = self._generate_metadata_record()
+        metadata_model = self._validate_metadata_record(metadata_record)
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+
         new_metadata_schema = ckanext_factories.MetadataSchema()
         input_dict['metadata_schema_id'] = new_metadata_schema['id']
+
         result, obj = self._test_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         metadata_schema_id=new_metadata_schema['id'],
-                                        validation_state='not validated')
+                                        validated=False)
+
         validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
         assert validation_model_names == []
 
-    def test_update_valid_owner_org_invalidate(self):
+    def test_update_owner_org_invalidate(self):
         metadata_record = self._generate_metadata_record()
-        metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'],
-                                                         organization_id=metadata_record['owner_org'])
-        validation_model_names = call_action('metadata_record_validation_model_list', id=metadata_record['id'])
-        assert validation_model_names == [metadata_model['name']]
+        metadata_model = self._validate_metadata_record(metadata_record)
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
         new_organization = self._generate_organization()
         new_metadata_collection = self._generate_metadata_collection(organization_id=new_organization['id'])
         new_metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'],
                                                              organization_id=new_organization['id'])
+        assert_package_has_extra(metadata_record['id'], 'validated', True)
 
-        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
         input_dict.update({
             'owner_org': new_organization['id'],
             'metadata_collection_id': new_metadata_collection['id'],
@@ -350,48 +350,44 @@ class TestMetadataRecordActions(ActionTestBase):
                                         name=input_dict['name'],
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
-                                        validation_state='not validated')
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert validation_model_names == [new_metadata_model['name']]
+                                        validated=False)
 
-    def test_update_valid_infrastructures_invalidate(self):
+        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
+        assert set(validation_model_names) == {metadata_model['name'], new_metadata_model['name']}
+
+    def test_update_infrastructures_invalidate(self):
         infrastructure = self._generate_infrastructure()
         metadata_record = self._generate_metadata_record(infrastructures=[{'id': infrastructure['id']}])
-        metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'],
-                                                         infrastructure_id=infrastructure['id'])
-        validation_model_names = call_action('metadata_record_validation_model_list', id=metadata_record['id'])
-        assert validation_model_names == [metadata_model['name']]
+        metadata_model = self._validate_metadata_record(metadata_record)
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
         new_infrastructure = self._generate_infrastructure()
         new_metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'],
                                                              infrastructure_id=new_infrastructure['id'])
+        assert_package_has_extra(metadata_record['id'], 'validated', True)
 
-        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
         result, obj = self._test_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
-                                        validation_state='not validated')
+                                        validated=False)
+
         validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
         assert validation_model_names == [new_metadata_model['name']]
 
-    def test_update_valid_no_invalidate(self):
+    def test_update_no_invalidate(self):
         metadata_record = self._generate_metadata_record()
-        metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_record['metadata_schema_id'])
-        validation_model_names = call_action('metadata_record_validation_model_list', id=metadata_record['id'])
-        assert validation_model_names == [metadata_model['name']]
+        metadata_model = self._validate_metadata_record(metadata_record)
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='partially valid')
         new_infrastructure = self._generate_infrastructure()
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
         result, obj = self._test_action('update', 'metadata_record',
                                         model_class=ckan_model.Package, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
-                                        validation_state='partially valid')
+                                        validated=True)
         validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
         assert validation_model_names == [metadata_model['name']]
 
@@ -407,7 +403,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                         name=input_dict['name'],
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
-                                        validation_state='partially valid')
+                                        validated=True)
         validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
         assert validation_model_names == [metadata_model['name']]
 
@@ -499,16 +495,6 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result['infrastructures'][0], 'id', 'Not found: Infrastructure')
 
-    def test_update_invalid_bad_validation_state(self):
-        metadata_record = self._generate_metadata_record()
-        assert metadata_record['validation_state'] == 'not validated'
-
-        result, obj = self._test_action('validation_state_override', 'metadata_record',
-                                        exception_class=tk.ValidationError,
-                                        id=metadata_record['id'],
-                                        validation_state='foo')
-        assert_error(result, 'message', 'Invalid validation state')
-
     def test_update_invalid_owner_org_collection_mismatch(self):
         metadata_record = self._generate_metadata_record()
         result, obj = self._test_action('update', 'metadata_record',
@@ -526,12 +512,15 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_invalidate(self):
         metadata_record = self._generate_metadata_record()
+        metadata_model = self._validate_metadata_record(metadata_record)
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
-        call_action('metadata_record_validation_state_override', id=input_dict['id'], validation_state='valid')
 
         result, obj = self._test_action('invalidate', 'metadata_record',
                                         model_class=ckan_model.Package,
                                         id=metadata_record['id'])
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
-                                        validation_state='not validated')
+                                        validated=False)
+
+        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
+        assert validation_model_names == [metadata_model['name']]

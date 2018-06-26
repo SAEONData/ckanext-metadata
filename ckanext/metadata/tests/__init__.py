@@ -3,6 +3,7 @@
 import uuid
 import re
 import json
+from paste.deploy.converters import asbool
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action
@@ -52,6 +53,8 @@ def assert_package_has_extra(package_id, key, value, state='active', is_json=Fal
         if isinstance(value, basestring):
             value = json.loads(value)
         extra_value = json.loads(extra.value)
+    elif type(value) is bool:
+        extra_value = asbool(extra.value)
     else:
         extra_value = extra.value
     assert extra_value == value
