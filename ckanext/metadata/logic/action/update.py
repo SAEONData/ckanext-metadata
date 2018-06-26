@@ -61,16 +61,22 @@ def metadata_schema_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.MetadataSchema.get(id_)
-    if obj is None:
+    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
+    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+    if metadata_schema is not None:
+        metadata_schema_id = metadata_schema.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
     tk.check_access('metadata_schema_update', context, data_dict)
 
-    data_dict['id'] = obj.id
-    context['metadata_schema'] = obj
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': metadata_schema_id,
+    })
+    context.update({
+        'metadata_schema': metadata_schema,
+        'allow_partial_update': True,
+    })
 
     data, errors = tk.navl_validate(data_dict, schema.metadata_schema_update_schema(), context)
     if errors:
@@ -84,13 +90,13 @@ def metadata_schema_update(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update metadata schema %s') % metadata_schema.id
+        rev.message = _(u'REST API: Update metadata schema %s') % metadata_schema_id
 
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_schema.id if return_id_only \
-        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema.id})
+    output = metadata_schema_id if return_id_only \
+        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_id})
     return output
 
 
@@ -140,9 +146,13 @@ def metadata_model_update(context, data_dict):
         old_model_json = json.loads(old_model_json)
     old_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
 
-    data_dict['id'] = metadata_model_id
-    context['metadata_model'] = metadata_model
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': metadata_model_id,
+    })
+    context.update({
+        'metadata_model': metadata_model,
+        'allow_partial_update': True,
+    })
 
     data, errors = tk.navl_validate(data_dict, schema.metadata_model_update_schema(), context)
     if errors:
@@ -174,13 +184,13 @@ def metadata_model_update(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update metadata model %s') % metadata_model.id
+        rev.message = _(u'REST API: Update metadata model %s') % metadata_model_id
 
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_model.id if return_id_only \
-        else tk.get_action('metadata_model_show')(context, {'id': metadata_model.id})
+    output = metadata_model_id if return_id_only \
+        else tk.get_action('metadata_model_show')(context, {'id': metadata_model_id})
     return output
 
 
@@ -212,28 +222,34 @@ def infrastructure_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Group.get(id_)
-    if obj is None or obj.type != 'infrastructure':
+    infrastructure_id = tk.get_or_bust(data_dict, 'id')
+    infrastructure = model.Group.get(infrastructure_id)
+    if infrastructure is not None and infrastructure.type == 'infrastructure':
+        infrastructure_id = infrastructure.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
 
     tk.check_access('infrastructure_update', context, data_dict)
 
-    data_dict['id'] = obj.id
-    data_dict['type'] = 'infrastructure'
-    data_dict['is_organization'] = False
-    context['schema'] = schema.infrastructure_update_schema()
-    context['invoked_api'] = 'infrastructure_update'
-    context['defer_commit'] = True
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': infrastructure_id,
+        'type': 'infrastructure',
+        'is_organization': False,
+    })
+    context.update({
+        'schema': schema.infrastructure_update_schema(),
+        'invoked_api': 'infrastructure_update',
+        'defer_commit': True,
+        'allow_partial_update': True,
+    })
 
     infrastructure_dict = tk.get_action('group_update')(context, data_dict)
 
     if not defer_commit:
         model.repo.commit()
 
-    output = infrastructure_dict['id'] if return_id_only \
-        else tk.get_action('infrastructure_show')(context, {'id': infrastructure_dict['id']})
+    output = infrastructure_id if return_id_only \
+        else tk.get_action('infrastructure_show')(context, {'id': infrastructure_id})
     return output
 
 
@@ -265,28 +281,34 @@ def metadata_collection_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Group.get(id_)
-    if obj is None or obj.type != 'metadata_collection':
+    metadata_collection_id = tk.get_or_bust(data_dict, 'id')
+    metadata_collection = model.Group.get(metadata_collection_id)
+    if metadata_collection is not None and metadata_collection.type == 'metadata_collection':
+        metadata_collection_id = metadata_collection.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
 
     tk.check_access('metadata_collection_update', context, data_dict)
 
-    data_dict['id'] = obj.id
-    data_dict['type'] = 'metadata_collection'
-    data_dict['is_organization'] = False
-    context['schema'] = schema.metadata_collection_update_schema()
-    context['invoked_api'] = 'metadata_collection_update'
-    context['defer_commit'] = True
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': metadata_collection_id,
+        'type': 'metadata_collection',
+        'is_organization': False,
+    })
+    context.update({
+        'schema': schema.metadata_collection_update_schema(),
+        'invoked_api': 'metadata_collection_update',
+        'defer_commit': True,
+        'allow_partial_update': True,
+    })
 
     metadata_collection_dict = tk.get_action('group_update')(context, data_dict)
 
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_collection_dict['id'] if return_id_only \
-        else tk.get_action('metadata_collection_show')(context, {'id': metadata_collection_dict['id']})
+    output = metadata_collection_id if return_id_only \
+        else tk.get_action('metadata_collection_show')(context, {'id': metadata_collection_id})
     return output
 
 
@@ -337,17 +359,20 @@ def metadata_record_update(context, data_dict):
             old_metadata_json = json.loads(old_metadata_json)
         old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id}))
 
-    data_dict['id'] = metadata_record_id
-    data_dict['type'] = 'metadata_record'
-    data_dict['validated'] = asbool(metadata_record.extras['validated'])
-    data_dict['errors'] = metadata_record.extras['errors']
-    data_dict['workflow_state_id'] = metadata_record.extras['workflow_state_id']
-
-    context['schema'] = schema.metadata_record_update_schema()
-    context['invoked_api'] = 'metadata_record_update'
-    context['defer_commit'] = True
-    context['return_id_only'] = True
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': metadata_record_id,
+        'type': 'metadata_record',
+        'validated': asbool(metadata_record.extras['validated']),
+        'errors': metadata_record.extras['errors'],
+        'workflow_state_id': metadata_record.extras['workflow_state_id'],
+    })
+    context.update({
+        'schema': schema.metadata_record_update_schema(),
+        'invoked_api': 'metadata_record_update',
+        'defer_commit': True,
+        'return_id_only': True,
+        'allow_partial_update': True,
+    })
 
     tk.get_action('package_update')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
@@ -556,26 +581,30 @@ def metadata_record_workflow_state_override(context, data_dict):
     user = context['user']
     defer_commit = context.get('defer_commit', False)
 
-    metadata_record_id, workflow_state_id = tk.get_or_bust(data_dict, ['id', 'workflow_state_id'])
-
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
-    if metadata_record is None or metadata_record.type != 'metadata_record':
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
+    workflow_state_id = tk.get_or_bust(data_dict, 'workflow_state_id')
     workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
-    if workflow_state is None or workflow_state.state != 'active':
+    if workflow_state is not None:
+        workflow_state_id = workflow_state.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
 
     tk.check_access('metadata_record_workflow_state_override', context, data_dict)
 
-    metadata_record.extras['workflow_state_id'] = workflow_state.id
+    metadata_record.extras['workflow_state_id'] = workflow_state_id
 
     rev = model.repo.new_revision()
     rev.author = user
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Override workflow state of metadata record %s') % metadata_record.id
+        rev.message = _(u'REST API: Override workflow state of metadata record %s') % metadata_record_id
 
     if not defer_commit:
         model.repo.commit()
@@ -609,16 +638,22 @@ def workflow_state_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.WorkflowState.get(id_)
-    if obj is None:
+    workflow_state_id = tk.get_or_bust(data_dict, 'id')
+    workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
+    if workflow_state is not None:
+        workflow_state_id = workflow_state.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
 
     tk.check_access('workflow_state_update', context, data_dict)
 
-    data_dict['id'] = obj.id
-    context['workflow_state'] = obj
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': workflow_state_id,
+    })
+    context.update({
+        'workflow_state': workflow_state,
+        'allow_partial_update': True,
+    })
 
     data, errors = tk.navl_validate(data_dict, schema.workflow_state_update_schema(), context)
     if errors:
@@ -632,13 +667,13 @@ def workflow_state_update(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update workflow state %s') % workflow_state.id
+        rev.message = _(u'REST API: Update workflow state %s') % workflow_state_id
 
     if not defer_commit:
         model.repo.commit()
 
-    output = workflow_state.id if return_id_only \
-        else tk.get_action('workflow_state_show')(context, {'id': workflow_state.id})
+    output = workflow_state_id if return_id_only \
+        else tk.get_action('workflow_state_show')(context, {'id': workflow_state_id})
     return output
 
 
@@ -681,16 +716,22 @@ def workflow_metric_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.WorkflowMetric.get(id_)
-    if obj is None:
+    workflow_metric_id = tk.get_or_bust(data_dict, 'id')
+    workflow_metric = ckanext_model.WorkflowMetric.get(workflow_metric_id)
+    if workflow_metric is not None:
+        workflow_metric_id = workflow_metric.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
 
     tk.check_access('workflow_metric_update', context, data_dict)
 
-    data_dict['id'] = obj.id
-    context['workflow_metric'] = obj
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': workflow_metric_id,
+    })
+    context.update({
+        'workflow_metric': workflow_metric,
+        'allow_partial_update': True,
+    })
 
     data, errors = tk.navl_validate(data_dict, schema.workflow_metric_update_schema(), context)
     if errors:
@@ -704,13 +745,13 @@ def workflow_metric_update(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update workflow metric %s') % workflow_metric.id
+        rev.message = _(u'REST API: Update workflow metric %s') % workflow_metric_id
 
     if not defer_commit:
         model.repo.commit()
 
-    output = workflow_metric.id if return_id_only \
-        else tk.get_action('workflow_metric_show')(context, {'id': workflow_metric.id})
+    output = workflow_metric_id if return_id_only \
+        else tk.get_action('workflow_metric_show')(context, {'id': workflow_metric_id})
     return output
 
 
@@ -738,16 +779,22 @@ def workflow_rule_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.WorkflowRule.get(id_)
-    if obj is None:
+    workflow_rule_id = tk.get_or_bust(data_dict, 'id')
+    workflow_rule = ckanext_model.WorkflowRule.get(workflow_rule_id)
+    if workflow_rule is not None:
+        workflow_rule_id = workflow_rule.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
 
     tk.check_access('workflow_rule_update', context, data_dict)
 
-    data_dict['id'] = obj.id
-    context['workflow_rule'] = obj
-    context['allow_partial_update'] = True
+    data_dict.update({
+        'id': workflow_rule_id,
+    })
+    context.update({
+        'workflow_rule': workflow_rule,
+        'allow_partial_update': True,
+    })
 
     data, errors = tk.navl_validate(data_dict, schema.workflow_rule_update_schema(), context)
     if errors:
@@ -761,13 +808,13 @@ def workflow_rule_update(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update workflow rule %s') % workflow_rule.id
+        rev.message = _(u'REST API: Update workflow rule %s') % workflow_rule_id
 
     if not defer_commit:
         model.repo.commit()
 
-    output = workflow_rule.id if return_id_only \
-        else tk.get_action('workflow_rule_show')(context, {'id': workflow_rule.id})
+    output = workflow_rule_id if return_id_only \
+        else tk.get_action('workflow_rule_show')(context, {'id': workflow_rule_id})
     return output
 
 
@@ -797,22 +844,26 @@ def metadata_record_workflow_state_transition(context, data_dict):
     user = context['user']
     defer_commit = context.get('defer_commit', False)
 
-    metadata_record_id, target_workflow_state_id = tk.get_or_bust(data_dict, ['id', 'workflow_state_id'])
-
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
-    if metadata_record is None or metadata_record.type != 'metadata_record':
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
+    target_workflow_state_id = tk.get_or_bust(data_dict, 'workflow_state_id')
     target_workflow_state = ckanext_model.WorkflowState.get(target_workflow_state_id)
-    if target_workflow_state is None or target_workflow_state.state != 'active':
+    if target_workflow_state is not None:
+        target_workflow_state_id = target_workflow_state.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
 
     tk.check_access('metadata_record_workflow_state_transition', context, data_dict)
 
-    metadata_record_id = metadata_record.id
-    target_workflow_state_id = target_workflow_state.id
-    context['metadata_record'] = metadata_record
-    context['workflow_state'] = target_workflow_state
+    context.update({
+        'metadata_record': metadata_record,
+        'workflow_state': target_workflow_state,
+    })
 
     current_workflow_state_id = session.query(model.PackageExtra.value) \
         .filter_by(package_id=metadata_record_id, key='workflow_state_id').scalar()

@@ -26,15 +26,17 @@ def metadata_schema_show(context, data_dict):
     """
     log.debug("Retrieving metadata schema: %r", data_dict)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.MetadataSchema.get(id_)
-    if obj is None:
+    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
+    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+    if metadata_schema is not None:
+        metadata_schema_id = metadata_schema.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
     tk.check_access('metadata_schema_show', context, data_dict)
 
-    context['metadata_schema'] = obj
-    metadata_schema_dict = model_dictize.metadata_schema_dictize(obj, context)
+    context['metadata_schema'] = metadata_schema
+    metadata_schema_dict = model_dictize.metadata_schema_dictize(metadata_schema, context)
 
     result_dict, errors = tk.navl_validate(metadata_schema_dict, schema.metadata_schema_show_schema(), context)
     return result_dict
@@ -82,15 +84,17 @@ def metadata_model_show(context, data_dict):
     """
     log.debug("Retrieving metadata model: %r", data_dict)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.MetadataModel.get(id_)
-    if obj is None:
+    metadata_model_id = tk.get_or_bust(data_dict, 'id')
+    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
+    if metadata_model is not None:
+        metadata_model_id = metadata_model.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
 
     tk.check_access('metadata_model_show', context, data_dict)
 
-    context['metadata_model'] = obj
-    metadata_model_dict = model_dictize.metadata_model_dictize(obj, context)
+    context['metadata_model'] = metadata_model
+    metadata_model_dict = model_dictize.metadata_model_dictize(metadata_model, context)
 
     result_dict, errors = tk.navl_validate(metadata_model_dict, schema.metadata_model_show_schema(), context)
     return result_dict
@@ -141,9 +145,12 @@ def metadata_model_dependent_record_list(context, data_dict):
 
     session = context['session']
     model = context['model']
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.MetadataModel.get(id_)
-    if obj is None:
+
+    metadata_model_id = tk.get_or_bust(data_dict, 'id')
+    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
+    if metadata_model is not None:
+        metadata_model_id = metadata_model.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
 
     tk.check_access('metadata_model_dependent_record_list', context, data_dict)
@@ -152,19 +159,19 @@ def metadata_model_dependent_record_list(context, data_dict):
         .join(model.PackageExtra) \
         .filter(model.Package.state == 'active') \
         .filter(model.PackageExtra.key == 'metadata_schema_id') \
-        .filter(model.PackageExtra.value == obj.metadata_schema_id)
+        .filter(model.PackageExtra.value == metadata_model.metadata_schema_id)
 
-    if obj.organization_id:
-        q = q.filter(model.Package.owner_org == obj.organization_id)
+    if metadata_model.organization_id:
+        q = q.filter(model.Package.owner_org == metadata_model.organization_id)
 
-    if obj.infrastructure_id:
+    if metadata_model.infrastructure_id:
         q = q.join(model.Member, model.Member.table_id == model.Package.id) \
             .filter(model.Member.table_name == 'package') \
             .filter(model.Member.state == 'active') \
             .join(model.Group, model.Group.id == model.Member.group_id) \
             .filter(model.Group.type == 'infrastructure') \
             .filter(model.Group.state == 'active') \
-            .filter(model.Group.id == obj.infrastructure_id)
+            .filter(model.Group.id == metadata_model.infrastructure_id)
 
     return [metadata_record_id for (metadata_record_id,) in q.all()]
 
@@ -182,9 +189,12 @@ def infrastructure_show(context, data_dict):
     log.debug("Retrieving infrastructure: %r", data_dict)
 
     model = context['model']
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Group.get(id_)
-    if obj is None or obj.type != 'infrastructure':
+
+    infrastructure_id = tk.get_or_bust(data_dict, 'id')
+    infrastructure = model.Group.get(infrastructure_id)
+    if infrastructure is not None and infrastructure.type == 'infrastructure':
+        infrastructure_id = infrastructure.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
 
     tk.check_access('infrastructure_show', context, data_dict)
@@ -199,8 +209,10 @@ def infrastructure_show(context, data_dict):
         'include_groups': False,
         'include_followers': False,
     })
-    context['schema'] = schema.infrastructure_show_schema()
-    context['invoked_api'] = 'infrastructure_show'
+    context.update({
+        'schema': schema.infrastructure_show_schema(),
+        'invoked_api': 'infrastructure_show',
+    })
 
     return tk.get_action('group_show')(context, data_dict)
 
@@ -226,7 +238,9 @@ def infrastructure_list(context, data_dict):
         'include_users': False,
         'include_groups': False,
     })
-    context['invoked_api'] = 'infrastructure_list'
+    context.update({
+        'invoked_api': 'infrastructure_list',
+    })
     
     return tk.get_action('group_list')(context, data_dict)
 
@@ -244,9 +258,12 @@ def metadata_collection_show(context, data_dict):
     log.debug("Retrieving metadata collection: %r", data_dict)
 
     model = context['model']
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Group.get(id_)
-    if obj is None or obj.type != 'metadata_collection':
+
+    metadata_collection_id = tk.get_or_bust(data_dict, 'id')
+    metadata_collection = model.Group.get(metadata_collection_id)
+    if metadata_collection is not None and metadata_collection.type == 'metadata_collection':
+        metadata_collection_id = metadata_collection.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
 
     tk.check_access('metadata_collection_show', context, data_dict)
@@ -261,8 +278,10 @@ def metadata_collection_show(context, data_dict):
         'include_groups': False,
         'include_followers': False,
     })
-    context['schema'] = schema.metadata_collection_show_schema()
-    context['invoked_api'] = 'metadata_collection_show'
+    context.update({
+        'schema': schema.metadata_collection_show_schema(),
+        'invoked_api': 'metadata_collection_show',
+    })
 
     return tk.get_action('group_show')(context, data_dict)
 
@@ -288,7 +307,9 @@ def metadata_collection_list(context, data_dict):
         'include_users': False,
         'include_groups': False,
     })
-    context['invoked_api'] = 'metadata_collection_list'
+    context.update({
+        'invoked_api': 'metadata_collection_list',
+    })
 
     return tk.get_action('group_list')(context, data_dict)
 
@@ -306,15 +327,18 @@ def metadata_record_show(context, data_dict):
     log.debug("Retrieving metadata record: %r", data_dict)
 
     model = context['model']
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = model.Package.get(id_)
-    if obj is None or obj.type != 'metadata_record':
+
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_show', context, data_dict)
 
-    context['package'] = obj
-    metadata_record_dict = model_dictize.metadata_record_dictize(obj, context)
+    context['package'] = metadata_record
+    metadata_record_dict = model_dictize.metadata_record_dictize(metadata_record, context)
 
     result_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(), context)
     return result_dict
@@ -429,35 +453,38 @@ def metadata_record_validation_model_list(context, data_dict):
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
 
-
     :rtype: list of names (dictionaries if all_fields) of metadata models
     """
     log.debug("Retrieving metadata models for metadata record validation: %r", data_dict)
 
     model = context['model']
     session = context['session']
-    obj = context.get('metadata_record')
-    if not obj:
-        id_ = tk.get_or_bust(data_dict, 'id')
-        obj = model.Package.get(id_)
-        if obj is None or obj.type != 'metadata_record':
+    metadata_record = context.get('metadata_record')
+
+    if metadata_record:
+        metadata_record_id = metadata_record.id
+    else:
+        metadata_record_id = tk.get_or_bust(data_dict, 'id')
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is not None and metadata_record.type == 'metadata_record':
+            metadata_record_id = metadata_record.id
+        else:
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_validation_model_list', context, data_dict)
 
-    id_ = obj.id
-    organization_id = obj.owner_org
+    organization_id = metadata_record.owner_org
     infrastructure_ids = session.query(model.Group.id) \
         .join(model.Member, model.Group.id == model.Member.group_id) \
         .filter(model.Group.type == 'infrastructure') \
         .filter(model.Group.state == 'active') \
         .filter(model.Member.table_name == 'package') \
-        .filter(model.Member.table_id == id_) \
+        .filter(model.Member.table_id == metadata_record_id) \
         .filter(model.Member.state == 'active') \
         .all()
     infrastructure_ids = [infra_id for (infra_id,) in infrastructure_ids] + [None]
     metadata_schema_id = session.query(model.PackageExtra.value) \
-        .filter_by(package_id=id_, key='metadata_schema_id').scalar()
+        .filter_by(package_id=metadata_record_id, key='metadata_schema_id').scalar()
 
     MetadataModel = ckanext_model.MetadataModel
     metadata_model_names = session.query(MetadataModel.name) \
@@ -492,18 +519,22 @@ def metadata_record_validation_activity_show(context, data_dict):
 
     model = context['model']
     session = context['session']
-    obj = context.get('metadata_record')
-    if not obj:
-        id_ = tk.get_or_bust(data_dict, 'id')
-        obj = model.Package.get(id_)
-        if obj is None or obj.type != 'metadata_record':
+    metadata_record = context.get('metadata_record')
+
+    if metadata_record:
+        metadata_record_id = metadata_record.id
+    else:
+        metadata_record_id = tk.get_or_bust(data_dict, 'id')
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is not None and metadata_record.type == 'metadata_record':
+            metadata_record_id = metadata_record.id
+        else:
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_validation_activity_show', context, data_dict)
 
-    id_ = obj.id
     activity = session.query(model.Activity) \
-        .filter_by(object_id=id_, activity_type=METADATA_VALIDATION_ACTIVITY_TYPE) \
+        .filter_by(object_id=metadata_record_id, activity_type=METADATA_VALIDATION_ACTIVITY_TYPE) \
         .order_by(model.Activity.timestamp.desc()) \
         .first()
     if not activity:
@@ -579,18 +610,22 @@ def metadata_record_workflow_activity_show(context, data_dict):
 
     model = context['model']
     session = context['session']
-    obj = context.get('metadata_record')
-    if not obj:
-        id_ = tk.get_or_bust(data_dict, 'id')
-        obj = model.Package.get(id_)
-        if obj is None or obj.type != 'metadata_record':
+    metadata_record = context.get('metadata_record')
+
+    if metadata_record:
+        metadata_record_id = metadata_record.id
+    else:
+        metadata_record_id = tk.get_or_bust(data_dict, 'id')
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is not None and metadata_record.type == 'metadata_record':
+            metadata_record_id = metadata_record.id
+        else:
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_workflow_activity_show', context, data_dict)
 
-    id_ = obj.id
     activity = session.query(model.Activity) \
-        .filter_by(object_id=id_, activity_type=METADATA_WORKFLOW_ACTIVITY_TYPE) \
+        .filter_by(object_id=metadata_record_id, activity_type=METADATA_WORKFLOW_ACTIVITY_TYPE) \
         .order_by(model.Activity.timestamp.desc()) \
         .first()
     if not activity:
@@ -611,15 +646,17 @@ def workflow_state_show(context, data_dict):
     """
     log.debug("Retrieving workflow state: %r", data_dict)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.WorkflowState.get(id_)
-    if obj is None:
+    workflow_state_id = tk.get_or_bust(data_dict, 'id')
+    workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
+    if workflow_state is not None:
+        workflow_state_id = workflow_state.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
 
     tk.check_access('workflow_state_show', context, data_dict)
 
-    context['workflow_state'] = obj
-    workflow_state_dict = model_dictize.workflow_state_dictize(obj, context)
+    context['workflow_state'] = workflow_state
+    workflow_state_dict = model_dictize.workflow_state_dictize(workflow_state, context)
 
     result_dict, errors = tk.navl_validate(workflow_state_dict, schema.workflow_state_show_schema(), context)
     return result_dict
@@ -675,21 +712,22 @@ def workflow_state_rule_list(context, data_dict):
     log.debug("Retrieving list of rules for workflow state: %r", data_dict)
 
     session = context['session']
-    obj = context.get('workflow_state')
-    if not obj:
-        id_ = tk.get_or_bust(data_dict, 'id')
-        obj = ckanext_model.WorkflowState.get(id_)
-        if obj is None:
+    workflow_state = context.get('workflow_state')
+    if workflow_state:
+        workflow_state_id = workflow_state.id
+    else:
+        workflow_state_id = tk.get_or_bust(data_dict, 'id')
+        workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
+        if workflow_state is not None:
+            workflow_state_id = workflow_state.id
+        else:
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
 
     tk.check_access('workflow_state_rule_list', context, data_dict)
 
-    context['workflow_state'] = obj
-    id_ = obj.id
-
     rules = session.query(ckanext_model.WorkflowRule) \
         .join(ckanext_model.WorkflowMetric) \
-        .filter(ckanext_model.WorkflowRule.workflow_state_id == id_) \
+        .filter(ckanext_model.WorkflowRule.workflow_state_id == workflow_state_id) \
         .all()
 
     return [{
@@ -714,15 +752,17 @@ def workflow_transition_show(context, data_dict):
     """
     log.debug("Retrieving workflow transition: %r", data_dict)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.WorkflowTransition.get(id_)
-    if obj is None:
+    workflow_transition_id = tk.get_or_bust(data_dict, 'id')
+    workflow_transition = ckanext_model.WorkflowTransition.get(workflow_transition_id)
+    if workflow_transition is not None:
+        workflow_transition_id = workflow_transition.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Transition')))
 
     tk.check_access('workflow_transition_show', context, data_dict)
 
-    context['workflow_transition'] = obj
-    workflow_transition_dict = model_dictize.workflow_transition_dictize(obj, context)
+    context['workflow_transition'] = workflow_transition
+    workflow_transition_dict = model_dictize.workflow_transition_dictize(workflow_transition, context)
 
     result_dict, errors = tk.navl_validate(workflow_transition_dict, schema.workflow_transition_show_schema(), context)
     return result_dict
@@ -770,15 +810,17 @@ def workflow_metric_show(context, data_dict):
     """
     log.debug("Retrieving workflow metric: %r", data_dict)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.WorkflowMetric.get(id_)
-    if obj is None:
+    workflow_metric_id = tk.get_or_bust(data_dict, 'id')
+    workflow_metric = ckanext_model.WorkflowMetric.get(workflow_metric_id)
+    if workflow_metric is not None:
+        workflow_metric_id = workflow_metric.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
 
     tk.check_access('workflow_metric_show', context, data_dict)
 
-    context['workflow_metric'] = obj
-    workflow_metric_dict = model_dictize.workflow_metric_dictize(obj, context)
+    context['workflow_metric'] = workflow_metric
+    workflow_metric_dict = model_dictize.workflow_metric_dictize(workflow_metric, context)
 
     result_dict, errors = tk.navl_validate(workflow_metric_dict, schema.workflow_metric_show_schema(), context)
     return result_dict
@@ -826,15 +868,17 @@ def workflow_rule_show(context, data_dict):
     """
     log.debug("Retrieving workflow rule: %r", data_dict)
 
-    id_ = tk.get_or_bust(data_dict, 'id')
-    obj = ckanext_model.WorkflowRule.get(id_)
-    if obj is None:
+    workflow_rule_id = tk.get_or_bust(data_dict, 'id')
+    workflow_rule = ckanext_model.WorkflowRule.get(workflow_rule_id)
+    if workflow_rule is not None:
+        workflow_rule_id = workflow_rule.id
+    else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
 
     tk.check_access('workflow_rule_show', context, data_dict)
 
-    context['workflow_rule'] = obj
-    workflow_rule_dict = model_dictize.workflow_rule_dictize(obj, context)
+    context['workflow_rule'] = workflow_rule
+    workflow_rule_dict = model_dictize.workflow_rule_dictize(workflow_rule, context)
 
     result_dict, errors = tk.navl_validate(workflow_rule_dict, schema.workflow_rule_show_schema(), context)
     return result_dict

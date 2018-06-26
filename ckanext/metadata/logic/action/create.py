@@ -180,12 +180,16 @@ def infrastructure_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    data_dict['type'] = 'infrastructure'
-    data_dict['is_organization'] = False
-    context['schema'] = schema.infrastructure_create_schema()
-    context['invoked_api'] = 'infrastructure_create'
-    context['defer_commit'] = True
-    context['return_id_only'] = True
+    data_dict.update({
+        'type': 'infrastructure',
+        'is_organization': False,
+    })
+    context.update({
+        'schema': schema.infrastructure_create_schema(),
+        'invoked_api': 'infrastructure_create',
+        'defer_commit': True,
+        'return_id_only': True,
+    })
 
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
     # - addition of the creating user as a member is done (committed) without consideration for defer_commit
@@ -232,12 +236,16 @@ def metadata_collection_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    data_dict['type'] = 'metadata_collection'
-    data_dict['is_organization'] = False
-    context['schema'] = schema.metadata_collection_create_schema()
-    context['invoked_api'] = 'metadata_collection_create'
-    context['defer_commit'] = True
-    context['return_id_only'] = True
+    data_dict.update({
+        'type': 'metadata_collection',
+        'is_organization': False,
+    })
+    context.update({
+        'schema': schema.metadata_collection_create_schema(),
+        'invoked_api': 'metadata_collection_create',
+        'defer_commit': True,
+        'return_id_only': True,
+    })
 
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
     # - addition of the creating user as a member is done (committed) without consideration for defer_commit
@@ -292,15 +300,18 @@ def metadata_record_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    data_dict['type'] = 'metadata_record'
-    data_dict['validated'] = False
-    data_dict['errors'] = '{}'
-    data_dict['workflow_state_id'] = ''
-
-    context['schema'] = schema.metadata_record_create_schema()
-    context['invoked_api'] = 'metadata_record_create'
-    context['defer_commit'] = True
-    context['return_id_only'] = True
+    data_dict.update({
+        'type': 'metadata_record',
+        'validated': False,
+        'errors': '{}',
+        'workflow_state_id': '',
+    })
+    context.update({
+        'schema': schema.metadata_record_create_schema(),
+        'invoked_api': 'metadata_record_create',
+        'defer_commit': True,
+        'return_id_only': True,
+    })
 
     metadata_record_id = tk.get_action('package_create')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
