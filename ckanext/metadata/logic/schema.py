@@ -248,7 +248,7 @@ def metadata_model_create_schema():
         'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists],
         'organization_id': [v.not_missing, unicode, v.group_exists('organization')],
         'infrastructure_id': [v.not_missing, unicode, v.group_exists('infrastructure')],
-        'model_json': [v.not_missing, unicode, v.json_dict_validator],
+        'model_json': [v.not_missing, unicode, v.json_dict_validator, v.json_schema_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation

@@ -4,6 +4,7 @@ import json
 import uuid
 import re
 import urlparse
+import jsonschema
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -129,6 +130,24 @@ def json_dict_validator(value):
 
         if type(obj) is not dict:
             raise tk.Invalid(_("Expecting a JSON dictionary"))
+
+    return value
+
+
+def json_schema_validator(value):
+    """
+    Checks that the value represents a valid JSON schema.
+    """
+    if value:
+        try:
+            schema = json.loads(value)
+            jsonschema.validate({}, schema)
+        except ValueError, e:
+            raise tk.Invalid(_("JSON decode error: %s") % e.message)
+        except AttributeError, e:
+            raise tk.Invalid(_("Invalid JSON object type: %s") % e.message)
+        except jsonschema.SchemaError, e:
+            raise tk.Invalid(_("Invalid JSON schema: %s") % e.message)
 
     return value
 

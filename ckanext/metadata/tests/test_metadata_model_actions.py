@@ -352,6 +352,12 @@ class TestMetadataModelActions(ActionTestBase):
                                         model_json='[1,2,3]')
         assert_error(result, 'model_json', 'Expecting a JSON dictionary')
 
+    def test_create_invalid_not_json_schema(self):
+        result, obj = self._test_action('create', 'metadata_model',
+                                        exception_class=tk.ValidationError,
+                                        model_json='{"type": "foo"}')
+        assert_error(result, 'model_json', 'Invalid JSON schema')
+
     def test_create_invalid_missing_params(self):
         result, obj = self._test_action('create', 'metadata_model',
                                         exception_class=tk.ValidationError)
@@ -709,6 +715,14 @@ class TestMetadataModelActions(ActionTestBase):
                                         id=metadata_model['id'],
                                         model_json='[1,2,3]')
         assert_error(result, 'model_json', 'Expecting a JSON dictionary')
+
+    def test_update_invalid_not_json_schema(self):
+        metadata_model = ckanext_factories.MetadataModel()
+        result, obj = self._test_action('update', 'metadata_model',
+                                        exception_class=tk.ValidationError,
+                                        id=metadata_model['id'],
+                                        model_json='{"type": "foo"}')
+        assert_error(result, 'model_json', 'Invalid JSON schema')
 
     def test_update_invalid_bad_references(self):
         metadata_model = ckanext_factories.MetadataModel()
