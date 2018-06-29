@@ -95,7 +95,7 @@ class MetadataModel(factory.Factory):
 
     title = factory.Sequence(lambda n: 'Test Metadata Model {0:02d}'.format(n))
     description = 'A test description for this test metadata model.'
-    model_json = '{}'
+    model_json = '{"type": "object"}'
     organization_id = ''
     infrastructure_id = ''
 

@@ -521,7 +521,7 @@ def metadata_record_validate(context, data_dict):
     for metadata_model in validation_models:
         validation_errors = tk.get_action('metadata_validity_check')(context, {
             'metadata_json': metadata_record.extras['metadata_json'],
-            'model_json': metadata_model['model_json'],
+            'model_json': json.dumps(metadata_model['model_json']),
         })
         validation_result = {
             'metadata_model_id': metadata_model['id'],

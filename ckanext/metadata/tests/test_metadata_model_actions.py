@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+import json
+
 from ckan.plugins import toolkit as tk
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
@@ -545,7 +547,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=metadata_model['metadata_schema_id'],
                     organization_id='',
                     infrastructure_id=metadata_record_1['infrastructures'][0]['id'],
-                    model_json='{}')
+                    model_json=json.dumps(metadata_model['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
@@ -567,7 +569,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=metadata_model_1['metadata_schema_id'],
                     organization_id='',
                     infrastructure_id='',
-                    model_json='{}')
+                    model_json=json.dumps(metadata_model_1['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
@@ -589,7 +591,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=metadata_model['metadata_schema_id'],
                     organization_id=metadata_record_1['owner_org'],
                     infrastructure_id='',
-                    model_json='{}')
+                    model_json=json.dumps(metadata_model['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
@@ -611,7 +613,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=metadata_model_1['metadata_schema_id'],
                     organization_id='',
                     infrastructure_id='',
-                    model_json='{}')
+                    model_json=json.dumps(metadata_model_1['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)

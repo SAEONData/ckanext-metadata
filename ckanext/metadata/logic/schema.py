@@ -133,6 +133,14 @@ def metadata_record_show_schema():
     return schema
 
 
+def metadata_validity_check_schema():
+    schema = {
+        'metadata_json': [v.not_missing, unicode, v.json_dict_validator],
+        'model_json': [v.not_missing, unicode, v.json_schema_validator],
+    }
+    return schema
+
+
 def metadata_collection_create_schema():
     schema = {
         # from the default group schema
@@ -248,7 +256,7 @@ def metadata_model_create_schema():
         'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists],
         'organization_id': [v.not_missing, unicode, v.group_exists('organization')],
         'infrastructure_id': [v.not_missing, unicode, v.group_exists('infrastructure')],
-        'model_json': [v.not_missing, unicode, v.json_dict_validator, v.json_schema_validator],
+        'model_json': [v.not_missing, unicode, v.json_schema_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation

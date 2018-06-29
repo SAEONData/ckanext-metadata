@@ -3,12 +3,13 @@
 import logging
 from paste.deploy.converters import asbool
 from sqlalchemy import or_
-import jsonschema
+import json
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
 from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_dictize
+from ckanext.metadata.jsonschema_validation import create_validator
 import ckanext.metadata.model as ckanext_model
 
 log = logging.getLogger(__name__)
@@ -553,20 +554,27 @@ def metadata_validity_check(context, data_dict):
     :param model_json: JSON dictionary defining a metadata model
     :type model_json: string
 
-    :rtype: dictionary of errors; empty dict implies that the metadata is 100% valid
+    :rtype: dictionary of metadata errors; empty dict implies that the metadata is 100% valid
         against the given model
     """
     log.debug("Checking metadata validity")
     tk.check_access('metadata_validity_check', context, data_dict)
 
-    metadata_json, model_json = tk.get_or_bust(data_dict, ['metadata_json', 'model_json'])
+    session = context['session']
+    data, errors = tk.navl_validate(data_dict, schema.metadata_validity_check_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
 
-    errors = {}
-    validator = jsonschema.Draft4Validator(model_json)
-    for error in validator.iter_errors(metadata_json):
-        errors[tuple(error.path)] = error.message
+    metadata_json = json.loads(data['metadata_json'])
+    model_json = json.loads(data['model_json'])
 
-    return errors
+    metadata_errors = {}
+    validator = create_validator(model_json)
+    for metadata_error in validator.iter_errors(metadata_json):
+        metadata_errors[tuple(metadata_error.path)] = metadata_error.message
+
+    return metadata_errors
 
 
 @tk.side_effect_free

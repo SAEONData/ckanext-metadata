@@ -145,7 +145,7 @@ def json_schema_validator(value):
         except ValueError, e:
             raise tk.Invalid(_("JSON decode error: %s") % e.message)
         except AttributeError, e:
-            raise tk.Invalid(_("Invalid JSON object type: %s") % e.message)
+            raise tk.Invalid(_("Expecting a JSON dictionary"))
         except jsonschema.SchemaError, e:
             raise tk.Invalid(_("Invalid JSON schema: %s") % e.message)
 
