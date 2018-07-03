@@ -4,8 +4,6 @@ import json
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
-import ckan.plugins.toolkit as tk
-import ckan.model as ckan_model
 
 from ckanext.metadata.tests import (
     ActionTestBase,
@@ -102,22 +100,19 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict['validated'] = 'ignore'
         input_dict['errors'] = 'ignore'
         input_dict['workflow_state_id'] = 'ignore'
-        result, obj = self._test_action('create', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
 
     def test_create_valid_setname(self):
         input_dict = self._make_input_dict()
         input_dict['name'] = 'test-metadata-record'
-        result, obj = self._test_action('create', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict, name=input_dict['name'])
 
     def test_create_valid_owner_org_byname(self):
         input_dict = self._make_input_dict()
         input_dict['owner_org'] = self.owner_org['name']
-        result, obj = self._test_action('create', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
 
     def test_create_valid_with_infrastructures(self):
@@ -130,8 +125,7 @@ class TestMetadataRecordActions(ActionTestBase):
                 {'id': infrastructure2['name']},
             ],
         })
-        result, obj = self._test_action('create', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
         assert_group_has_member(infrastructure1['id'], obj.id, 'package')
         assert_group_has_member(infrastructure2['id'], obj.id, 'package')
@@ -139,27 +133,22 @@ class TestMetadataRecordActions(ActionTestBase):
     def test_create_valid_sysadmin_setid(self):
         input_dict = self._make_input_dict()
         input_dict['id'] = make_uuid()
-        result, obj = self._test_action('create', 'metadata_record',
-                                        model_class=ckan_model.Package,
-                                        sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self._test_action('metadata_record_create', sysadmin=True, check_auth=True, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
 
     def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError, check_auth=True,
+        result, obj = self._test_action('metadata_record_create', should_error=True, check_auth=True,
                                         id=make_uuid())
         assert_error(result, 'id', 'The input field id was not expected.')
 
     def test_create_invalid_sysadmin_duplicate_id(self):
         metadata_record = ckanext_factories.MetadataRecord()
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError, sysadmin=True, check_auth=True,
+        result, obj = self._test_action('metadata_record_create', should_error=True, sysadmin=True, check_auth=True,
                                         id=metadata_record['id'])
         assert_error(result, 'id', 'Dataset id already exists')
 
     def test_create_invalid_missing_params(self):
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError)
+        result, obj = self._test_action('metadata_record_create', should_error=True)
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
         assert_error(result, 'infrastructures', 'Missing parameter')
@@ -169,8 +158,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'metadata_url', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_create', should_error=True,
                                         owner_org='',
                                         metadata_collection_id='',
                                         metadata_schema_id='')
@@ -180,26 +168,22 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_create_invalid_duplicate_name(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_create', should_error=True,
                                         name=metadata_record['name'])
         assert_error(result, 'name', 'That URL is already in use.')
 
     def test_create_invalid_not_json(self):
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_create', should_error=True,
                                         metadata_json='not json')
         assert_error(result, 'metadata_json', 'JSON decode error')
 
     def test_create_invalid_not_json_dict(self):
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_create', should_error=True,
                                         metadata_json='[1,2,3]')
         assert_error(result, 'metadata_json', 'Expecting a JSON dictionary')
 
     def test_create_invalid_bad_references(self):
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_create', should_error=True,
                                         owner_org='a',
                                         metadata_collection_id='b',
                                         metadata_schema_id='c',
@@ -218,8 +202,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         input_dict = self._make_input_dict()
         input_dict['infrastructures'] = [{'id': infrastructure['id']}]
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError, **input_dict)
+        result, obj = self._test_action('metadata_record_create', should_error=True, **input_dict)
 
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
@@ -227,8 +210,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result['infrastructures'][0], 'id', 'Not found: Infrastructure')
 
     def test_create_invalid_owner_org_collection_mismatch(self):
-        result, obj = self._test_action('create', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_create', should_error=True,
                                         owner_org=self.owner_org['id'],
                                         metadata_collection_id=self._generate_metadata_collection()['id'])
         assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
@@ -262,8 +244,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'errors': 'ignore',
             'workflow_state_id': 'ignore',
         }
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
 
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
@@ -287,8 +268,7 @@ class TestMetadataRecordActions(ActionTestBase):
         })
         del input_dict['title']
 
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
 
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
@@ -302,8 +282,7 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
         input_dict['metadata_json'] = '{ "newtestkey": "newtestvalue" }'
 
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
@@ -319,8 +298,7 @@ class TestMetadataRecordActions(ActionTestBase):
         new_metadata_schema = ckanext_factories.MetadataSchema()
         input_dict['metadata_schema_id'] = new_metadata_schema['id']
 
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         metadata_schema_id=new_metadata_schema['id'],
@@ -344,8 +322,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'owner_org': new_organization['id'],
             'metadata_collection_id': new_metadata_collection['id'],
         })
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         owner_org=new_organization['id'],
@@ -367,8 +344,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validated', True)
 
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
@@ -383,8 +359,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         new_infrastructure = self._generate_infrastructure()
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=True)
@@ -397,8 +372,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'owner_org': new_organization['id'],
             'metadata_collection_id': new_metadata_collection['id'],
         })
-        result, obj = self._test_action('update', 'metadata_record',
-                                        model_class=ckan_model.Package, **input_dict)
+        result, obj = self._test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         owner_org=new_organization['id'],
@@ -410,16 +384,14 @@ class TestMetadataRecordActions(ActionTestBase):
     def test_update_invalid_duplicate_name(self):
         metadata_record1 = self._generate_metadata_record()
         metadata_record2 = self._generate_metadata_record()
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record1['id'],
                                         name=metadata_record2['name'])
         assert_error(result, 'name', 'That URL is already in use.')
 
     def test_update_invalid_missing_params(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record['id'])
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
@@ -431,8 +403,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_update_invalid_missing_values(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record['id'],
                                         owner_org='',
                                         metadata_collection_id='',
@@ -443,24 +414,21 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_update_invalid_not_json(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record['id'],
                                         metadata_json='not json')
         assert_error(result, 'metadata_json', 'JSON decode error')
 
     def test_update_invalid_not_json_dict(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record['id'],
                                         metadata_json='[1,2,3]')
         assert_error(result, 'metadata_json', 'Expecting a JSON dictionary')
 
     def test_update_invalid_bad_references(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record['id'],
                                         owner_org='a',
                                         metadata_collection_id='b',
@@ -482,8 +450,7 @@ class TestMetadataRecordActions(ActionTestBase):
         call_action('metadata_schema_delete', id=metadata_schema['id'])
         call_action('infrastructure_delete', id=infrastructure['id'])
 
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record['id'],
                                         owner_org=organization['id'],
                                         metadata_collection_id=metadata_collection['id'],
@@ -497,8 +464,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_update_invalid_owner_org_collection_mismatch(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('update', 'metadata_record',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('metadata_record_update', should_error=True,
                                         id=metadata_record['id'],
                                         owner_org=self.owner_org['id'],
                                         metadata_collection_id=self._generate_metadata_collection()['id'])
@@ -506,8 +472,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_delete_valid(self):
         metadata_record = self._generate_metadata_record()
-        self._test_action('delete', 'metadata_record',
-                          model_class=ckan_model.Package,
+        self._test_action('metadata_record_delete',
                           id=metadata_record['id'])
 
     def test_invalidate(self):
@@ -515,8 +480,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_model = self._validate_metadata_record(metadata_record)
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        result, obj = self._test_action('invalidate', 'metadata_record',
-                                        model_class=ckan_model.Package,
+        result, obj = self._test_action('metadata_record_invalidate',
                                         id=metadata_record['id'])
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],

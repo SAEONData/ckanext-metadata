@@ -10,6 +10,20 @@ from ckan.tests.helpers import FunctionalTestBase, call_action
 import ckan.plugins.toolkit as tk
 import ckan.model as ckan_model
 import ckanext.metadata.model.setup as ckanext_setup
+from ckanext.metadata import model as ckanext_model
+
+_model_map = {
+    'organization': ckan_model.Group,
+    'infrastructure': ckan_model.Group,
+    'metadata_collection': ckan_model.Group,
+    'metadata_record': ckan_model.Package,
+    'metadata_model': ckanext_model.MetadataModel,
+    'metadata_schema': ckanext_model.MetadataSchema,
+    'workflow_state': ckanext_model.WorkflowState,
+    'workflow_transition': ckanext_model.WorkflowTransition,
+    'workflow_metric': ckanext_model.WorkflowMetric,
+    'workflow_rule': ckanext_model.WorkflowRule,
+}
 
 
 def make_uuid():
@@ -120,9 +134,10 @@ class ActionTestBase(FunctionalTestBase):
         self.normal_user = ckan_factories.User()
         self.sysadmin_user = ckan_factories.Sysadmin()
 
-    def _test_action(self, method, model_name, model_class=None, exception_class=None, sysadmin=False, check_auth=False, **kwargs):
+    def _test_action(self, action_name, should_error=False, exception_class=tk.ValidationError,
+                     sysadmin=False, check_auth=False, **kwargs):
 
-        method_name = model_name + '_' + method
+        model, method = action_name.rsplit('_', 1)
         user = self.sysadmin_user if sysadmin else self.normal_user
         context = {
             'user': user['name'],
@@ -131,7 +146,7 @@ class ActionTestBase(FunctionalTestBase):
 
         obj = None
         try:
-            result = call_action(method_name, context, **kwargs)
+            result = call_action(action_name, context, **kwargs)
         except exception_class, e:
             if exception_class is tk.ValidationError:
                 result = e.error_dict
@@ -140,14 +155,15 @@ class ActionTestBase(FunctionalTestBase):
         except Exception, e:
             assert False, "Unexpected exception %s: %s" % (type(e), e)
         else:
-            if exception_class:
+            if should_error:
                 assert False, str(exception_class) + " was not raised"
         finally:
             # close the session to ensure that we're not just getting the obj from
             # memory but are reloading it from the DB
             ckan_model.Session.close_all()
 
-        if not exception_class:
+        if not should_error:
+            model_class = _model_map[model]
             if method in ('create', 'update', 'show'):
                 assert 'id' in result
                 obj = model_class.get(result['id'])

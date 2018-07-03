@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-from ckan.plugins import toolkit as tk
-
 from ckanext.metadata import model as ckanext_model
 from ckanext.metadata.tests import (
     ActionTestBase,
@@ -21,8 +19,7 @@ class TestWorkflowMetricActions(ActionTestBase):
             'description': 'This is a test workflow metric',
             'evaluator_url': 'http://example.net/',
         }
-        result, obj = self._test_action('create', 'workflow_metric',
-                                        model_class=ckanext_model.WorkflowMetric, **input_dict)
+        result, obj = self._test_action('workflow_metric_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_sysadmin_setid(self):
@@ -31,42 +28,35 @@ class TestWorkflowMetricActions(ActionTestBase):
             'name': 'test-workflow-metric',
             'evaluator_url': 'http://example.net/',
         }
-        result, obj = self._test_action('create', 'workflow_metric',
-                                        model_class=ckanext_model.WorkflowMetric,
-                                        sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self._test_action('workflow_metric_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_invalid_duplicate_name(self):
         workflow_metric = ckanext_factories.WorkflowMetric()
-        result, obj = self._test_action('create', 'workflow_metric',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('workflow_metric_create', should_error=True,
                                         name=workflow_metric['name'])
         assert_error(result, 'name', 'Duplicate name: Workflow Metric')
 
     def test_create_invalid_missing_params(self):
-        result, obj = self._test_action('create', 'workflow_metric',
-                                        exception_class=tk.ValidationError)
+        result, obj = self._test_action('workflow_metric_create', should_error=True)
         assert_error(result, 'name', 'Missing parameter')
         assert_error(result, 'evaluator_url', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
-        result, obj = self._test_action('create', 'workflow_metric',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('workflow_metric_create', should_error=True,
                                         name='',
                                         evaluator_url='')
         assert_error(result, 'name', 'Missing value')
         assert_error(result, 'evaluator_url', 'Missing value')
 
     def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self._test_action('create', 'workflow_metric',
-                                        exception_class=tk.ValidationError, check_auth=True,
+        result, obj = self._test_action('workflow_metric_create', should_error=True, check_auth=True,
                                         id=make_uuid())
         assert_error(result, 'id', 'The input field id was not expected.')
 
     def test_create_invalid_sysadmin_duplicate_id(self):
         workflow_metric = ckanext_factories.WorkflowMetric()
-        result, obj = self._test_action('create', 'workflow_metric',
-                                        exception_class=tk.ValidationError, sysadmin=True, check_auth=True,
+        result, obj = self._test_action('workflow_metric_create', should_error=True, sysadmin=True, check_auth=True,
                                         id=workflow_metric['id'])
         assert_error(result, 'id', 'Already exists: Workflow Metric')
 
@@ -79,8 +69,7 @@ class TestWorkflowMetricActions(ActionTestBase):
             'description': 'Updated test workflow metric description',
             'evaluator_url': 'http://updated.example.net/',
         }
-        result, obj = self._test_action('update', 'workflow_metric',
-                                        model_class=ckanext_model.WorkflowMetric, **input_dict)
+        result, obj = self._test_action('workflow_metric_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_valid_partial(self):
@@ -90,8 +79,7 @@ class TestWorkflowMetricActions(ActionTestBase):
             'name': 'updated-test-workflow-metric',
             'evaluator_url': 'http://updated.example.net/',
         }
-        result, obj = self._test_action('update', 'workflow_metric',
-                                        model_class=ckanext_model.WorkflowMetric, **input_dict)
+        result, obj = self._test_action('workflow_metric_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.title == workflow_metric['title']
         assert obj.description == workflow_metric['description']
@@ -103,35 +91,30 @@ class TestWorkflowMetricActions(ActionTestBase):
             'id': workflow_metric1['id'],
             'name': workflow_metric2['name'],
         }
-        result, obj = self._test_action('update', 'workflow_metric',
-                                        exception_class=tk.ValidationError, **input_dict)
+        result, obj = self._test_action('workflow_metric_update', should_error=True, **input_dict)
         assert_error(result, 'name', 'Duplicate name: Workflow Metric')
 
     def test_update_invalid_missing_params(self):
         workflow_metric = ckanext_factories.WorkflowMetric()
-        result, obj = self._test_action('update', 'workflow_metric',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('workflow_metric_update', should_error=True,
                                         id=workflow_metric['id'])
         assert_error(result, 'evaluator_url', 'Missing parameter')
 
     def test_update_invalid_missing_values(self):
         workflow_metric = ckanext_factories.WorkflowMetric()
-        result, obj = self._test_action('update', 'workflow_metric',
-                                        exception_class=tk.ValidationError,
+        result, obj = self._test_action('workflow_metric_update', should_error=True,
                                         id=workflow_metric['id'],
                                         evaluator_url='')
         assert_error(result, 'evaluator_url', 'Missing value')
 
     def test_delete_valid(self):
         workflow_metric = ckanext_factories.WorkflowMetric()
-        self._test_action('delete', 'workflow_metric',
-                          model_class=ckanext_model.WorkflowMetric,
+        self._test_action('workflow_metric_delete',
                           id=workflow_metric['id'])
 
     def test_delete_with_rule_references(self):
         workflow_metric = ckanext_factories.WorkflowMetric()
         workflow_rule = ckanext_factories.WorkflowRule(workflow_metric_id=workflow_metric['id'])
-        self._test_action('delete', 'workflow_metric',
-                          model_class=ckanext_model.WorkflowMetric,
+        self._test_action('workflow_metric_delete',
                           id=workflow_metric['id'])
         assert ckanext_model.WorkflowRule.get(workflow_rule['id']).state == 'deleted'
