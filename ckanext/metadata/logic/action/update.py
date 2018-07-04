@@ -170,21 +170,22 @@ def metadata_model_update(context, data_dict):
     else:
         affected_record_ids = set(old_dependent_record_list) ^ set(new_dependent_record_list)
 
-    invalidate_context = context.copy()
-    invalidate_context.update({
-        'defer_commit': True,
-        'trigger_action': 'metadata_model_update',
-        'trigger_object': metadata_model,
-    })
-    for metadata_record_id in affected_record_ids:
-        tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
-
     rev = model.repo.new_revision()
     rev.author = user
     if 'message' in context:
         rev.message = context['message']
     else:
         rev.message = _(u'REST API: Update metadata model %s') % metadata_model_id
+
+    invalidate_context = context.copy()
+    invalidate_context.update({
+        'defer_commit': True,
+        'trigger_action': 'metadata_model_update',
+        'trigger_object_id': metadata_model_id,
+        'trigger_revision_id': rev.id,
+    })
+    for metadata_record_id in affected_record_ids:
+        tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
     if not defer_commit:
         model.repo.commit()
@@ -394,7 +395,8 @@ def metadata_record_update(context, data_dict):
             invalidate_context.update({
                 'defer_commit': True,
                 'trigger_action': 'metadata_record_update',
-                'trigger_object': metadata_record,
+                'trigger_object_id': metadata_record_id,
+                'trigger_revision_id': model.Package.get(metadata_record_id).revision_id,
             })
             tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
@@ -415,9 +417,10 @@ def metadata_record_invalidate(context, data_dict):
 
     Note: this function is typically called from within another action function
     whose effect triggers invalidation of the given metadata record. In such a
-    case, the calling function should pass 'trigger_action' (its own name, e.g.
-    'metadata_model_update') and 'trigger_object' (the object being modified,
-    e.g. a MetadataModel instance) in the context.
+    case, the calling function should pass the following items in the context:
+    'trigger_action': the calling function name, e.g. 'metadata_model_update'
+    'trigger_object_id': the id of the object (e.g. a MetadataModel) being modified
+    'trigger_revision_id': the id of the revision for this modification
 
     :param id: the id or name of the metadata record to invalidate
     :type id: string
@@ -445,15 +448,14 @@ def metadata_record_invalidate(context, data_dict):
     metadata_record.extras['errors'] = '{}'
 
     trigger_action = context.get('trigger_action')
-    trigger_object = context.get('trigger_object')
-    trigger_object_id = trigger_object.id if trigger_object else None
-    trigger_revision_id = trigger_object.revision_id if trigger_object else None
+    trigger_object_id = context.get('trigger_object_id')
+    trigger_revision_id = context.get('trigger_revision_id')
 
     activity_context = context.copy()
     activity_context.update({
         'defer_commit': True,
         'schema': {
-            'user_id': [],
+            'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
             'object_id': [],
             'revision_id': [],
             'activity_type': [],
@@ -538,7 +540,7 @@ def metadata_record_validate(context, data_dict):
     activity_context.update({
         'defer_commit': True,
         'schema': {
-            'user_id': [],
+            'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
             'object_id': [],
             'revision_id': [],
             'activity_type': [],
@@ -551,8 +553,7 @@ def metadata_record_validate(context, data_dict):
         'activity_type': METADATA_VALIDATION_ACTIVITY_TYPE,
         'data': {
             'action': 'metadata_record_validate',
-            'errors': accumulated_errors,
-            'details': validation_results,
+            'results': validation_results,
         }
     }
     tk.get_action('activity_create')(activity_context, activity_dict)

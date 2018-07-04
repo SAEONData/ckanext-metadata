@@ -4,6 +4,7 @@ import uuid
 import re
 import json
 from paste.deploy.converters import asbool
+import pkg_resources
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action
@@ -24,6 +25,10 @@ _model_map = {
     'workflow_metric': ckanext_model.WorkflowMetric,
     'workflow_rule': ckanext_model.WorkflowRule,
 }
+
+
+def load_example(filename):
+    return pkg_resources.resource_string(__name__, '../../../examples/' + filename)
 
 
 def make_uuid():
@@ -136,7 +141,17 @@ class ActionTestBase(FunctionalTestBase):
 
     def _test_action(self, action_name, should_error=False, exception_class=tk.ValidationError,
                      sysadmin=False, check_auth=False, **kwargs):
-
+        """
+        Test an API action.
+        :param action_name: action function name, e.g. 'metadata_record_create'
+        :param should_error: True if this test should raise an exception, False otherwise
+        :param exception_class: the type of exception to be expected if should_error is True
+        :param sysadmin: True to execute the action as a sysadmin, False to run it as a normal user
+        :param check_auth: True to check whether the user is authorized to perform the action,
+            False to ignore the auth check
+        :param kwargs: additional args to pass to the action function
+        :return: tuple(result dict, result obj)
+        """
         model, method = action_name.rsplit('_', 1)
         user = self.sysadmin_user if sysadmin else self.normal_user
         context = {
@@ -176,3 +191,52 @@ class ActionTestBase(FunctionalTestBase):
                 obj = model_class.get(kwargs['id'])
 
         return result, obj
+
+    def _assert_validate_activity_logged(self, metadata_record_id, *validation_models, **validation_errors):
+        """
+        :param validation_models: iterable of metadata model dictionaries
+        :param validation_errors: dictionary mapping metadata model keys to expected error patterns (regex's)
+        """
+        activity_dict = call_action('metadata_record_validation_activity_show', id=metadata_record_id)
+        assert activity_dict['user_id'] == self.normal_user['id']
+        assert activity_dict['object_id'] == metadata_record_id
+        assert activity_dict['activity_type'] == 'metadata validation'
+        assert activity_dict['data']['action'] == 'metadata_record_validate'
+        logged_results = activity_dict['data']['results']
+        assert len(logged_results) == len(validation_models)
+        logged_errors = {}
+        for validation_model in validation_models:
+            logged_result = next((result for result in logged_results
+                                  if result['metadata_model_id'] == validation_model['id']), None)
+            assert logged_result
+            assert logged_result['metadata_model_revision_id'] == validation_model['revision_id']
+            logged_errors.update(logged_result['errors'])
+        assert len(logged_errors) == len(validation_errors)
+        for error_key, error_pattern in validation_errors.items():
+            assert_error(logged_errors, error_key, error_pattern)
+
+    def _assert_invalidate_activity_logged(self, metadata_record_id, trigger_action, trigger_object):
+        activity_dict = call_action('metadata_record_validation_activity_show', id=metadata_record_id)
+        assert activity_dict['user_id'] == self.normal_user['id']
+        assert activity_dict['object_id'] == metadata_record_id
+        assert activity_dict['activity_type'] == 'metadata validation'
+        assert activity_dict['data'] == {
+            'action': 'metadata_record_invalidate',
+            'trigger_action': trigger_action,
+            'trigger_object_id': trigger_object.id if trigger_object else None,
+            'trigger_revision_id': trigger_object.revision_id if trigger_object else None,
+        }
+
+    def _assert_metadata_record_has_validation_models(self, metadata_record_id, *metadata_model_names):
+        """
+        Check that the given record has the expected set of validation models.
+        """
+        validation_model_list = call_action('metadata_record_validation_model_list', id=metadata_record_id)
+        assert set(validation_model_list) == set(metadata_model_names)
+
+    def _assert_metadata_model_has_dependent_records(self, metadata_model_id, *metadata_record_ids):
+        """
+        Check that the given model has the expected set of dependent records.
+        """
+        dependent_record_list = call_action('metadata_model_dependent_record_list', id=metadata_model_id)
+        assert set(dependent_record_list) == set(metadata_record_ids)

@@ -513,8 +513,7 @@ def metadata_record_validation_activity_show(context, data_dict):
     :param id: the id or name of the metadata record
     :type id: string
 
-    :rtype: dictionary including activity detail list under 'details',
-        or None if the record has never been validated
+    :rtype: dictionary, or None if the record has never been validated
     """
     log.debug("Retrieving metadata record validation activity: %r", data_dict)
 

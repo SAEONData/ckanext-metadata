@@ -106,19 +106,20 @@ def metadata_model_delete(context, data_dict):
 
     tk.check_access('metadata_model_delete', context, data_dict)
 
+    rev = model.repo.new_revision()
+    rev.author = user
+    rev.message = _(u'REST API: Delete metadata model %s') % metadata_model_id
+
     dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
     invalidate_context = context.copy()
     invalidate_context.update({
         'defer_commit': True,
         'trigger_action': 'metadata_model_delete',
-        'trigger_object': metadata_model,
+        'trigger_object_id': metadata_model_id,
+        'trigger_revision_id': rev.id,
     })
     for metadata_record_id in dependent_record_list:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    rev.message = _(u'REST API: Delete metadata model %s') % metadata_model_id
 
     metadata_model.delete()
     if not defer_commit:

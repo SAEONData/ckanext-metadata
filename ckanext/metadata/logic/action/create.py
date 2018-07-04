@@ -137,7 +137,8 @@ def metadata_model_create(context, data_dict):
     invalidate_context.update({
         'defer_commit': True,
         'trigger_action': 'metadata_model_create',
-        'trigger_object': metadata_model,
+        'trigger_object_id': metadata_model.id,
+        'trigger_revision_id': rev.id,
     })
     for metadata_record_id in dependent_record_list:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})

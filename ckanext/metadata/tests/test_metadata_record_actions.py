@@ -12,6 +12,7 @@ from ckanext.metadata.tests import (
     assert_group_has_member,
     assert_error,
     factories as ckanext_factories,
+    load_example,
 )
 
 
@@ -52,9 +53,8 @@ class TestMetadataRecordActions(ActionTestBase):
         )
         call_action('metadata_record_validate', id=metadata_record['id'], context={'user': self.normal_user['name']})
         assert_package_has_extra(metadata_record['id'], 'validated', True)
-
-        validation_model_names = call_action('metadata_record_validation_model_list', id=metadata_record['id'])
-        assert validation_model_names == [metadata_model['name']]
+        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
 
         return metadata_model
 
@@ -78,7 +78,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def _assert_metadata_record_ok(self, obj, input_dict, **kwargs):
         """
-        Checks the resulting package object against the input dict and referenced objects.
+        Check the resulting package object against the input dict and referenced objects.
         Override comparison values using kwargs.
         """
         assert obj.type == 'metadata_record'
@@ -286,9 +286,8 @@ class TestMetadataRecordActions(ActionTestBase):
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
-
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert validation_model_names == [metadata_model['name']]
+        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_schema_invalidate(self):
         metadata_record = self._generate_metadata_record()
@@ -303,9 +302,8 @@ class TestMetadataRecordActions(ActionTestBase):
                                         name=input_dict['name'],
                                         metadata_schema_id=new_metadata_schema['id'],
                                         validated=False)
-
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert validation_model_names == []
+        self._assert_metadata_record_has_validation_models(metadata_record['id'])
+        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_owner_org_invalidate(self):
         metadata_record = self._generate_metadata_record()
@@ -328,9 +326,9 @@ class TestMetadataRecordActions(ActionTestBase):
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=False)
-
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert set(validation_model_names) == {metadata_model['name'], new_metadata_model['name']}
+        self._assert_metadata_record_has_validation_models(metadata_record['id'],
+                                                           metadata_model['name'], new_metadata_model['name'])
+        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_infrastructures_invalidate(self):
         infrastructure = self._generate_infrastructure()
@@ -348,9 +346,8 @@ class TestMetadataRecordActions(ActionTestBase):
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
-
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert validation_model_names == [new_metadata_model['name']]
+        self._assert_metadata_record_has_validation_models(metadata_record['id'], new_metadata_model['name'])
+        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_no_invalidate(self):
         metadata_record = self._generate_metadata_record()
@@ -363,8 +360,7 @@ class TestMetadataRecordActions(ActionTestBase):
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=True)
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert validation_model_names == [metadata_model['name']]
+        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
 
         new_organization = self._generate_organization()
         new_metadata_collection = self._generate_metadata_collection(organization_id=new_organization['id'])
@@ -378,8 +374,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=True)
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert validation_model_names == [metadata_model['name']]
+        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
 
     def test_update_invalid_duplicate_name(self):
         metadata_record1 = self._generate_metadata_record()
@@ -485,6 +480,12 @@ class TestMetadataRecordActions(ActionTestBase):
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
+        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self._assert_invalidate_activity_logged(metadata_record['id'], None, None)
 
-        validation_model_names = call_action('metadata_record_validation_model_list', id=input_dict['id'])
-        assert validation_model_names == [metadata_model['name']]
+    # def test_validate_datacite(self):
+    #     metadata_record = self._generate_metadata_record(
+    #         metadata_json=load_example('saeon_datacite_record.json'))
+    #     metadata_model = ckanext_factories.MetadataModel(
+    #         metadata_schema_id=metadata_record['metadata_schema_id'],
+    #         model_json=load_example('saeon_datacite_model.json'))
