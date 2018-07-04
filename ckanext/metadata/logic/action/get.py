@@ -9,7 +9,7 @@ import ckan.plugins.toolkit as tk
 from ckan.common import _
 from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_dictize
-from ckanext.metadata.jsonschema_validation import create_validator
+from ckanext.metadata import jsonschema_validation
 import ckanext.metadata.model as ckanext_model
 
 log = logging.getLogger(__name__)
@@ -569,7 +569,7 @@ def metadata_validity_check(context, data_dict):
     model_json = json.loads(data['model_json'])
 
     metadata_errors = {}
-    validator = create_validator(model_json)
+    validator = jsonschema_validation.create_validator(model_json)
     for metadata_error in validator.iter_errors(metadata_json):
         metadata_errors[tuple(metadata_error.path)] = metadata_error.message
 

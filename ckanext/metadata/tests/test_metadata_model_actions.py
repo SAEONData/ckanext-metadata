@@ -14,6 +14,7 @@ from ckanext.metadata.tests import (
     assert_error,
     assert_package_has_extra,
     factories as ckanext_factories,
+    load_example,
 )
 
 
@@ -81,6 +82,17 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self._test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.name == generate_name(metadata_schema['name'], '', '')
+
+    def test_create_valid_datacite(self):
+        metadata_schema = ckanext_factories.MetadataSchema()
+        input_dict = {
+            'metadata_schema_id': metadata_schema['id'],
+            'organization_id': '',
+            'infrastructure_id': '',
+            'model_json': load_example('saeon_datacite_model.json'),
+        }
+        result, obj = self._test_action('metadata_model_create', **input_dict)
+        assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_setname(self):
         metadata_schema = ckanext_factories.MetadataSchema()

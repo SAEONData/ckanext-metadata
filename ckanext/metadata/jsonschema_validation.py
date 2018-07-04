@@ -23,6 +23,11 @@ GEO_BOX_RE = re.compile(r'^(?P<lat1>[+-]?\d+(\.\d+)?)\s+(?P<lon1>[+-]?\d+(\.\d+)
 checks_format = jsonschema.FormatChecker.cls_checks
 
 
+def check_schema(schema):
+    cls = jsonschema.validators.validator_for(schema)
+    cls.check_schema(schema)
+
+
 def create_validator(schema):
     cls = jsonschema.validators.validator_for(schema)
     cls.check_schema(schema)
