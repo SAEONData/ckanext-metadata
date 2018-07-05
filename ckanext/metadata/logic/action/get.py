@@ -568,11 +568,7 @@ def metadata_validity_check(context, data_dict):
     metadata_json = json.loads(data['metadata_json'])
     model_json = json.loads(data['model_json'])
 
-    metadata_errors = {}
-    validator = jsonschema_validation.create_validator(model_json)
-    for metadata_error in validator.iter_errors(metadata_json):
-        metadata_errors[tuple(metadata_error.path)] = metadata_error.message
-
+    metadata_errors = jsonschema_validation.validate(metadata_json, model_json)
     return metadata_errors
 
 

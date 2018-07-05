@@ -23,6 +23,44 @@ GEO_BOX_RE = re.compile(r'^(?P<lat1>[+-]?\d+(\.\d+)?)\s+(?P<lon1>[+-]?\d+(\.\d+)
 checks_format = jsonschema.FormatChecker.cls_checks
 
 
+def validate(instance, schema):
+
+    def clear_empties(node):
+        if type(node) is dict:
+            for element in node.keys():
+                clear_empties(node[element])
+                if not node[element]:
+                    del node[element]
+        elif type(node) is list:
+            for element in node:
+                clear_empties(element)
+                if not element:
+                    node.remove(element)
+
+    def add_error(node, path, message):
+        if path:
+            element = path.popleft()
+        else:
+            element = u'__global'
+
+        if path:
+            if element not in node:
+                node[element] = {}
+            add_error(node[element], path, message)
+        else:
+            if element not in node:
+                node[element] = []
+            node[element] += [message]
+
+    errors = {}
+    validator = create_validator(schema)
+    clear_empties(instance)
+    for error in validator.iter_errors(instance):
+        add_error(errors, error.path, error.message)
+
+    return errors
+
+
 def check_schema(schema):
     cls = jsonschema.validators.validator_for(schema)
     cls.check_schema(schema)
@@ -37,7 +75,7 @@ def create_validator(schema):
     return cls(schema, format_checker=jsonschema.FormatChecker(
         formats=[
             'doi',
-            'uri',
+            'uri',  # implemented in jsonschema._format.py; requires rfc3987
             'url',
             'year',
             'yearmonth',
@@ -53,14 +91,14 @@ def create_validator(schema):
 
 
 def vocabulary_validator(validator, vocabulary_name, instance, schema):
-    if validator.is_type(instance, "string"):
+    if validator.is_type(instance, 'string'):
         try:
             vocabulary = tk.get_action('vocabulary_show')(data_dict={'id': vocabulary_name})
             tags = [tag['name'] for tag in vocabulary['tags']]
             if instance not in tags:
                 yield jsonschema.ValidationError(_('Tag not found in vocabulary'))
         except tk.ObjectNotFound:
-            yield jsonschema.ValidationError('%s: %s' % (_('Not found'), _('Vocabulary')))
+            yield jsonschema.ValidationError("%s: %s '%s'" % (_('Not found'), _('Vocabulary'), vocabulary_name))
 
 
 @checks_format('doi')
@@ -105,7 +143,6 @@ def is_yearmonth(instance):
         return False
 
 
-# TODO: check if this replaces or adds to the existing date format checkers
 @checks_format('date')
 def is_date(instance):
     if not isinstance(instance, basestring):
@@ -127,7 +164,12 @@ def is_datetime(instance):
         time_match = re.match(TIME_RE, timestr)
         if time_match:
             h, m, s, tzh, tzm = time_match.group('h', 'm', 's', 'tzh', 'tzm')
-            if 0 <= int(h) <= 23 and 0 <= int(m) <= 59 and 0 <= int(s) <= 59 and 0 <= int(tzm) <= 59:
+            if (
+                    0 <= int(h) <= 23 and
+                    0 <= int(m) <= 59 and
+                    0 <= int(s) <= 59 and
+                    0 <= int(tzm) <= 59
+            ):
                 return True
         return False
     except ValueError:
@@ -175,7 +217,10 @@ def is_geolocation_point(instance):
     match = re.match(GEO_POINT_RE, instance)
     if match:
         lat, lon = match.group('lat', 'lon')
-        if -90 <= float(lat) <= 90 and -180 <= float(lon) <= 180:
+        if (
+                 -90 <= float(lat) <= 90 and
+                -180 <= float(lon) <= 180
+        ):
             return True
     return False
 
@@ -187,7 +232,13 @@ def is_geolocation_box(instance):
     match = re.match(GEO_BOX_RE, instance)
     if match:
         lat1, lon1, lat2, lon2 = match.group('lat1', 'lon1', 'lat2', 'lon2')
-        if -90 <= float(lat1) <= 90 and -180 <= float(lon1) <= 180 and -90 <= float(lat2) <= 90 and -180 <= float(lon2) <= 180 and \
-                float(lat1) <= float(lat2) and float(lon1) <= float(lon2):
+        if (
+                 -90 <= float(lat1) <= 90 and
+                -180 <= float(lon1) <= 180 and
+                 -90 <= float(lat2) <= 90 and
+                -180 <= float(lon2) <= 180 and
+                float(lat1) <= float(lat2) and
+                float(lon1) <= float(lon2)
+        ):
             return True
     return False

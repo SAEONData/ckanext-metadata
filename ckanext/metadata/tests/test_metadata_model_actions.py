@@ -426,6 +426,18 @@ class TestMetadataModelActions(ActionTestBase):
         assert obj.title == metadata_model['title']
         assert obj.description == metadata_model['description']
 
+    def test_update_valid_datacite(self):
+        metadata_model = ckanext_factories.MetadataModel()
+        input_dict = {
+            'id': metadata_model['id'],
+            'metadata_schema_id': metadata_model['metadata_schema_id'],
+            'organization_id': '',
+            'infrastructure_id': '',
+            'model_json': load_example('saeon_datacite_model.json'),
+        }
+        result, obj = self._test_action('metadata_model_update', **input_dict)
+        assert_object_matches_dict(obj, input_dict)
+
     def test_update_valid_set_organization(self):
         metadata_model = ckanext_factories.MetadataModel()
         organization = ckan_factories.Organization()

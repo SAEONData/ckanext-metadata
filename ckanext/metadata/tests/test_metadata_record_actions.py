@@ -483,9 +483,15 @@ class TestMetadataRecordActions(ActionTestBase):
         self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
         self._assert_invalidate_activity_logged(metadata_record['id'], None, None)
 
-    # def test_validate_datacite(self):
-    #     metadata_record = self._generate_metadata_record(
-    #         metadata_json=load_example('saeon_datacite_record.json'))
-    #     metadata_model = ckanext_factories.MetadataModel(
-    #         metadata_schema_id=metadata_record['metadata_schema_id'],
-    #         model_json=load_example('saeon_datacite_model.json'))
+    def test_validate_datacite(self):
+        metadata_record = self._generate_metadata_record(
+            metadata_json=load_example('saeon_datacite_record.json'))
+        metadata_model = ckanext_factories.MetadataModel(
+            metadata_schema_id=metadata_record['metadata_schema_id'],
+            model_json=load_example('saeon_datacite_model.json'))
+
+        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self._test_action('metadata_record_validate', id=metadata_record['id'])
+        assert_package_has_extra(metadata_record['id'], 'validated', True)
+        # TODO: finalise exact structure of DataCite model; currently the sample record does not validate
+        # self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
