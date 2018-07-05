@@ -26,18 +26,26 @@ checks_format = jsonschema.FormatChecker.cls_checks
 def validate(instance, schema):
 
     def clear_empties(node):
+        """
+        Recursively remove empty elements from the instance tree.
+        """
         if type(node) is dict:
+            # iterate over a copy of the dict's keys, as we are deleting keys during iteration
             for element in node.keys():
                 clear_empties(node[element])
                 if not node[element]:
                     del node[element]
         elif type(node) is list:
-            for element in node:
+            # iterate over a copy of the list, as we are deleting elements during iteration
+            for element in list(node):
                 clear_empties(element)
                 if not element:
                     node.remove(element)
 
     def add_error(node, path, message):
+        """
+        Add an error message to the error tree.
+        """
         if path:
             element = path.popleft()
         else:
