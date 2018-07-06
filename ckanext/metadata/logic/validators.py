@@ -10,8 +10,7 @@ import ckan.plugins.toolkit as tk
 from ckan.common import _
 import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata import jsonschema_validation
-
+from ckanext.metadata.logic.metadata_validator import MetadataValidator
 
 convert_to_extras = tk.get_validator('convert_to_extras')
 
@@ -142,7 +141,7 @@ def json_schema_validator(value):
     if value:
         try:
             schema = json.loads(value)
-            jsonschema_validation.check_schema(schema)
+            MetadataValidator.check_schema(schema)
         except ValueError, e:
             raise tk.Invalid(_("JSON decode error: %s") % e.message)
         except AttributeError, e:

@@ -23,65 +23,25 @@ GEO_BOX_RE = re.compile(r'^(?P<lat1>[+-]?\d+(\.\d+)?)\s+(?P<lon1>[+-]?\d+(\.\d+)
 checks_format = jsonschema.FormatChecker.cls_checks
 
 
-def validate(instance, schema):
+class MetadataValidator(object):
 
-    def clear_empties(node):
+    def __init__(self, schema):
         """
-        Recursively remove empty elements from the instance tree.
+        Check the given schema and create a validator for it.
+        :param schema: JSON schema dict
         """
-        if type(node) is dict:
-            # iterate over a copy of the dict's keys, as we are deleting keys during iteration
-            for element in node.keys():
-                clear_empties(node[element])
-                if not node[element]:
-                    del node[element]
-        elif type(node) is list:
-            # iterate over a copy of the list, as we are deleting elements during iteration
-            for element in list(node):
-                clear_empties(element)
-                if not element:
-                    node.remove(element)
+        jsonschema_validator_cls = jsonschema.validators.validator_for(schema)
+        jsonschema_validator_cls.check_schema(schema)
+        jsonschema_validator_cls.VALIDATORS.update({
+            'vocabulary': vocabulary_validator,
+        })
 
-    def add_error(node, path, message):
-        """
-        Add an error message to the error tree.
-        """
-        if path:
-            element = path.popleft()
-        else:
-            element = u'__global'
+        try:
+            import rfc3987
+        except ImportError:
+            raise ImportError("Module rfc3987 is required for uri format checking")
 
-        if path:
-            if element not in node:
-                node[element] = {}
-            add_error(node[element], path, message)
-        else:
-            if element not in node:
-                node[element] = []
-            node[element] += [message]
-
-    errors = {}
-    validator = create_validator(schema)
-    clear_empties(instance)
-    for error in validator.iter_errors(instance):
-        add_error(errors, error.path, error.message)
-
-    return errors
-
-
-def check_schema(schema):
-    cls = jsonschema.validators.validator_for(schema)
-    cls.check_schema(schema)
-
-
-def create_validator(schema):
-    cls = jsonschema.validators.validator_for(schema)
-    cls.check_schema(schema)
-    cls.VALIDATORS.update({
-        'vocabulary': vocabulary_validator,
-    })
-    return cls(schema, format_checker=jsonschema.FormatChecker(
-        formats=[
+        format_checker = jsonschema.FormatChecker(formats=[
             'doi',
             'uri',  # implemented in jsonschema._format.py; requires rfc3987
             'url',
@@ -95,7 +55,67 @@ def create_validator(schema):
             'datetime-range',
             'geolocation-point',
             'geolocation-box',
-        ]))
+        ])
+
+        self.jsonschema_validator = jsonschema_validator_cls(schema, format_checker=format_checker)
+
+    @classmethod
+    def check_schema(cls, schema):
+        """
+        Check that the given dictionary is a valid JSON schema.
+        :param schema: dict
+        """
+        jsonschema_validator_cls = jsonschema.validators.validator_for(schema)
+        jsonschema_validator_cls.check_schema(schema)
+
+    def validate(self, instance):
+        """
+        Validate a JSON metadata instance.
+        :param instance: metadata dict
+        :return: error dict
+        """
+
+        def clear_empties(node):
+            """
+            Recursively remove empty elements from the instance tree.
+            """
+            if type(node) is dict:
+                # iterate over a copy of the dict's keys, as we are deleting keys during iteration
+                for element in node.keys():
+                    clear_empties(node[element])
+                    if not node[element]:
+                        del node[element]
+            elif type(node) is list:
+                # iterate over a copy of the list, as we are deleting elements during iteration
+                for element in list(node):
+                    clear_empties(element)
+                    if not element:
+                        node.remove(element)
+
+        def add_error(node, path, message):
+            """
+            Add an error message to the error tree.
+            """
+            if path:
+                element = path.popleft()
+            else:
+                element = u'__global'
+
+            if path:
+                if element not in node:
+                    node[element] = {}
+                add_error(node[element], path, message)
+            else:
+                if element not in node:
+                    node[element] = []
+                node[element] += [message]
+
+        errors = {}
+        clear_empties(instance)
+        for error in self.jsonschema_validator.iter_errors(instance):
+            add_error(errors, error.path, error.message)
+
+        return errors
 
 
 def vocabulary_validator(validator, vocabulary_name, instance, schema):
