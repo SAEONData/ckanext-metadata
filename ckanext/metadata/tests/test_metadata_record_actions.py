@@ -489,9 +489,10 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel(
             metadata_schema_id=metadata_record['metadata_schema_id'],
             model_json=load_example('saeon_datacite_model.json'))
+        ckan_factories.Vocabulary(name='language-tags', tags=[{'name': 'en-us'}])
 
         self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
         self._test_action('metadata_record_validate', id=metadata_record['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', True)
-        # TODO: finalise exact structure of DataCite model; currently the sample record does not validate
-        # self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
+        assert_package_has_extra(metadata_record['id'], 'errors', '{}')
+        self._assert_validate_activity_logged(metadata_record['id'], metadata_model)

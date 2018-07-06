@@ -1,15 +1,9 @@
 {
-    "additionalFields": {
-        "coverageBegin": "",
-        "coverageEnd": "",
-        "onlineResources": [
-            {"desc": "Original Metadata Record",
-             "func": "metadata",
-             "href": "http://qa.dirisa.org/Portals/test-mike/testcustmike/metadata/metadata.2018-02-28.9981326861/getOriginalXml",
-             "name": "Original Metadata Record"}],
-        "source_uri": "",
-        "status": "complete"
-    },
+    "onlineResources": [
+        {"desc": "Original Metadata Record",
+         "func": "metadata",
+         "href": "http://qa.dirisa.org/Portals/test-mike/testcustmike/metadata/metadata.2018-02-28.9981326861/getOriginalXml",
+         "name": "Original Metadata Record"}],
     "alternateIdentifiers": [{
         "alternateIdentifier": "http://schema.datacite.org/schema/meta/kernel-3.1/example/datacite-example-full-v3.1.xml",
         "alternateIdentifierType": "URL"}],
@@ -32,7 +26,7 @@
         "description": "XML example of all DataCite Metadata Schema v3.1 properties.",
         "descriptionType": "Abstract"}],
     "errors": [],
-    "formats": ["application/xml"],
+    "formats": [{"format": "application/xml"}],
     "geoLocations": [{
         "geoLocationBox": "41.090 -71.032  42.893 -68.211",
         "geoLocationPlace": "Atlantic Ocean",
@@ -64,7 +58,9 @@
         "rights": "CC0 1.0 Universal",
         "rightsURI": "http://creativecommons.org/publicdomain/zero/1.0/"}],
     "schemaSpecific": {},
-    "sizes": ["3KB", "25ml"],
+    "sizes": [
+        {"size": "3KB"},
+        {"size": "25ml"}],
     "subjects": [{
         "schemeURI": "http://dewey.info/",
         "subject": "000 computer science",
