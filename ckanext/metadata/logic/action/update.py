@@ -488,8 +488,6 @@ def metadata_record_validate(context, data_dict):
 
     :param id: the id or name of the metadata record to validate
     :type id: string
-
-    :rtype: validation activity dictionary
     """
     log.info("Validating metadata record: %r", data_dict)
 
@@ -828,13 +826,6 @@ def metadata_record_workflow_state_transition(context, data_dict):
     :type id: string
     :param workflow_state_id: the id or name of the target workflow state
     :type workflow_state_id: string
-
-    :rtype: workflow activity dictionary
-
-    TODO: we must log complete details of the transition, metrics and rules involved
-    because later on these might be changed and it won't otherwise be clear how a record
-    got into the state it's in... alternative would be to revert all records in a particular
-    state if the rules for that state change, but this might cause even more problems...
     """
     log.info("Transitioning workflow state of metadata record: %r", data_dict)
 
@@ -867,6 +858,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
     current_workflow_state_id = session.query(model.PackageExtra.value) \
         .filter_by(package_id=metadata_record_id, key='workflow_state_id').scalar()
 
+    # already on target state
     if current_workflow_state_id == target_workflow_state_id:
         return
 
@@ -876,40 +868,50 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     workflow_rules = tk.get_action('workflow_state_rule_list')(context, {'id': target_workflow_state_id})
 
-    # log results of rule evaluation using CKAN's activity stream model; CKAN doesn't provide a way
-    # to hook into activity detail creation, so we work directly with the model objects here
-    activity = model.Activity(
-        user_id=model.User.by_name(user.decode('utf8')).id,
-        object_id=metadata_record_id,
-        revision_id=metadata_record.revision_id,
-        activity_type=METADATA_WORKFLOW_ACTIVITY_TYPE,
-        data={'workflow_transition_id': workflow_transition.id}
-    )
-
     # delegate the actual evaluation work to the pluggable action metadata_workflow_rule_evaluate
-    activity_details = []
+    rule_results = []
     success = True  # if there are no rules associated with a state, the transition is allowed
     for workflow_rule in workflow_rules:
         rule_success = tk.get_action('metadata_workflow_rule_evaluate')(context, {
             'metadata_json': metadata_record.extras['metadata_json'],
-            'evaluator_url': workflow_rule['evaluator_url'],
+            'evaluator_url': workflow_rule['metric_evaluator_url'],
             'rule_json': workflow_rule['rule_json'],
         })
+        rule_result = {
+            'workflow_rule_id': workflow_rule['rule_id'],
+            'workflow_rule_revision_id': workflow_rule['rule_revision_id'],
+            'workflow_metric_id': workflow_rule['metric_id'],
+            'workflow_metric_revision_id': workflow_rule['metric_revision_id'],
+            'success': rule_success,
+        }
+        rule_results += [rule_result]
         success = success and rule_success
-        activity_detail = model.ActivityDetail(
-            activity_id=activity.id,
-            object_id=workflow_rule['rule_id'],
-            object_type=ckanext_model.WorkflowRule,
-            activity_type='pass' if rule_success else 'fail',
-        )
-        activity_details += [activity_detail]
 
     if success:
         metadata_record.extras['workflow_state_id'] = target_workflow_state_id
 
-    session.add(activity)
-    for activity_detail in activity_details:
-        session.add(activity_detail)
+    activity_context = context.copy()
+    activity_context.update({
+        'defer_commit': True,
+        'schema': {
+            'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
+            'object_id': [],
+            'revision_id': [],
+            'activity_type': [],
+            'data': [],
+        },
+    })
+    activity_dict = {
+        'user_id': model.User.by_name(user.decode('utf8')).id,
+        'object_id': metadata_record_id,
+        'activity_type': METADATA_WORKFLOW_ACTIVITY_TYPE,
+        'data': {
+            'workflow_transition_id': workflow_transition.id,
+            'workflow_transition_revision_id': workflow_transition.revision_id,
+            'results': rule_results,
+        }
+    }
+    tk.get_action('activity_create')(activity_context, activity_dict)
 
     if not defer_commit:
         model.repo.commit()

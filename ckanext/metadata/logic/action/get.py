@@ -705,11 +705,11 @@ def workflow_state_rule_list(context, data_dict):
 
     :rtype: list of dictionaries combining rule and metric information {
             rule_id
-            metric_name
-            metric_title
-            metric_description
-            evaluator_url
+            rule_revision_id
             rule_json
+            metric_id
+            metric_revision_id
+            metric_evaluator_url
         }
     """
     log.debug("Retrieving list of rules for workflow state: %r", data_dict)
@@ -728,19 +728,22 @@ def workflow_state_rule_list(context, data_dict):
 
     tk.check_access('workflow_state_rule_list', context, data_dict)
 
-    rules = session.query(ckanext_model.WorkflowRule) \
-        .join(ckanext_model.WorkflowMetric) \
-        .filter(ckanext_model.WorkflowRule.workflow_state_id == workflow_state_id) \
+    rule_tab = ckanext_model.WorkflowRule
+    metric_tab = ckanext_model.WorkflowMetric
+    rules = session.query(rule_tab.id, rule_tab.revision_id, rule_tab.rule_json,
+                          metric_tab.id, metric_tab.revision_id, metric_tab.evaluator_url) \
+        .join(metric_tab) \
+        .filter(rule_tab.workflow_state_id == workflow_state_id) \
         .all()
 
     return [{
-        'rule_id': rule.id,
-        'metric_name': rule.name,
-        'metric_title': rule.title,
-        'metric_description': rule.description,
-        'evaluator_url': rule.evaluator_url,
-        'rule_json': rule.rule_json,
-    } for rule in rules]
+        'rule_id': rule_id,
+        'rule_revision_id': rule_revision_id,
+        'rule_json': rule_json,
+        'metric_id': metric_id,
+        'metric_revision_id': metric_revision_id,
+        'metric_evaluator_url': metric_evaluator_url,
+    } for (rule_id, rule_revision_id, rule_json, metric_id, metric_revision_id, metric_evaluator_url) in rules]
 
 
 @tk.side_effect_free
