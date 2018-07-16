@@ -508,9 +508,9 @@ def metadata_record_validate(context, data_dict):
 
     context['metadata_record'] = metadata_record
 
-    # already validated -> return the last validation result
+    # already validated
     if asbool(metadata_record.extras['validated']):
-        return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
+        return
 
     validation_models = tk.get_action('metadata_record_validation_model_list')\
         (context, {'id': metadata_record_id, 'all_fields': True})
@@ -560,8 +560,6 @@ def metadata_record_validate(context, data_dict):
 
     if not defer_commit:
         model.repo.commit()
-
-    return tk.get_action('metadata_record_validation_activity_show')(context, {'id': metadata_record_id})
 
 
 def metadata_record_workflow_state_override(context, data_dict):
@@ -870,7 +868,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
         .filter_by(package_id=metadata_record_id, key='workflow_state_id').scalar()
 
     if current_workflow_state_id == target_workflow_state_id:
-        return None
+        return
 
     workflow_transition = ckanext_model.WorkflowTransition.lookup(current_workflow_state_id, target_workflow_state_id)
     if not workflow_transition or workflow_transition.state != 'active':
@@ -915,5 +913,3 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     if not defer_commit:
         model.repo.commit()
-
-    return tk.get_action('metadata_record_workflow_activity_show')(context, {'id': metadata_record_id})
