@@ -86,6 +86,7 @@ def metadata_record_create_schema():
         'state': [ignore_not_package_admin, ignore_missing],
         'owner_org': [v.not_empty, v.group_exists('organization'), owner_org_validator, unicode],
         'type': [],
+        'private': [],
 
         # extension-specific fields
         'metadata_collection_id': [v.not_empty, unicode, v.group_exists('metadata_collection'), convert_to_extras],
@@ -288,6 +289,7 @@ def workflow_state_create_schema():
         'name': [v.not_empty, unicode, name_validator, v.workflow_state_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
+        'private': [v.not_missing, boolean_validator],
         'revert_state_id': [v.not_missing, unicode, v.workflow_state_exists],
         'state': [ignore_not_sysadmin, ignore_missing],
     }

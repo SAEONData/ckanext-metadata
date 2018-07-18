@@ -366,6 +366,7 @@ def metadata_record_update(context, data_dict):
         'validated': asbool(metadata_record.extras['validated']),
         'errors': metadata_record.extras['errors'],
         'workflow_state_id': metadata_record.extras['workflow_state_id'],
+        'private': metadata_record.private,
     })
     context.update({
         'schema': schema.metadata_record_update_schema(),
@@ -595,6 +596,7 @@ def metadata_record_workflow_state_override(context, data_dict):
     tk.check_access('metadata_record_workflow_state_override', context, data_dict)
 
     metadata_record.extras['workflow_state_id'] = workflow_state_id
+    metadata_record.private = workflow_state.private
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -644,6 +646,8 @@ def workflow_state_update(context, data_dict):
 
     tk.check_access('workflow_state_update', context, data_dict)
 
+    old_private = workflow_state.private
+
     data_dict.update({
         'id': workflow_state_id,
     })
@@ -658,6 +662,19 @@ def workflow_state_update(context, data_dict):
         raise tk.ValidationError(errors)
 
     workflow_state = model_save.workflow_state_dict_save(data, context)
+
+    if workflow_state.private != old_private:
+        # cascade change in 'private' status to metadata records that are in this workflow state
+        metadata_records = session.query(model.Package) \
+            .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
+            .filter(model.PackageExtra.key == 'workflow_state_id') \
+            .filter(model.PackageExtra.value == workflow_state_id) \
+            .filter(model.Package.type == 'metadata_record') \
+            .filter(model.Package.state != 'deleted') \
+            .all()
+
+        for metadata_record in metadata_records:
+            metadata_record.private = workflow_state.private
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -889,6 +906,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     if success:
         metadata_record.extras['workflow_state_id'] = target_workflow_state_id
+        metadata_record.private = target_workflow_state.private
 
     activity_context = context.copy()
     activity_context.update({

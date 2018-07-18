@@ -8,6 +8,7 @@ from ckanext.metadata.tests import (
     make_uuid,
     assert_object_matches_dict,
     assert_package_has_extra,
+    assert_package_has_attribute,
     assert_error,
     factories as ckanext_factories,
 )
@@ -21,6 +22,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'title': 'Test Workflow State',
             'description': 'This is a test workflow state',
             'revert_state_id': '',
+            'private': True,
         }
         result, obj = self._test_action('workflow_state_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -30,6 +32,7 @@ class TestWorkflowStateActions(ActionTestBase):
         input_dict = {
             'name': 'test-workflow-state',
             'revert_state_id': workflow_state['id'],
+            'private': False,
         }
         result, obj = self._test_action('workflow_state_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -39,6 +42,7 @@ class TestWorkflowStateActions(ActionTestBase):
         input_dict = {
             'name': 'test-workflow-state',
             'revert_state_id': workflow_state['name'],
+            'private': False,
         }
         result, obj = self._test_action('workflow_state_create', **input_dict)
         input_dict['revert_state_id'] = workflow_state['id']
@@ -49,6 +53,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': make_uuid(),
             'name': 'test-workflow-state',
             'revert_state_id': '',
+            'private': True,
         }
         result, obj = self._test_action('workflow_state_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -63,6 +68,7 @@ class TestWorkflowStateActions(ActionTestBase):
         result, obj = self._test_action('workflow_state_create', should_error=True)
         assert_error(result, 'name', 'Missing parameter')
         assert_error(result, 'revert_state_id', 'Missing parameter')
+        assert_error(result, 'private', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
         result, obj = self._test_action('workflow_state_create', should_error=True,
@@ -110,6 +116,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'title': 'Updated Test Workflow State',
             'description': 'Updated test workflow state description',
             'revert_state_id': '',
+            'private': False,
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -120,6 +127,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state['id'],
             'name': 'updated-test-workflow-state',
             'revert_state_id': '',
+            'private': False,
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -133,6 +141,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state1['id'],
             'name': workflow_state1['name'],
             'revert_state_id': workflow_state2['id'],
+            'private': True,
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -145,6 +154,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state3['id'],
             'name': workflow_state3['name'],
             'revert_state_id': workflow_state1['id'],
+            'private': True,
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -159,9 +169,54 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state3['id'],
             'name': workflow_state3['name'],
             'revert_state_id': workflow_state1['id'],
+            'private': True,
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
+
+    def test_update_private_cascade_1(self):
+        """
+        Test that the visibility of a metadata record is determined by that of its workflow state.
+        """
+        metadata_record = ckanext_factories.MetadataRecord()
+        workflow_state = ckanext_factories.WorkflowState(private=False)
+        call_action('metadata_record_workflow_state_override',
+                    id=metadata_record['id'],
+                    workflow_state_id=workflow_state['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
+        assert_package_has_attribute(metadata_record['id'], 'private', False)
+
+        input_dict = {
+            'id': workflow_state['id'],
+            'revert_state_id': '',
+            'private': True,
+        }
+        result, obj = self._test_action('workflow_state_update', **input_dict)
+        assert_object_matches_dict(obj, input_dict)
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
+        assert_package_has_attribute(metadata_record['id'], 'private', True)
+
+    def test_update_private_cascade_2(self):
+        """
+        Test that the visibility of a metadata record is determined by that of its workflow state.
+        """
+        metadata_record = ckanext_factories.MetadataRecord()
+        workflow_state = ckanext_factories.WorkflowState(private=True)
+        call_action('metadata_record_workflow_state_override',
+                    id=metadata_record['id'],
+                    workflow_state_id=workflow_state['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
+        assert_package_has_attribute(metadata_record['id'], 'private', True)
+
+        input_dict = {
+            'id': workflow_state['id'],
+            'revert_state_id': '',
+            'private': False,
+        }
+        result, obj = self._test_action('workflow_state_update', **input_dict)
+        assert_object_matches_dict(obj, input_dict)
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
+        assert_package_has_attribute(metadata_record['id'], 'private', False)
 
     def test_update_invalid_duplicate_name(self):
         workflow_state1 = ckanext_factories.WorkflowState()
@@ -178,6 +233,7 @@ class TestWorkflowStateActions(ActionTestBase):
         result, obj = self._test_action('workflow_state_update', should_error=True,
                                         id=workflow_state['id'])
         assert_error(result, 'revert_state_id', 'Missing parameter')
+        assert_error(result, 'private', 'Missing parameter')
 
     def test_update_invalid_circular_revert(self):
         workflow_state1 = ckanext_factories.WorkflowState()

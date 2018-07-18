@@ -145,6 +145,7 @@ class WorkflowState(factory.Factory):
     title = factory.LazyAttribute(lambda obj: obj.name.replace('_', ' ').title())
     description = 'A test description for this test workflow state.'
     revert_state_id = ''
+    private = False
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):

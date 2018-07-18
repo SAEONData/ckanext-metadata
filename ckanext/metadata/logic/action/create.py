@@ -306,6 +306,7 @@ def metadata_record_create(context, data_dict):
         'validated': False,
         'errors': '{}',
         'workflow_state_id': '',
+        'private': True,
     })
     context.update({
         'schema': schema.metadata_record_create_schema(),
@@ -339,6 +340,8 @@ def workflow_state_create(context, data_dict):
     :type title: string
     :param description: the description of the workflow state (optional)
     :type description: string
+    :param private: determines the private/public status of metadata records that are in this workflow state
+    :type private: boolean
     :param revert_state_id: the id or name of the state to which a metadata record is
         reverted in case it no longer fulfils the rules for this state (nullable)
     :type revert_state_id: string

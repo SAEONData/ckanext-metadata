@@ -85,6 +85,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert obj.title == kwargs.pop('title', input_dict.get('title'))
         assert obj.name == kwargs.pop('name', 'metadata-' + obj.id)
         assert obj.owner_org == kwargs.pop('owner_org', self.owner_org['id'])
+        assert obj.private == kwargs.pop('private', True)
         assert_package_has_extra(obj.id, 'metadata_collection_id', kwargs.pop('metadata_collection_id', self.metadata_collection['id']))
         assert_package_has_extra(obj.id, 'metadata_schema_id', kwargs.pop('metadata_schema_id', self.metadata_schema['id']))
         assert_package_has_extra(obj.id, 'metadata_json', input_dict['metadata_json'], is_json=True)
@@ -96,10 +97,13 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_create_valid(self):
         input_dict = self._make_input_dict()
-        input_dict['type'] = 'ignore'
-        input_dict['validated'] = 'ignore'
-        input_dict['errors'] = 'ignore'
-        input_dict['workflow_state_id'] = 'ignore'
+        input_dict.update({
+            'type': 'ignore',
+            'validated': 'ignore',
+            'errors': 'ignore',
+            'workflow_state_id': 'ignore',
+            'private': 'ignore',
+        })
         result, obj = self._test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
 
@@ -243,6 +247,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'validated': 'ignore',
             'errors': 'ignore',
             'workflow_state_id': 'ignore',
+            'private': 'ignore',
         }
         result, obj = self._test_action('metadata_record_update', **input_dict)
 

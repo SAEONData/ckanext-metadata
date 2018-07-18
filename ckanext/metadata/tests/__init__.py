@@ -79,6 +79,16 @@ def assert_package_has_extra(package_id, key, value, state='active', is_json=Fal
     assert extra_value == value
 
 
+def assert_package_has_attribute(package_id, attr, value):
+    """
+    Check that a package has the specified native attribute value.
+    """
+    obj = ckan_model.Package.get(package_id)
+    assert obj
+    assert hasattr(obj, attr)
+    assert getattr(obj, attr) == value
+
+
 def assert_group_has_extra(group_id, key, value, state='active'):
     """
     Check that a group has the specified extra key-value pair.
