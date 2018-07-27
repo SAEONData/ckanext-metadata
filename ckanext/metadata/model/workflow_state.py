@@ -12,7 +12,8 @@ workflow_state_table = Table(
     Column('name', types.UnicodeText, nullable=False, unique=True),
     Column('title', types.UnicodeText),
     Column('description', types.UnicodeText),
-    Column('private', types.Boolean, nullable=False),
+    Column('workflow_rules_json', types.UnicodeText),
+    Column('metadata_records_private', types.Boolean, nullable=False),
     # we implement the self-relation "softly", otherwise revision table
     # auto-generation gets confused about how to join to this table
     Column('revert_state_id', types.UnicodeText),  # ForeignKey('workflow_state.id')),

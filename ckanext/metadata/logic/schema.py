@@ -142,6 +142,15 @@ def metadata_validity_check_schema():
     return schema
 
 
+def metadata_record_workflow_rules_check_schema():
+    schema = {
+        'metadata_record_json': [v.not_missing, unicode, v.json_dict_validator],
+        'workflow_annotations_json': [v.not_missing, unicode, v.json_dict_validator],
+        'workflow_rules_json': [v.not_missing, unicode, v.json_schema_validator],
+    }
+    return schema
+
+
 def metadata_collection_create_schema():
     schema = {
         # from the default group schema
@@ -289,7 +298,8 @@ def workflow_state_create_schema():
         'name': [v.not_empty, unicode, name_validator, v.workflow_state_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
-        'private': [v.not_missing, boolean_validator],
+        'workflow_rules_json': [v.not_missing, unicode, v.json_schema_validator],
+        'metadata_records_private': [v.not_missing, boolean_validator],
         'revert_state_id': [v.not_missing, unicode, v.workflow_state_exists],
         'state': [ignore_not_sysadmin, ignore_missing],
     }
@@ -307,6 +317,7 @@ def workflow_state_update_schema():
 def workflow_state_show_schema():
     schema = workflow_state_create_schema()
     _make_show_schema(schema)
+    schema['workflow_rules_json'] = [v.deserialize_json]
     return schema
 
 
@@ -333,57 +344,18 @@ def workflow_transition_show_schema():
     return schema
 
 
-def workflow_metric_create_schema():
+def workflow_annotation_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_metric_does_not_exist],
-        'name': [v.not_empty, unicode, name_validator, v.workflow_metric_name_validator],
-        'title': [ignore_missing, unicode],
-        'description': [ignore_missing, unicode],
-        'evaluator_url': [v.not_empty, unicode, v.url_validator],
-        'state': [ignore_not_sysadmin, ignore_missing],
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_annotation_does_not_exist],
+        'metadata_record_id': [v.not_empty, unicode, v.metadata_record_exists],
+        'workflow_annotation_json': [v.not_empty, unicode, v.json_dict_validator],
+        'timestamp': [ignore],
     }
-    _make_create_schema(schema)
     return schema
 
 
-def workflow_metric_update_schema():
-    schema = workflow_metric_create_schema()
-    _make_update_schema(schema)
-    return schema
-
-
-def workflow_metric_show_schema():
-    schema = workflow_metric_create_schema()
+def workflow_annotation_show_schema():
+    schema = workflow_annotation_create_schema()
     _make_show_schema(schema)
-    return schema
-
-
-def workflow_rule_create_schema():
-    schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_rule_does_not_exist],
-        'workflow_state_id': [v.not_empty, unicode, v.workflow_state_exists],
-        'workflow_metric_id': [v.not_empty, unicode, v.workflow_metric_exists],
-        'rule_json': [v.not_empty, unicode, v.json_dict_validator],
-        'state': [ignore_not_sysadmin, ignore_missing],
-
-        # post-validation
-        '__after': [v.workflow_rule_unique, ignore],
-    }
-    _make_create_schema(schema)
-    return schema
-
-
-def workflow_rule_update_schema():
-    schema = workflow_rule_create_schema()
-    # cannot change the associated state or metric
-    schema['workflow_state_id'] = [empty]
-    schema['workflow_metric_id'] = [empty]
-    _make_update_schema(schema)
-    return schema
-
-
-def workflow_rule_show_schema():
-    schema = workflow_rule_create_schema()
-    _make_show_schema(schema)
-    schema['rule_json'] = [v.deserialize_json]
+    schema['workflow_annotation_json'] = [v.deserialize_json]
     return schema

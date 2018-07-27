@@ -9,6 +9,7 @@ from ckan.common import _
 from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
+from ckanext.metadata.lib.dictization import model_dictize
 
 log = logging.getLogger(__name__)
 
@@ -511,8 +512,10 @@ def metadata_record_validate(context, data_dict):
     if asbool(metadata_record.extras['validated']):
         return
 
-    validation_models = tk.get_action('metadata_record_validation_model_list')\
-        (context, {'id': metadata_record_id, 'all_fields': True})
+    validation_models = tk.get_action('metadata_record_validation_model_list')(context, {
+        'id': metadata_record_id,
+        'all_fields': True,
+    })
     if not validation_models:
         raise tk.ObjectNotFound(_('Could not find any metadata models for validating this metadata record'))
 
@@ -596,7 +599,7 @@ def metadata_record_workflow_state_override(context, data_dict):
     tk.check_access('metadata_record_workflow_state_override', context, data_dict)
 
     metadata_record.extras['workflow_state_id'] = workflow_state_id
-    metadata_record.private = workflow_state.private
+    metadata_record.private = workflow_state.metadata_records_private
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -646,7 +649,7 @@ def workflow_state_update(context, data_dict):
 
     tk.check_access('workflow_state_update', context, data_dict)
 
-    old_private = workflow_state.private
+    old_metadata_records_private = workflow_state.metadata_records_private
 
     data_dict.update({
         'id': workflow_state_id,
@@ -663,8 +666,8 @@ def workflow_state_update(context, data_dict):
 
     workflow_state = model_save.workflow_state_dict_save(data, context)
 
-    if workflow_state.private != old_private:
-        # cascade change in 'private' status to metadata records that are in this workflow state
+    if workflow_state.metadata_records_private != old_metadata_records_private:
+        # cascade change in 'metadata_records_private' status to metadata records that are in this workflow state
         metadata_records = session.query(model.Package) \
             .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
             .filter(model.PackageExtra.key == 'workflow_state_id') \
@@ -674,7 +677,7 @@ def workflow_state_update(context, data_dict):
             .all()
 
         for metadata_record in metadata_records:
-            metadata_record.private = workflow_state.private
+            metadata_record.private = workflow_state.metadata_records_private
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -702,134 +705,13 @@ def workflow_transition_update(context, data_dict):
     raise tk.ValidationError("A workflow transition cannot be updated. Delete it and create a new one instead.")
 
 
-def workflow_metric_update(context, data_dict):
+def workflow_annotation_update(context, data_dict):
     """
-    Update a workflow metric.
+    Update a workflow annotation.
 
-    You must be authorized to edit the workflow metric.
-
-    It is recommended to call
-    :py:func:`ckan.logic.action.get.workflow_metric_show`, make the desired changes to
-    the result, and then call ``workflow_metric_update()`` with it.
-
-    For further parameters see
-    :py:func:`~ckanext.metadata.logic.action.create.workflow_metric_create`.
-
-    :param id: the id or name of the workflow metric to update
-    :type id: string
-
-    :returns: the updated workflow metric (unless 'return_id_only' is set to True
-              in the context, in which case just the workflow metric id will be returned)
-    :rtype: dictionary
+    Note: this action will always fail; workflow annotations are not intended to be updatable.
     """
-    log.info("Updating workflow metric: %r", data_dict)
-
-    model = context['model']
-    user = context['user']
-    session = context['session']
-    defer_commit = context.get('defer_commit', False)
-    return_id_only = context.get('return_id_only', False)
-
-    workflow_metric_id = tk.get_or_bust(data_dict, 'id')
-    workflow_metric = ckanext_model.WorkflowMetric.get(workflow_metric_id)
-    if workflow_metric is not None:
-        workflow_metric_id = workflow_metric.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
-
-    tk.check_access('workflow_metric_update', context, data_dict)
-
-    data_dict.update({
-        'id': workflow_metric_id,
-    })
-    context.update({
-        'workflow_metric': workflow_metric,
-        'allow_partial_update': True,
-    })
-
-    data, errors = tk.navl_validate(data_dict, schema.workflow_metric_update_schema(), context)
-    if errors:
-        session.rollback()
-        raise tk.ValidationError(errors)
-
-    workflow_metric = model_save.workflow_metric_dict_save(data, context)
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
-    else:
-        rev.message = _(u'REST API: Update workflow metric %s') % workflow_metric_id
-
-    if not defer_commit:
-        model.repo.commit()
-
-    output = workflow_metric_id if return_id_only \
-        else tk.get_action('workflow_metric_show')(context, {'id': workflow_metric_id})
-    return output
-
-
-def workflow_rule_update(context, data_dict):
-    """
-    Update a workflow rule. Only the JSON rule definition can be modified.
-
-    You must be authorized to edit the workflow rule.
-
-    :param id: the id or name of the workflow rule to update
-    :type id: string
-    :param rule_json: JSON object defining acceptable return value/range from metric
-        evaluation to pass this rule
-    :type rule_json: string
-
-    :returns: the updated workflow rule (unless 'return_id_only' is set to True
-              in the context, in which case just the workflow rule id will be returned)
-    :rtype: dictionary
-    """
-    log.info("Updating workflow rule: %r", data_dict)
-
-    model = context['model']
-    user = context['user']
-    session = context['session']
-    defer_commit = context.get('defer_commit', False)
-    return_id_only = context.get('return_id_only', False)
-
-    workflow_rule_id = tk.get_or_bust(data_dict, 'id')
-    workflow_rule = ckanext_model.WorkflowRule.get(workflow_rule_id)
-    if workflow_rule is not None:
-        workflow_rule_id = workflow_rule.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
-
-    tk.check_access('workflow_rule_update', context, data_dict)
-
-    data_dict.update({
-        'id': workflow_rule_id,
-    })
-    context.update({
-        'workflow_rule': workflow_rule,
-        'allow_partial_update': True,
-    })
-
-    data, errors = tk.navl_validate(data_dict, schema.workflow_rule_update_schema(), context)
-    if errors:
-        session.rollback()
-        raise tk.ValidationError(errors)
-
-    workflow_rule = model_save.workflow_rule_dict_save(data, context)
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
-    else:
-        rev.message = _(u'REST API: Update workflow rule %s') % workflow_rule_id
-
-    if not defer_commit:
-        model.repo.commit()
-
-    output = workflow_rule_id if return_id_only \
-        else tk.get_action('workflow_rule_show')(context, {'id': workflow_rule_id})
-    return output
+    raise tk.ValidationError("A workflow annotation cannot be updated. Delete it and create a new one instead.")
 
 
 def metadata_record_workflow_state_transition(context, data_dict):
@@ -883,30 +765,28 @@ def metadata_record_workflow_state_transition(context, data_dict):
     if not workflow_transition or workflow_transition.state != 'active':
         raise tk.ValidationError(_("Invalid workflow state transition"))
 
-    workflow_rules = tk.get_action('workflow_state_rule_list')(context, {'id': target_workflow_state_id})
+    metadata_record_dict = model_dictize.metadata_record_dictize(metadata_record, context)
+    metadata_record_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(), context)
 
-    # delegate the actual evaluation work to the pluggable action metadata_workflow_rule_evaluate
-    rule_results = []
-    success = True  # if there are no rules associated with a state, the transition is allowed
-    for workflow_rule in workflow_rules:
-        rule_success = tk.get_action('metadata_workflow_rule_evaluate')(context, {
-            'metadata_json': metadata_record.extras['metadata_json'],
-            'evaluator_url': workflow_rule['metric_evaluator_url'],
-            'rule_json': workflow_rule['rule_json'],
-        })
-        rule_result = {
-            'workflow_rule_id': workflow_rule['rule_id'],
-            'workflow_rule_revision_id': workflow_rule['rule_revision_id'],
-            'workflow_metric_id': workflow_rule['metric_id'],
-            'workflow_metric_revision_id': workflow_rule['metric_revision_id'],
-            'success': rule_success,
-        }
-        rule_results += [rule_result]
-        success = success and rule_success
+    # merge workflow annotations for this record; for duplicate keys, new overrides old
+    workflow_annotations_dict = {}
+    workflow_annotations = tk.get_action('workflow_annotation_list')(context, {
+        'metadata_record_id': metadata_record_id,
+        'all_fields': True,
+    })
+    for workflow_annotation in workflow_annotations:
+        workflow_annotations_dict.update(json.loads(workflow_annotation.workflow_annotation_json))
 
-    if success:
+    # test whether the metadata record, augmented with workflow annotations, passes the rules for the target state
+    workflow_errors = tk.get_action('metadata_record_workflow_rules_check')(context, {
+        'metadata_record_json': json.dumps(metadata_record_dict),
+        'workflow_annotations_json': json.dumps(workflow_annotations_dict),
+        'workflow_rules_json': target_workflow_state.workflow_rules_json,
+    })
+
+    if not workflow_errors:
         metadata_record.extras['workflow_state_id'] = target_workflow_state_id
-        metadata_record.private = target_workflow_state.private
+        metadata_record.private = target_workflow_state.metadata_records_private
 
     activity_context = context.copy()
     activity_context.update({
@@ -924,9 +804,10 @@ def metadata_record_workflow_state_transition(context, data_dict):
         'object_id': metadata_record_id,
         'activity_type': METADATA_WORKFLOW_ACTIVITY_TYPE,
         'data': {
-            'workflow_transition_id': workflow_transition.id,
-            'workflow_transition_revision_id': workflow_transition.revision_id,
-            'results': rule_results,
+            'workflow_state_id': target_workflow_state_id,
+            'workflow_state_revision_id': target_workflow_state.revision_id,
+            'workflow_annotations': workflow_annotations_dict,
+            'errors': workflow_errors,
         }
     }
     tk.get_action('activity_create')(activity_context, activity_dict)

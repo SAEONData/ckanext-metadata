@@ -28,16 +28,9 @@ from workflow_transition import (
     workflow_transition_revision_table,
 )
 
-from workflow_metric import (
-    WorkflowMetric,
-    WorkflowMetricRevision,
-    workflow_metric_table,
-    workflow_metric_revision_table,
-)
-
-from workflow_rule import (
-    WorkflowRule,
-    WorkflowRuleRevision,
-    workflow_rule_table,
-    workflow_rule_revision_table,
+from workflow_annotation import (
+    WorkflowAnnotation,
+    WorkflowAnnotationRevision,
+    workflow_annotation_table,
+    workflow_annotation_revision_table,
 )

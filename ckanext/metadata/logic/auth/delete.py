@@ -57,11 +57,7 @@ def workflow_transition_delete(context, data_dict):
     return {'success': True}
 
 
-def workflow_metric_delete(context, data_dict):
-    return {'success': True}
-
-
-def workflow_rule_delete(context, data_dict):
+def workflow_annotation_delete(context, data_dict):
     return {'success': True}
 
 

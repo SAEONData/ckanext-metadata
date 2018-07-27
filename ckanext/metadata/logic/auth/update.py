@@ -73,9 +73,5 @@ def workflow_transition_update(context, data_dict):
     return {'success': True}
 
 
-def workflow_metric_update(context, data_dict):
-    return {'success': True}
-
-
-def workflow_rule_update(context, data_dict):
+def workflow_annotation_update(context, data_dict):
     return {'success': True}

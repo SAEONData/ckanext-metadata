@@ -9,6 +9,7 @@ import ckan.plugins.toolkit as tk
 from ckan.common import _
 from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.logic.metadata_validator import MetadataValidator
+from ckanext.metadata.logic.workflow_validator import WorkflowValidator
 from ckanext.metadata.lib.dictization import model_dictize
 import ckanext.metadata.model as ckanext_model
 
@@ -573,29 +574,36 @@ def metadata_validity_check(context, data_dict):
 
 
 @tk.side_effect_free
-def metadata_workflow_rule_evaluate(context, data_dict):
+def metadata_record_workflow_rules_check(context, data_dict):
     """
-    Evaluate whether a metadata dictionary passes a workflow rule.
+    Evaluate whether a metadata record passes the rules for a workflow state.
 
-    :param metadata_json: JSON dictionary of metadata record content
-    :type metadata_json: string
-    :param evaluator_url: URI of the metric evaluation service
-    :type evaluator_url: string
-    :param rule_json: JSON dictionary defining a workflow rule
-    :type rule_json: string
+    :param metadata_record_json: JSON dictionary representation of a metadata record object
+    :type metadata_record_json: string
+    :param workflow_annotations_json: JSON dictionary defining workflow annotations to augment the metadata record
+    :type workflow_annotations_json: string
+    :param workflow_rules_json: JSON schema defining the workflow rules
+    :type workflow_rules_json: string
 
-    :rtype: boolean (pass/fail)
+    :rtype: dictionary of errors; empty dict implies that the augmented metadata record is 100% valid
+        against the given rules
     """
-    log.debug("Evaluating metadata against workflow rule", data_dict)
-    tk.check_access('metadata_workflow_rule_evaluate', context, data_dict)
+    log.debug("Checking metadata record against workflow rules", data_dict)
+    tk.check_access('metadata_record_workflow_rules_check', context, data_dict)
 
-    model = context['model']
     session = context['session']
+    data, errors = tk.navl_validate(data_dict, schema.metadata_record_workflow_rules_check_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
 
-    metadata_json, evaluator_url, rule_json = tk.get_or_bust(
-        data_dict, ['metadata_json', 'evaluator_url', 'rule_json'])
+    metadata_record_json = json.loads(data['metadata_record_json'])
+    workflow_annotations_json = json.loads(data['workflow_annotations_json'])
+    workflow_rules_json = json.loads(data['workflow_rules_json'])
+    metadata_record_json.update(workflow_annotations_json)
 
-    raise NotImplementedError
+    workflow_errors = WorkflowValidator(workflow_rules_json).validate(metadata_record_json)
+    return workflow_errors
 
 
 @tk.side_effect_free
@@ -696,57 +704,6 @@ def workflow_state_list(context, data_dict):
 
 
 @tk.side_effect_free
-def workflow_state_rule_list(context, data_dict):
-    """
-    Return a list of rules for a workflow state.
-
-    :param id: the id or name of the workflow state
-    :type id: string
-
-    :rtype: list of dictionaries combining rule and metric information {
-            rule_id
-            rule_revision_id
-            rule_json
-            metric_id
-            metric_revision_id
-            metric_evaluator_url
-        }
-    """
-    log.debug("Retrieving list of rules for workflow state: %r", data_dict)
-
-    session = context['session']
-    workflow_state = context.get('workflow_state')
-    if workflow_state:
-        workflow_state_id = workflow_state.id
-    else:
-        workflow_state_id = tk.get_or_bust(data_dict, 'id')
-        workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
-        if workflow_state is not None:
-            workflow_state_id = workflow_state.id
-        else:
-            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
-
-    tk.check_access('workflow_state_rule_list', context, data_dict)
-
-    rule_tab = ckanext_model.WorkflowRule
-    metric_tab = ckanext_model.WorkflowMetric
-    rules = session.query(rule_tab.id, rule_tab.revision_id, rule_tab.rule_json,
-                          metric_tab.id, metric_tab.revision_id, metric_tab.evaluator_url) \
-        .join(metric_tab) \
-        .filter(rule_tab.workflow_state_id == workflow_state_id) \
-        .all()
-
-    return [{
-        'rule_id': rule_id,
-        'rule_revision_id': rule_revision_id,
-        'rule_json': rule_json,
-        'metric_id': metric_id,
-        'metric_revision_id': metric_revision_id,
-        'metric_evaluator_url': metric_evaluator_url,
-    } for (rule_id, rule_revision_id, rule_json, metric_id, metric_revision_id, metric_evaluator_url) in rules]
-
-
-@tk.side_effect_free
 def workflow_transition_show(context, data_dict):
     """
     Return a workflow transition definition.
@@ -805,115 +762,70 @@ def workflow_transition_list(context, data_dict):
 
 
 @tk.side_effect_free
-def workflow_metric_show(context, data_dict):
+def workflow_annotation_show(context, data_dict):
     """
-    Return a workflow metric definition.
+    Return a workflow annotation definition.
 
-    :param id: the id or name of the workflow metric
+    :param id: the id of the workflow annotation
     :type id: string
 
     :rtype: dictionary
     """
-    log.debug("Retrieving workflow metric: %r", data_dict)
+    log.debug("Retrieving workflow annotation: %r", data_dict)
 
-    workflow_metric_id = tk.get_or_bust(data_dict, 'id')
-    workflow_metric = ckanext_model.WorkflowMetric.get(workflow_metric_id)
-    if workflow_metric is not None:
-        workflow_metric_id = workflow_metric.id
+    workflow_annotation_id = tk.get_or_bust(data_dict, 'id')
+    workflow_annotation = ckanext_model.WorkflowAnnotation.get(workflow_annotation_id)
+    if workflow_annotation is not None:
+        workflow_annotation_id = workflow_annotation.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Annotation')))
 
-    tk.check_access('workflow_metric_show', context, data_dict)
+    tk.check_access('workflow_annotation_show', context, data_dict)
 
-    context['workflow_metric'] = workflow_metric
-    workflow_metric_dict = model_dictize.workflow_metric_dictize(workflow_metric, context)
+    context['workflow_annotation'] = workflow_annotation
+    workflow_annotation_dict = model_dictize.workflow_annotation_dictize(workflow_annotation, context)
 
-    result_dict, errors = tk.navl_validate(workflow_metric_dict, schema.workflow_metric_show_schema(), context)
+    result_dict, errors = tk.navl_validate(workflow_annotation_dict, schema.workflow_annotation_show_schema(), context)
     return result_dict
 
 
 @tk.side_effect_free
-def workflow_metric_list(context, data_dict):
+def workflow_annotation_list(context, data_dict):
     """
-    Return a list of names of the site's workflow metrics.
+    Return a list of ids of a metadata record's workflow annotations, in creation order.
 
-    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
-    :type all_fields: boolean
-
-    :rtype: list of strings
-    """
-    log.debug("Retrieving workflow metric list: %r", data_dict)
-    tk.check_access('workflow_metric_list', context, data_dict)
-
-    session = context['session']
-    all_fields = asbool(data_dict.get('all_fields'))
-
-    workflow_metrics = session.query(ckanext_model.WorkflowMetric.id, ckanext_model.WorkflowMetric.name) \
-        .filter_by(state='active') \
-        .all()
-    result = []
-    for (id_, name) in workflow_metrics:
-        if all_fields:
-            data_dict['id'] = id_
-            result += [tk.get_action('workflow_metric_show')(context, data_dict)]
-        else:
-            result += [name]
-
-    return result
-
-
-@tk.side_effect_free
-def workflow_rule_show(context, data_dict):
-    """
-    Return a workflow rule definition.
-
-    :param id: the id of the workflow rule
-    :type id: string
-
-    :rtype: dictionary
-    """
-    log.debug("Retrieving workflow rule: %r", data_dict)
-
-    workflow_rule_id = tk.get_or_bust(data_dict, 'id')
-    workflow_rule = ckanext_model.WorkflowRule.get(workflow_rule_id)
-    if workflow_rule is not None:
-        workflow_rule_id = workflow_rule.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
-
-    tk.check_access('workflow_rule_show', context, data_dict)
-
-    context['workflow_rule'] = workflow_rule
-    workflow_rule_dict = model_dictize.workflow_rule_dictize(workflow_rule, context)
-
-    result_dict, errors = tk.navl_validate(workflow_rule_dict, schema.workflow_rule_show_schema(), context)
-    return result_dict
-
-
-@tk.side_effect_free
-def workflow_rule_list(context, data_dict):
-    """
-    Return a list of ids of the site's workflow rules.
-
+    :param metadata_record_id: the id or name of the metadata record with which the annotations
+        are associated
+    :type metadata_record_id: string
     :param all_fields: return dictionaries instead of just ids (optional, default: ``False``)
     :type all_fields: boolean
 
     :rtype: list of strings
     """
-    log.debug("Retrieving workflow rule list: %r", data_dict)
-    tk.check_access('workflow_rule_list', context, data_dict)
+    log.debug("Retrieving workflow annotation list: %r", data_dict)
 
+    model = context['model']
     session = context['session']
     all_fields = asbool(data_dict.get('all_fields'))
 
-    workflow_rules = session.query(ckanext_model.WorkflowRule.id) \
-        .filter_by(state='active') \
+    metadata_record_id = tk.get_or_bust(data_dict, 'metadata_record_id')
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('workflow_annotation_list', context, data_dict)
+
+    workflow_annotations = session.query(ckanext_model.WorkflowAnnotation.id) \
+        .filter_by(metadata_record_id=metadata_record_id, state='active') \
+        .order_by(ckanext_model.WorkflowAnnotation.timestamp) \
         .all()
     result = []
-    for (id_,) in workflow_rules:
+    for (id_,) in workflow_annotations:
         if all_fields:
             data_dict['id'] = id_
-            result += [tk.get_action('workflow_rule_show')(context, data_dict)]
+            result += [tk.get_action('workflow_annotation_show')(context, data_dict)]
         else:
             result += [id_]
 

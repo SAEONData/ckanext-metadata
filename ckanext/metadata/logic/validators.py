@@ -10,7 +10,7 @@ import ckan.plugins.toolkit as tk
 from ckan.common import _
 import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata.logic.metadata_validator import MetadataValidator
+from ckanext.metadata.logic.json_validator import JSONValidator
 
 convert_to_extras = tk.get_validator('convert_to_extras')
 
@@ -141,7 +141,7 @@ def json_schema_validator(value):
     if value:
         try:
             schema = json.loads(value)
-            MetadataValidator.check_schema(schema)
+            JSONValidator.check_schema(schema)
         except ValueError, e:
             raise tk.Invalid(_("JSON decode error: %s") % e.message)
         except AttributeError, e:
@@ -286,6 +286,21 @@ def metadata_record_infrastructures_not_missing(key, data, errors, context):
 
     errors.setdefault(key[:-1] + ('infrastructures',), [])
     errors[key[:-1] + ('infrastructures',)].append(_('Missing parameter'))
+
+
+def metadata_record_exists(key, data, errors, context):
+    package_id_or_name = data.get(key)
+    if not package_id_or_name:
+        data[key] = None
+        raise tk.StopOnError
+
+    model = context['model']
+    package = model.Package.get(package_id_or_name)
+    if not package or package.type != 'metadata_record' or package.state == 'deleted':
+        errors[key].append('%s: %s' % (_('Not found'), _('Metadata Record')))
+        raise tk.StopOnError
+
+    data[key] = package.id
 
 
 def group_does_not_exist(group_id_or_name, context):
@@ -468,28 +483,16 @@ def workflow_transition_does_not_exist(workflow_transition_id, context):
     return _object_does_not_exist(workflow_transition_id, ckanext_model.WorkflowTransition, 'Workflow Transition')
 
 
-def workflow_metric_does_not_exist(workflow_metric_id_or_name, context):
-    return _object_does_not_exist(workflow_metric_id_or_name, ckanext_model.WorkflowMetric, 'Workflow Metric')
-
-
-def workflow_rule_does_not_exist(workflow_rule_id, context):
-    return _object_does_not_exist(workflow_rule_id, ckanext_model.WorkflowRule, 'Workflow Rule')
+def workflow_annotation_does_not_exist(workflow_annotation_id, context):
+    return _object_does_not_exist(workflow_annotation_id, ckanext_model.WorkflowAnnotation, 'Workflow Annotation')
 
 
 def workflow_state_exists(key, data, errors, context):
     _object_exists(key, data, errors, ckanext_model.WorkflowState, 'Workflow State')
 
 
-def workflow_metric_exists(key, data, errors, context):
-    _object_exists(key, data, errors, ckanext_model.WorkflowMetric, 'Workflow Metric')
-
-
 def workflow_state_name_validator(key, data, errors, context):
     _name_validator(key, data, errors, context, 'workflow_state', ckanext_model.WorkflowState, 'Workflow State')
-
-
-def workflow_metric_name_validator(key, data, errors, context):
-    _name_validator(key, data, errors, context, 'workflow_metric', ckanext_model.WorkflowMetric, 'Workflow Metric')
 
 
 def workflow_revert_state_validator(key, data, errors, context):
@@ -554,18 +557,5 @@ def workflow_transition_graph_validator(key, data, errors, context):
 
     if ckanext_model.WorkflowState.revert_path_exists(from_state_id, to_state_id):
         raise tk.Invalid(_("Backward transition in workflow state graph"))
-
-
-def workflow_rule_unique(key, data, errors, context):
-    """
-    For use with the '__after' schema key.
-    """
-    id_ = data.get(key[:-1] + ('id',))
-    workflow_state_id = _convert_missing(data.get(key[:-1] + ('workflow_state_id',)))
-    workflow_metric_id = _convert_missing(data.get(key[:-1] + ('workflow_metric_id',)))
-
-    workflow_rule = ckanext_model.WorkflowRule.lookup(workflow_state_id, workflow_metric_id)
-    if workflow_rule and workflow_rule.state != 'deleted' and workflow_rule.id != id_:
-        raise tk.Invalid(_("Unique constraint violation: %s") % '(workflow_state_id, workflow_metric_id)')
 
 # endregion

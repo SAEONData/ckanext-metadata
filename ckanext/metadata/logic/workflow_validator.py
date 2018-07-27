@@ -1,5 +1,5 @@
 from ckanext.metadata.logic.json_validator import JSONValidator
 
 
-class MetadataValidator(JSONValidator):
+class WorkflowValidator(JSONValidator):
     pass

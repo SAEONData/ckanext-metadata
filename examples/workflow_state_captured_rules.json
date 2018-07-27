@@ -1,0 +1,43 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "type": "object",
+
+    "properties": {
+        "data_agreement": {
+            "type": "boolean",
+            "const": true
+        },
+        "data_agreement_link": {
+            "type": "string",
+            "format": "url"
+        },
+        "terms_and_conditions": {
+            "type": "boolean",
+            "const": true
+        },
+        "capture_method": {
+            "type": "string",
+            "enum": ["harvester", "curator", "manual"]
+        },
+        "validated": {
+            "type": "boolean",
+            "const": true
+        },
+        "errors": {
+            "$comment": "this sub-schema should check that 'identifier' etc are not in the errors dict... or should it?",
+            "type": "object",
+            "properties": {
+                "identifier": false
+            }
+        }
+    },
+
+    "required": [
+        "data_agreement",
+        "data_agreement_link",
+        "terms_and_conditions",
+        "capture_method",
+        "validated"
+    ]
+}

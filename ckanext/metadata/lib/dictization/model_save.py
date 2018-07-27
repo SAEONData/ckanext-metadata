@@ -87,14 +87,9 @@ def workflow_transition_dict_save(workflow_transition_dict, context):
                              ckanext_model.workflow_transition_table, context)
 
 
-def workflow_metric_dict_save(workflow_metric_dict, context):
-    return _object_dict_save(workflow_metric_dict, 'workflow_metric', ckanext_model.WorkflowMetric,
-                             ckanext_model.workflow_metric_table, context)
-
-
-def workflow_rule_dict_save(workflow_rule_dict, context):
-    return _object_dict_save(workflow_rule_dict, 'workflow_rule', ckanext_model.WorkflowRule,
-                             ckanext_model.workflow_rule_table, context)
+def workflow_annotation_dict_save(workflow_annotation_dict, context):
+    return _object_dict_save(workflow_annotation_dict, 'workflow_annotation', ckanext_model.WorkflowAnnotation,
+                             ckanext_model.workflow_annotation_table, context)
 
 
 def _object_dict_save(object_dict, model_name, model_class, table, context):

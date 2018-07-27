@@ -359,84 +359,36 @@ def workflow_transition_delete(context, data_dict):
         model.repo.commit()
 
 
-def workflow_metric_delete(context, data_dict):
+def workflow_annotation_delete(context, data_dict):
     """
-    Delete a workflow metric.
+    Delete a workflow annotation.
 
-    You must be authorized to delete the workflow metric.
+    You must be authorized to delete the workflow annotation.
 
-    :param id: the id or name of the workflow metric to delete
+    :param id: the id or name of the workflow annotation to delete
     :type id: string
     """
-    log.info("Deleting workflow metric: %r", data_dict)
+    log.info("Deleting workflow annotation: %r", data_dict)
 
     model = context['model']
     user = context['user']
     session = context['session']
     defer_commit = context.get('defer_commit', False)
 
-    workflow_metric_id = tk.get_or_bust(data_dict, 'id')
-    workflow_metric = ckanext_model.WorkflowMetric.get(workflow_metric_id)
-    if workflow_metric is not None:
-        workflow_metric_id = workflow_metric.id
+    workflow_annotation_id = tk.get_or_bust(data_dict, 'id')
+    workflow_annotation = ckanext_model.WorkflowAnnotation.get(workflow_annotation_id)
+    if workflow_annotation is not None:
+        workflow_annotation_id = workflow_annotation.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Metric')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Annotation')))
 
-    tk.check_access('workflow_metric_delete', context, data_dict)
-
-    # cascade delete to dependent workflow rules
-    cascade_context = {
-        'model': model,
-        'user': user,
-        'session': session,
-        'defer_commit': True,
-    }
-    workflow_rule_ids = session.query(ckanext_model.WorkflowRule.id) \
-        .filter(ckanext_model.WorkflowRule.workflow_metric_id == workflow_metric_id) \
-        .filter(ckanext_model.WorkflowRule.state != 'deleted') \
-        .all()
-    for (workflow_rule_id,) in workflow_rule_ids:
-        tk.get_action('workflow_rule_delete')(cascade_context, {'id': workflow_rule_id})
+    tk.check_access('workflow_annotation_delete', context, data_dict)
 
     rev = model.repo.new_revision()
     rev.author = user
-    rev.message = _(u'REST API: Delete workflow metric %s') % workflow_metric_id
+    rev.message = _(u'REST API: Delete workflow annotation %s') % workflow_annotation_id
 
-    workflow_metric.delete()
-    if not defer_commit:
-        model.repo.commit()
-
-
-def workflow_rule_delete(context, data_dict):
-    """
-    Delete a workflow rule.
-
-    You must be authorized to delete the workflow rule.
-
-    :param id: the id or name of the workflow rule to delete
-    :type id: string
-    """
-    log.info("Deleting workflow rule: %r", data_dict)
-
-    model = context['model']
-    user = context['user']
-    session = context['session']
-    defer_commit = context.get('defer_commit', False)
-
-    workflow_rule_id = tk.get_or_bust(data_dict, 'id')
-    workflow_rule = ckanext_model.WorkflowRule.get(workflow_rule_id)
-    if workflow_rule is not None:
-        workflow_rule_id = workflow_rule.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Rule')))
-
-    tk.check_access('workflow_rule_delete', context, data_dict)
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    rev.message = _(u'REST API: Delete workflow rule %s') % workflow_rule_id
-
-    workflow_rule.delete()
+    workflow_annotation.delete()
     if not defer_commit:
         model.repo.commit()
 

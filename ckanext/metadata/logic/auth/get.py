@@ -105,7 +105,7 @@ def metadata_validity_check(context, data_dict):
     return {'success': True}
 
 
-def metadata_workflow_rule_evaluate(context, data_dict):
+def metadata_record_workflow_rules_check(context, data_dict):
     return {'success': True}
 
 
@@ -133,17 +133,9 @@ def workflow_transition_list(context, data_dict):
     return {'success': True}
 
 
-def workflow_metric_show(context, data_dict):
+def workflow_annotation_show(context, data_dict):
     return {'success': True}
 
 
-def workflow_metric_list(context, data_dict):
-    return {'success': True}
-
-
-def workflow_rule_show(context, data_dict):
-    return {'success': True}
-
-
-def workflow_rule_list(context, data_dict):
+def workflow_annotation_list(context, data_dict):
     return {'success': True}
