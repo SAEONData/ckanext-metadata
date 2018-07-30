@@ -22,7 +22,8 @@ class TestWorkflowStateActions(ActionTestBase):
             'title': 'Test Workflow State',
             'description': 'This is a test workflow state',
             'revert_state_id': '',
-            'private': True,
+            'metadata_records_private': True,
+            'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
         result, obj = self._test_action('workflow_state_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -32,7 +33,8 @@ class TestWorkflowStateActions(ActionTestBase):
         input_dict = {
             'name': 'test-workflow-state',
             'revert_state_id': workflow_state['id'],
-            'private': False,
+            'metadata_records_private': False,
+            'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
         result, obj = self._test_action('workflow_state_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -42,7 +44,8 @@ class TestWorkflowStateActions(ActionTestBase):
         input_dict = {
             'name': 'test-workflow-state',
             'revert_state_id': workflow_state['name'],
-            'private': False,
+            'metadata_records_private': False,
+            'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
         result, obj = self._test_action('workflow_state_create', **input_dict)
         input_dict['revert_state_id'] = workflow_state['id']
@@ -53,7 +56,8 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': make_uuid(),
             'name': 'test-workflow-state',
             'revert_state_id': '',
-            'private': True,
+            'metadata_records_private': True,
+            'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
         result, obj = self._test_action('workflow_state_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -68,7 +72,8 @@ class TestWorkflowStateActions(ActionTestBase):
         result, obj = self._test_action('workflow_state_create', should_error=True)
         assert_error(result, 'name', 'Missing parameter')
         assert_error(result, 'revert_state_id', 'Missing parameter')
-        assert_error(result, 'private', 'Missing parameter')
+        assert_error(result, 'metadata_records_private', 'Missing parameter')
+        assert_error(result, 'workflow_rules_json', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
         result, obj = self._test_action('workflow_state_create', should_error=True,
@@ -116,7 +121,8 @@ class TestWorkflowStateActions(ActionTestBase):
             'title': 'Updated Test Workflow State',
             'description': 'Updated test workflow state description',
             'revert_state_id': '',
-            'private': False,
+            'metadata_records_private': False,
+            'workflow_rules_json': '{ "testkey": "newtestvalue" }',
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -127,7 +133,8 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state['id'],
             'name': 'updated-test-workflow-state',
             'revert_state_id': '',
-            'private': False,
+            'metadata_records_private': False,
+            'workflow_rules_json': '{ "testkey": "newtestvalue" }',
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -141,7 +148,8 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state1['id'],
             'name': workflow_state1['name'],
             'revert_state_id': workflow_state2['id'],
-            'private': True,
+            'metadata_records_private': True,
+            'workflow_rules_json': '{}',
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -154,7 +162,8 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state3['id'],
             'name': workflow_state3['name'],
             'revert_state_id': workflow_state1['id'],
-            'private': True,
+            'metadata_records_private': True,
+            'workflow_rules_json': '{}',
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -169,17 +178,18 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state3['id'],
             'name': workflow_state3['name'],
             'revert_state_id': workflow_state1['id'],
-            'private': True,
+            'metadata_records_private': True,
+            'workflow_rules_json': '{}',
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
-    def test_update_private_cascade_1(self):
+    def test_update_metadata_records_private_cascade_1(self):
         """
         Test that the visibility of a metadata record is determined by that of its workflow state.
         """
         metadata_record = ckanext_factories.MetadataRecord()
-        workflow_state = ckanext_factories.WorkflowState(private=False)
+        workflow_state = ckanext_factories.WorkflowState(metadata_records_private=False)
         call_action('metadata_record_workflow_state_override',
                     id=metadata_record['id'],
                     workflow_state_id=workflow_state['id'])
@@ -189,19 +199,20 @@ class TestWorkflowStateActions(ActionTestBase):
         input_dict = {
             'id': workflow_state['id'],
             'revert_state_id': '',
-            'private': True,
+            'metadata_records_private': True,
+            'workflow_rules_json': '{}',
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
         assert_package_has_attribute(metadata_record['id'], 'private', True)
 
-    def test_update_private_cascade_2(self):
+    def test_update_metadata_records_private_cascade_2(self):
         """
         Test that the visibility of a metadata record is determined by that of its workflow state.
         """
         metadata_record = ckanext_factories.MetadataRecord()
-        workflow_state = ckanext_factories.WorkflowState(private=True)
+        workflow_state = ckanext_factories.WorkflowState(metadata_records_private=True)
         call_action('metadata_record_workflow_state_override',
                     id=metadata_record['id'],
                     workflow_state_id=workflow_state['id'])
@@ -211,7 +222,8 @@ class TestWorkflowStateActions(ActionTestBase):
         input_dict = {
             'id': workflow_state['id'],
             'revert_state_id': '',
-            'private': False,
+            'metadata_records_private': False,
+            'workflow_rules_json': '{}',
         }
         result, obj = self._test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -233,7 +245,8 @@ class TestWorkflowStateActions(ActionTestBase):
         result, obj = self._test_action('workflow_state_update', should_error=True,
                                         id=workflow_state['id'])
         assert_error(result, 'revert_state_id', 'Missing parameter')
-        assert_error(result, 'private', 'Missing parameter')
+        assert_error(result, 'metadata_records_private', 'Missing parameter')
+        assert_error(result, 'workflow_rules_json', 'Missing parameter')
 
     def test_update_invalid_circular_revert(self):
         workflow_state1 = ckanext_factories.WorkflowState()
@@ -322,7 +335,7 @@ class TestWorkflowStateActions(ActionTestBase):
                           id=workflow_state1['id'])
         workflow_state2['revert_state_id'] = None
         del workflow_state2['revision_id']
-        assert_object_matches_dict(ckanext_model.WorkflowState.get(workflow_state2['id']), workflow_state2)
+        assert_object_matches_dict(ckanext_model.WorkflowState.get(workflow_state2['id']), workflow_state2, json_values=('workflow_rules_json',))
 
     def test_delete_with_transition_references(self):
         workflow_state = ckanext_factories.WorkflowState()
@@ -342,10 +355,3 @@ class TestWorkflowStateActions(ActionTestBase):
         self._test_action('workflow_state_delete',
                           id=workflow_state['id'])
         assert ckanext_model.WorkflowTransition.get(workflow_transition['id']).state == 'deleted'
-
-    def test_delete_with_rule_references(self):
-        workflow_state = ckanext_factories.WorkflowState()
-        workflow_rule = ckanext_factories.WorkflowRule(workflow_state_id=workflow_state['id'])
-        self._test_action('workflow_state_delete',
-                          id=workflow_state['id'])
-        assert ckanext_model.WorkflowRule.get(workflow_rule['id']).state == 'deleted'

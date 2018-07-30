@@ -22,8 +22,7 @@ _model_map = {
     'metadata_schema': ckanext_model.MetadataSchema,
     'workflow_state': ckanext_model.WorkflowState,
     'workflow_transition': ckanext_model.WorkflowTransition,
-    'workflow_metric': ckanext_model.WorkflowMetric,
-    'workflow_rule': ckanext_model.WorkflowRule,
+    'workflow_annotation': ckanext_model.WorkflowAnnotation,
 }
 
 
@@ -46,7 +45,7 @@ def generate_name(*strings):
     return re.sub('[^a-z0-9_\-]+', '-', text.lower())
 
 
-def assert_object_matches_dict(object_, dict_):
+def assert_object_matches_dict(object_, dict_, json_values=()):
     """
     Check that the object has all the items in the dict.
     """
@@ -54,6 +53,10 @@ def assert_object_matches_dict(object_, dict_):
         # any kind of empty matches any kind of empty
         dict_value = dict_[key] or None
         object_value = getattr(object_, key) or None
+        if key in json_values:
+            if isinstance(dict_value, basestring):
+                dict_value = json.loads(dict_value)
+            object_value = json.loads(object_value)
         assert dict_value == object_value
 
 

@@ -145,7 +145,8 @@ class WorkflowState(factory.Factory):
     title = factory.LazyAttribute(lambda obj: obj.name.replace('_', ' ').title())
     description = 'A test description for this test workflow state.'
     revert_state_id = ''
-    private = False
+    metadata_records_private = False
+    workflow_rules_json = '{"type": "object"}'
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):
@@ -187,13 +188,10 @@ class WorkflowTransition(factory.Factory):
                                    **kwargs)
 
 
-class WorkflowMetric(factory.Factory):
-    FACTORY_FOR = ckanext_model.WorkflowMetric
+class WorkflowAnnotation(factory.Factory):
+    FACTORY_FOR = ckanext_model.WorkflowAnnotation
 
-    name = factory.Sequence(lambda n: 'test_workflow_metric_{0:02d}'.format(n))
-    title = factory.LazyAttribute(lambda obj: obj.name.replace('_', ' ').title())
-    description = 'A test description for this test workflow metric.'
-    evaluator_url = 'http://example.net/'
+    workflow_annotation_json = '{ "workflowkey": "workflowvalue" }'
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):
@@ -205,30 +203,9 @@ class WorkflowMetric(factory.Factory):
             assert False, "Positional args aren't supported, use keyword args."
 
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
+        metadata_record_id = kwargs.pop('metadata_record_id', None) or MetadataRecord()['id']
 
-        return helpers.call_action('workflow_metric_create', context=context, **kwargs)
-
-
-class WorkflowRule(factory.Factory):
-    FACTORY_FOR = ckanext_model.WorkflowRule
-
-    rule_json = '{ "testkey": "testvalue" }'
-
-    @classmethod
-    def _build(cls, target_class, *args, **kwargs):
-        raise NotImplementedError(".build() isn't supported in CKAN")
-
-    @classmethod
-    def _create(cls, target_class, *args, **kwargs):
-        if args:
-            assert False, "Positional args aren't supported, use keyword args."
-
-        context = {'user': ckan_factories._get_action_user_name(kwargs)}
-        workflow_state_id = kwargs.pop('workflow_state_id', None) or WorkflowState()['id']
-        workflow_metric_id = kwargs.pop('workflow_metric_id', None) or WorkflowMetric()['id']
-
-        return helpers.call_action('workflow_rule_create',
+        return helpers.call_action('workflow_annotation_create',
                                    context=context,
-                                   workflow_state_id=workflow_state_id,
-                                   workflow_metric_id=workflow_metric_id,
+                                   metadata_record_id=metadata_record_id,
                                    **kwargs)

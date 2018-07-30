@@ -308,14 +308,6 @@ def workflow_state_delete(context, data_dict):
     for (workflow_transition_id,) in workflow_transition_ids:
         tk.get_action('workflow_transition_delete')(cascade_context, {'id': workflow_transition_id})
 
-    # cascade delete to dependent workflow rules
-    workflow_rule_ids = session.query(ckanext_model.WorkflowRule.id) \
-        .filter(ckanext_model.WorkflowRule.workflow_state_id == workflow_state_id) \
-        .filter(ckanext_model.WorkflowRule.state != 'deleted') \
-        .all()
-    for (workflow_rule_id,) in workflow_rule_ids:
-        tk.get_action('workflow_rule_delete')(cascade_context, {'id': workflow_rule_id})
-
     rev = model.repo.new_revision()
     rev.author = user
     rev.message = _(u'REST API: Delete workflow state %s') % workflow_state_id
