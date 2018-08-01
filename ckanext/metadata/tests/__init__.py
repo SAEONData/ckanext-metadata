@@ -237,7 +237,6 @@ class ActionTestBase(FunctionalTestBase):
             'action': 'metadata_record_invalidate',
             'trigger_action': trigger_action,
             'trigger_object_id': trigger_object.id if trigger_object else None,
-            'trigger_revision_id': trigger_object.revision_id if trigger_object else None,
         }
 
     def _assert_metadata_record_has_validation_models(self, metadata_record_id, *metadata_model_names):

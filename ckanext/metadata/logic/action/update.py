@@ -183,7 +183,6 @@ def metadata_model_update(context, data_dict):
         'defer_commit': True,
         'trigger_action': 'metadata_model_update',
         'trigger_object_id': metadata_model_id,
-        'trigger_revision_id': rev.id,
     })
     for metadata_record_id in affected_record_ids:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
@@ -398,7 +397,6 @@ def metadata_record_update(context, data_dict):
                 'defer_commit': True,
                 'trigger_action': 'metadata_record_update',
                 'trigger_object_id': metadata_record_id,
-                'trigger_revision_id': model.Package.get(metadata_record_id).revision_id,
             })
             tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
@@ -422,10 +420,13 @@ def metadata_record_invalidate(context, data_dict):
     case, the calling function should pass the following items in the context:
     'trigger_action': the calling function name, e.g. 'metadata_model_update'
     'trigger_object_id': the id of the object (e.g. a MetadataModel) being modified
-    'trigger_revision_id': the id of the revision for this modification
 
     :param id: the id or name of the metadata record to invalidate
     :type id: string
+
+    :returns: the validation activity record, unless the metadata record is already in a not
+        validated state, in which case nothing is changed and None is returned
+    :rtype: dictionary
     """
     log.info("Invalidating metadata record: %r", data_dict)
 
@@ -451,7 +452,6 @@ def metadata_record_invalidate(context, data_dict):
 
     trigger_action = context.get('trigger_action')
     trigger_object_id = context.get('trigger_object_id')
-    trigger_revision_id = context.get('trigger_revision_id')
 
     activity_context = context.copy()
     activity_context.update({
@@ -472,13 +472,22 @@ def metadata_record_invalidate(context, data_dict):
             'action': 'metadata_record_invalidate',
             'trigger_action': trigger_action,
             'trigger_object_id': trigger_object_id,
-            'trigger_revision_id': trigger_revision_id,
         }
     }
-    tk.get_action('activity_create')(activity_context, activity_dict)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Invalidate metadata record %s') % metadata_record_id
+
+    activity_dict = tk.get_action('activity_create')(activity_context, activity_dict)
 
     if not defer_commit:
         model.repo.commit()
+
+    return activity_dict
 
 
 def metadata_record_validate(context, data_dict):
@@ -490,6 +499,10 @@ def metadata_record_validate(context, data_dict):
 
     :param id: the id or name of the metadata record to validate
     :type id: string
+
+    :returns: the validation activity record, unless the metadata record is already validated,
+        in which case nothing is changed and None is returned
+    :rtype: dictionary
     """
     log.info("Validating metadata record: %r", data_dict)
 
@@ -529,7 +542,6 @@ def metadata_record_validate(context, data_dict):
         })
         validation_result = {
             'metadata_model_id': metadata_model['id'],
-            'metadata_model_revision_id': metadata_model['revision_id'],
             'errors': validation_errors,
         }
         validation_results += [validation_result]
@@ -558,10 +570,20 @@ def metadata_record_validate(context, data_dict):
             'results': validation_results,
         }
     }
-    tk.get_action('activity_create')(activity_context, activity_dict)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Validate metadata record %s') % metadata_record_id
+
+    activity_dict = tk.get_action('activity_create')(activity_context, activity_dict)
 
     if not defer_commit:
         model.repo.commit()
+
+    return activity_dict
 
 
 def metadata_record_workflow_state_override(context, data_dict):
@@ -725,6 +747,10 @@ def metadata_record_workflow_state_transition(context, data_dict):
     :type id: string
     :param workflow_state_id: the id or name of the target workflow state
     :type workflow_state_id: string
+
+    :returns: the workflow activity record, unless the metadata record is already on the target
+        state, in which case nothing is changed and None is returned
+    :rtype: dictionary
     """
     log.info("Transitioning workflow state of metadata record: %r", data_dict)
 
@@ -810,7 +836,17 @@ def metadata_record_workflow_state_transition(context, data_dict):
             'errors': workflow_errors,
         }
     }
-    tk.get_action('activity_create')(activity_context, activity_dict)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Transition workflow state of metadata record %s') % metadata_record_id
+
+    activity_dict = tk.get_action('activity_create')(activity_context, activity_dict)
 
     if not defer_commit:
         model.repo.commit()
+
+    return activity_dict
