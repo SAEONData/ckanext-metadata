@@ -795,18 +795,20 @@ def metadata_record_workflow_state_transition(context, data_dict):
     metadata_record_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(), context)
 
     # merge workflow annotations for this record; for duplicate keys, new overrides old
-    workflow_annotations_dict = {}
     workflow_annotations = tk.get_action('workflow_annotation_list')(context, {
         'metadata_record_id': metadata_record_id,
         'all_fields': True,
     })
+    workflow_annotation_list = []
+    workflow_annotation_ids = []
     for workflow_annotation in workflow_annotations:
-        workflow_annotations_dict.update(json.loads(workflow_annotation.workflow_annotation_json))
+        workflow_annotation_list += [{'json': json.dumps(workflow_annotation['workflow_annotation_json'])}]
+        workflow_annotation_ids += [workflow_annotation['id']]
 
     # test whether the metadata record, augmented with workflow annotations, passes the rules for the target state
     workflow_errors = tk.get_action('metadata_record_workflow_rules_check')(context, {
         'metadata_record_json': json.dumps(metadata_record_dict),
-        'workflow_annotations_json': json.dumps(workflow_annotations_dict),
+        'workflow_annotation_list': workflow_annotation_list,
         'workflow_rules_json': target_workflow_state.workflow_rules_json,
     })
 
@@ -831,8 +833,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
         'activity_type': METADATA_WORKFLOW_ACTIVITY_TYPE,
         'data': {
             'workflow_state_id': target_workflow_state_id,
-            'workflow_state_revision_id': target_workflow_state.revision_id,
-            'workflow_annotations': workflow_annotations_dict,
+            'workflow_annotation_ids': workflow_annotation_ids,
             'errors': workflow_errors,
         }
     }

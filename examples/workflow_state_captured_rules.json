@@ -28,7 +28,7 @@
             "$comment": "this sub-schema should check that 'identifier' etc are not in the errors dict... or should it?",
             "type": "object",
             "properties": {
-                "identifier": false
+                "identifier": {"not": {}}
             }
         }
     },

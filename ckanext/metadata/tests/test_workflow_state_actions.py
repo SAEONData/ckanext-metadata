@@ -77,8 +77,10 @@ class TestWorkflowStateActions(ActionTestBase):
 
     def test_create_invalid_missing_values(self):
         result, obj = self._test_action('workflow_state_create', should_error=True,
-                                        name='')
+                                        name='',
+                                        workflow_rules_json='')
         assert_error(result, 'name', 'Missing value')
+        assert_error(result, 'workflow_rules_json', 'Missing value')
 
     def test_create_invalid_nonsysadmin_setid(self):
         result, obj = self._test_action('workflow_state_create', should_error=True, check_auth=True,
@@ -247,6 +249,13 @@ class TestWorkflowStateActions(ActionTestBase):
         assert_error(result, 'revert_state_id', 'Missing parameter')
         assert_error(result, 'metadata_records_private', 'Missing parameter')
         assert_error(result, 'workflow_rules_json', 'Missing parameter')
+
+    def test_update_invalid_missing_values(self):
+        workflow_state = ckanext_factories.WorkflowState()
+        result, obj = self._test_action('workflow_state_update', should_error=True,
+                                        id=workflow_state['id'],
+                                        workflow_rules_json='')
+        assert_error(result, 'workflow_rules_json', 'Missing value')
 
     def test_update_invalid_circular_revert(self):
         workflow_state1 = ckanext_factories.WorkflowState()

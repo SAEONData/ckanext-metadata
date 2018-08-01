@@ -40,8 +40,9 @@ class WorkflowTransition(vdm.sqlalchemy.RevisionedObjectMixin,
         """
         Returns a workflow_transition object that connects the given states.
         """
+        # param from_state_id may be an empty string, for initial transitions
         return meta.Session.query(cls) \
-            .filter(cls.from_state_id == from_state_id) \
+            .filter(cls.from_state_id == (from_state_id or None)) \
             .filter(cls.to_state_id == to_state_id) \
             .first()
 

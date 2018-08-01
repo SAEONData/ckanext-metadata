@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+from datetime import datetime
+
 from ckan.tests.helpers import call_action
 
 from ckanext.metadata.tests import (
@@ -21,6 +23,7 @@ class TestWorkflowAnnotationActions(ActionTestBase):
         }
         result, obj = self._test_action('workflow_annotation_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
+        assert type(obj.timestamp) is datetime
 
     def test_create_valid_byname(self):
         metadata_record = ckanext_factories.MetadataRecord()

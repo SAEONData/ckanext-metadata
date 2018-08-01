@@ -580,8 +580,10 @@ def metadata_record_workflow_rules_check(context, data_dict):
 
     :param metadata_record_json: JSON dictionary representation of a metadata record object
     :type metadata_record_json: string
-    :param workflow_annotations_json: JSON dictionary defining workflow annotations to augment the metadata record
-    :type workflow_annotations_json: string
+    :param workflow_annotation_list: list of JSON dictionaries defining workflow annotations
+        with which to augment/modify the metadata record; the annotations are applied in order,
+        and should be ordered from oldest first to newest last
+    :type workflow_annotation_list: list of dict {'json': string}
     :param workflow_rules_json: JSON schema defining the workflow rules
     :type workflow_rules_json: string
 
@@ -598,9 +600,12 @@ def metadata_record_workflow_rules_check(context, data_dict):
         raise tk.ValidationError(errors)
 
     metadata_record_json = json.loads(data['metadata_record_json'])
-    workflow_annotations_json = json.loads(data['workflow_annotations_json'])
+    workflow_annotation_list = data['workflow_annotation_list']
     workflow_rules_json = json.loads(data['workflow_rules_json'])
-    metadata_record_json.update(workflow_annotations_json)
+
+    for workflow_annotation in workflow_annotation_list:
+        workflow_annotation_json = json.loads(workflow_annotation['json'])
+        metadata_record_json.update(workflow_annotation_json)
 
     workflow_errors = WorkflowValidator(workflow_rules_json).validate(metadata_record_json)
     return workflow_errors

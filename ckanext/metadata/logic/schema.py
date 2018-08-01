@@ -136,17 +136,19 @@ def metadata_record_show_schema():
 
 def metadata_validity_check_schema():
     schema = {
-        'metadata_json': [v.not_missing, unicode, v.json_dict_validator],
-        'model_json': [v.not_missing, unicode, v.json_schema_validator],
+        'metadata_json': [v.not_empty, unicode, v.json_dict_validator],
+        'model_json': [v.not_empty, unicode, v.json_schema_validator],
     }
     return schema
 
 
 def metadata_record_workflow_rules_check_schema():
     schema = {
-        'metadata_record_json': [v.not_missing, unicode, v.json_dict_validator],
-        'workflow_annotations_json': [v.not_missing, unicode, v.json_dict_validator],
-        'workflow_rules_json': [v.not_missing, unicode, v.json_schema_validator],
+        'metadata_record_json': [v.not_empty, unicode, v.json_dict_validator],
+        'workflow_annotation_list': {
+            'json': [v.not_empty, unicode, v.json_dict_validator],
+        },
+        'workflow_rules_json': [v.not_empty, unicode, v.json_schema_validator],
     }
     return schema
 
@@ -266,7 +268,7 @@ def metadata_model_create_schema():
         'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists],
         'organization_id': [v.not_missing, unicode, v.group_exists('organization')],
         'infrastructure_id': [v.not_missing, unicode, v.group_exists('infrastructure')],
-        'model_json': [v.not_missing, unicode, v.json_schema_validator],
+        'model_json': [v.not_empty, unicode, v.json_schema_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
@@ -298,7 +300,7 @@ def workflow_state_create_schema():
         'name': [v.not_empty, unicode, name_validator, v.workflow_state_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
-        'workflow_rules_json': [v.not_missing, unicode, v.json_schema_validator],
+        'workflow_rules_json': [v.not_empty, unicode, v.json_schema_validator],
         'metadata_records_private': [v.not_missing, boolean_validator],
         'revert_state_id': [v.not_missing, unicode, v.workflow_state_exists],
         'state': [ignore_not_sysadmin, ignore_missing],

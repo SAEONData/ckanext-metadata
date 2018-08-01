@@ -367,8 +367,10 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_invalid_missing_values(self):
         result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        metadata_schema_id='')
+                                        metadata_schema_id='',
+                                        model_json='')
         assert_error(result, 'metadata_schema_id', 'Missing value')
+        assert_error(result, 'model_json', 'Missing value')
 
     def test_create_invalid_bad_references(self):
         result, obj = self._test_action('metadata_model_create', should_error=True,
@@ -641,8 +643,10 @@ class TestMetadataModelActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel()
         result, obj = self._test_action('metadata_model_update', should_error=True,
                                         id=metadata_model['id'],
-                                        metadata_schema_id='')
+                                        metadata_schema_id='',
+                                        model_json='')
         assert_error(result, 'metadata_schema_id', 'Missing value')
+        assert_error(result, 'model_json', 'Missing value')
 
     def test_update_invalid_duplicate_schema(self):
         metadata_model1 = ckanext_factories.MetadataModel()
