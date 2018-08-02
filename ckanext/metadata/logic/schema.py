@@ -84,16 +84,16 @@ def metadata_record_create_schema():
         'name': [ignore_missing, unicode, name_validator, package_name_validator],
         'title': [ignore_missing, unicode],
         'state': [ignore_not_package_admin, ignore_missing],
-        'owner_org': [v.not_empty, v.group_exists('organization'), owner_org_validator, unicode],
+        'owner_org': [v.not_empty, v.object_exists('organization'), owner_org_validator, unicode],
         'type': [],
         'private': [],
 
         # extension-specific fields
-        'metadata_collection_id': [v.not_empty, unicode, v.group_exists('metadata_collection'), convert_to_extras],
+        'metadata_collection_id': [v.not_empty, unicode, v.object_exists('metadata_collection'), convert_to_extras],
         'infrastructures': {
-            'id': [v.not_empty, unicode, v.group_exists('infrastructure')],
+            'id': [v.not_empty, unicode, v.object_exists('infrastructure')],
         },
-        'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists, convert_to_extras],
+        'metadata_schema_id': [v.not_empty, unicode, v.object_exists('metadata_schema'), convert_to_extras],
         'metadata_json': [v.not_missing, unicode, v.json_dict_validator, convert_to_extras],
         'metadata_raw': [v.not_missing, unicode, convert_to_extras],
         'metadata_url': [v.not_missing, unicode, v.url_validator, convert_to_extras],
@@ -170,7 +170,7 @@ def metadata_collection_create_schema():
         },
 
         # extension-specific fields
-        'organization_id': [v.not_empty, unicode, v.group_exists('organization'), convert_to_extras],
+        'organization_id': [v.not_empty, unicode, v.object_exists('organization'), convert_to_extras],
     }
     _make_create_schema(schema)
     return schema
@@ -227,14 +227,14 @@ def infrastructure_show_schema():
 
 def metadata_schema_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.metadata_schema_does_not_exist],
-        'name': [ignore_missing, unicode, name_validator, v.metadata_schema_name_validator],
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_schema')],
+        'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_schema')],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'schema_name': [v.not_empty, unicode],
         'schema_version': [v.not_missing, unicode],
         'schema_xsd': [v.not_missing, unicode, v.xsd_validator],
-        'base_schema_id': [v.not_missing, unicode, v.metadata_schema_exists],
+        'base_schema_id': [v.not_missing, unicode, v.object_exists('metadata_schema')],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
@@ -261,13 +261,13 @@ def metadata_schema_show_schema():
 
 def metadata_model_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.metadata_model_does_not_exist],
-        'name': [ignore_missing, unicode, name_validator, v.metadata_model_name_validator],
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_model')],
+        'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_model')],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
-        'metadata_schema_id': [v.not_empty, unicode, v.metadata_schema_exists],
-        'organization_id': [v.not_missing, unicode, v.group_exists('organization')],
-        'infrastructure_id': [v.not_missing, unicode, v.group_exists('infrastructure')],
+        'metadata_schema_id': [v.not_empty, unicode, v.object_exists('metadata_schema')],
+        'organization_id': [v.not_missing, unicode, v.object_exists('organization')],
+        'infrastructure_id': [v.not_missing, unicode, v.object_exists('infrastructure')],
         'model_json': [v.not_empty, unicode, v.json_schema_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
@@ -296,13 +296,13 @@ def metadata_model_show_schema():
 
 def workflow_state_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_state_does_not_exist],
-        'name': [v.not_empty, unicode, name_validator, v.workflow_state_name_validator],
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('workflow_state')],
+        'name': [v.not_empty, unicode, name_validator, v.object_name_validator('workflow_state')],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'workflow_rules_json': [v.not_empty, unicode, v.json_schema_validator],
         'metadata_records_private': [v.not_missing, boolean_validator],
-        'revert_state_id': [v.not_missing, unicode, v.workflow_state_exists],
+        'revert_state_id': [v.not_missing, unicode, v.object_exists('workflow_state')],
         'state': [ignore_not_sysadmin, ignore_missing],
     }
     _make_create_schema(schema)
@@ -325,9 +325,9 @@ def workflow_state_show_schema():
 
 def workflow_transition_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_transition_does_not_exist],
-        'from_state_id': [v.not_missing, unicode, v.workflow_state_exists],
-        'to_state_id': [v.not_empty, unicode, v.workflow_state_exists],
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('workflow_transition')],
+        'from_state_id': [v.not_missing, unicode, v.object_exists('workflow_state')],
+        'to_state_id': [v.not_empty, unicode, v.object_exists('workflow_state')],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
@@ -348,8 +348,8 @@ def workflow_transition_show_schema():
 
 def workflow_annotation_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.workflow_annotation_does_not_exist],
-        'metadata_record_id': [v.not_empty, unicode, v.metadata_record_exists],
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('workflow_annotation')],
+        'metadata_record_id': [v.not_empty, unicode, v.object_exists('metadata_record')],
         'workflow_annotation_json': [v.not_empty, unicode, v.json_dict_validator],
         'timestamp': [ignore],
     }

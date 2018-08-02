@@ -11,9 +11,12 @@ from ckan.common import _
 import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.json_validator import JSONValidator
+from ckanext.metadata.logic import model_map
 
 convert_to_extras = tk.get_validator('convert_to_extras')
 
+
+# region Utils
 
 def _make_uuid():
     return unicode(uuid.uuid4())
@@ -28,13 +31,6 @@ def _convert_missing(value, default=None):
     return value
 
 
-def _group_desc(group_type):
-    """
-    Returns the descriptive form of a group type (for e.g. error/log messages).
-    """
-    return group_type.replace('_', ' ').title()
-
-
 def _generate_name(*strings):
     """
     Converts the given string(s) into a form suitable for an object name.
@@ -45,50 +41,7 @@ def _generate_name(*strings):
     text = '_'.join(strings)
     return re.sub('[^a-z0-9_\-]+', '-', text.lower())
 
-
-def _object_does_not_exist(object_id_or_name, model_class, model_desc):
-    """
-    Checks that an object id/name is not already in use.
-    """
-    if not object_id_or_name:
-        return None
-
-    result = model_class.get(object_id_or_name)
-    if result:
-        raise tk.Invalid('%s: %s' % (_('Already exists'), _(model_desc)))
-
-    return object_id_or_name
-
-
-def _object_exists(key, data, errors, model_class, model_desc):
-    """
-    Checks that an object exists and is not deleted,
-    and converts name to id if applicable.
-    """
-    object_id_or_name = data.get(key)
-    if not object_id_or_name:
-        data[key] = None
-        raise tk.StopOnError
-
-    obj = model_class.get(object_id_or_name)
-    if not obj or obj.state == 'deleted':
-        errors[key].append('%s: %s' % (_('Not found'), _(model_desc)))
-        raise tk.StopOnError
-
-    data[key] = obj.id
-
-
-def _name_validator(key, data, errors, context, model_name, model_class, model_desc):
-    session = context['session']
-    obj = context.get(model_name)
-
-    query = session.query(model_class.name).filter_by(name=data[key])
-    id_ = obj.id if obj else _convert_missing(data.get(key[:-1] + ('id',)))
-    if id_:
-        query = query.filter(model_class.id != id_)
-    result = query.first()
-    if result:
-        errors[key].append('%s: %s' % (_('Duplicate name'), _(model_desc)))
+# endregion
 
 
 # region General validators / converters
@@ -193,24 +146,66 @@ def url_validator(value):
 
 # region Framework validators / converters
 
-def group_exists(group_type):
+def object_name_validator(model_name):
     """
-    Checks that a group exists, is of the specified type and is not deleted,
-    and converts name to id if applicable.
+    Checks that the supplied object name is not already in use for the given model.
     """
+    model_class = model_map[model_name]['class']
+    model_desc = model_map[model_name]['desc']
+
     def callable_(key, data, errors, context):
-        group_id_or_name = data.get(key)
-        if not group_id_or_name:
+        session = context['session']
+        obj = context.get(model_name)
+
+        query = session.query(model_class.name).filter_by(name=data[key])
+        id_ = obj.id if obj else _convert_missing(data.get(key[:-1] + ('id',)))
+        if id_:
+            query = query.filter(model_class.id != id_)
+        result = query.first()
+        if result:
+            errors[key].append('%s: %s' % (_('Duplicate name'), _(model_desc)))
+
+    return callable_
+
+
+def object_exists(model_name):
+    """
+    Checks that an object exists and is not deleted, and converts name to id if applicable.
+    """
+    model_class = model_map[model_name]['class']
+    model_desc = model_map[model_name]['desc']
+
+    def callable_(key, data, errors, context):
+        object_id_or_name = data.get(key)
+        if not object_id_or_name:
             data[key] = None
             raise tk.StopOnError
 
-        model = context['model']
-        group = model.Group.get(group_id_or_name)
-        if not group or group.type != group_type or group.state == 'deleted':
-            errors[key].append('%s: %s' % (_('Not found'), _(_group_desc(group_type))))
+        obj = model_class.get(object_id_or_name)
+        if not obj or obj.state == 'deleted' or (hasattr(obj, 'type') and obj.type != model_name):
+            errors[key].append('%s: %s' % (_('Not found'), _(model_desc)))
             raise tk.StopOnError
 
-        data[key] = group.id
+        data[key] = obj.id
+
+    return callable_
+
+
+def object_does_not_exist(model_name):
+    """
+    Checks that an object id/name is not already in use.
+    """
+    model_class = model_map[model_name]['class']
+    model_desc = model_map[model_name]['desc']
+
+    def callable_(key, data, errors, context):
+        object_id_or_name = data.get(key)
+        if not object_id_or_name:
+            return None
+
+        result = model_class.get(object_id_or_name)
+        if result:
+            raise tk.Invalid('%s: %s' % (_('Already exists'), _(model_desc)))
 
     return callable_
 
@@ -288,21 +283,6 @@ def metadata_record_infrastructures_not_missing(key, data, errors, context):
     errors[key[:-1] + ('infrastructures',)].append(_('Missing parameter'))
 
 
-def metadata_record_exists(key, data, errors, context):
-    package_id_or_name = data.get(key)
-    if not package_id_or_name:
-        data[key] = None
-        raise tk.StopOnError
-
-    model = context['model']
-    package = model.Package.get(package_id_or_name)
-    if not package or package.type != 'metadata_record' or package.state == 'deleted':
-        errors[key].append('%s: %s' % (_('Not found'), _('Metadata Record')))
-        raise tk.StopOnError
-
-    data[key] = package.id
-
-
 def group_does_not_exist(group_id_or_name, context):
     if not group_id_or_name:
         return None
@@ -313,18 +293,6 @@ def group_does_not_exist(group_id_or_name, context):
         raise tk.Invalid('%s: %s' % (_('Already exists'), _('Group')))
 
     return group_id_or_name
-
-
-def metadata_model_does_not_exist(metadata_model_id_or_name, context):
-    return _object_does_not_exist(metadata_model_id_or_name, ckanext_model.MetadataModel, 'Metadata Model')
-
-
-def metadata_schema_exists(key, data, errors, context):
-    _object_exists(key, data, errors, ckanext_model.MetadataSchema, 'Metadata Schema')
-
-
-def metadata_schema_does_not_exist(metadata_schema_id_or_name, context):
-    return _object_does_not_exist(metadata_schema_id_or_name, ckanext_model.MetadataSchema, 'Metadata Schema')
 
 
 def unique_metadata_schema_name_and_version(key, data, errors, context):
@@ -404,14 +372,6 @@ def metadata_model_check_organization_infrastructure(key, data, errors, context)
                            "infrastructure but not both."))
 
 
-def metadata_schema_name_validator(key, data, errors, context):
-    _name_validator(key, data, errors, context, 'metadata_schema', ckanext_model.MetadataSchema, 'Metadata Schema')
-
-
-def metadata_model_name_validator(key, data, errors, context):
-    _name_validator(key, data, errors, context, 'metadata_model', ckanext_model.MetadataModel, 'Metadata Model')
-
-
 def metadata_schema_name_generator(key, data, errors, context):
     """
     Generates the name for a metadata schema if not supplied. For use with the '__after' schema key.
@@ -473,26 +433,6 @@ def metadata_model_name_generator(key, data, errors, context):
         )
         name = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
         data[key[:-1] + ('name',)] = name
-
-
-def workflow_state_does_not_exist(workflow_state_id_or_name, context):
-    return _object_does_not_exist(workflow_state_id_or_name, ckanext_model.WorkflowState, 'Workflow State')
-
-
-def workflow_transition_does_not_exist(workflow_transition_id, context):
-    return _object_does_not_exist(workflow_transition_id, ckanext_model.WorkflowTransition, 'Workflow Transition')
-
-
-def workflow_annotation_does_not_exist(workflow_annotation_id, context):
-    return _object_does_not_exist(workflow_annotation_id, ckanext_model.WorkflowAnnotation, 'Workflow Annotation')
-
-
-def workflow_state_exists(key, data, errors, context):
-    _object_exists(key, data, errors, ckanext_model.WorkflowState, 'Workflow State')
-
-
-def workflow_state_name_validator(key, data, errors, context):
-    _name_validator(key, data, errors, context, 'workflow_state', ckanext_model.WorkflowState, 'Workflow State')
 
 
 def workflow_revert_state_validator(key, data, errors, context):
