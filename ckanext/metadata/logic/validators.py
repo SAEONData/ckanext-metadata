@@ -7,7 +7,7 @@ import urlparse
 import jsonschema
 
 import ckan.plugins.toolkit as tk
-from ckan.common import _
+from ckan.common import _, config
 import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.json_validator import JSONValidator
@@ -213,14 +213,19 @@ def object_does_not_exist(model_name):
 def convert_id_to_name(model_name):
     """
     Converts an object's id to its name.
+
+    Behaviour depends on the value of the config option 'ckan.metadata.convert_nested_ids_to_names'.
+    If True, the object id is converted to name; if False (the default) the id is left unaltered.
     """
+    convert_nested_ids_to_names = tk.asbool(config.get('ckan.metadata.convert_nested_ids_to_names', False))
     model_class = model_map[model_name]['class']
 
     def callable_(key, data, errors, context):
-        id_ = data.get(key)
-        obj = model_class.get(id_)
-        if obj:
-            data[key] = obj.name
+        if convert_nested_ids_to_names:
+            id_ = data.get(key)
+            obj = model_class.get(id_)
+            if obj:
+                data[key] = obj.name
 
     return callable_
 
