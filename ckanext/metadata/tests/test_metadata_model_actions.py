@@ -113,7 +113,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_schema['name'],
             'organization_id': organization['name'],
             'infrastructure_id': '',
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_create', **input_dict)
         assert obj.metadata_schema_id == metadata_schema['id']
@@ -128,7 +128,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_schema['name'],
             'organization_id': '',
             'infrastructure_id': infrastructure['name'],
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_create', **input_dict)
         assert obj.metadata_schema_id == metadata_schema['id']
@@ -143,7 +143,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_schema['id'],
             'organization_id': '',
             'infrastructure_id': '',
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -156,7 +156,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_model['metadata_schema_id'],
             'organization_id': organization2['id'],
             'infrastructure_id': '',
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -169,7 +169,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_model['metadata_schema_id'],
             'organization_id': '',
             'infrastructure_id': infrastructure2['id'],
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -182,7 +182,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_schema['id'],
             'organization_id': metadata_model['organization_id'],
             'infrastructure_id': '',
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -195,7 +195,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_schema['id'],
             'organization_id': '',
             'infrastructure_id': metadata_model['infrastructure_id'],
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -211,7 +211,7 @@ class TestMetadataModelActions(ActionTestBase):
                                         metadata_schema_id=metadata_record['metadata_schema_id'],
                                         organization_id='',
                                         infrastructure_id='',
-                                        model_json='')
+                                        model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
@@ -225,7 +225,7 @@ class TestMetadataModelActions(ActionTestBase):
                                         metadata_schema_id=metadata_record['metadata_schema_id'],
                                         organization_id=metadata_record['owner_org'],
                                         infrastructure_id='',
-                                        model_json='')
+                                        model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
@@ -239,7 +239,7 @@ class TestMetadataModelActions(ActionTestBase):
                                         metadata_schema_id=metadata_record['metadata_schema_id'],
                                         organization_id='',
                                         infrastructure_id=metadata_record['infrastructures'][0]['id'],
-                                        model_json='')
+                                        model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
@@ -253,7 +253,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=ckanext_factories.MetadataSchema()['id'],
                     organization_id='',
                     infrastructure_id='',
-                    model_json='')
+                    model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', True)
 
     def test_create_no_invalidate_records_different_organization(self):
@@ -266,7 +266,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id=ckan_factories.Organization()['id'],
                     infrastructure_id='',
-                    model_json='')
+                    model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', True)
 
     def test_create_no_invalidate_records_different_infrastructure_1(self):
@@ -279,7 +279,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
                     infrastructure_id=ckanext_factories.Infrastructure()['id'],
-                    model_json='')
+                    model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', True)
 
     def test_create_no_invalidate_records_different_infrastructure_2(self):
@@ -292,7 +292,7 @@ class TestMetadataModelActions(ActionTestBase):
                     metadata_schema_id=metadata_record['metadata_schema_id'],
                     organization_id='',
                     infrastructure_id=ckanext_factories.Infrastructure()['id'],
-                    model_json='')
+                    model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', True)
 
     def test_create_invalid_duplicate_name(self):
@@ -448,7 +448,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_model['metadata_schema_id'],
             'organization_id': organization['id'],
             'infrastructure_id': '',
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -463,7 +463,7 @@ class TestMetadataModelActions(ActionTestBase):
             'metadata_schema_id': metadata_model['metadata_schema_id'],
             'organization_id': '',
             'infrastructure_id': infrastructure['id'],
-            'model_json': '',
+            'model_json': '{}',
         }
         result, obj = self._test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)

@@ -222,7 +222,6 @@ class ActionTestBase(FunctionalTestBase):
             logged_result = next((result for result in logged_results
                                   if result['metadata_model_id'] == validation_model['id']), None)
             assert logged_result
-            assert logged_result['metadata_model_revision_id'] == validation_model['revision_id']
             logged_errors.update(logged_result['errors'])
         assert len(logged_errors) == len(validation_errors)
         for error_key, error_pattern in validation_errors.items():
