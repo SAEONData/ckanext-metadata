@@ -210,6 +210,21 @@ def object_does_not_exist(model_name):
     return callable_
 
 
+def convert_id_to_name(model_name):
+    """
+    Converts an object's id to its name.
+    """
+    model_class = model_map[model_name]['class']
+
+    def callable_(key, data, errors, context):
+        id_ = data.get(key)
+        obj = model_class.get(id_)
+        if obj:
+            data[key] = obj.name
+
+    return callable_
+
+
 def owner_org_owns_metadata_collection(key, data, errors, context):
     """
     Checks that the owner_org specified for a metadata record is the same organization that

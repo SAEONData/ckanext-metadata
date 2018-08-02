@@ -120,14 +120,19 @@ def metadata_record_show_schema():
     schema = metadata_record_create_schema()
     _make_show_schema(schema)
     schema.update({
-        'metadata_schema_id': [convert_from_extras],
+        'owner_org': [v.convert_id_to_name('organization')],
+        'metadata_schema_id': [convert_from_extras, v.convert_id_to_name('metadata_schema')],
         'metadata_json': [convert_from_extras, v.deserialize_json],
         'metadata_raw': [convert_from_extras],
         'metadata_url': [convert_from_extras],
-        'metadata_collection_id': [convert_from_extras],
+        'metadata_collection_id': [convert_from_extras, v.convert_id_to_name('metadata_collection')],
+        'infrastructures': {
+            'id': [v.convert_id_to_name('infrastructure')],
+            '__extras': [ignore],
+        },
         'validated': [convert_from_extras],
         'errors': [convert_from_extras, v.deserialize_json],
-        'workflow_state_id': [convert_from_extras, default(None)],
+        'workflow_state_id': [convert_from_extras, default(None), v.convert_id_to_name('workflow_state')],
         'private': [],
         'extras': _extras_schema(),
     })
@@ -187,7 +192,7 @@ def metadata_collection_show_schema():
     schema = metadata_collection_create_schema()
     _make_show_schema(schema)
     schema.update({
-        'organization_id': [convert_from_extras],
+        'organization_id': [convert_from_extras, v.convert_id_to_name('organization')],
         'extras': _extras_schema(),
     })
     return schema
@@ -256,6 +261,9 @@ def metadata_schema_update_schema():
 def metadata_schema_show_schema():
     schema = metadata_schema_create_schema()
     _make_show_schema(schema)
+    schema.update({
+        'base_schema_id': [v.convert_id_to_name('metadata_schema')],
+    })
     return schema
 
 
@@ -290,7 +298,12 @@ def metadata_model_update_schema():
 def metadata_model_show_schema():
     schema = metadata_model_create_schema()
     _make_show_schema(schema)
-    schema['model_json'] = [v.deserialize_json]
+    schema.update({
+        'model_json': [v.deserialize_json],
+        'metadata_schema_id': [v.convert_id_to_name('metadata_schema')],
+        'organization_id': [v.convert_id_to_name('organization')],
+        'infrastructure_id': [v.convert_id_to_name('infrastructure')],
+    })
     return schema
 
 
@@ -319,7 +332,10 @@ def workflow_state_update_schema():
 def workflow_state_show_schema():
     schema = workflow_state_create_schema()
     _make_show_schema(schema)
-    schema['workflow_rules_json'] = [v.deserialize_json]
+    schema.update({
+        'workflow_rules_json': [v.deserialize_json],
+        'revert_state_id': [v.convert_id_to_name('workflow_state')],
+    })
     return schema
 
 
@@ -343,6 +359,10 @@ def workflow_transition_create_schema():
 def workflow_transition_show_schema():
     schema = workflow_transition_create_schema()
     _make_show_schema(schema)
+    schema.update({
+        'from_state_id': [v.convert_id_to_name('workflow_state')],
+        'to_state_id': [v.convert_id_to_name('workflow_state')],
+    })
     return schema
 
 
@@ -359,5 +379,8 @@ def workflow_annotation_create_schema():
 def workflow_annotation_show_schema():
     schema = workflow_annotation_create_schema()
     _make_show_schema(schema)
-    schema['workflow_annotation_json'] = [v.deserialize_json]
+    schema.update({
+        'metadata_record_id': [v.convert_id_to_name('metadata_record')],
+        'workflow_annotation_json': [v.deserialize_json],
+    })
     return schema
