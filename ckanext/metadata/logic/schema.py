@@ -130,7 +130,7 @@ def metadata_record_show_schema():
             'id': [v.convert_id_to_name('infrastructure')],
             '__extras': [ignore],
         },
-        'validated': [convert_from_extras],
+        'validated': [convert_from_extras, boolean_validator],
         'errors': [convert_from_extras, v.deserialize_json],
         'workflow_state_id': [convert_from_extras, default(None), v.convert_id_to_name('workflow_state')],
         'private': [],
