@@ -3,6 +3,9 @@
 import logging
 import jsonschema
 import jsonschema.validators
+from collections import deque
+import re
+import ast
 
 log = logging.getLogger(__name__)
 
@@ -87,7 +90,7 @@ class JSONValidator(object):
             if path:
                 element = path.popleft()
             else:
-                element = u'__global'
+                element = '__root'
 
             if path:
                 if element not in node:
@@ -100,7 +103,18 @@ class JSONValidator(object):
 
         errors = {}
         clear_empties(instance)
+
         for error in self.jsonschema_validator.iter_errors(instance):
+
+            if error.schema_path == deque(['required']):
+                # put required errors under the required keys themselves
+                try:
+                    match = re.match('(?P<key>.+) is a required property', error.message)
+                    required_key = ast.literal_eval(match.group('key'))
+                    error.path = deque([required_key])
+                except:
+                    log.warning("Unexpected message from jsonschema library for required property error")
+
             add_error(errors, error.path, error.message)
 
         return errors
