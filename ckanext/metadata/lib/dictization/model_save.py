@@ -87,11 +87,6 @@ def workflow_transition_dict_save(workflow_transition_dict, context):
                              ckanext_model.workflow_transition_table, context)
 
 
-def workflow_annotation_dict_save(workflow_annotation_dict, context):
-    return _object_dict_save(workflow_annotation_dict, 'workflow_annotation', ckanext_model.WorkflowAnnotation,
-                             ckanext_model.workflow_annotation_table, context)
-
-
 def _object_dict_save(object_dict, model_name, model_class, table, context):
     session = context['session']
     obj = context.get(model_name)

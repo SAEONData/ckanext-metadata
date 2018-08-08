@@ -501,3 +501,16 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validated', True)
         assert_package_has_extra(metadata_record['id'], 'errors', '{}')
         self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
+
+    def test_workflow_transition(self):
+        metadata_record = self._generate_metadata_record(
+            metadata_json=load_example('saeon_datacite_record.json'))
+        workflow_state_submitted = ckanext_factories.WorkflowState(
+            workflow_rules_json=load_example('workflow_state_submitted_rules.json'))
+        workflow_state_captured = ckanext_factories.WorkflowState(
+            workflow_rules_json=load_example('workflow_state_captured_rules.json'))
+
+        result, obj = self._test_action('metadata_record_workflow_state_transition',
+                                        id=metadata_record['id'],
+                                        workflow_state_id=workflow_state_submitted['id'])
+        # todo...

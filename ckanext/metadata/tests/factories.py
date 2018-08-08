@@ -186,26 +186,3 @@ class WorkflowTransition(factory.Factory):
                                    from_state_id=from_state_id,
                                    to_state_id=to_state_id,
                                    **kwargs)
-
-
-class WorkflowAnnotation(factory.Factory):
-    FACTORY_FOR = ckanext_model.WorkflowAnnotation
-
-    workflow_annotation_json = '{ "workflowkey": "workflowvalue" }'
-
-    @classmethod
-    def _build(cls, target_class, *args, **kwargs):
-        raise NotImplementedError(".build() isn't supported in CKAN")
-
-    @classmethod
-    def _create(cls, target_class, *args, **kwargs):
-        if args:
-            assert False, "Positional args aren't supported, use keyword args."
-
-        context = {'user': ckan_factories._get_action_user_name(kwargs)}
-        metadata_record_id = kwargs.pop('metadata_record_id', None) or MetadataRecord()['id']
-
-        return helpers.call_action('workflow_annotation_create',
-                                   context=context,
-                                   metadata_record_id=metadata_record_id,
-                                   **kwargs)

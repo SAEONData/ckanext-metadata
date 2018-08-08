@@ -727,15 +727,6 @@ def workflow_transition_update(context, data_dict):
     raise tk.ValidationError("A workflow transition cannot be updated. Delete it and create a new one instead.")
 
 
-def workflow_annotation_update(context, data_dict):
-    """
-    Update a workflow annotation.
-
-    Note: this action will always fail; workflow annotations are not intended to be updatable.
-    """
-    raise tk.ValidationError("A workflow annotation cannot be updated. Delete it and create a new one instead.")
-
-
 def metadata_record_workflow_state_transition(context, data_dict):
     """
     Transition a metadata record to a different workflow state, and log the result
@@ -791,24 +782,18 @@ def metadata_record_workflow_state_transition(context, data_dict):
     if not workflow_transition or workflow_transition.state != 'active':
         raise tk.ValidationError(_("Invalid workflow state transition"))
 
-    metadata_record_dict = model_dictize.metadata_record_dictize(metadata_record, context)
-    metadata_record_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(), context)
+    # get the metadata record dict, augmented with workflow annotations
+    jsonpatch_params = {
+        'model_name': 'metadata_record',
+        'object_id': metadata_record_id,
+        'qualifier': 'workflow',
+    }
+    metadata_record_dict = tk.get_action('jsonpatch_apply')(context, jsonpatch_params)
+    jsonpatch_ids = tk.get_action('jsonpatch_list')(context, jsonpatch_params)
 
-    # merge workflow annotations for this record; for duplicate keys, new overrides old
-    workflow_annotations = tk.get_action('workflow_annotation_list')(context, {
-        'metadata_record_id': metadata_record_id,
-        'all_fields': True,
-    })
-    workflow_annotation_list = []
-    workflow_annotation_ids = []
-    for workflow_annotation in workflow_annotations:
-        workflow_annotation_list += [{'json': json.dumps(workflow_annotation['workflow_annotation_json'])}]
-        workflow_annotation_ids += [workflow_annotation['id']]
-
-    # test whether the metadata record, augmented with workflow annotations, passes the rules for the target state
+    # test whether the augmented metadata record passes the rules for the target state
     workflow_errors = tk.get_action('metadata_record_workflow_rules_check')(context, {
         'metadata_record_json': json.dumps(metadata_record_dict),
-        'workflow_annotation_list': workflow_annotation_list,
         'workflow_rules_json': target_workflow_state.workflow_rules_json,
     })
 
@@ -833,7 +818,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
         'activity_type': METADATA_WORKFLOW_ACTIVITY_TYPE,
         'data': {
             'workflow_state_id': target_workflow_state_id,
-            'workflow_annotation_ids': workflow_annotation_ids,
+            'jsonpatch_ids': jsonpatch_ids,
             'errors': workflow_errors,
         }
     }

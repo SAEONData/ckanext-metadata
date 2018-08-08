@@ -71,7 +71,3 @@ def workflow_state_update(context, data_dict):
 
 def workflow_transition_update(context, data_dict):
     return {'success': True}
-
-
-def workflow_annotation_update(context, data_dict):
-    return {'success': True}

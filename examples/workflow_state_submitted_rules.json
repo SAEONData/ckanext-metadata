@@ -5,16 +5,19 @@
 
     "properties": {
         "data_agreement": {
-            "type": "boolean",
-            "const": true
-        },
-        "data_agreement_link": {
-            "type": "string",
-            "format": "url"
+            "type": "object",
+            "properties": {
+                "accepted": {"type": "boolean", "const": true},
+                "href": {"type": "string", "format": "url"}
+            },
+            "required": ["accepted", "href"]
         },
         "terms_and_conditions": {
-            "type": "boolean",
-            "const": true
+            "type": "object",
+            "properties": {
+                "accepted": {"type": "boolean", "const": true}
+            },
+            "required": ["accepted"]
         },
         "capture_method": {
             "type": "string",
@@ -24,7 +27,6 @@
 
     "required": [
         "data_agreement",
-        "data_agreement_link",
         "terms_and_conditions",
         "capture_method"
     ]

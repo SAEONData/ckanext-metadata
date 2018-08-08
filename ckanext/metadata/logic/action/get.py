@@ -578,16 +578,13 @@ def metadata_record_workflow_rules_check(context, data_dict):
     """
     Evaluate whether a metadata record passes the rules for a workflow state.
 
-    :param metadata_record_json: JSON dictionary representation of a metadata record object
+    :param metadata_record_json: JSON dictionary representation of a metadata record object,
+        optionally augmented with workflow annotations
     :type metadata_record_json: string
-    :param workflow_annotation_list: list of JSON dictionaries defining workflow annotations
-        with which to augment/modify the metadata record; the annotations are applied in order,
-        and should be ordered from oldest first to newest last
-    :type workflow_annotation_list: list of dict {'json': string}
     :param workflow_rules_json: JSON schema defining the workflow rules
     :type workflow_rules_json: string
 
-    :rtype: dictionary of errors; empty dict implies that the augmented metadata record is 100% valid
+    :rtype: dictionary of errors; empty dict implies that the metadata record is 100% valid
         against the given rules
     """
     log.debug("Checking metadata record against workflow rules", data_dict)
@@ -600,12 +597,7 @@ def metadata_record_workflow_rules_check(context, data_dict):
         raise tk.ValidationError(errors)
 
     metadata_record_json = json.loads(data['metadata_record_json'])
-    workflow_annotation_list = data['workflow_annotation_list']
     workflow_rules_json = json.loads(data['workflow_rules_json'])
-
-    for workflow_annotation in workflow_annotation_list:
-        workflow_annotation_json = json.loads(workflow_annotation['json'])
-        metadata_record_json.update(workflow_annotation_json)
 
     workflow_errors = WorkflowValidator(workflow_rules_json).validate(metadata_record_json)
     return workflow_errors
@@ -760,77 +752,6 @@ def workflow_transition_list(context, data_dict):
         if all_fields:
             data_dict['id'] = id_
             result += [tk.get_action('workflow_transition_show')(context, data_dict)]
-        else:
-            result += [id_]
-
-    return result
-
-
-@tk.side_effect_free
-def workflow_annotation_show(context, data_dict):
-    """
-    Return a workflow annotation definition.
-
-    :param id: the id of the workflow annotation
-    :type id: string
-
-    :rtype: dictionary
-    """
-    log.debug("Retrieving workflow annotation: %r", data_dict)
-
-    workflow_annotation_id = tk.get_or_bust(data_dict, 'id')
-    workflow_annotation = ckanext_model.WorkflowAnnotation.get(workflow_annotation_id)
-    if workflow_annotation is not None:
-        workflow_annotation_id = workflow_annotation.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Annotation')))
-
-    tk.check_access('workflow_annotation_show', context, data_dict)
-
-    context['workflow_annotation'] = workflow_annotation
-    workflow_annotation_dict = model_dictize.workflow_annotation_dictize(workflow_annotation, context)
-
-    result_dict, errors = tk.navl_validate(workflow_annotation_dict, schema.workflow_annotation_show_schema(), context)
-    return result_dict
-
-
-@tk.side_effect_free
-def workflow_annotation_list(context, data_dict):
-    """
-    Return a list of ids of a metadata record's workflow annotations, in creation order.
-
-    :param metadata_record_id: the id or name of the metadata record with which the annotations
-        are associated
-    :type metadata_record_id: string
-    :param all_fields: return dictionaries instead of just ids (optional, default: ``False``)
-    :type all_fields: boolean
-
-    :rtype: list of strings
-    """
-    log.debug("Retrieving workflow annotation list: %r", data_dict)
-
-    model = context['model']
-    session = context['session']
-    all_fields = asbool(data_dict.get('all_fields'))
-
-    metadata_record_id = tk.get_or_bust(data_dict, 'metadata_record_id')
-    metadata_record = model.Package.get(metadata_record_id)
-    if metadata_record is not None and metadata_record.type == 'metadata_record':
-        metadata_record_id = metadata_record.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
-
-    tk.check_access('workflow_annotation_list', context, data_dict)
-
-    workflow_annotations = session.query(ckanext_model.WorkflowAnnotation.id) \
-        .filter_by(metadata_record_id=metadata_record_id, state='active') \
-        .order_by(ckanext_model.WorkflowAnnotation.timestamp) \
-        .all()
-    result = []
-    for (id_,) in workflow_annotations:
-        if all_fields:
-            data_dict['id'] = id_
-            result += [tk.get_action('workflow_annotation_show')(context, data_dict)]
         else:
             result += [id_]
 

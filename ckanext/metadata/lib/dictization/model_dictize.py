@@ -93,11 +93,6 @@ def workflow_transition_dictize(workflow_transition, context):
                            ckanext_model.workflow_transition_revision_table, context)
 
 
-def workflow_annotation_dictize(workflow_annotation, context):
-    return _object_dictize(workflow_annotation, ckanext_model.WorkflowAnnotation, ckanext_model.WorkflowAnnotationRevision,
-                           ckanext_model.workflow_annotation_revision_table, context)
-
-
 def _object_dictize(obj, model_class, rev_model_class, rev_table, context):
     is_latest_revision = not(context.get('revision_id') or context.get('revision_date'))
     execute = _execute if is_latest_revision else _execute_with_revision

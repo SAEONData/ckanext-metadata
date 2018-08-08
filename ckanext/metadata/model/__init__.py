@@ -27,10 +27,3 @@ from workflow_transition import (
     workflow_transition_table,
     workflow_transition_revision_table,
 )
-
-from workflow_annotation import (
-    WorkflowAnnotation,
-    WorkflowAnnotationRevision,
-    workflow_annotation_table,
-    workflow_annotation_revision_table,
-)

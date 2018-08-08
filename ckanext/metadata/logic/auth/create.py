@@ -57,5 +57,5 @@ def workflow_transition_create(context, data_dict):
     return {'success': True}
 
 
-def workflow_annotation_create(context, data_dict):
+def metadata_record_workflow_annotation_create(context, data_dict):
     return {'success': True}

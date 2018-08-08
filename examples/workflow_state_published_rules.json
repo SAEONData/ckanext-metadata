@@ -33,11 +33,29 @@
                 },
                 "required": ["userid", "date"]
             },
-            "minItems": 1
+            "minItems": 2,
+            "uniqueItems": true,
+            "$comment": "to fix: as it stands this sub-schema will not enforce different users, because of the date property"
         },
         "validated": {
             "type": "boolean",
             "const": true
+        },
+        "errors": {
+            "$comment": "this sub-schema checks that 'identifier' etc are not in the errors dict",
+            "type": "object",
+            "properties": {
+                "identifier": {"not": {}},
+                "creators": {"not": {}},
+                "titles": {"not": {}},
+                "publisher": {"not": {}},
+                "publicationYear": {"not": {}},
+                "subjects": {"not": {}},
+                "resourceType": {"not": {}},
+                "resourceTypeGeneral": {"not": {}},
+                "alternateIdentifiers": {"not": {}},
+                "onlineResources": {"not": {}}
+            }
         }
     },
 

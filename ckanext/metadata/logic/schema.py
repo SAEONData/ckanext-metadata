@@ -150,9 +150,6 @@ def metadata_validity_check_schema():
 def metadata_record_workflow_rules_check_schema():
     schema = {
         'metadata_record_json': [v.not_empty, unicode, v.json_dict_validator],
-        'workflow_annotation_list': {
-            'json': [v.not_empty, unicode, v.json_dict_validator],
-        },
         'workflow_rules_json': [v.not_empty, unicode, v.json_schema_validator],
     }
     return schema
@@ -362,25 +359,5 @@ def workflow_transition_show_schema():
     schema.update({
         'from_state_id': [v.convert_id_to_name('workflow_state')],
         'to_state_id': [v.convert_id_to_name('workflow_state')],
-    })
-    return schema
-
-
-def workflow_annotation_create_schema():
-    schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('workflow_annotation')],
-        'metadata_record_id': [v.not_empty, unicode, v.object_exists('metadata_record')],
-        'workflow_annotation_json': [v.not_empty, unicode, v.json_dict_validator],
-        'timestamp': [ignore],
-    }
-    return schema
-
-
-def workflow_annotation_show_schema():
-    schema = workflow_annotation_create_schema()
-    _make_show_schema(schema)
-    schema.update({
-        'metadata_record_id': [v.convert_id_to_name('metadata_record')],
-        'workflow_annotation_json': [v.deserialize_json],
     })
     return schema

@@ -22,7 +22,6 @@ _model_map = {
     'metadata_schema': ckanext_model.MetadataSchema,
     'workflow_state': ckanext_model.WorkflowState,
     'workflow_transition': ckanext_model.WorkflowTransition,
-    'workflow_annotation': ckanext_model.WorkflowAnnotation,
 }
 
 

@@ -131,11 +131,3 @@ def workflow_transition_show(context, data_dict):
 
 def workflow_transition_list(context, data_dict):
     return {'success': True}
-
-
-def workflow_annotation_show(context, data_dict):
-    return {'success': True}
-
-
-def workflow_annotation_list(context, data_dict):
-    return {'success': True}

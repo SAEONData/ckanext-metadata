@@ -350,40 +350,6 @@ def workflow_transition_delete(context, data_dict):
         model.repo.commit()
 
 
-def workflow_annotation_delete(context, data_dict):
-    """
-    Delete a workflow annotation.
-
-    You must be authorized to delete the workflow annotation.
-
-    :param id: the id or name of the workflow annotation to delete
-    :type id: string
-    """
-    log.info("Deleting workflow annotation: %r", data_dict)
-
-    model = context['model']
-    user = context['user']
-    session = context['session']
-    defer_commit = context.get('defer_commit', False)
-
-    workflow_annotation_id = tk.get_or_bust(data_dict, 'id')
-    workflow_annotation = ckanext_model.WorkflowAnnotation.get(workflow_annotation_id)
-    if workflow_annotation is not None:
-        workflow_annotation_id = workflow_annotation.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Annotation')))
-
-    tk.check_access('workflow_annotation_delete', context, data_dict)
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    rev.message = _(u'REST API: Delete workflow annotation %s') % workflow_annotation_id
-
-    workflow_annotation.delete()
-    if not defer_commit:
-        model.repo.commit()
-
-
 def organization_delete(context, data_dict):
     """
     Delete an organization.

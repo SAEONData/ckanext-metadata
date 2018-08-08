@@ -15,5 +15,4 @@ model_map = {
     'metadata_schema': {'class': ckanext_model.MetadataSchema, 'desc': u'Metadata Schema'},
     'workflow_state': {'class': ckanext_model.WorkflowState, 'desc': u'Workflow State'},
     'workflow_transition': {'class': ckanext_model.WorkflowTransition, 'desc': u'Workflow Transition'},
-    'workflow_annotation': {'class': ckanext_model.WorkflowAnnotation, 'desc': u'Workflow Annotation'},
 }

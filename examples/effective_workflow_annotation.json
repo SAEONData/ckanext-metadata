@@ -1,0 +1,14 @@
+{
+    "data_agreement": {
+        "accepted": true,
+        "href": "http://www.saeon.ac.za"
+    },
+    "terms_and_conditions": {
+        "accepted": true
+    },
+    "capture_method": "manual",
+    "quality_control": [
+        {"userid": "kyle", "date": "2018-08-01"},
+        {"userid": "leo", "date": "2018-08-06"}
+    ]
+}

@@ -17,8 +17,6 @@ def init_tables():
         workflow_state_revision_table,
         workflow_transition_table,
         workflow_transition_revision_table,
-        workflow_annotation_table,
-        workflow_annotation_revision_table,
     )
     for table in tables:
         if not table.exists():

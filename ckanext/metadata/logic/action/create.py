@@ -433,49 +433,35 @@ def workflow_transition_create(context, data_dict):
     return output
 
 
-def workflow_annotation_create(context, data_dict):
+def metadata_record_workflow_annotation_create(context, data_dict):
     """
-    Create a new workflow annotation.
+    Add a workflow annotation to a metadata record.
 
-    You must be authorized to create workflow annotations.
+    This is a wrapper for jsonpatch_create, creating an 'add' operation with qualifier 'workflow'.
 
-    :param id: the id of the workflow annotation (optional - only sysadmins can set this)
+    :param id: the id or name of the metadata record to annotate
     :type id: string
-    :param metadata_record_id: the id or name of the metadata record to annotate
-    :type metadata_record_id: string
-    :param workflow_annotation_json: JSON dictionary of workflow information
-    :type workflow_annotation_json: string
+    :param path: JSON pointer into the metadata record dict at which to set the annotation
+    :type path: string
+    :param value: the value to set at the given path
+    :type value: a JSON-serializable object
 
-    :returns: the newly created workflow annotation (unless 'return_id_only' is set to True
-              in the context, in which case just the workflow annotation id will be returned)
+    :returns: the newly created JSONPatch object
     :rtype: dictionary
     """
-    log.info("Creating workflow annotation: %r", data_dict)
-    tk.check_access('workflow_annotation_create', context, data_dict)
+    log.info("Adding a workflow annotation to a metadata record: %r", data_dict)
+    tk.check_access('metadata_record_workflow_annotation_create', context, data_dict)
 
-    model = context['model']
-    user = context['user']
-    session = context['session']
-    defer_commit = context.get('defer_commit', False)
-    return_id_only = context.get('return_id_only', False)
+    metadata_record_id, path, value = tk.get_or_bust(data_dict, ['id', 'path', 'value'])
 
-    data, errors = tk.navl_validate(data_dict, schema.workflow_annotation_create_schema(), context)
-    if errors:
-        session.rollback()
-        raise tk.ValidationError(errors)
-
-    workflow_annotation = model_save.workflow_annotation_dict_save(data, context)
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
-    else:
-        rev.message = _(u'REST API: Create workflow annotation %s') % workflow_annotation.id
-
-    if not defer_commit:
-        model.repo.commit()
-
-    output = workflow_annotation.id if return_id_only \
-        else tk.get_action('workflow_annotation_show')(context, {'id': workflow_annotation.id})
-    return output
+    data_dict = {
+        'model_name': 'metadata_record',
+        'object_id': metadata_record_id,
+        'qualifier': 'workflow',
+        'operation': {
+            'op': 'add',
+            'path': path,
+            'value': value,
+        },
+    }
+    return tk.get_action('jsonpatch_create')(context, data_dict)
