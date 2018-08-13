@@ -68,19 +68,19 @@ class JSONValidator(object):
 
         def clear_empties(node):
             """
-            Recursively remove empty elements from the instance tree.
+            Recursively remove empty strings, lists and dicts from the instance tree.
             """
             if type(node) is dict:
-                # iterate over a copy of the dict's keys, as we are deleting keys during iteration
+                # iterate over a *copy* of the dict's keys, as we are deleting keys during iteration
                 for element in node.keys():
                     clear_empties(node[element])
-                    if not node[element]:
+                    if type(node[element]) in (str, unicode, list, dict) and not node[element]:
                         del node[element]
             elif type(node) is list:
-                # iterate over a copy of the list, as we are deleting elements during iteration
+                # iterate over a *copy* of the list, as we are deleting elements during iteration
                 for element in list(node):
                     clear_empties(element)
-                    if not element:
+                    if type(element) in (str, unicode, list, dict) and not element:
                         node.remove(element)
 
         def add_error(node, path, message):
