@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 from ckanext.metadata.logic.json_validator import JSONValidator
+from ckanext.metadata.logic.json_validator_functions import objectid_validator, role_validator
 
 
 class WorkflowValidator(JSONValidator):
@@ -10,7 +11,10 @@ class WorkflowValidator(JSONValidator):
 
     @classmethod
     def _validators(cls):
-        return {}
+        return {
+            'objectid': objectid_validator,
+            'role': role_validator,
+        }
 
     @classmethod
     def _formats(cls):

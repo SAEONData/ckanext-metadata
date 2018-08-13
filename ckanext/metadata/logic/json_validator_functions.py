@@ -19,7 +19,7 @@ GEO_BOX_RE = re.compile(r'^(?P<lat1>[+-]?\d+(\.\d+)?)\s+(?P<lon1>[+-]?\d+(\.\d+)
 
 def vocabulary_validator(validator, vocabulary_name, instance, schema):
     """
-    "vocabulary" keyword validator function.
+    "vocabulary" keyword validator function: checks that instance is a tag from the named vocabulary.
     """
     if validator.is_type(instance, 'string'):
         try:
@@ -29,6 +29,37 @@ def vocabulary_validator(validator, vocabulary_name, instance, schema):
                 yield jsonschema.ValidationError(_('Tag not found in vocabulary'))
         except tk.ObjectNotFound:
             yield jsonschema.ValidationError("%s: %s '%s'" % (_('Not found'), _('Vocabulary'), vocabulary_name))
+
+
+def objectid_validator(validator, model_name, instance, schema):
+    """
+    "objectid" keyword validator function: checks that instance is the id of an object of the named model.
+    """
+    if validator.is_type(instance, 'string'):
+        show_func_name = '{}_show'.format(model_name)
+        try:
+            show_func = tk.get_action(show_func_name)
+        except:
+            yield jsonschema.ValidationError(_("Invalid model name '{}': action '{}' not found".
+                                               format(model_name, show_func_name)))
+            return
+
+        try:
+            object_dict = show_func({}, {'id': instance})
+        except:
+            yield jsonschema.ValidationError("%s: %s" % (_("Not found"), _("User")))
+            return
+
+        if object_dict['id'] != instance:
+            yield jsonschema.ValidationError(_("Must use object id not name"))
+
+
+def role_validator(validator, role_name, instance, schema):
+    """
+    "role" keyword validator function: checks that instance is the id of a user with the named role.
+    """
+    if validator.is_type(instance, 'string'):
+        yield jsonschema.ValidationError("Role validation has not been implemented yet")
 
 
 @checks_format('doi')
