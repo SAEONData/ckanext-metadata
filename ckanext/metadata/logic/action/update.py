@@ -783,13 +783,10 @@ def metadata_record_workflow_state_transition(context, data_dict):
         raise tk.ValidationError(_("Invalid workflow state transition"))
 
     # get the metadata record dict, augmented with workflow annotations
-    jsonpatch_params = {
-        'model_name': 'metadata_record',
-        'object_id': metadata_record_id,
-        'qualifier': 'workflow',
-    }
-    metadata_record_dict = tk.get_action('jsonpatch_apply')(context, jsonpatch_params)
-    jsonpatch_ids = tk.get_action('jsonpatch_list')(context, jsonpatch_params)
+    metadata_record_dict = tk.get_action('metadata_record_workflow_augmented_show')(
+        context, {'id': metadata_record_id})
+    jsonpatch_ids = tk.get_action('metadata_record_workflow_annotations_list')(
+        context, {'id': metadata_record_id})
 
     # test whether the augmented metadata record passes the rules for the target state
     workflow_errors = tk.get_action('metadata_record_workflow_rules_check')(context, {

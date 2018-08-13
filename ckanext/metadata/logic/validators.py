@@ -105,6 +105,18 @@ def json_schema_validator(value):
     return value
 
 
+def json_serializable_validator(value):
+    """
+    Checks that the provided object is JSON-serializable.
+    """
+    try:
+        json.dumps(value)
+    except:
+        raise tk.Invalid(_("Object is not JSON-serializable"))
+
+    return value
+
+
 def xsd_validator(value):
     """
     TODO
@@ -140,6 +152,20 @@ def url_validator(value):
             raise tk.Invalid(_("Invalid URL: %s") % e.message)
 
     return value
+
+
+def augmented_key_validator(schema):
+    """
+    Checks that the value is a valid key for augmenting the given schema.
+    """
+    def callable_(key, data, errors, context):
+        value = data.get(key)
+        if not re.match('\w+', value):
+            raise tk.Invalid(_("Invalid key name"))
+        if value in schema:
+            raise tk.Invalid(_("An existing key name cannot be used"))
+
+    return callable_
 
 # endregion
 

@@ -437,31 +437,47 @@ def metadata_record_workflow_annotation_create(context, data_dict):
     """
     Add a workflow annotation to a metadata record.
 
-    This is a wrapper for jsonpatch_create, creating an 'add' operation with qualifier 'workflow'.
+    This is a convenience function which wraps jsonpatch_create, creating an 'add'
+    patch operation with qualifier 'workflow'.
 
     :param id: the id or name of the metadata record to annotate
     :type id: string
-    :param path: JSON pointer into the metadata record dict at which to set the annotation
-    :type path: string
-    :param value: the value to set at the given path
+    :param key: the name of the key to set on the (augmented) metadata record dict;
+        this cannot be the same as an existing key in the metadata record schema
+    :type key: string
+    :param value: the value to set for the given key
     :type value: a JSON-serializable object
 
     :returns: the newly created JSONPatch object
     :rtype: dictionary
     """
     log.info("Adding a workflow annotation to a metadata record: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
     tk.check_access('metadata_record_workflow_annotation_create', context, data_dict)
 
-    metadata_record_id, path, value = tk.get_or_bust(data_dict, ['id', 'path', 'value'])
+    data, errors = tk.navl_validate(data_dict, schema.metadata_record_workflow_annotation_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
 
-    data_dict = {
+    jsonpatch_data = {
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,
         'qualifier': 'workflow',
         'operation': {
             'op': 'add',
-            'path': path,
-            'value': value,
+            'path': '/' + data_dict['key'],
+            'value': data_dict['value'],
         },
     }
-    return tk.get_action('jsonpatch_create')(context, data_dict)
+    return tk.get_action('jsonpatch_create')(context, jsonpatch_data)

@@ -155,6 +155,15 @@ def metadata_record_workflow_rules_check_schema():
     return schema
 
 
+def metadata_record_workflow_annotation_create_schema():
+    schema = {
+        'id': [],
+        'key': [v.not_empty, unicode, v.augmented_key_validator(metadata_record_show_schema())],
+        'value': [v.not_empty, v.json_serializable_validator],
+    }
+    return schema
+
+
 def metadata_collection_create_schema():
     schema = {
         # from the default group schema

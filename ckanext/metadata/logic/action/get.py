@@ -643,6 +643,84 @@ def metadata_record_workflow_activity_show(context, data_dict):
 
 
 @tk.side_effect_free
+def metadata_record_workflow_annotations_list(context, data_dict):
+    """
+    Return a list of ids of workflow annotations (JSON Patches) associated with
+    a metadata record.
+
+    This is a convenience function which wraps jsonpatch_list.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+    :param all_fields: return JSONPatch dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving workflow annotations for metadata record: %r", data_dict)
+
+    model = context['model']
+    metadata_record = context.get('metadata_record')
+
+    if metadata_record:
+        metadata_record_id = metadata_record.id
+    else:
+        metadata_record_id = tk.get_or_bust(data_dict, 'id')
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is not None and metadata_record.type == 'metadata_record':
+            metadata_record_id = metadata_record.id
+        else:
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_workflow_annotations_list', context, data_dict)
+
+    jsonpatch_params = {
+        'model_name': 'metadata_record',
+        'object_id': metadata_record_id,
+        'qualifier': 'workflow',
+        'all_fields': asbool(data_dict.get('all_fields')),
+    }
+    return tk.get_action('jsonpatch_list')(context, jsonpatch_params)
+
+
+@tk.side_effect_free
+def metadata_record_workflow_augmented_show(context, data_dict):
+    """
+    Return a metadata record dictionary augmented with workflow annotations.
+
+    This is a convenience function which wraps jsonpatch_apply.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving workflow-augmented metadata record: %r", data_dict)
+
+    model = context['model']
+    metadata_record = context.get('metadata_record')
+
+    if metadata_record:
+        metadata_record_id = metadata_record.id
+    else:
+        metadata_record_id = tk.get_or_bust(data_dict, 'id')
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is not None and metadata_record.type == 'metadata_record':
+            metadata_record_id = metadata_record.id
+        else:
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_workflow_augmented_show', context, data_dict)
+
+    jsonpatch_params = {
+        'model_name': 'metadata_record',
+        'object_id': metadata_record_id,
+        'qualifier': 'workflow',
+    }
+    return tk.get_action('jsonpatch_apply')(context, jsonpatch_params)
+
+
+@tk.side_effect_free
 def workflow_state_show(context, data_dict):
     """
     Return a workflow state definition.
