@@ -86,20 +86,24 @@ class JSONValidator(object):
         def add_error(node, path, message):
             """
             Add an error message to the error tree.
+            Note: this assumes the instance root is a dict.
             """
-            if path:
-                element = path.popleft()
-            else:
-                element = '__root'
+            def subnode():
+                return [] if not path or type(path[0]) is int else {}
+
+            index = path.popleft() if path else '__root'
+
+            if type(node) is dict:
+                if index not in node:
+                    node[index] = subnode()
+            elif type(node) is list:
+                while index >= len(node):
+                    node += [subnode()]
 
             if path:
-                if element not in node:
-                    node[element] = {}
-                add_error(node[element], path, message)
+                add_error(node[index], path, message)
             else:
-                if element not in node:
-                    node[element] = []
-                node[element] += [message]
+                node[index] += [message]
 
         errors = {}
         clear_empties(instance)
