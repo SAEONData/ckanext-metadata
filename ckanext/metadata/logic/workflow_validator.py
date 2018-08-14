@@ -20,4 +20,5 @@ class WorkflowValidator(JSONValidator):
     def _formats(cls):
         return [
             'url',
+            'date',
         ]

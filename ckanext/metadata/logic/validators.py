@@ -71,6 +71,19 @@ def not_empty(key, data, errors, context):
         raise tk.StopOnError
 
 
+def json_object_validator(value):
+    """
+    Checks for well-formed JSON.
+    """
+    if value:
+        try:
+            json.loads(value)
+        except ValueError, e:
+            raise tk.Invalid(_("JSON decode error: %s") % e.message)
+
+    return value
+
+
 def json_dict_validator(value):
     """
     Checks for well-formed JSON, and that the supplied JSON represents a dictionary.
@@ -101,18 +114,6 @@ def json_schema_validator(value):
             raise tk.Invalid(_("Expecting a JSON dictionary"))
         except jsonschema.SchemaError, e:
             raise tk.Invalid(_("Invalid JSON schema: %s") % e.message)
-
-    return value
-
-
-def json_serializable_validator(value):
-    """
-    Checks that the provided object is JSON-serializable.
-    """
-    try:
-        json.dumps(value)
-    except:
-        raise tk.Invalid(_("Object is not JSON-serializable"))
 
     return value
 

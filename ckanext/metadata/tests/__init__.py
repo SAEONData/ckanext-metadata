@@ -5,6 +5,7 @@ import re
 import json
 from paste.deploy.converters import asbool
 import pkg_resources
+from collections import deque
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action
@@ -12,6 +13,7 @@ import ckan.plugins.toolkit as tk
 import ckan.model as ckan_model
 import ckanext.metadata.model.setup as ckanext_setup
 from ckanext.metadata import model as ckanext_model
+from ckanext.jsonpatch.model.jsonpatch import JSONPatch
 
 _model_map = {
     'organization': ckan_model.Group,
@@ -22,6 +24,7 @@ _model_map = {
     'metadata_schema': ckanext_model.MetadataSchema,
     'workflow_state': ckanext_model.WorkflowState,
     'workflow_transition': ckanext_model.WorkflowTransition,
+    'jsonpatch': JSONPatch,
 }
 
 
@@ -123,19 +126,29 @@ def assert_group_has_member(group_id, object_id, object_table, capacity='public'
 def assert_error(error_dict, key, pattern):
     """
     Check that the error dictionary contains the given key with the corresponding error message regex.
+    Key may be in JSON pointer format (e.g. 'infrastructures/0/id').
     """
-    errors = error_dict.get(key)
-    if type(errors) is list:
-        assert next((True for error in errors if re.search(pattern, error) is not None), False)
-    elif isinstance(errors, basestring):
-        assert re.search(pattern, errors) is not None
-    else:
-        assert False
+    def has_error(node, path):
+        if path:
+            index = path.popleft()
+            try:
+                index = int(index)
+            except:
+                pass
+            return has_error(node[index], path)
+        elif type(node) is list:
+            return next((True for msg in node if re.search(pattern, msg) is not None), False)
+        elif isinstance(node, basestring):
+            return re.search(pattern, node) is not None
+        return False
+
+    error_path = deque(key.split('/'))
+    assert has_error(error_dict, error_path)
 
 
 class ActionTestBase(FunctionalTestBase):
 
-    _load_plugins = 'metadata',
+    _load_plugins = 'metadata', 'jsonpatch'
 
     @classmethod
     def setup_class(cls):
@@ -165,6 +178,7 @@ class ActionTestBase(FunctionalTestBase):
         :return: tuple(result dict, result obj)
         """
         model, method = action_name.rsplit('_', 1)
+        model_class = _model_map.get(model)
         user = self.sysadmin_user if sysadmin else self.normal_user
         context = {
             'user': user['name'],
@@ -189,8 +203,7 @@ class ActionTestBase(FunctionalTestBase):
             # memory but are reloading it from the DB
             ckan_model.Session.close_all()
 
-        if not should_error:
-            model_class = _model_map[model]
+        if not should_error and model_class is not None:
             if method in ('create', 'update', 'show'):
                 assert 'id' in result
                 obj = model_class.get(result['id'])
@@ -250,3 +263,17 @@ class ActionTestBase(FunctionalTestBase):
         """
         dependent_record_list = call_action('metadata_model_dependent_record_list', id=metadata_model_id)
         assert set(dependent_record_list) == set(metadata_record_ids)
+
+    def _assert_workflow_activity_logged(self, metadata_record_id, workflow_state_id, *jsonpatch_ids, **workflow_errors):
+        """
+        :param workflow_errors: dictionary mapping workflow annotation (flattened) keys to expected error patterns
+        """
+        activity_dict = call_action('metadata_record_workflow_activity_show', id=metadata_record_id)
+        assert activity_dict['user_id'] == self.normal_user['id']
+        assert activity_dict['object_id'] == metadata_record_id
+        assert activity_dict['activity_type'] == 'metadata workflow'
+        assert activity_dict['data']['workflow_state_id'] == workflow_state_id
+        assert activity_dict['data']['jsonpatch_ids'] == list(jsonpatch_ids)
+        logged_errors = activity_dict['data']['errors']
+        for error_key, error_pattern in workflow_errors.items():
+            assert_error(logged_errors, error_key, error_pattern)

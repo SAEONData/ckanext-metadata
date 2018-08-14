@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import logging
+import json
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -445,8 +446,8 @@ def metadata_record_workflow_annotation_create(context, data_dict):
     :param key: the name of the key to set on the (augmented) metadata record dict;
         this cannot be the same as an existing key in the metadata record schema
     :type key: string
-    :param value: the value to set for the given key
-    :type value: a JSON-serializable object
+    :param value: the JSON object to set for the given key
+    :type value: string
 
     :returns: the newly created JSONPatch object
     :rtype: dictionary
@@ -477,7 +478,7 @@ def metadata_record_workflow_annotation_create(context, data_dict):
         'operation': {
             'op': 'add',
             'path': '/' + data_dict['key'],
-            'value': data_dict['value'],
+            'value': json.loads(data_dict['value']),
         },
     }
     return tk.get_action('jsonpatch_create')(context, jsonpatch_data)
