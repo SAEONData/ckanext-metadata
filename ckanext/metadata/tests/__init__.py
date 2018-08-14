@@ -131,10 +131,8 @@ def assert_error(error_dict, key, pattern):
     def has_error(node, path):
         if path:
             index = path.popleft()
-            try:
+            if type(node) is list:
                 index = int(index)
-            except:
-                pass
             return has_error(node[index], path)
         elif type(node) is list:
             return next((True for msg in node if re.search(pattern, msg) is not None), False)

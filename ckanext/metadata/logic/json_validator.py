@@ -86,19 +86,11 @@ class JSONValidator(object):
         def add_error(node, path, message):
             """
             Add an error message to the error tree.
-            Note: this assumes the instance root is a dict.
             """
-            def subnode():
-                return [] if not path or type(path[0]) is int else {}
+            index = str(path.popleft()) if path else '__root'
 
-            index = path.popleft() if path else '__root'
-
-            if type(node) is dict:
-                if index not in node:
-                    node[index] = subnode()
-            elif type(node) is list:
-                while index >= len(node):
-                    node += [subnode()]
+            if index not in node:
+                node[index] = [] if not path else {}
 
             if path:
                 add_error(node[index], path, message)
@@ -110,14 +102,21 @@ class JSONValidator(object):
 
         for error in self.jsonschema_validator.iter_errors(instance):
 
-            if error.schema_path == deque(['required']):
+            if error.schema_path[-1] == 'required':
                 # put required errors under the required keys themselves
                 try:
                     match = re.match('(?P<key>.+) is a required property', error.message)
                     required_key = ast.literal_eval(match.group('key'))
-                    error.path = deque([required_key])
+                    error.path.append(required_key)
                 except:
                     log.warning("Unexpected message from jsonschema library for required property error")
+
+            elif error.schema_path[-1] == 'minItems':
+                error.path.append('__length')
+                error.message = 'Array has too few items'
+
+            elif error.schema_path[-1] == 'not' and error.validator_value == {}:
+                error.message = 'This key may not be present in the dictionary'
 
             add_error(errors, error.path, error.message)
 
