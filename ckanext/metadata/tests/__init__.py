@@ -14,6 +14,7 @@ import ckan.model as ckan_model
 import ckanext.metadata.model.setup as ckanext_setup
 from ckanext.metadata import model as ckanext_model
 from ckanext.jsonpatch.model.jsonpatch import JSONPatch
+import ckanext.jsonpatch.model.setup as jsonpatch_setup
 
 _model_map = {
     'organization': ckan_model.Group,
@@ -153,6 +154,7 @@ class ActionTestBase(FunctionalTestBase):
         print "\n===", cls.__name__, "==="
         super(ActionTestBase, cls).setup_class()
         ckanext_setup.init_tables()
+        jsonpatch_setup.init_tables()
 
     def setup(self):
         super(ActionTestBase, self).setup()
