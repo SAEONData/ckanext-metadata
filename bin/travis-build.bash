@@ -10,6 +10,7 @@ sudo apt-get install solr-jetty
 echo "Installing CKAN v$CKAN_VERSION and its Python dependencies..."
 wget https://github.com/ckan/ckan/archive/ckan-$CKAN_VERSION.tar.gz -O ckan.tar.gz
 tar xzf ckan.tar.gz
+mv ckan-ckan-$CKAN_VERSION ckan
 cd ckan
 pip install -e .
 sed -i 's/psycopg2.*/psycopg2==2.7.3.2/' requirements.txt
@@ -45,7 +46,7 @@ pip install -r dev-requirements.txt
 echo "Installing ckanext-jsonpatch v$JSONPATCH_VERSION and its requirements..."
 wget https://github.com/SAEONData/ckanext-jsonpatch/archive/v$JSONPATCH_VERSION.tar.gz -O ckanext-jsonpatch.tar.gz
 tar xzf ckanext-jsonpatch.tar.gz
-cd ckanext-jsonpatch
+cd ckanext-jsonpatch-$JSONPATCH_VERSION
 python setup.py develop
 pip install -r requirements.txt
 pip install -r dev-requirements.txt
