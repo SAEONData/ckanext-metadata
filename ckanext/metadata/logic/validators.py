@@ -39,7 +39,7 @@ def _generate_name(*strings):
     while '' in strings:
         strings.remove('')
     text = '_'.join(strings)
-    return re.sub('[^a-z0-9_\-]+', '-', text.lower())
+    return re.sub(r'[^a-z0-9_-]+', '-', text.lower())
 
 # endregion
 
@@ -161,7 +161,7 @@ def augmented_key_validator(schema):
     """
     def callable_(key, data, errors, context):
         value = data.get(key)
-        if not re.match('\w+', value):
+        if not re.match(r'^\w+$', value):
             raise tk.Invalid(_("Invalid key name"))
         if value in schema:
             raise tk.Invalid(_("An existing key name cannot be used"))

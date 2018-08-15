@@ -104,7 +104,7 @@ class JSONValidator(object):
 
             if error.schema_path[-1] == 'required':
                 # put required errors under the required keys themselves
-                match = re.match('(?P<key>.+) is a required property', error.message)
+                match = re.match(r'(?P<key>.+) is a required property', error.message)
                 assert match is not None, "Unexpected message for 'required' property"
                 required_key = ast.literal_eval(match.group('key'))
                 error.path.append(required_key)

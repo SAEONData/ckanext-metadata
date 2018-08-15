@@ -45,7 +45,7 @@ def generate_name(*strings):
     while '' in strings:
         strings.remove('')
     text = '_'.join(strings)
-    return re.sub('[^a-z0-9_\-]+', '-', text.lower())
+    return re.sub(r'[^a-z0-9_-]+', '-', text.lower())
 
 
 def assert_object_matches_dict(object_, dict_, json_values=()):
