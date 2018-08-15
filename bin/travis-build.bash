@@ -43,6 +43,10 @@ python setup.py develop
 pip install -r requirements.txt
 pip install -r dev-requirements.txt
 
+echo "Moving test.ini into a subdir..."
+mkdir subdir
+mv test.ini subdir
+
 echo "Installing ckanext-jsonpatch v$JSONPATCH_VERSION and its requirements..."
 wget https://github.com/SAEONData/ckanext-jsonpatch/archive/v$JSONPATCH_VERSION.tar.gz -O ckanext-jsonpatch.tar.gz
 tar xzf ckanext-jsonpatch.tar.gz
@@ -50,9 +54,5 @@ cd ckanext-jsonpatch-$JSONPATCH_VERSION
 python setup.py develop
 pip install -r requirements.txt
 pip install -r dev-requirements.txt
-
-echo "Moving test.ini into a subdir..."
-mkdir subdir
-mv test.ini subdir
 
 echo "travis-build.bash is done."
