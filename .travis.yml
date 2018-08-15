@@ -5,7 +5,7 @@ services: postgresql
 python:
   - "2.7"
 env:
-  - CKANVERSION=2.7.4
+  - CKAN_VERSION=2.7.4 JSONPATCH_VERSION=0.1-alpha
 
 install: bash bin/travis-build.bash
 script: bash bin/travis-run.bash
