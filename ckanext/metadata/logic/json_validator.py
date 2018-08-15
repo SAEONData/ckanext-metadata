@@ -104,12 +104,10 @@ class JSONValidator(object):
 
             if error.schema_path[-1] == 'required':
                 # put required errors under the required keys themselves
-                try:
-                    match = re.match('(?P<key>.+) is a required property', error.message)
-                    required_key = ast.literal_eval(match.group('key'))
-                    error.path.append(required_key)
-                except:
-                    log.warning("Unexpected message from jsonschema library for required property error")
+                match = re.match('(?P<key>.+) is a required property', error.message)
+                assert match is not None, "Unexpected message for 'required' property"
+                required_key = ast.literal_eval(match.group('key'))
+                error.path.append(required_key)
 
             elif error.schema_path[-1] == 'minItems':
                 error.path.append('__length')
