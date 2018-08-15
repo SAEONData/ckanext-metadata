@@ -786,7 +786,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                               *jsonpatch_ids,
                                               **{
                                                   'errors/identifier': 'This key may not be present in the dictionary',
-                                                  'quality_control/__length': 'Array has too few items',
+                                                  'quality_control/__minItems': 'Array has too few items',
                                               })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
@@ -799,16 +799,15 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-15"}),
                                       )['id']]
 
-        # TODO: the following depends on implementation of userid uniqueness checking
-        # self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-        #                   workflow_state_id=workflow_state_published['id'])
-        # self._assert_workflow_activity_logged(metadata_record['id'],
-        #                                       workflow_state_published['id'],
-        #                                       *jsonpatch_ids,
-        #                                       **{
-        #                                           'quality_control': 'uniqueness of user id...',
-        #                                       })
-        # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
+        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                          workflow_state_id=workflow_state_published['id'])
+        self._assert_workflow_activity_logged(metadata_record['id'],
+                                              workflow_state_published['id'],
+                                              *jsonpatch_ids,
+                                              **{
+                                                  'quality_control/__uniqueObjects': 'Array has non-unique objects',
+                                              })
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       path='/quality_control',

@@ -34,8 +34,7 @@
                 "required": ["userid", "date"]
             },
             "minItems": 2,
-            "uniqueItems": true,
-            "$comment": "to fix: as it stands this sub-schema will not enforce different users, because of the date property"
+            "uniqueObjects": ["userid"]
         },
         "validated": {
             "type": "boolean",

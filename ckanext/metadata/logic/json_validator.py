@@ -110,11 +110,15 @@ class JSONValidator(object):
                 error.path.append(required_key)
 
             elif error.schema_path[-1] == 'minItems':
-                error.path.append('__length')
+                error.path.append('__minItems')
                 error.message = 'Array has too few items'
 
             elif error.schema_path[-1] == 'not' and error.validator_value == {}:
                 error.message = 'This key may not be present in the dictionary'
+
+            elif error.schema_path[-1] == 'uniqueObjects':
+                error.path.append('__uniqueObjects')
+                error.message = 'Array has non-unique objects'
 
             add_error(errors, error.path, error.message)
 

@@ -6,6 +6,7 @@ import json
 from paste.deploy.converters import asbool
 import pkg_resources
 from collections import deque
+import traceback
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action
@@ -194,6 +195,7 @@ class ActionTestBase(FunctionalTestBase):
             else:
                 result = e.message
         except Exception, e:
+            traceback.print_exc()
             assert False, "Unexpected exception %s: %s" % (type(e), e)
         else:
             if should_error:

@@ -62,6 +62,20 @@ def role_validator(validator, role_name, instance, schema):
         yield jsonschema.ValidationError("Role validation has not been implemented yet")
 
 
+def unique_objects_validator(validator, key_properties, instance, schema):
+    """
+    "uniqueObjects" keyword validator: for an array comprising objects, this checks that the objects
+    are unique with respect to the named properties.
+    """
+    if validator.is_type(instance, 'array') and validator.is_type(schema.get('items', {}), 'object'):
+        key_objects = []
+        for obj in instance:
+            key_object = {k: v for k, v in obj.items() if k in key_properties}
+            if key_object in key_objects:
+                yield jsonschema.ValidationError(_("%r has non-unique objects") % (instance,))
+            key_objects += [key_object]
+
+
 @checks_format('doi')
 def is_doi(instance):
     if not isinstance(instance, basestring):
