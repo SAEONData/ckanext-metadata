@@ -5,6 +5,7 @@ import uuid
 import re
 import urlparse
 import jsonschema
+import jsonpointer
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _, config
@@ -118,6 +119,19 @@ def json_schema_validator(value):
     return value
 
 
+def json_pointer_validator(value):
+    """
+    Checks that the value is a valid JSON pointer.
+    """
+    if value:
+        try:
+            jsonpointer.JsonPointer(value)
+        except jsonpointer.JsonPointerException, e:
+            raise tk.Invalid(_("Invalid JSON pointer: %s") % e.message)
+
+    return value
+
+
 def xsd_validator(value):
     """
     TODO
@@ -155,15 +169,19 @@ def url_validator(value):
     return value
 
 
-def augmented_key_validator(schema):
+def augmented_schema_validator(schema):
     """
-    Checks that the value is a valid key for augmenting the given schema.
+    Checks that the first element of the supplied JSON pointer value is a valid key
+    for augmenting the given schema; i.e. it won't replace an already existing key
+    in the schema.
     """
     def callable_(key, data, errors, context):
         value = data.get(key)
-        if not re.match(r'^\w+$', value):
-            raise tk.Invalid(_("Invalid key name"))
-        if value in schema:
+        parts = value.split('/')
+        if len(parts) < 2 or not parts[1]:
+            raise tk.Invalid(_("Invalid path"))
+        element = parts[1]
+        if element in schema:
             raise tk.Invalid(_("An existing key name cannot be used"))
 
     return callable_

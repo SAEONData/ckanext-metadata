@@ -443,10 +443,10 @@ def metadata_record_workflow_annotation_create(context, data_dict):
 
     :param id: the id or name of the metadata record to annotate
     :type id: string
-    :param key: the name of the key to set on the (augmented) metadata record dict;
-        this cannot be the same as an existing key in the metadata record schema
-    :type key: string
-    :param value: the JSON object to set for the given key
+    :param path: JSON pointer to a location in the augmented metadata record dict;
+        this cannot be based off an existing key in the metadata record schema
+    :type path: string
+    :param value: the JSON object to set at the specified path
     :type value: string
 
     :returns: the newly created JSONPatch object
@@ -477,7 +477,7 @@ def metadata_record_workflow_annotation_create(context, data_dict):
         'qualifier': 'workflow',
         'operation': {
             'op': 'add',
-            'path': '/' + data_dict['key'],
+            'path': data_dict['path'],
             'value': json.loads(data_dict['value']),
         },
     }
