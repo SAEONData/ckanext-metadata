@@ -643,7 +643,7 @@ def metadata_record_workflow_activity_show(context, data_dict):
 
 
 @tk.side_effect_free
-def metadata_record_workflow_annotations_list(context, data_dict):
+def metadata_record_workflow_annotation_list(context, data_dict):
     """
     Return a list of ids of workflow annotations (JSON Patches) associated with
     a metadata record.
@@ -672,7 +672,7 @@ def metadata_record_workflow_annotations_list(context, data_dict):
         else:
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
-    tk.check_access('metadata_record_workflow_annotations_list', context, data_dict)
+    tk.check_access('metadata_record_workflow_annotation_list', context, data_dict)
 
     jsonpatch_params = {
         'model_name': 'metadata_record',
