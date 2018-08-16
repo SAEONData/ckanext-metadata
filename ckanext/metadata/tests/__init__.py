@@ -266,16 +266,19 @@ class ActionTestBase(FunctionalTestBase):
         dependent_record_list = call_action('metadata_model_dependent_record_list', id=metadata_model_id)
         assert set(dependent_record_list) == set(metadata_record_ids)
 
-    def _assert_workflow_activity_logged(self, metadata_record_id, workflow_state_id, *jsonpatch_ids, **workflow_errors):
+    def _assert_workflow_activity_logged(self, action_suffix, metadata_record_id, workflow_state_id,
+                                         *jsonpatch_ids, **workflow_errors):
         """
+        :param action_suffix: 'transition' | 'revert' | 'override'
         :param workflow_errors: dictionary mapping workflow annotation (flattened) keys to expected error patterns
         """
         activity_dict = call_action('metadata_record_workflow_activity_show', id=metadata_record_id)
         assert activity_dict['user_id'] == self.normal_user['id']
         assert activity_dict['object_id'] == metadata_record_id
         assert activity_dict['activity_type'] == 'metadata workflow'
+        assert activity_dict['data']['action'] == 'metadata_record_workflow_state_' + action_suffix
         assert activity_dict['data']['workflow_state_id'] == workflow_state_id
-        assert activity_dict['data']['jsonpatch_ids'] == list(jsonpatch_ids)
-        logged_errors = activity_dict['data']['errors']
+        assert activity_dict['data'].get('jsonpatch_ids', []) == list(jsonpatch_ids)
+        logged_errors = activity_dict['data'].get('errors', {})
         for error_key, error_pattern in workflow_errors.items():
             assert_error(logged_errors, error_key, error_pattern)

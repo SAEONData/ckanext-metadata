@@ -753,7 +753,7 @@ def workflow_transition_update(context, data_dict):
     does not define any properties of its own; to "update" a transition, delete it and
     create a new one.
     """
-    raise tk.ValidationError("A workflow transition cannot be updated. Delete it and create a new one instead.")
+    raise tk.ValidationError(_("A workflow transition cannot be updated. Delete it and create a new one instead."))
 
 
 def metadata_record_workflow_state_transition(context, data_dict):
@@ -856,6 +856,90 @@ def metadata_record_workflow_state_transition(context, data_dict):
         rev.message = context['message']
     else:
         rev.message = _(u'REST API: Transition workflow state of metadata record %s') % metadata_record_id
+
+    activity_dict = tk.get_action('activity_create')(activity_context, activity_dict)
+
+    if not defer_commit:
+        model.repo.commit()
+
+    return activity_dict
+
+
+def metadata_record_workflow_state_revert(context, data_dict):
+    """
+    Revert a metadata record to the predecessor to its current workflow state (or to None
+    if the current state has no revert state), and log the change to the metadata record's
+    activity stream.
+
+    You must be authorized to revert the metadata record's workflow state.
+
+    :param id: the id or name of the metadata record to revert
+    :type id: string
+
+    :returns: the workflow activity record
+    :rtype: dictionary
+    """
+    log.info("Reverting workflow state of metadata record: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_record_id = tk.get_or_bust(data_dict, 'id')
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_workflow_state_revert', context, data_dict)
+
+    current_workflow_state_id = session.query(model.PackageExtra.value) \
+        .filter_by(package_id=metadata_record_id, key='workflow_state_id').scalar()
+
+    # already on null state - do nothing
+    if not current_workflow_state_id:
+        return
+
+    target_workflow_state = ckanext_model.WorkflowState.get_revert_state(current_workflow_state_id)
+    if target_workflow_state:
+        target_workflow_state_id = target_workflow_state.id
+        metadata_record_private = target_workflow_state.metadata_records_private
+    else:
+        target_workflow_state_id =''
+        metadata_record_private = True
+
+    metadata_record.extras['workflow_state_id'] = target_workflow_state_id
+    metadata_record.private = metadata_record_private
+
+    activity_context = context.copy()
+    activity_context.update({
+        'defer_commit': True,
+        'schema': {
+            'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
+            'object_id': [],
+            'revision_id': [],
+            'activity_type': [],
+            'data': [],
+        },
+    })
+    activity_dict = {
+        'user_id': model.User.by_name(user.decode('utf8')).id,
+        'object_id': metadata_record_id,
+        'activity_type': METADATA_WORKFLOW_ACTIVITY_TYPE,
+        'data': {
+            'action': 'metadata_record_workflow_state_revert',
+            'workflow_state_id': target_workflow_state_id,
+        }
+    }
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Revert workflow state of metadata record %s') % metadata_record_id
 
     activity_dict = tk.get_action('activity_create')(activity_context, activity_dict)
 

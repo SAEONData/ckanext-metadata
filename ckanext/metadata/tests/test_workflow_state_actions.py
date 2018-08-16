@@ -192,7 +192,7 @@ class TestWorkflowStateActions(ActionTestBase):
         """
         metadata_record = ckanext_factories.MetadataRecord()
         workflow_state = ckanext_factories.WorkflowState(metadata_records_private=False)
-        call_action('metadata_record_workflow_state_override',
+        call_action('metadata_record_workflow_state_override', context={'user': self.normal_user['name']},
                     id=metadata_record['id'],
                     workflow_state_id=workflow_state['id'])
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
@@ -215,7 +215,7 @@ class TestWorkflowStateActions(ActionTestBase):
         """
         metadata_record = ckanext_factories.MetadataRecord()
         workflow_state = ckanext_factories.WorkflowState(metadata_records_private=True)
-        call_action('metadata_record_workflow_state_override',
+        call_action('metadata_record_workflow_state_override', context={'user': self.normal_user['name']},
                     id=metadata_record['id'],
                     workflow_state_id=workflow_state['id'])
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
@@ -322,7 +322,7 @@ class TestWorkflowStateActions(ActionTestBase):
     def test_delete_with_dependencies(self):
         metadata_record = ckanext_factories.MetadataRecord()
         workflow_state = ckanext_factories.WorkflowState()
-        call_action('metadata_record_workflow_state_override',
+        call_action('metadata_record_workflow_state_override', context={'user': self.normal_user['name']},
                     id=metadata_record['id'],
                     workflow_state_id=workflow_state['id'])
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])

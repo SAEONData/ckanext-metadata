@@ -41,6 +41,18 @@ class WorkflowState(vdm.sqlalchemy.RevisionedObjectMixin,
         return workflow_state
 
     @classmethod
+    def get_revert_state(cls, reference):
+        """
+        Returns a workflow_state object referenced by the revert_state_id of the object
+        with the given id or name.
+        """
+        workflow_state = cls.get(reference)
+        if not workflow_state:
+            return None
+
+        return cls.get(workflow_state.revert_state_id)
+
+    @classmethod
     def revert_path_exists(cls, from_state_id, to_state_id):
         """
         Determines whether it is possible to change from from_state_id to to_state_id

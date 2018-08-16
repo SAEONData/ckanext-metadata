@@ -13,6 +13,7 @@ from ckanext.metadata.tests import (
     assert_group_has_member,
     assert_error,
     assert_object_matches_dict,
+    assert_package_has_attribute,
     factories as ckanext_factories,
     load_example,
 )
@@ -595,8 +596,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_submitted['id'],
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
                                               data_agreement='is a required property',
                                               terms_and_conditions='is a required property',
                                               capture_method='is a required property')
@@ -617,10 +617,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_submitted['id'],
-                                              *jsonpatch_ids,
-                                              **{
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                                              *jsonpatch_ids, **{
                                                   'data_agreement/accepted': 'True was expected',
                                                   'data_agreement/href': 'is not a .*url',
                                                   'terms_and_conditions': 'is not of type .*object',
@@ -643,10 +641,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_submitted['id'],
-                                              *jsonpatch_ids,
-                                              **{
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                                              *jsonpatch_ids, **{
                                                   'data_agreement/href': 'is a required property',
                                               })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
@@ -658,8 +654,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_submitted['id'],
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
                                               *jsonpatch_ids)
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_submitted['id'])
 
@@ -692,8 +687,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_captured['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_captured['id'],
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                               *jsonpatch_ids,
                                               validated='True was expected',
                                               quality_control='is not of type .*array')
@@ -707,10 +701,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_captured['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_captured['id'],
-                                              *jsonpatch_ids,
-                                              **{
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                                              *jsonpatch_ids, **{
                                                   'quality_control/0/userid': 'Not found.? User',
                                                   'quality_control/0/date': 'is not a .*date',
                                               })
@@ -723,10 +715,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_captured['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_captured['id'],
-                                              *jsonpatch_ids,
-                                              **{
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                                              *jsonpatch_ids, **{
                                                   'quality_control/0/userid': 'Must use object id not name',
                                               })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
@@ -739,8 +729,7 @@ class TestMetadataRecordActions(ActionTestBase):
         # TODO: the following depends on implementation of role_validator() in json_validator_functions
         # self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
         #                   workflow_state_id=workflow_state_captured['id'])
-        # self._assert_workflow_activity_logged(metadata_record['id'],
-        #                                       workflow_state_captured['id'],
+        # self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
         #                                       *jsonpatch_ids)
         # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_captured['id'])
 
@@ -781,10 +770,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_published['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_published['id'],
-                                              *jsonpatch_ids,
-                                              **{
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
+                                              *jsonpatch_ids, **{
                                                   'errors/identifier': 'This key may not be present in the dictionary',
                                                   'quality_control/__minItems': 'Array has too few items',
                                               })
@@ -801,10 +788,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                           workflow_state_id=workflow_state_published['id'])
-        self._assert_workflow_activity_logged(metadata_record['id'],
-                                              workflow_state_published['id'],
-                                              *jsonpatch_ids,
-                                              **{
+        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
+                                              *jsonpatch_ids, **{
                                                   'quality_control/__uniqueObjects': 'Array has non-unique objects',
                                               })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
@@ -818,7 +803,31 @@ class TestMetadataRecordActions(ActionTestBase):
         # TODO: the following depends on implementation of role_validator() in json_validator_functions
         # self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
         #                   workflow_state_id=workflow_state_published['id'])
-        # self._assert_workflow_activity_logged(metadata_record['id'],
-        #                                       workflow_state_published['id'],
+        # self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
         #                                       *jsonpatch_ids)
         # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_published['id'])
+
+    def test_workflow_state_revert(self):
+        metadata_record = self._generate_metadata_record()
+        workflow_state1 = ckanext_factories.WorkflowState(metadata_records_private=False)
+        workflow_state2 = ckanext_factories.WorkflowState(revert_state_id=workflow_state1['id'], metadata_records_private=True)
+
+        call_action('metadata_record_workflow_state_override', context={'user': self.normal_user['name']},
+                    id=metadata_record['id'], workflow_state_id=workflow_state2['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state2['id'])
+        assert_package_has_attribute(metadata_record['id'], 'private', True)
+
+        self._test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
+        self._assert_workflow_activity_logged('revert', metadata_record['id'], workflow_state1['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state1['id'])
+        assert_package_has_attribute(metadata_record['id'], 'private', False)
+
+        self._test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
+        self._assert_workflow_activity_logged('revert', metadata_record['id'], '')
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
+        assert_package_has_attribute(metadata_record['id'], 'private', True)
+
+        # reverting a record already in the null workflow state should not error or change anything
+        self._test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
+        assert_package_has_attribute(metadata_record['id'], 'private', True)
