@@ -588,7 +588,8 @@ def metadata_record_validate(context, data_dict):
 
 def metadata_record_workflow_state_override(context, data_dict):
     """
-    Override a metadata record's workflow state, bypassing workflow rule evaluation.
+    Override a metadata record's workflow state, bypassing workflow rule evaluation,
+    and log the change to the metadata record's activity stream.
 
     You must be authorized to override the metadata record's workflow state.
     This should normally only be allowed for sysadmins.
@@ -597,6 +598,9 @@ def metadata_record_workflow_state_override(context, data_dict):
     :type id: string
     :param workflow_state_id: the id or name of the workflow state to assign to the record
     :type workflow_state_id: string
+
+    :returns: the workflow activity record
+    :rtype: dictionary
     """
     log.info("Overriding workflow state of metadata record: %r", data_dict)
 
@@ -623,6 +627,27 @@ def metadata_record_workflow_state_override(context, data_dict):
     metadata_record.extras['workflow_state_id'] = workflow_state_id
     metadata_record.private = workflow_state.metadata_records_private
 
+    activity_context = context.copy()
+    activity_context.update({
+        'defer_commit': True,
+        'schema': {
+            'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
+            'object_id': [],
+            'revision_id': [],
+            'activity_type': [],
+            'data': [],
+        },
+    })
+    activity_dict = {
+        'user_id': model.User.by_name(user.decode('utf8')).id,
+        'object_id': metadata_record_id,
+        'activity_type': METADATA_WORKFLOW_ACTIVITY_TYPE,
+        'data': {
+            'action': 'metadata_record_workflow_state_override',
+            'workflow_state_id': workflow_state_id,
+        }
+    }
+
     rev = model.repo.new_revision()
     rev.author = user
     if 'message' in context:
@@ -630,8 +655,12 @@ def metadata_record_workflow_state_override(context, data_dict):
     else:
         rev.message = _(u'REST API: Override workflow state of metadata record %s') % metadata_record_id
 
+    activity_dict = tk.get_action('activity_create')(activity_context, activity_dict)
+
     if not defer_commit:
         model.repo.commit()
+
+    return activity_dict
 
 
 def workflow_state_update(context, data_dict):
@@ -814,6 +843,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
         'object_id': metadata_record_id,
         'activity_type': METADATA_WORKFLOW_ACTIVITY_TYPE,
         'data': {
+            'action': 'metadata_record_workflow_state_transition',
             'workflow_state_id': target_workflow_state_id,
             'jsonpatch_ids': jsonpatch_ids,
             'errors': workflow_errors,
