@@ -543,7 +543,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_object_matches_dict(jsonpatch2, jsonpatch2_dict)
         assert type(jsonpatch2.timestamp) is datetime
 
-        jsonpatch_list = call_action('metadata_record_workflow_annotations_list', id=metadata_record['id'])
+        jsonpatch_list = call_action('metadata_record_workflow_annotation_list', id=metadata_record['id'])
         assert jsonpatch_list == [jsonpatch1.id, jsonpatch2.id]
 
         metadata_record_dict, obj = self._test_action('metadata_record_show', id=metadata_record['id'])

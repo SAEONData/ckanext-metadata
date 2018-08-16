@@ -814,7 +814,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
     # get the metadata record dict, augmented with workflow annotations
     metadata_record_dict = tk.get_action('metadata_record_workflow_augmented_show')(
         context, {'id': metadata_record_id})
-    jsonpatch_ids = tk.get_action('metadata_record_workflow_annotations_list')(
+    jsonpatch_ids = tk.get_action('metadata_record_workflow_annotation_list')(
         context, {'id': metadata_record_id})
 
     # test whether the augmented metadata record passes the rules for the target state
