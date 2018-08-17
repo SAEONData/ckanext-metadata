@@ -13,6 +13,8 @@ from ckanext.metadata.tests import (
     assert_object_matches_dict,
     assert_error,
     assert_package_has_extra,
+    assert_metadata_record_has_validation_models,
+    assert_metadata_model_has_dependent_records,
     factories as ckanext_factories,
     load_example,
 )
@@ -41,9 +43,9 @@ class TestMetadataModelActions(ActionTestBase):
             organization_id=metadata_record['owner_org'] if add_organization_to_model else '',
             infrastructure_id=metadata_record['infrastructures'][0]['id'] if add_infrastructure_to_model else '')
 
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
         self._validate_metadata_record(metadata_record)
-        self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
+        self.assert_validate_activity_logged(metadata_record['id'], metadata_model)
         return metadata_record, metadata_model
 
     def _generate_and_validate_metadata_record_using_model(self, metadata_model):
@@ -57,9 +59,9 @@ class TestMetadataModelActions(ActionTestBase):
             owner_org=metadata_model['organization_id'],
             infrastructures=[{'id': metadata_model['infrastructure_id']}] if metadata_model['infrastructure_id'] else [])
 
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
         self._validate_metadata_record(metadata_record)
-        self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
+        self.assert_validate_activity_logged(metadata_record['id'], metadata_model)
         return metadata_record
 
     def _validate_metadata_record(self, metadata_record):
@@ -79,7 +81,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{ "testkey": "testvalue" }',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.name == generate_name(metadata_schema['name'], '', '')
 
@@ -91,7 +93,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': load_example('saeon_datacite_model.json'),
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_setname(self):
@@ -103,7 +105,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{ "testkey": "testvalue" }',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_with_organization_byname(self):
@@ -115,7 +117,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert obj.metadata_schema_id == metadata_schema['id']
         assert obj.organization_id == organization['id']
         assert obj.infrastructure_id is None
@@ -130,7 +132,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': infrastructure['name'],
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert obj.metadata_schema_id == metadata_schema['id']
         assert obj.organization_id is None
         assert obj.infrastructure_id == infrastructure['id']
@@ -145,7 +147,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_create', sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self.test_action('metadata_model_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_same_schema_different_organization(self):
@@ -158,7 +160,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_same_schema_different_infrastructure(self):
@@ -171,7 +173,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': infrastructure2['id'],
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_same_organization_different_schema(self):
@@ -184,7 +186,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_same_infrastructure_different_schema(self):
@@ -197,7 +199,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': metadata_model['infrastructure_id'],
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_create', **input_dict)
+        result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_invalidate_records_matching_schema(self):
@@ -207,13 +209,13 @@ class TestMetadataModelActions(ActionTestBase):
         """
         # add org to model to avoid unique key violation below
         metadata_record, _ = self._generate_and_validate_metadata_record(add_organization_to_model=True)
-        result, obj = self._test_action('metadata_model_create',
-                                        metadata_schema_id=metadata_record['metadata_schema_id'],
-                                        organization_id='',
-                                        infrastructure_id='',
-                                        model_json='{}')
+        result, obj = self.test_action('metadata_model_create',
+                                       metadata_schema_id=metadata_record['metadata_schema_id'],
+                                       organization_id='',
+                                       infrastructure_id='',
+                                       model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
     def test_create_invalidate_records_matching_schema_organization(self):
         """
@@ -221,13 +223,13 @@ class TestMetadataModelActions(ActionTestBase):
         of matching on schema and organization. This should invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record()
-        result, obj = self._test_action('metadata_model_create',
-                                        metadata_schema_id=metadata_record['metadata_schema_id'],
-                                        organization_id=metadata_record['owner_org'],
-                                        infrastructure_id='',
-                                        model_json='{}')
+        result, obj = self.test_action('metadata_model_create',
+                                       metadata_schema_id=metadata_record['metadata_schema_id'],
+                                       organization_id=metadata_record['owner_org'],
+                                       infrastructure_id='',
+                                       model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
     def test_create_invalidate_records_matching_schema_infrastructure(self):
         """
@@ -235,13 +237,13 @@ class TestMetadataModelActions(ActionTestBase):
         of matching on schema and infrastructure. This should invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
-        result, obj = self._test_action('metadata_model_create',
-                                        metadata_schema_id=metadata_record['metadata_schema_id'],
-                                        organization_id='',
-                                        infrastructure_id=metadata_record['infrastructures'][0]['id'],
-                                        model_json='{}')
+        result, obj = self.test_action('metadata_model_create',
+                                       metadata_schema_id=metadata_record['metadata_schema_id'],
+                                       organization_id='',
+                                       infrastructure_id=metadata_record['infrastructures'][0]['id'],
+                                       model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
     def test_create_no_invalidate_records_different_schema(self):
         """
@@ -297,86 +299,86 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_invalid_duplicate_name(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        name=metadata_model['name'])
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       name=metadata_model['name'])
         assert_error(result, 'name', 'Duplicate name: Metadata Model')
 
     def test_create_invalid_duplicate_schema(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        metadata_schema_id=metadata_model['metadata_schema_id'])
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       metadata_schema_id=metadata_model['metadata_schema_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_create_invalid_duplicate_schema_organization(self):
         organization = ckan_factories.Organization()
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        metadata_schema_id=metadata_model['metadata_schema_id'],
-                                        organization_id=metadata_model['organization_id'])
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       organization_id=metadata_model['organization_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_create_invalid_duplicate_schema_infrastructure(self):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        metadata_schema_id=metadata_model['metadata_schema_id'],
-                                        infrastructure_id=metadata_model['infrastructure_id'])
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       infrastructure_id=metadata_model['infrastructure_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_create_invalid_with_organization_and_infrastructure(self):
         organization = ckan_factories.Organization()
         infrastructure = ckanext_factories.Infrastructure()
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        organization_id=organization['id'],
-                                        infrastructure_id=infrastructure['id'])
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       organization_id=organization['id'],
+                                       infrastructure_id=infrastructure['id'])
         assert_error(result, '__after',
                      'A metadata model may be associated with either an organization or an infrastructure but not both.')
 
     def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self._test_action('metadata_model_create', should_error=True, check_auth=True,
-                                        id=make_uuid())
+        result, obj = self.test_action('metadata_model_create', should_error=True, check_auth=True,
+                                       id=make_uuid())
         assert_error(result, 'id', 'The input field id was not expected.')
 
     def test_create_invalid_sysadmin_duplicate_id(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_create', should_error=True, sysadmin=True, check_auth=True,
-                                        id=metadata_model['id'])
+        result, obj = self.test_action('metadata_model_create', should_error=True, sysadmin=True, check_auth=True,
+                                       id=metadata_model['id'])
         assert_error(result, 'id', 'Already exists: Metadata Model')
 
     def test_create_invalid_not_json(self):
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        model_json='not json')
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       model_json='not json')
         assert_error(result, 'model_json', 'JSON decode error')
 
     def test_create_invalid_not_json_dict(self):
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        model_json='[1,2,3]')
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       model_json='[1,2,3]')
         assert_error(result, 'model_json', 'Expecting a JSON dictionary')
 
     def test_create_invalid_not_json_schema(self):
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        model_json='{"type": "foo"}')
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       model_json='{"type": "foo"}')
         assert_error(result, 'model_json', 'Invalid JSON schema')
 
     def test_create_invalid_missing_params(self):
-        result, obj = self._test_action('metadata_model_create', should_error=True)
+        result, obj = self.test_action('metadata_model_create', should_error=True)
         assert_error(result, 'metadata_schema_id', 'Missing parameter')
         assert_error(result, 'organization_id', 'Missing parameter')
         assert_error(result, 'infrastructure_id', 'Missing parameter')
         assert_error(result, 'model_json', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        metadata_schema_id='',
-                                        model_json='')
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       metadata_schema_id='',
+                                       model_json='')
         assert_error(result, 'metadata_schema_id', 'Missing value')
         assert_error(result, 'model_json', 'Missing value')
 
     def test_create_invalid_bad_references(self):
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        metadata_schema_id='a',
-                                        organization_id='b',
-                                        infrastructure_id='c')
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       metadata_schema_id='a',
+                                       organization_id='b',
+                                       infrastructure_id='c')
         assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
@@ -389,10 +391,10 @@ class TestMetadataModelActions(ActionTestBase):
         call_action('organization_delete', id=organization['id'])
         call_action('infrastructure_delete', id=infrastructure['id'])
 
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        metadata_schema_id=metadata_schema['id'],
-                                        organization_id=organization['id'],
-                                        infrastructure_id=infrastructure['id'])
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       metadata_schema_id=metadata_schema['id'],
+                                       organization_id=organization['id'],
+                                       infrastructure_id=infrastructure['id'])
         assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
@@ -409,7 +411,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{ "testkey": "newtestvalue" }',
         }
-        result, obj = self._test_action('metadata_model_update', **input_dict)
+        result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.name == generate_name(metadata_schema['name'], '', '')
 
@@ -423,7 +425,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{ "testkey": "newtestvalue" }',
         }
-        result, obj = self._test_action('metadata_model_update', **input_dict)
+        result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.title == metadata_model['title']
         assert obj.description == metadata_model['description']
@@ -437,7 +439,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': load_example('saeon_datacite_model.json'),
         }
-        result, obj = self._test_action('metadata_model_update', **input_dict)
+        result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_valid_set_organization(self):
@@ -450,7 +452,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': '',
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_update', **input_dict)
+        result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         metadata_schema = ckanext_model.MetadataSchema.get(metadata_model['metadata_schema_id'])
         assert obj.name == generate_name(metadata_schema.name, organization['name'], '')
@@ -465,7 +467,7 @@ class TestMetadataModelActions(ActionTestBase):
             'infrastructure_id': infrastructure['id'],
             'model_json': '{}',
         }
-        result, obj = self._test_action('metadata_model_update', **input_dict)
+        result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         metadata_schema = ckanext_model.MetadataSchema.get(metadata_model['metadata_schema_id'])
         assert obj.name == generate_name(metadata_schema.name, '', infrastructure['name'])
@@ -477,20 +479,20 @@ class TestMetadataModelActions(ActionTestBase):
         """
         metadata_record_1, metadata_model = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_model(metadata_model)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
 
-        result, obj = self._test_action('metadata_model_update',
-                                        id=metadata_model['id'],
-                                        metadata_schema_id=metadata_model['metadata_schema_id'],
-                                        organization_id='',
-                                        infrastructure_id='',
-                                        model_json='{ "newtestkey": "newtestvalue" }')
+        result, obj = self.test_action('metadata_model_update',
+                                       id=metadata_model['id'],
+                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       organization_id='',
+                                       infrastructure_id='',
+                                       model_json='{ "newtestkey": "newtestvalue" }')
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', False)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
-        self._assert_invalidate_activity_logged(metadata_record_1['id'], 'metadata_model_update', obj)
-        self._assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        self.assert_invalidate_activity_logged(metadata_record_1['id'], 'metadata_model_update', obj)
+        self.assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
 
     def test_update_json_invalidate_records_2(self):
         """
@@ -499,20 +501,20 @@ class TestMetadataModelActions(ActionTestBase):
         """
         metadata_record_1, metadata_model = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True, add_infrastructure_to_model=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_model(metadata_model)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
 
-        result, obj = self._test_action('metadata_model_update',
-                                        id=metadata_model['id'],
-                                        metadata_schema_id=metadata_model['metadata_schema_id'],
-                                        organization_id='',
-                                        infrastructure_id=metadata_model['infrastructure_id'],
-                                        model_json='{ "newtestkey": "newtestvalue" }')
+        result, obj = self.test_action('metadata_model_update',
+                                       id=metadata_model['id'],
+                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       organization_id='',
+                                       infrastructure_id=metadata_model['infrastructure_id'],
+                                       model_json='{ "newtestkey": "newtestvalue" }')
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', False)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
-        self._assert_invalidate_activity_logged(metadata_record_1['id'], 'metadata_model_update', obj)
-        self._assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        self.assert_invalidate_activity_logged(metadata_record_1['id'], 'metadata_model_update', obj)
+        self.assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
 
     def test_update_json_invalidate_records_3(self):
         """
@@ -521,20 +523,20 @@ class TestMetadataModelActions(ActionTestBase):
         """
         metadata_record_1, metadata_model = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True, add_organization_to_model=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_model(metadata_model)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
 
-        result, obj = self._test_action('metadata_model_update',
-                                        id=metadata_model['id'],
-                                        metadata_schema_id=metadata_model['metadata_schema_id'],
-                                        organization_id=metadata_model['organization_id'],
-                                        infrastructure_id='',
-                                        model_json='{ "newtestkey": "newtestvalue" }')
+        result, obj = self.test_action('metadata_model_update',
+                                       id=metadata_model['id'],
+                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       organization_id=metadata_model['organization_id'],
+                                       infrastructure_id='',
+                                       model_json='{ "newtestkey": "newtestvalue" }')
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', False)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
-        self._assert_invalidate_activity_logged(metadata_record_1['id'], 'metadata_model_update', obj)
-        self._assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        self.assert_invalidate_activity_logged(metadata_record_1['id'], 'metadata_model_update', obj)
+        self.assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
 
     def test_update_infrastructure_invalidate_records_1(self):
         """
@@ -543,19 +545,19 @@ class TestMetadataModelActions(ActionTestBase):
         """
         metadata_record_1, metadata_model = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_model(metadata_model)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
 
-        result, obj = self._test_action('metadata_model_update',
-                                        id=metadata_model['id'],
-                                        metadata_schema_id=metadata_model['metadata_schema_id'],
-                                        organization_id='',
-                                        infrastructure_id=metadata_record_1['infrastructures'][0]['id'],
-                                        model_json=json.dumps(metadata_model['model_json']))
+        result, obj = self.test_action('metadata_model_update',
+                                       id=metadata_model['id'],
+                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       organization_id='',
+                                       infrastructure_id=metadata_record_1['infrastructures'][0]['id'],
+                                       model_json=json.dumps(metadata_model['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'])
-        self._assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'])
+        self.assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
 
     def test_update_infrastructure_invalidate_records_2(self):
         """
@@ -564,19 +566,19 @@ class TestMetadataModelActions(ActionTestBase):
         """
         metadata_record_1, metadata_model_1 = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True, add_infrastructure_to_model=True)
         metadata_record_2, metadata_model_2 = self._generate_and_validate_metadata_record(metadata_schema_id=metadata_record_1['metadata_schema_id'], add_organization_to_model=True)
-        self._assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'])
+        assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'])
 
-        result, obj = self._test_action('metadata_model_update',
-                                        id=metadata_model_1['id'],
-                                        metadata_schema_id=metadata_model_1['metadata_schema_id'],
-                                        organization_id='',
-                                        infrastructure_id='',
-                                        model_json=json.dumps(metadata_model_1['model_json']))
+        result, obj = self.test_action('metadata_model_update',
+                                       id=metadata_model_1['id'],
+                                       metadata_schema_id=metadata_model_1['metadata_schema_id'],
+                                       organization_id='',
+                                       infrastructure_id='',
+                                       model_json=json.dumps(metadata_model_1['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
-        self._assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'], metadata_record_2['id'])
-        self._assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
+        assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'], metadata_record_2['id'])
+        self.assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
 
     def test_update_organization_invalidate_records_1(self):
         """
@@ -585,19 +587,19 @@ class TestMetadataModelActions(ActionTestBase):
         """
         metadata_record_1, metadata_model = self._generate_and_validate_metadata_record()
         metadata_record_2 = self._generate_and_validate_metadata_record_using_model(metadata_model)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'], metadata_record_2['id'])
 
-        result, obj = self._test_action('metadata_model_update',
-                                        id=metadata_model['id'],
-                                        metadata_schema_id=metadata_model['metadata_schema_id'],
-                                        organization_id=metadata_record_1['owner_org'],
-                                        infrastructure_id='',
-                                        model_json=json.dumps(metadata_model['model_json']))
+        result, obj = self.test_action('metadata_model_update',
+                                       id=metadata_model['id'],
+                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       organization_id=metadata_record_1['owner_org'],
+                                       infrastructure_id='',
+                                       model_json=json.dumps(metadata_model['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
-        self._assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'])
-        self._assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
+        assert_metadata_model_has_dependent_records(metadata_model['id'], metadata_record_1['id'])
+        self.assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
 
     def test_update_organization_invalidate_records_2(self):
         """
@@ -606,19 +608,19 @@ class TestMetadataModelActions(ActionTestBase):
         """
         metadata_record_1, metadata_model_1 = self._generate_and_validate_metadata_record(add_organization_to_model=True)
         metadata_record_2, metadata_model_2 = self._generate_and_validate_metadata_record(metadata_schema_id=metadata_record_1['metadata_schema_id'], add_organization_to_model=True)
-        self._assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'])
+        assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'])
 
-        result, obj = self._test_action('metadata_model_update',
-                                        id=metadata_model_1['id'],
-                                        metadata_schema_id=metadata_model_1['metadata_schema_id'],
-                                        organization_id='',
-                                        infrastructure_id='',
-                                        model_json=json.dumps(metadata_model_1['model_json']))
+        result, obj = self.test_action('metadata_model_update',
+                                       id=metadata_model_1['id'],
+                                       metadata_schema_id=metadata_model_1['metadata_schema_id'],
+                                       organization_id='',
+                                       infrastructure_id='',
+                                       model_json=json.dumps(metadata_model_1['model_json']))
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
-        self._assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'], metadata_record_2['id'])
-        self._assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
+        assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'], metadata_record_2['id'])
+        self.assert_invalidate_activity_logged(metadata_record_2['id'], 'metadata_model_update', obj)
 
     def test_update_invalid_duplicate_name(self):
         metadata_model1 = ckanext_factories.MetadataModel()
@@ -627,13 +629,13 @@ class TestMetadataModelActions(ActionTestBase):
             'id': metadata_model1['id'],
             'name': metadata_model2['name'],
         }
-        result, obj = self._test_action('metadata_model_update', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_model_update', should_error=True, **input_dict)
         assert_error(result, 'name', 'Duplicate name: Metadata Model')
 
     def test_update_invalid_missing_params(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'])
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'])
         assert_error(result, 'metadata_schema_id', 'Missing parameter')
         assert_error(result, 'organization_id', 'Missing parameter')
         assert_error(result, 'infrastructure_id', 'Missing parameter')
@@ -641,48 +643,48 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_update_invalid_missing_values(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'],
-                                        metadata_schema_id='',
-                                        model_json='')
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'],
+                                       metadata_schema_id='',
+                                       model_json='')
         assert_error(result, 'metadata_schema_id', 'Missing value')
         assert_error(result, 'model_json', 'Missing value')
 
     def test_update_invalid_duplicate_schema(self):
         metadata_model1 = ckanext_factories.MetadataModel()
         metadata_model2 = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model1['id'],
-                                        metadata_schema_id=metadata_model2['metadata_schema_id'])
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model1['id'],
+                                       metadata_schema_id=metadata_model2['metadata_schema_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_update_invalid_duplicate_schema_organization(self):
         organization = ckan_factories.Organization()
         metadata_model1 = ckanext_factories.MetadataModel()
         metadata_model2 = ckanext_factories.MetadataModel(organization_id=organization['id'])
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model1['id'],
-                                        metadata_schema_id=metadata_model2['metadata_schema_id'],
-                                        organization_id=metadata_model2['organization_id'])
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model1['id'],
+                                       metadata_schema_id=metadata_model2['metadata_schema_id'],
+                                       organization_id=metadata_model2['organization_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_update_invalid_duplicate_schema_infrastructure(self):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_model1 = ckanext_factories.MetadataModel()
         metadata_model2 = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model1['id'],
-                                        metadata_schema_id=metadata_model2['metadata_schema_id'],
-                                        infrastructure_id=metadata_model2['infrastructure_id'])
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model1['id'],
+                                       metadata_schema_id=metadata_model2['metadata_schema_id'],
+                                       infrastructure_id=metadata_model2['infrastructure_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_update_invalid_with_organization_set_infrastructure(self):
         organization = ckan_factories.Organization()
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
         infrastructure = ckanext_factories.Infrastructure()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'],
-                                        infrastructure_id=infrastructure['id'])
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'],
+                                       infrastructure_id=infrastructure['id'])
         assert_error(result, '__after',
                      'A metadata model may be associated with either an organization or an infrastructure but not both.')
 
@@ -690,40 +692,40 @@ class TestMetadataModelActions(ActionTestBase):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
         organization = ckan_factories.Organization()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'],
-                                        organization_id=organization['id'])
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'],
+                                       organization_id=organization['id'])
         assert_error(result, '__after',
                      'A metadata model may be associated with either an organization or an infrastructure but not both.')
 
     def test_update_invalid_not_json(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'],
-                                        model_json='not json')
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'],
+                                       model_json='not json')
         assert_error(result, 'model_json', 'JSON decode error')
 
     def test_update_invalid_not_json_dict(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'],
-                                        model_json='[1,2,3]')
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'],
+                                       model_json='[1,2,3]')
         assert_error(result, 'model_json', 'Expecting a JSON dictionary')
 
     def test_update_invalid_not_json_schema(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'],
-                                        model_json='{"type": "foo"}')
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'],
+                                       model_json='{"type": "foo"}')
         assert_error(result, 'model_json', 'Invalid JSON schema')
 
     def test_update_invalid_bad_references(self):
         metadata_model = ckanext_factories.MetadataModel()
-        result, obj = self._test_action('metadata_model_update', should_error=True,
-                                        id=metadata_model['id'],
-                                        metadata_schema_id='a',
-                                        organization_id='b',
-                                        infrastructure_id='c')
+        result, obj = self.test_action('metadata_model_update', should_error=True,
+                                       id=metadata_model['id'],
+                                       metadata_schema_id='a',
+                                       organization_id='b',
+                                       infrastructure_id='c')
         assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
@@ -737,36 +739,36 @@ class TestMetadataModelActions(ActionTestBase):
         call_action('organization_delete', id=organization['id'])
         call_action('infrastructure_delete', id=infrastructure['id'])
 
-        result, obj = self._test_action('metadata_model_create', should_error=True,
-                                        id=metadata_model['id'],
-                                        metadata_schema_id=metadata_schema['id'],
-                                        organization_id=organization['id'],
-                                        infrastructure_id=infrastructure['id'])
+        result, obj = self.test_action('metadata_model_create', should_error=True,
+                                       id=metadata_model['id'],
+                                       metadata_schema_id=metadata_schema['id'],
+                                       organization_id=organization['id'],
+                                       infrastructure_id=infrastructure['id'])
         assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
 
     def test_delete_valid(self):
         metadata_model = ckanext_factories.MetadataModel()
-        self._test_action('metadata_model_delete',
-                          id=metadata_model['id'])
+        self.test_action('metadata_model_delete',
+                         id=metadata_model['id'])
 
     def test_delete_invalidate_records(self):
         metadata_record, metadata_model = self._generate_and_validate_metadata_record()
-        result, obj = self._test_action('metadata_model_delete',
-                                        id=metadata_model['id'])
+        result, obj = self.test_action('metadata_model_delete',
+                                       id=metadata_model['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', False)
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_delete', obj)
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_delete', obj)
 
         metadata_record, metadata_model = self._generate_and_validate_metadata_record(add_organization_to_model=True)
-        result, obj = self._test_action('metadata_model_delete',
-                                        id=metadata_model['id'])
+        result, obj = self.test_action('metadata_model_delete',
+                                       id=metadata_model['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', False)
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_delete', obj)
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_delete', obj)
 
         metadata_record, metadata_model = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True,
                                                                                       add_infrastructure_to_model=True)
-        result, obj = self._test_action('metadata_model_delete',
-                                        id=metadata_model['id'])
+        result, obj = self.test_action('metadata_model_delete',
+                                       id=metadata_model['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', False)
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_delete', obj)
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_delete', obj)

@@ -7,6 +7,7 @@ from paste.deploy.converters import asbool
 import pkg_resources
 from collections import deque
 import traceback
+from nose.tools import nottest
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action
@@ -125,6 +126,22 @@ def assert_group_has_member(group_id, object_id, object_table, capacity='public'
     assert member.state == state
 
 
+def assert_metadata_record_has_validation_models(metadata_record_id, *metadata_model_names):
+    """
+    Check that the given record has the expected set of validation models.
+    """
+    validation_model_list = call_action('metadata_record_validation_model_list', id=metadata_record_id)
+    assert set(validation_model_list) == set(metadata_model_names)
+
+
+def assert_metadata_model_has_dependent_records(metadata_model_id, *metadata_record_ids):
+    """
+    Check that the given model has the expected set of dependent records.
+    """
+    dependent_record_list = call_action('metadata_model_dependent_record_list', id=metadata_model_id)
+    assert set(dependent_record_list) == set(metadata_record_ids)
+
+
 def assert_error(error_dict, key, pattern):
     """
     Check that the error dictionary contains the given key with the corresponding error message regex.
@@ -165,8 +182,9 @@ class ActionTestBase(FunctionalTestBase):
         self.normal_user = ckan_factories.User()
         self.sysadmin_user = ckan_factories.Sysadmin()
 
-    def _test_action(self, action_name, should_error=False, exception_class=tk.ValidationError,
-                     sysadmin=False, check_auth=False, **kwargs):
+    @nottest
+    def test_action(self, action_name, should_error=False, exception_class=tk.ValidationError,
+                    sysadmin=False, check_auth=False, **kwargs):
         """
         Test an API action.
         :param action_name: action function name, e.g. 'metadata_record_create'
@@ -219,7 +237,7 @@ class ActionTestBase(FunctionalTestBase):
 
         return result, obj
 
-    def _assert_validate_activity_logged(self, metadata_record_id, *validation_models, **validation_errors):
+    def assert_validate_activity_logged(self, metadata_record_id, *validation_models, **validation_errors):
         """
         :param validation_models: iterable of metadata model dictionaries
         :param validation_errors: dictionary mapping metadata model keys to expected error patterns (regex's)
@@ -241,7 +259,7 @@ class ActionTestBase(FunctionalTestBase):
         for error_key, error_pattern in validation_errors.items():
             assert_error(logged_errors, error_key, error_pattern)
 
-    def _assert_invalidate_activity_logged(self, metadata_record_id, trigger_action, trigger_object):
+    def assert_invalidate_activity_logged(self, metadata_record_id, trigger_action, trigger_object):
         activity_dict = call_action('metadata_record_validation_activity_show', id=metadata_record_id)
         assert activity_dict['user_id'] == self.normal_user['id']
         assert activity_dict['object_id'] == metadata_record_id
@@ -252,22 +270,8 @@ class ActionTestBase(FunctionalTestBase):
             'trigger_object_id': trigger_object.id if trigger_object else None,
         }
 
-    def _assert_metadata_record_has_validation_models(self, metadata_record_id, *metadata_model_names):
-        """
-        Check that the given record has the expected set of validation models.
-        """
-        validation_model_list = call_action('metadata_record_validation_model_list', id=metadata_record_id)
-        assert set(validation_model_list) == set(metadata_model_names)
-
-    def _assert_metadata_model_has_dependent_records(self, metadata_model_id, *metadata_record_ids):
-        """
-        Check that the given model has the expected set of dependent records.
-        """
-        dependent_record_list = call_action('metadata_model_dependent_record_list', id=metadata_model_id)
-        assert set(dependent_record_list) == set(metadata_record_ids)
-
-    def _assert_workflow_activity_logged(self, action_suffix, metadata_record_id, workflow_state_id,
-                                         *jsonpatch_ids, **workflow_errors):
+    def assert_workflow_activity_logged(self, action_suffix, metadata_record_id, workflow_state_id,
+                                        *jsonpatch_ids, **workflow_errors):
         """
         :param action_suffix: 'transition' | 'revert' | 'override'
         :param workflow_errors: dictionary mapping workflow annotation (flattened) keys to expected error patterns

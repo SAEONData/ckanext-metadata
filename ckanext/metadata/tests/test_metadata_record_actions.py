@@ -14,6 +14,7 @@ from ckanext.metadata.tests import (
     assert_error,
     assert_object_matches_dict,
     assert_package_has_attribute,
+    assert_metadata_record_has_validation_models,
     factories as ckanext_factories,
     load_example,
 )
@@ -56,8 +57,8 @@ class TestMetadataRecordActions(ActionTestBase):
         )
         call_action('metadata_record_validate', id=metadata_record['id'], context={'user': self.normal_user['name']})
         assert_package_has_extra(metadata_record['id'], 'validated', True)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
-        self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self.assert_validate_activity_logged(metadata_record['id'], metadata_model)
 
         return metadata_model
 
@@ -107,19 +108,19 @@ class TestMetadataRecordActions(ActionTestBase):
             'workflow_state_id': 'ignore',
             'private': 'ignore',
         })
-        result, obj = self._test_action('metadata_record_create', **input_dict)
+        result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
 
     def test_create_valid_setname(self):
         input_dict = self._make_input_dict()
         input_dict['name'] = 'test-metadata-record'
-        result, obj = self._test_action('metadata_record_create', **input_dict)
+        result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict, name=input_dict['name'])
 
     def test_create_valid_owner_org_byname(self):
         input_dict = self._make_input_dict()
         input_dict['owner_org'] = self.owner_org['name']
-        result, obj = self._test_action('metadata_record_create', **input_dict)
+        result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
 
     def test_create_valid_with_infrastructures(self):
@@ -132,7 +133,7 @@ class TestMetadataRecordActions(ActionTestBase):
                 {'id': infrastructure2['name']},
             ],
         })
-        result, obj = self._test_action('metadata_record_create', **input_dict)
+        result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
         assert_group_has_member(infrastructure1['id'], obj.id, 'package')
         assert_group_has_member(infrastructure2['id'], obj.id, 'package')
@@ -140,22 +141,22 @@ class TestMetadataRecordActions(ActionTestBase):
     def test_create_valid_sysadmin_setid(self):
         input_dict = self._make_input_dict()
         input_dict['id'] = make_uuid()
-        result, obj = self._test_action('metadata_record_create', sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self.test_action('metadata_record_create', sysadmin=True, check_auth=True, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
 
     def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self._test_action('metadata_record_create', should_error=True, check_auth=True,
-                                        id=make_uuid())
+        result, obj = self.test_action('metadata_record_create', should_error=True, check_auth=True,
+                                       id=make_uuid())
         assert_error(result, 'id', 'The input field id was not expected.')
 
     def test_create_invalid_sysadmin_duplicate_id(self):
         metadata_record = ckanext_factories.MetadataRecord()
-        result, obj = self._test_action('metadata_record_create', should_error=True, sysadmin=True, check_auth=True,
-                                        id=metadata_record['id'])
+        result, obj = self.test_action('metadata_record_create', should_error=True, sysadmin=True, check_auth=True,
+                                       id=metadata_record['id'])
         assert_error(result, 'id', 'Dataset id already exists')
 
     def test_create_invalid_missing_params(self):
-        result, obj = self._test_action('metadata_record_create', should_error=True)
+        result, obj = self.test_action('metadata_record_create', should_error=True)
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
         assert_error(result, 'infrastructures', 'Missing parameter')
@@ -165,36 +166,36 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'metadata_url', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
-        result, obj = self._test_action('metadata_record_create', should_error=True,
-                                        owner_org='',
-                                        metadata_collection_id='',
-                                        metadata_schema_id='')
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       owner_org='',
+                                       metadata_collection_id='',
+                                       metadata_schema_id='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
         assert_error(result, 'metadata_schema_id', 'Missing value')
 
     def test_create_invalid_duplicate_name(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_create', should_error=True,
-                                        name=metadata_record['name'])
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       name=metadata_record['name'])
         assert_error(result, 'name', 'That URL is already in use.')
 
     def test_create_invalid_not_json(self):
-        result, obj = self._test_action('metadata_record_create', should_error=True,
-                                        metadata_json='not json')
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       metadata_json='not json')
         assert_error(result, 'metadata_json', 'JSON decode error')
 
     def test_create_invalid_not_json_dict(self):
-        result, obj = self._test_action('metadata_record_create', should_error=True,
-                                        metadata_json='[1,2,3]')
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       metadata_json='[1,2,3]')
         assert_error(result, 'metadata_json', 'Expecting a JSON dictionary')
 
     def test_create_invalid_bad_references(self):
-        result, obj = self._test_action('metadata_record_create', should_error=True,
-                                        owner_org='a',
-                                        metadata_collection_id='b',
-                                        metadata_schema_id='c',
-                                        infrastructures=[{'id': 'd'}])
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       owner_org='a',
+                                       metadata_collection_id='b',
+                                       metadata_schema_id='c',
+                                       infrastructures=[{'id': 'd'}])
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
         assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
@@ -209,7 +210,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         input_dict = self._make_input_dict()
         input_dict['infrastructures'] = [{'id': infrastructure['id']}]
-        result, obj = self._test_action('metadata_record_create', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_record_create', should_error=True, **input_dict)
 
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
@@ -217,9 +218,9 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
     def test_create_invalid_owner_org_collection_mismatch(self):
-        result, obj = self._test_action('metadata_record_create', should_error=True,
-                                        owner_org=self.owner_org['id'],
-                                        metadata_collection_id=self._generate_metadata_collection()['id'])
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       owner_org=self.owner_org['id'],
+                                       metadata_collection_id=self._generate_metadata_collection()['id'])
         assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
 
     def test_update_valid(self):
@@ -252,7 +253,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'workflow_state_id': 'ignore',
             'private': 'ignore',
         }
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
 
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
@@ -276,7 +277,7 @@ class TestMetadataRecordActions(ActionTestBase):
         })
         del input_dict['title']
 
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
 
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
@@ -290,12 +291,12 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
         input_dict['metadata_json'] = '{ "newtestkey": "newtestvalue" }'
 
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_schema_invalidate(self):
         metadata_record = self._generate_metadata_record()
@@ -305,13 +306,13 @@ class TestMetadataRecordActions(ActionTestBase):
         new_metadata_schema = ckanext_factories.MetadataSchema()
         input_dict['metadata_schema_id'] = new_metadata_schema['id']
 
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         metadata_schema_id=new_metadata_schema['id'],
                                         validated=False)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'])
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
+        assert_metadata_record_has_validation_models(metadata_record['id'])
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_owner_org_invalidate(self):
         metadata_record = self._generate_metadata_record()
@@ -328,15 +329,15 @@ class TestMetadataRecordActions(ActionTestBase):
             'owner_org': new_organization['id'],
             'metadata_collection_id': new_metadata_collection['id'],
         })
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=False)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'],
-                                                           metadata_model['name'], new_metadata_model['name'])
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
+        assert_metadata_record_has_validation_models(metadata_record['id'],
+                                                     metadata_model['name'], new_metadata_model['name'])
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_infrastructures_invalidate(self):
         infrastructure = self._generate_infrastructure()
@@ -350,12 +351,12 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validated', True)
 
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], new_metadata_model['name'])
-        self._assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
+        assert_metadata_record_has_validation_models(metadata_record['id'], new_metadata_model['name'])
+        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_no_invalidate(self):
         metadata_record = self._generate_metadata_record()
@@ -364,11 +365,11 @@ class TestMetadataRecordActions(ActionTestBase):
 
         new_infrastructure = self._generate_infrastructure()
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=True)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
 
         new_organization = self._generate_organization()
         new_metadata_collection = self._generate_metadata_collection(organization_id=new_organization['id'])
@@ -376,26 +377,26 @@ class TestMetadataRecordActions(ActionTestBase):
             'owner_org': new_organization['id'],
             'metadata_collection_id': new_metadata_collection['id'],
         })
-        result, obj = self._test_action('metadata_record_update', **input_dict)
+        result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=True)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
 
     def test_update_invalid_duplicate_name(self):
         metadata_record1 = self._generate_metadata_record()
         metadata_record2 = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record1['id'],
-                                        name=metadata_record2['name'])
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record1['id'],
+                                       name=metadata_record2['name'])
         assert_error(result, 'name', 'That URL is already in use.')
 
     def test_update_invalid_missing_params(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record['id'])
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'])
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
         assert_error(result, 'infrastructures', 'Missing parameter')
@@ -406,37 +407,37 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_update_invalid_missing_values(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record['id'],
-                                        owner_org='',
-                                        metadata_collection_id='',
-                                        metadata_schema_id='')
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'],
+                                       owner_org='',
+                                       metadata_collection_id='',
+                                       metadata_schema_id='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
         assert_error(result, 'metadata_schema_id', 'Missing value')
 
     def test_update_invalid_not_json(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record['id'],
-                                        metadata_json='not json')
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'],
+                                       metadata_json='not json')
         assert_error(result, 'metadata_json', 'JSON decode error')
 
     def test_update_invalid_not_json_dict(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record['id'],
-                                        metadata_json='[1,2,3]')
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'],
+                                       metadata_json='[1,2,3]')
         assert_error(result, 'metadata_json', 'Expecting a JSON dictionary')
 
     def test_update_invalid_bad_references(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record['id'],
-                                        owner_org='a',
-                                        metadata_collection_id='b',
-                                        metadata_schema_id='c',
-                                        infrastructures=[{'id': 'd'}])
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'],
+                                       owner_org='a',
+                                       metadata_collection_id='b',
+                                       metadata_schema_id='c',
+                                       infrastructures=[{'id': 'd'}])
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
         assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
@@ -453,12 +454,12 @@ class TestMetadataRecordActions(ActionTestBase):
         call_action('metadata_schema_delete', id=metadata_schema['id'])
         call_action('infrastructure_delete', id=infrastructure['id'])
 
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record['id'],
-                                        owner_org=organization['id'],
-                                        metadata_collection_id=metadata_collection['id'],
-                                        metadata_schema_id=metadata_schema['id'],
-                                        infrastructures=[{'id': infrastructure['id']}])
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'],
+                                       owner_org=organization['id'],
+                                       metadata_collection_id=metadata_collection['id'],
+                                       metadata_schema_id=metadata_schema['id'],
+                                       infrastructures=[{'id': infrastructure['id']}])
 
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
@@ -467,29 +468,29 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_update_invalid_owner_org_collection_mismatch(self):
         metadata_record = self._generate_metadata_record()
-        result, obj = self._test_action('metadata_record_update', should_error=True,
-                                        id=metadata_record['id'],
-                                        owner_org=self.owner_org['id'],
-                                        metadata_collection_id=self._generate_metadata_collection()['id'])
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'],
+                                       owner_org=self.owner_org['id'],
+                                       metadata_collection_id=self._generate_metadata_collection()['id'])
         assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
 
     def test_delete_valid(self):
         metadata_record = self._generate_metadata_record()
-        self._test_action('metadata_record_delete',
-                          id=metadata_record['id'])
+        self.test_action('metadata_record_delete',
+                         id=metadata_record['id'])
 
     def test_invalidate(self):
         metadata_record = self._generate_metadata_record()
         metadata_model = self._validate_metadata_record(metadata_record)
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        result, obj = self._test_action('metadata_record_invalidate',
-                                        id=metadata_record['id'])
+        result, obj = self.test_action('metadata_record_invalidate',
+                                       id=metadata_record['id'])
         self._assert_metadata_record_ok(obj, input_dict,
                                         name=input_dict['name'],
                                         validated=False)
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
-        self._assert_invalidate_activity_logged(metadata_record['id'], None, None)
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self.assert_invalidate_activity_logged(metadata_record['id'], None, None)
 
     def test_validate_datacite(self):
         metadata_record = self._generate_metadata_record(
@@ -499,22 +500,22 @@ class TestMetadataRecordActions(ActionTestBase):
             model_json=load_example('saeon_datacite_model.json'))
         ckan_factories.Vocabulary(name='language-tags', tags=[{'name': 'en-us'}])
 
-        self._assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
-        self._test_action('metadata_record_validate', id=metadata_record['id'])
+        assert_metadata_record_has_validation_models(metadata_record['id'], metadata_model['name'])
+        self.test_action('metadata_record_validate', id=metadata_record['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', True)
         assert_package_has_extra(metadata_record['id'], 'errors', '{}')
-        self._assert_validate_activity_logged(metadata_record['id'], metadata_model)
+        self.assert_validate_activity_logged(metadata_record['id'], metadata_model)
 
     def test_workflow_annotations_valid(self):
         metadata_record = self._generate_metadata_record()
 
         annotation1_value = '{"foo": true, "bar": "http://example.net"}'
-        annotation1_dict, _ = self._test_action('metadata_record_workflow_annotation_create',
-                                                id=metadata_record['id'],
-                                                path='/annotation1_key',
-                                                value=annotation1_value)
+        annotation1_dict, _ = self.test_action('metadata_record_workflow_annotation_create',
+                                               id=metadata_record['id'],
+                                               path='/annotation1_key',
+                                               value=annotation1_value)
 
-        _, jsonpatch1 = self._test_action('jsonpatch_show', id=annotation1_dict['id'])
+        _, jsonpatch1 = self.test_action('jsonpatch_show', id=annotation1_dict['id'])
         jsonpatch1_dict = {
             'model_name': 'metadata_record',
             'object_id': metadata_record['id'],
@@ -527,12 +528,12 @@ class TestMetadataRecordActions(ActionTestBase):
         assert type(jsonpatch1.timestamp) is datetime
 
         annotation2_value = '[1, 2, 3]'
-        annotation2_dict, _ = self._test_action('metadata_record_workflow_annotation_create',
-                                                id=metadata_record['id'],
-                                                path='/annotation2_key',
-                                                value=annotation2_value)
+        annotation2_dict, _ = self.test_action('metadata_record_workflow_annotation_create',
+                                               id=metadata_record['id'],
+                                               path='/annotation2_key',
+                                               value=annotation2_value)
 
-        _, jsonpatch2 = self._test_action('jsonpatch_show', id=annotation2_dict['id'])
+        _, jsonpatch2 = self.test_action('jsonpatch_show', id=annotation2_dict['id'])
         jsonpatch2_dict = {
             'model_name': 'metadata_record',
             'object_id': metadata_record['id'],
@@ -547,9 +548,9 @@ class TestMetadataRecordActions(ActionTestBase):
         jsonpatch_list = call_action('metadata_record_workflow_annotation_list', id=metadata_record['id'])
         assert jsonpatch_list == [jsonpatch1.id, jsonpatch2.id]
 
-        metadata_record_dict, obj = self._test_action('metadata_record_show', id=metadata_record['id'])
-        metadata_record_augmented_dict, _ = self._test_action('metadata_record_workflow_augmented_show',
-                                                              id=metadata_record['id'])
+        metadata_record_dict, obj = self.test_action('metadata_record_show', id=metadata_record['id'])
+        metadata_record_augmented_dict, _ = self.test_action('metadata_record_workflow_augmented_show',
+                                                             id=metadata_record['id'])
         self._assert_metadata_record_ok(obj, metadata_record, name=metadata_record['name'])
         assert metadata_record_augmented_dict.pop('annotation1_key') == json.loads(annotation1_value)
         assert metadata_record_augmented_dict.pop('annotation2_key') == json.loads(annotation2_value)
@@ -557,30 +558,30 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_workflow_annotation_invalid_missing_params(self):
         metadata_record = self._generate_metadata_record()
-        result, _ = self._test_action('metadata_record_workflow_annotation_create', should_error=True,
-                                      id=metadata_record['id'])
+        result, _ = self.test_action('metadata_record_workflow_annotation_create', should_error=True,
+                                     id=metadata_record['id'])
         assert_error(result, 'path', 'Missing parameter')
         assert_error(result, 'value', 'Missing parameter')
 
     def test_workflow_annotation_invalid_missing_values(self):
         metadata_record = self._generate_metadata_record()
-        result, _ = self._test_action('metadata_record_workflow_annotation_create', should_error=True,
-                                      id=metadata_record['id'],
-                                      path='',
-                                      value='')
+        result, _ = self.test_action('metadata_record_workflow_annotation_create', should_error=True,
+                                     id=metadata_record['id'],
+                                     path='',
+                                     value='')
         assert_error(result, 'path', 'Missing value')
         assert_error(result, 'value', 'Missing value')
 
     def test_workflow_annotation_invalid_existing_metadata_record_key(self):
         metadata_record = self._generate_metadata_record()
-        result, _ = self._test_action('metadata_record_workflow_annotation_create', should_error=True,
-                                      id=metadata_record['id'],
-                                      path='/owner_org')
+        result, _ = self.test_action('metadata_record_workflow_annotation_create', should_error=True,
+                                     id=metadata_record['id'],
+                                     path='/owner_org')
         assert_error(result, 'path', 'An existing key name cannot be used')
 
-        result, _ = self._test_action('metadata_record_workflow_annotation_create', should_error=True,
-                                      id=metadata_record['id'],
-                                      path='/metadata_json/description/-')
+        result, _ = self.test_action('metadata_record_workflow_annotation_create', should_error=True,
+                                     id=metadata_record['id'],
+                                     path='/metadata_json/description/-')
         assert_error(result, 'path', 'An existing key name cannot be used')
 
     def test_workflow_transition_submitted(self):
@@ -594,12 +595,12 @@ class TestMetadataRecordActions(ActionTestBase):
 
         jsonpatch_ids = []
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
-                                              data_agreement='is a required property',
-                                              terms_and_conditions='is a required property',
-                                              capture_method='is a required property')
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_submitted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                                             data_agreement='is a required property',
+                                             terms_and_conditions='is a required property',
+                                             capture_method='is a required property')
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
@@ -615,15 +616,15 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value='"bar"',
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
-                                              *jsonpatch_ids, **{
-                                                  'data_agreement/accepted': 'True was expected',
-                                                  'data_agreement/href': 'is not a .*url',
-                                                  'terms_and_conditions': 'is not of type .*object',
-                                                  'capture_method': 'is not one of ',
-                                              })
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_submitted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                                             *jsonpatch_ids, **{
+                                                 'data_agreement/accepted': 'True was expected',
+                                                 'data_agreement/href': 'is not a .*url',
+                                                 'terms_and_conditions': 'is not of type .*object',
+                                                 'capture_method': 'is not one of ',
+                                             })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
@@ -639,12 +640,12 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value='"manual"',
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
-                                              *jsonpatch_ids, **{
-                                                  'data_agreement/href': 'is a required property',
-                                              })
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_submitted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                                             *jsonpatch_ids, **{
+                                                 'data_agreement/href': 'is a required property',
+                                             })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
@@ -652,10 +653,10 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value='{"accepted": true, "href": "http://example.net/"}',
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_submitted['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
-                                              *jsonpatch_ids)
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_submitted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                                             *jsonpatch_ids)
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_submitted['id'])
 
     def test_workflow_transition_captured(self):
@@ -685,12 +686,12 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value='"foo"',
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_captured['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
-                                              *jsonpatch_ids,
-                                              validated='True was expected',
-                                              quality_control='is not of type .*array')
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                                             *jsonpatch_ids,
+                                             validated='True was expected',
+                                             quality_control='is not of type .*array')
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         self._validate_metadata_record(metadata_record)
@@ -699,13 +700,13 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value='[{"userid": "someone", "date": "Friday the 13th"}]',
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_captured['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
-                                              *jsonpatch_ids, **{
-                                                  'quality_control/0/userid': 'Not found.? User',
-                                                  'quality_control/0/date': 'is not a .*date',
-                                              })
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                                             *jsonpatch_ids, **{
+                                                 'quality_control/0/userid': 'Not found.? User',
+                                                 'quality_control/0/date': 'is not a .*date',
+                                             })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
@@ -713,12 +714,12 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value=json.dumps([{"userid": self.normal_user['name'], "date": "2018-08-14"}]),
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_captured['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
-                                              *jsonpatch_ids, **{
-                                                  'quality_control/0/userid': 'Must use object id not name',
-                                              })
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                                             *jsonpatch_ids, **{
+                                                 'quality_control/0/userid': 'Must use object id not name',
+                                             })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
@@ -727,10 +728,10 @@ class TestMetadataRecordActions(ActionTestBase):
                                       )['id']]
 
         # TODO: the following depends on implementation of role_validator() in json_validator_functions
-        # self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-        #                   workflow_state_id=workflow_state_captured['id'])
-        # self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
-        #                                       *jsonpatch_ids)
+        # self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+        #                  workflow_state_id=workflow_state_captured['id'])
+        # self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+        #                                      *jsonpatch_ids)
         # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_captured['id'])
 
     def test_workflow_transition_published(self):
@@ -768,13 +769,13 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value=json.dumps([{"userid": self.normal_user['id'], "date": "2018-08-14"}]),
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_published['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
-                                              *jsonpatch_ids, **{
-                                                  'errors/identifier': 'This key may not be present in the dictionary',
-                                                  'quality_control/__minItems': 'Array has too few items',
-                                              })
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_published['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
+                                             *jsonpatch_ids, **{
+                                                 'errors/identifier': 'This key may not be present in the dictionary',
+                                                 'quality_control/__minItems': 'Array has too few items',
+                                             })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         metadata_record['metadata_json'] = load_example('saeon_datacite_record.json')
@@ -786,12 +787,12 @@ class TestMetadataRecordActions(ActionTestBase):
                                       value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-15"}),
                                       )['id']]
 
-        self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                          workflow_state_id=workflow_state_published['id'])
-        self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
-                                              *jsonpatch_ids, **{
-                                                  'quality_control/__uniqueObjects': 'Array has non-unique objects',
-                                              })
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_published['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
+                                             *jsonpatch_ids, **{
+                                                 'quality_control/__uniqueObjects': 'Array has non-unique objects',
+                                             })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
@@ -801,10 +802,10 @@ class TestMetadataRecordActions(ActionTestBase):
                                       )['id']]
 
         # TODO: the following depends on implementation of role_validator() in json_validator_functions
-        # self._test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-        #                   workflow_state_id=workflow_state_published['id'])
-        # self._assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
-        #                                       *jsonpatch_ids)
+        # self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+        #                  workflow_state_id=workflow_state_published['id'])
+        # self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
+        #                                      *jsonpatch_ids)
         # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_published['id'])
 
     def test_workflow_state_revert(self):
@@ -817,17 +818,17 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state2['id'])
         assert_package_has_attribute(metadata_record['id'], 'private', True)
 
-        self._test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
-        self._assert_workflow_activity_logged('revert', metadata_record['id'], workflow_state1['id'])
+        self.test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
+        self.assert_workflow_activity_logged('revert', metadata_record['id'], workflow_state1['id'])
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state1['id'])
         assert_package_has_attribute(metadata_record['id'], 'private', False)
 
-        self._test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
-        self._assert_workflow_activity_logged('revert', metadata_record['id'], '')
+        self.test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
+        self.assert_workflow_activity_logged('revert', metadata_record['id'], '')
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
         assert_package_has_attribute(metadata_record['id'], 'private', True)
 
         # reverting a record already in the null workflow state should not error or change anything
-        self._test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
+        self.test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
         assert_package_has_attribute(metadata_record['id'], 'private', True)

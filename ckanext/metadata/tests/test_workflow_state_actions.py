@@ -25,7 +25,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': True,
             'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
-        result, obj = self._test_action('workflow_state_create', **input_dict)
+        result, obj = self.test_action('workflow_state_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_with_revert(self):
@@ -36,7 +36,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': False,
             'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
-        result, obj = self._test_action('workflow_state_create', **input_dict)
+        result, obj = self.test_action('workflow_state_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_with_revert_byname(self):
@@ -47,7 +47,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': False,
             'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
-        result, obj = self._test_action('workflow_state_create', **input_dict)
+        result, obj = self.test_action('workflow_state_create', **input_dict)
         input_dict['revert_state_id'] = workflow_state['id']
         assert_object_matches_dict(obj, input_dict)
 
@@ -59,38 +59,38 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': True,
             'workflow_rules_json': '{ "testkey": "testvalue" }',
         }
-        result, obj = self._test_action('workflow_state_create', sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self.test_action('workflow_state_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_invalid_duplicate_name(self):
         workflow_state = ckanext_factories.WorkflowState()
-        result, obj = self._test_action('workflow_state_create', should_error=True,
-                                        name=workflow_state['name'])
+        result, obj = self.test_action('workflow_state_create', should_error=True,
+                                       name=workflow_state['name'])
         assert_error(result, 'name', 'Duplicate name: Workflow State')
 
     def test_create_invalid_missing_params(self):
-        result, obj = self._test_action('workflow_state_create', should_error=True)
+        result, obj = self.test_action('workflow_state_create', should_error=True)
         assert_error(result, 'name', 'Missing parameter')
         assert_error(result, 'revert_state_id', 'Missing parameter')
         assert_error(result, 'metadata_records_private', 'Missing parameter')
         assert_error(result, 'workflow_rules_json', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
-        result, obj = self._test_action('workflow_state_create', should_error=True,
-                                        name='',
-                                        workflow_rules_json='')
+        result, obj = self.test_action('workflow_state_create', should_error=True,
+                                       name='',
+                                       workflow_rules_json='')
         assert_error(result, 'name', 'Missing value')
         assert_error(result, 'workflow_rules_json', 'Missing value')
 
     def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self._test_action('workflow_state_create', should_error=True, check_auth=True,
-                                        id=make_uuid())
+        result, obj = self.test_action('workflow_state_create', should_error=True, check_auth=True,
+                                       id=make_uuid())
         assert_error(result, 'id', 'The input field id was not expected.')
 
     def test_create_invalid_sysadmin_duplicate_id(self):
         workflow_state = ckanext_factories.WorkflowState()
-        result, obj = self._test_action('workflow_state_create', should_error=True, sysadmin=True, check_auth=True,
-                                        id=workflow_state['id'])
+        result, obj = self.test_action('workflow_state_create', should_error=True, sysadmin=True, check_auth=True,
+                                       id=workflow_state['id'])
         assert_error(result, 'id', 'Already exists: Workflow State')
 
     def test_create_invalid_sysadmin_self_revert(self):
@@ -99,20 +99,20 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': new_id,
             'revert_state_id': new_id,
         }
-        result, obj = self._test_action('workflow_state_create', should_error=True,
-                                        sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self.test_action('workflow_state_create', should_error=True,
+                                       sysadmin=True, check_auth=True, **input_dict)
         assert_error(result, 'revert_state_id', 'Not found: Workflow State')
 
     def test_create_invalid_bad_revert(self):
-        result, obj = self._test_action('workflow_state_create', should_error=True,
-                                        revert_state_id='foo')
+        result, obj = self.test_action('workflow_state_create', should_error=True,
+                                       revert_state_id='foo')
         assert_error(result, 'revert_state_id', 'Not found: Workflow State')
 
     def test_create_invalid_deleted_revert(self):
         workflow_state = ckanext_factories.WorkflowState()
         call_action('workflow_state_delete', id=workflow_state['id'])
-        result, obj = self._test_action('workflow_state_create', should_error=True,
-                                        revert_state_id=workflow_state['id'])
+        result, obj = self.test_action('workflow_state_create', should_error=True,
+                                       revert_state_id=workflow_state['id'])
         assert_error(result, 'revert_state_id', 'Not found: Workflow State')
 
     def test_update_valid(self):
@@ -126,7 +126,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': False,
             'workflow_rules_json': '{ "testkey": "newtestvalue" }',
         }
-        result, obj = self._test_action('workflow_state_update', **input_dict)
+        result, obj = self.test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_valid_partial(self):
@@ -138,7 +138,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': False,
             'workflow_rules_json': '{ "testkey": "newtestvalue" }',
         }
-        result, obj = self._test_action('workflow_state_update', **input_dict)
+        result, obj = self.test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.title == workflow_state['title']
         assert obj.description == workflow_state['description']
@@ -153,7 +153,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': True,
             'workflow_rules_json': '{}',
         }
-        result, obj = self._test_action('workflow_state_update', **input_dict)
+        result, obj = self.test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_valid_change_revert_2(self):
@@ -167,7 +167,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': True,
             'workflow_rules_json': '{}',
         }
-        result, obj = self._test_action('workflow_state_update', **input_dict)
+        result, obj = self.test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_valid_change_revert_3(self):
@@ -183,7 +183,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': True,
             'workflow_rules_json': '{}',
         }
-        result, obj = self._test_action('workflow_state_update', **input_dict)
+        result, obj = self.test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_metadata_records_private_cascade_1(self):
@@ -204,7 +204,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': True,
             'workflow_rules_json': '{}',
         }
-        result, obj = self._test_action('workflow_state_update', **input_dict)
+        result, obj = self.test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
         assert_package_has_attribute(metadata_record['id'], 'private', True)
@@ -227,7 +227,7 @@ class TestWorkflowStateActions(ActionTestBase):
             'metadata_records_private': False,
             'workflow_rules_json': '{}',
         }
-        result, obj = self._test_action('workflow_state_update', **input_dict)
+        result, obj = self.test_action('workflow_state_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
         assert_package_has_attribute(metadata_record['id'], 'private', False)
@@ -239,22 +239,22 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state1['id'],
             'name': workflow_state2['name'],
         }
-        result, obj = self._test_action('workflow_state_update', should_error=True, **input_dict)
+        result, obj = self.test_action('workflow_state_update', should_error=True, **input_dict)
         assert_error(result, 'name', 'Duplicate name: Workflow State')
 
     def test_update_invalid_missing_params(self):
         workflow_state = ckanext_factories.WorkflowState()
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state['id'])
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state['id'])
         assert_error(result, 'revert_state_id', 'Missing parameter')
         assert_error(result, 'metadata_records_private', 'Missing parameter')
         assert_error(result, 'workflow_rules_json', 'Missing parameter')
 
     def test_update_invalid_missing_values(self):
         workflow_state = ckanext_factories.WorkflowState()
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state['id'],
-                                        workflow_rules_json='')
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state['id'],
+                                       workflow_rules_json='')
         assert_error(result, 'workflow_rules_json', 'Missing value')
 
     def test_update_invalid_circular_revert(self):
@@ -262,14 +262,14 @@ class TestWorkflowStateActions(ActionTestBase):
         workflow_state2 = ckanext_factories.WorkflowState(revert_state_id=workflow_state1['id'])
         workflow_state3 = ckanext_factories.WorkflowState(revert_state_id=workflow_state2['id'])
 
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state1['id'],
-                                        revert_state_id=workflow_state2['id'])
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state1['id'],
+                                       revert_state_id=workflow_state2['id'])
         assert_error(result, 'revert_state_id', 'Revert loop in workflow state graph')
 
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state1['id'],
-                                        revert_state_id=workflow_state3['id'])
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state1['id'],
+                                       revert_state_id=workflow_state3['id'])
         assert_error(result, 'revert_state_id', 'Revert loop in workflow state graph')
 
     def test_update_invalid_forward_revert(self):
@@ -279,14 +279,14 @@ class TestWorkflowStateActions(ActionTestBase):
         ckanext_factories.WorkflowTransition(from_state_id=workflow_state1['id'], to_state_id=workflow_state2['id'])
         ckanext_factories.WorkflowTransition(from_state_id=workflow_state2['id'], to_state_id=workflow_state3['id'])
 
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state1['id'],
-                                        revert_state_id=workflow_state2['id'])
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state1['id'],
+                                       revert_state_id=workflow_state2['id'])
         assert_error(result, 'revert_state_id', 'Forward revert in workflow state graph')
 
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state1['id'],
-                                        revert_state_id=workflow_state3['id'])
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state1['id'],
+                                       revert_state_id=workflow_state3['id'])
         assert_error(result, 'revert_state_id', 'Forward revert in workflow state graph')
 
     def test_update_invalid_self_revert(self):
@@ -295,29 +295,29 @@ class TestWorkflowStateActions(ActionTestBase):
             'id': workflow_state['id'],
             'revert_state_id': workflow_state['id'],
         }
-        result, obj = self._test_action('workflow_state_update', should_error=True, **input_dict)
+        result, obj = self.test_action('workflow_state_update', should_error=True, **input_dict)
         assert_error(result, 'revert_state_id', 'A workflow state cannot revert to itself')
 
     def test_update_invalid_bad_revert(self):
         workflow_state = ckanext_factories.WorkflowState()
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state['id'],
-                                        revert_state_id='foo')
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state['id'],
+                                       revert_state_id='foo')
         assert_error(result, 'revert_state_id', 'Not found: Workflow State')
 
     def test_update_invalid_deleted_revert(self):
         workflow_state1 = ckanext_factories.WorkflowState()
         workflow_state2 = ckanext_factories.WorkflowState()
         call_action('workflow_state_delete', id=workflow_state1['id'])
-        result, obj = self._test_action('workflow_state_update', should_error=True,
-                                        id=workflow_state2['id'],
-                                        revert_state_id=workflow_state1['id'])
+        result, obj = self.test_action('workflow_state_update', should_error=True,
+                                       id=workflow_state2['id'],
+                                       revert_state_id=workflow_state1['id'])
         assert_error(result, 'revert_state_id', 'Not found: Workflow State')
 
     def test_delete_valid(self):
         workflow_state = ckanext_factories.WorkflowState()
-        self._test_action('workflow_state_delete',
-                          id=workflow_state['id'])
+        self.test_action('workflow_state_delete',
+                         id=workflow_state['id'])
 
     def test_delete_with_dependencies(self):
         metadata_record = ckanext_factories.MetadataRecord()
@@ -327,21 +327,21 @@ class TestWorkflowStateActions(ActionTestBase):
                     workflow_state_id=workflow_state['id'])
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state['id'])
 
-        result, obj = self._test_action('workflow_state_delete', should_error=True,
-                                        id=workflow_state['id'])
+        result, obj = self.test_action('workflow_state_delete', should_error=True,
+                                       id=workflow_state['id'])
         assert_error(result, 'message', 'Workflow state has dependent metadata records')
 
         call_action('metadata_record_delete', id=metadata_record['id'])
-        self._test_action('workflow_state_delete',
-                          id=workflow_state['id'])
+        self.test_action('workflow_state_delete',
+                         id=workflow_state['id'])
 
     def test_delete_with_revert_references(self):
         workflow_state1 = ckanext_factories.WorkflowState()
         workflow_state2 = ckanext_factories.WorkflowState(revert_state_id=workflow_state1['name'])
         assert workflow_state2['revert_state_id'] == workflow_state1['id']
 
-        self._test_action('workflow_state_delete',
-                          id=workflow_state1['id'])
+        self.test_action('workflow_state_delete',
+                         id=workflow_state1['id'])
         workflow_state2['revert_state_id'] = None
         del workflow_state2['revision_id']
         assert_object_matches_dict(ckanext_model.WorkflowState.get(workflow_state2['id']), workflow_state2, json_values=('workflow_rules_json',))
@@ -349,18 +349,18 @@ class TestWorkflowStateActions(ActionTestBase):
     def test_delete_with_transition_references(self):
         workflow_state = ckanext_factories.WorkflowState()
         workflow_transition = ckanext_factories.WorkflowTransition(from_state_id=workflow_state['id'])
-        self._test_action('workflow_state_delete',
-                          id=workflow_state['id'])
+        self.test_action('workflow_state_delete',
+                         id=workflow_state['id'])
         assert ckanext_model.WorkflowTransition.get(workflow_transition['id']).state == 'deleted'
 
         workflow_state = ckanext_factories.WorkflowState()
         workflow_transition = ckanext_factories.WorkflowTransition(to_state_id=workflow_state['id'])
-        self._test_action('workflow_state_delete',
-                          id=workflow_state['id'])
+        self.test_action('workflow_state_delete',
+                         id=workflow_state['id'])
         assert ckanext_model.WorkflowTransition.get(workflow_transition['id']).state == 'deleted'
 
         workflow_state = ckanext_factories.WorkflowState()
         workflow_transition = ckanext_factories.WorkflowTransition(from_state_id=None, to_state_id=workflow_state['id'])
-        self._test_action('workflow_state_delete',
-                          id=workflow_state['id'])
+        self.test_action('workflow_state_delete',
+                         id=workflow_state['id'])
         assert ckanext_model.WorkflowTransition.get(workflow_transition['id']).state == 'deleted'

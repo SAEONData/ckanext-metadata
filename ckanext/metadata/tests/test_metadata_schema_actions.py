@@ -24,7 +24,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<xsd/>',
             'base_schema_id': '',
         }
-        result, obj = self._test_action('metadata_schema_create', **input_dict)
+        result, obj = self.test_action('metadata_schema_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.name == generate_name(input_dict['schema_name'], input_dict['schema_version'])
 
@@ -36,7 +36,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<xsd/>',
             'base_schema_id': '',
         }
-        result, obj = self._test_action('metadata_schema_create', **input_dict)
+        result, obj = self.test_action('metadata_schema_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_with_parent(self):
@@ -47,7 +47,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<xsd/>',
             'base_schema_id': metadata_schema['id'],
         }
-        result, obj = self._test_action('metadata_schema_create', **input_dict)
+        result, obj = self.test_action('metadata_schema_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_with_parent_byname(self):
@@ -58,7 +58,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<xsd/>',
             'base_schema_id': metadata_schema['name'],
         }
-        result, obj = self._test_action('metadata_schema_create', **input_dict)
+        result, obj = self.test_action('metadata_schema_create', **input_dict)
         input_dict['base_schema_id'] = metadata_schema['id']
         assert_object_matches_dict(obj, input_dict)
 
@@ -70,7 +70,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<xsd/>',
             'base_schema_id': '',
         }
-        result, obj = self._test_action('metadata_schema_create', sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_same_name_new_version(self):
@@ -81,7 +81,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<xsd/>',
             'base_schema_id': '',
         }
-        result, obj = self._test_action('metadata_schema_create', **input_dict)
+        result, obj = self.test_action('metadata_schema_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_same_version_different_name(self):
@@ -92,25 +92,25 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<xsd/>',
             'base_schema_id': '',
         }
-        result, obj = self._test_action('metadata_schema_create', **input_dict)
+        result, obj = self.test_action('metadata_schema_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_invalid_duplicate_name(self):
         metadata_schema = ckanext_factories.MetadataSchema()
-        result, obj = self._test_action('metadata_schema_create', should_error=True,
-                                        name=metadata_schema['name'])
+        result, obj = self.test_action('metadata_schema_create', should_error=True,
+                                       name=metadata_schema['name'])
         assert_error(result, 'name', 'Duplicate name: Metadata Schema')
 
     def test_create_invalid_missing_params(self):
-        result, obj = self._test_action('metadata_schema_create', should_error=True)
+        result, obj = self.test_action('metadata_schema_create', should_error=True)
         assert_error(result, 'schema_name', 'Missing parameter')
         assert_error(result, 'schema_version', 'Missing parameter')
         assert_error(result, 'schema_xsd', 'Missing parameter')
         assert_error(result, 'base_schema_id', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
-        result, obj = self._test_action('metadata_schema_create', should_error=True,
-                                        schema_name='')
+        result, obj = self.test_action('metadata_schema_create', should_error=True,
+                                       schema_name='')
         assert_error(result, 'schema_name', 'Missing value')
 
     def test_create_invalid_duplicate(self):
@@ -119,18 +119,18 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_name': metadata_schema['schema_name'],
             'schema_version': metadata_schema['schema_version'],
         }
-        result, obj = self._test_action('metadata_schema_create', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_create', should_error=True, **input_dict)
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self._test_action('metadata_schema_create', should_error=True, check_auth=True,
-                                        id=make_uuid())
+        result, obj = self.test_action('metadata_schema_create', should_error=True, check_auth=True,
+                                       id=make_uuid())
         assert_error(result, 'id', 'The input field id was not expected.')
 
     def test_create_invalid_sysadmin_duplicate_id(self):
         metadata_schema = ckanext_factories.MetadataSchema()
-        result, obj = self._test_action('metadata_schema_create', should_error=True, sysadmin=True, check_auth=True,
-                                        id=metadata_schema['id'])
+        result, obj = self.test_action('metadata_schema_create', should_error=True, sysadmin=True, check_auth=True,
+                                       id=metadata_schema['id'])
         assert_error(result, 'id', 'Already exists: Metadata Schema')
 
     def test_create_invalid_sysadmin_self_parent(self):
@@ -139,20 +139,20 @@ class TestMetadataSchemaActions(ActionTestBase):
             'id': new_id,
             'base_schema_id': new_id,
         }
-        result, obj = self._test_action('metadata_schema_create', should_error=True,
-                                        sysadmin=True, check_auth=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_create', should_error=True,
+                                       sysadmin=True, check_auth=True, **input_dict)
         assert_error(result, 'base_schema_id', 'Not found: Metadata Schema')
 
     def test_create_invalid_bad_parent(self):
-        result, obj = self._test_action('metadata_schema_create', should_error=True,
-                                        base_schema_id='foo')
+        result, obj = self.test_action('metadata_schema_create', should_error=True,
+                                       base_schema_id='foo')
         assert_error(result, 'base_schema_id', 'Not found: Metadata Schema')
 
     def test_create_invalid_deleted_parent(self):
         metadata_schema = ckanext_factories.MetadataSchema()
         call_action('metadata_schema_delete', id=metadata_schema['id'])
-        result, obj = self._test_action('metadata_schema_create', should_error=True,
-                                        base_schema_id=metadata_schema['id'])
+        result, obj = self.test_action('metadata_schema_create', should_error=True,
+                                       base_schema_id=metadata_schema['id'])
         assert_error(result, 'base_schema_id', 'Not found: Metadata Schema')
 
     def test_update_valid(self):
@@ -166,7 +166,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<updated_xsd/>',
             'base_schema_id': '',
         }
-        result, obj = self._test_action('metadata_schema_update', **input_dict)
+        result, obj = self.test_action('metadata_schema_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.name == generate_name(input_dict['schema_name'], input_dict['schema_version'])
 
@@ -180,7 +180,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': '<updated_xsd/>',
             'base_schema_id': '',
         }
-        result, obj = self._test_action('metadata_schema_update', **input_dict)
+        result, obj = self.test_action('metadata_schema_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
         assert obj.title == metadata_schema['title']
         assert obj.description == metadata_schema['description']
@@ -195,7 +195,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': metadata_schema1['schema_xsd'],
             'base_schema_id': metadata_schema2['id'],
         }
-        result, obj = self._test_action('metadata_schema_update', **input_dict)
+        result, obj = self.test_action('metadata_schema_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_valid_change_parent_2(self):
@@ -209,7 +209,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_xsd': metadata_schema3['schema_xsd'],
             'base_schema_id': metadata_schema1['id'],
         }
-        result, obj = self._test_action('metadata_schema_update', **input_dict)
+        result, obj = self.test_action('metadata_schema_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
     def test_update_invalid_duplicate_name(self):
@@ -219,13 +219,13 @@ class TestMetadataSchemaActions(ActionTestBase):
             'id': metadata_schema1['id'],
             'name': metadata_schema2['name'],
         }
-        result, obj = self._test_action('metadata_schema_update', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_update', should_error=True, **input_dict)
         assert_error(result, 'name', 'Duplicate name: Metadata Schema')
 
     def test_update_invalid_missing_params(self):
         metadata_schema = ckanext_factories.MetadataSchema()
-        result, obj = self._test_action('metadata_schema_update', should_error=True,
-                                        id=metadata_schema['id'])
+        result, obj = self.test_action('metadata_schema_update', should_error=True,
+                                       id=metadata_schema['id'])
         assert_error(result, 'schema_name', 'Missing parameter')
         assert_error(result, 'schema_version', 'Missing parameter')
         assert_error(result, 'schema_xsd', 'Missing parameter')
@@ -233,9 +233,9 @@ class TestMetadataSchemaActions(ActionTestBase):
 
     def test_update_invalid_missing_values(self):
         metadata_schema = ckanext_factories.MetadataSchema()
-        result, obj = self._test_action('metadata_schema_update', should_error=True,
-                                        id=metadata_schema['id'],
-                                        schema_name='')
+        result, obj = self.test_action('metadata_schema_update', should_error=True,
+                                       id=metadata_schema['id'],
+                                       schema_name='')
         assert_error(result, 'schema_name', 'Missing value')
 
     def test_update_invalid_duplicate(self):
@@ -246,7 +246,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'schema_name': metadata_schema2['schema_name'],
             'schema_version': metadata_schema2['schema_version'],
         }
-        result, obj = self._test_action('metadata_schema_update', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_update', should_error=True, **input_dict)
         assert_error(result, '__after', 'Unique constraint violation')
 
     def test_update_invalid_circular_ref_1(self):
@@ -256,7 +256,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'id': metadata_schema1['id'],
             'base_schema_id': metadata_schema2['id'],
         }
-        result, obj = self._test_action('metadata_schema_update', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_update', should_error=True, **input_dict)
         assert_error(result, 'base_schema_id', 'Loop in metadata schema hierarchy')
 
     def test_update_invalid_circular_ref_2(self):
@@ -267,7 +267,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'id': metadata_schema1['id'],
             'base_schema_id': metadata_schema3['id'],
         }
-        result, obj = self._test_action('metadata_schema_update', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_update', should_error=True, **input_dict)
         assert_error(result, 'base_schema_id', 'Loop in metadata schema hierarchy')
 
     def test_update_invalid_self_parent(self):
@@ -276,37 +276,37 @@ class TestMetadataSchemaActions(ActionTestBase):
             'id': metadata_schema['id'],
             'base_schema_id': metadata_schema['id'],
         }
-        result, obj = self._test_action('metadata_schema_update', should_error=True, **input_dict)
+        result, obj = self.test_action('metadata_schema_update', should_error=True, **input_dict)
         assert_error(result, 'base_schema_id', 'Loop in metadata schema hierarchy')
 
     def test_update_invalid_bad_parent(self):
         metadata_schema = ckanext_factories.MetadataSchema()
-        result, obj = self._test_action('metadata_schema_update', should_error=True,
-                                        id=metadata_schema['id'],
-                                        base_schema_id='foo')
+        result, obj = self.test_action('metadata_schema_update', should_error=True,
+                                       id=metadata_schema['id'],
+                                       base_schema_id='foo')
         assert_error(result, 'base_schema_id', 'Not found: Metadata Schema')
 
     def test_update_invalid_deleted_parent(self):
         metadata_schema1 = ckanext_factories.MetadataSchema()
         metadata_schema2 = ckanext_factories.MetadataSchema()
         call_action('metadata_schema_delete', id=metadata_schema1['id'])
-        result, obj = self._test_action('metadata_schema_update', should_error=True,
-                                        id=metadata_schema2['id'],
-                                        base_schema_id=metadata_schema1['id'])
+        result, obj = self.test_action('metadata_schema_update', should_error=True,
+                                       id=metadata_schema2['id'],
+                                       base_schema_id=metadata_schema1['id'])
         assert_error(result, 'base_schema_id', 'Not found: Metadata Schema')
 
     def test_delete_valid(self):
         metadata_schema = ckanext_factories.MetadataSchema()
-        self._test_action('metadata_schema_delete',
-                          id=metadata_schema['id'])
+        self.test_action('metadata_schema_delete',
+                         id=metadata_schema['id'])
 
     def test_delete_with_child_schemas(self):
         metadata_schema1 = ckanext_factories.MetadataSchema()
         metadata_schema2 = ckanext_factories.MetadataSchema(base_schema_id=metadata_schema1['id'])
         assert metadata_schema2['base_schema_id'] == metadata_schema1['id']
 
-        self._test_action('metadata_schema_delete',
-                          id=metadata_schema1['id'])
+        self.test_action('metadata_schema_delete',
+                         id=metadata_schema1['id'])
         metadata_schema2['base_schema_id'] = None
         del metadata_schema2['revision_id']
         assert_object_matches_dict(ckanext_model.MetadataSchema.get(metadata_schema2['id']), metadata_schema2)
@@ -316,13 +316,13 @@ class TestMetadataSchemaActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel(metadata_schema_id=metadata_schema['id'])
         metadata_record = ckanext_factories.MetadataRecord(metadata_schema_id=metadata_schema['id'])
 
-        result, obj = self._test_action('metadata_schema_delete', should_error=True,
-                                        id=metadata_schema['id'])
+        result, obj = self.test_action('metadata_schema_delete', should_error=True,
+                                       id=metadata_schema['id'])
 
         assert_error(result, 'message', 'Metadata schema has dependent metadata records')
         assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
 
         call_action('metadata_record_delete', id=metadata_record['id'])
-        self._test_action('metadata_schema_delete',
-                          id=metadata_schema['id'])
+        self.test_action('metadata_schema_delete',
+                         id=metadata_schema['id'])
         assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
