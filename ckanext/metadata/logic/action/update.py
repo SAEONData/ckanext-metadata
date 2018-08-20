@@ -34,27 +34,27 @@ log = logging.getLogger(__name__)
 # Fields indicated as "optional" in the docstrings remain at their current values if
 # not supplied by the caller.
 
-def metadata_schema_update(context, data_dict):
+def metadata_standard_update(context, data_dict):
     """
-    Update a metadata schema.
+    Update a metadata standard.
 
-    You must be authorized to edit the metadata schema.
+    You must be authorized to edit the metadata standard.
 
     It is recommended to call
-    :py:func:`ckan.logic.action.get.metadata_schema_show`, make the desired changes to
-    the result, and then call ``metadata_schema_update()`` with it.
+    :py:func:`ckan.logic.action.get.metadata_standard_show`, make the desired changes to
+    the result, and then call ``metadata_standard_update()`` with it.
 
     For further parameters see
-    :py:func:`~ckanext.metadata.logic.action.create.metadata_schema_create`.
+    :py:func:`~ckanext.metadata.logic.action.create.metadata_standard_create`.
 
-    :param id: the id or name of the metadata schema to update
+    :param id: the id or name of the metadata standard to update
     :type id: string
 
-    :returns: the updated metadata schema (unless 'return_id_only' is set to True
-              in the context, in which case just the metadata schema id will be returned)
+    :returns: the updated metadata standard (unless 'return_id_only' is set to True
+              in the context, in which case just the metadata standard id will be returned)
     :rtype: dictionary
     """
-    log.info("Updating metadata schema: %r", data_dict)
+    log.info("Updating metadata standard: %r", data_dict)
 
     model = context['model']
     user = context['user']
@@ -62,42 +62,42 @@ def metadata_schema_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
-    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
-    if metadata_schema is not None:
-        metadata_schema_id = metadata_schema.id
+    metadata_standard_id = tk.get_or_bust(data_dict, 'id')
+    metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
+    if metadata_standard is not None:
+        metadata_standard_id = metadata_standard.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
 
-    tk.check_access('metadata_schema_update', context, data_dict)
+    tk.check_access('metadata_standard_update', context, data_dict)
 
     data_dict.update({
-        'id': metadata_schema_id,
+        'id': metadata_standard_id,
     })
     context.update({
-        'metadata_schema': metadata_schema,
+        'metadata_standard': metadata_standard,
         'allow_partial_update': True,
     })
 
-    data, errors = tk.navl_validate(data_dict, schema.metadata_schema_update_schema(), context)
+    data, errors = tk.navl_validate(data_dict, schema.metadata_standard_update_schema(), context)
     if errors:
         session.rollback()
         raise tk.ValidationError(errors)
 
-    metadata_schema = model_save.metadata_schema_dict_save(data, context)
+    metadata_standard = model_save.metadata_standard_dict_save(data, context)
 
     rev = model.repo.new_revision()
     rev.author = user
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update metadata schema %s') % metadata_schema_id
+        rev.message = _(u'REST API: Update metadata standard %s') % metadata_standard_id
 
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_schema_id if return_id_only \
-        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_id})
+    output = metadata_standard_id if return_id_only \
+        else tk.get_action('metadata_standard_show')(context, {'id': metadata_standard_id})
     return output
 
 
@@ -108,7 +108,7 @@ def metadata_model_update(context, data_dict):
     You must be authorized to edit the metadata model.
 
     Changes to the model_json will cause dependent metadata records to be invalidated.
-    If any of metadata_schema_id, organization_id or infrastructure_id change, then
+    If any of metadata_standard_id, organization_id or infrastructure_id change, then
     ex-dependent and newly-dependent metadata records will also be invalidated.
 
     It is recommended to call

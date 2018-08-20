@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 #     return result if result else next_auth(context, data_dict)
 
 
-def metadata_schema_update(context, data_dict):
+def metadata_standard_update(context, data_dict):
     return {'success': True}
 
 

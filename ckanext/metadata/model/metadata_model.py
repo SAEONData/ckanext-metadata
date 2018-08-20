@@ -4,7 +4,7 @@ from sqlalchemy import types, orm, Table, Column, ForeignKey, UniqueConstraint
 import vdm.sqlalchemy
 
 from ckan.model import meta, core, types as _types, domain_object
-from ckanext.metadata.model.metadata_schema import MetadataSchema
+from ckanext.metadata.model.metadata_standard import MetadataStandard
 
 
 metadata_model_table = Table(
@@ -13,12 +13,12 @@ metadata_model_table = Table(
     Column('name', types.UnicodeText, nullable=False, unique=True),
     Column('title', types.UnicodeText),
     Column('description', types.UnicodeText),
-    Column('metadata_schema_id', types.UnicodeText, ForeignKey('metadata_schema.id'), nullable=False),
+    Column('metadata_standard_id', types.UnicodeText, ForeignKey('metadata_standard.id'), nullable=False),
     Column('organization_id', types.UnicodeText, ForeignKey('group.id')),
     Column('infrastructure_id', types.UnicodeText, ForeignKey('group.id')),
     Column('model_json', types.UnicodeText),
-    # null organization & infrastructure indicates the default model for the given schema
-    UniqueConstraint('metadata_schema_id', 'organization_id', 'infrastructure_id')
+    # null organization & infrastructure indicates the default model for the given metadata standard
+    UniqueConstraint('metadata_standard_id', 'organization_id', 'infrastructure_id')
 )
 
 vdm.sqlalchemy.make_table_stateful(metadata_model_table)
@@ -43,19 +43,18 @@ class MetadataModel(vdm.sqlalchemy.RevisionedObjectMixin,
         return metadata_model
 
     @classmethod
-    def lookup(cls, metadata_schema_id, organization_id, infrastructure_id):
+    def lookup(cls, metadata_standard_id, organization_id, infrastructure_id):
         """
-        Returns a metadata_model object by metadata_schema, organization, infrastructure.
+        Returns a metadata_model object by metadata_standard, organization, infrastructure.
         """
         return meta.Session.query(cls) \
-            .filter(cls.metadata_schema_id == metadata_schema_id) \
+            .filter(cls.metadata_standard_id == metadata_standard_id) \
             .filter(cls.organization_id == organization_id) \
             .filter(cls.infrastructure_id == infrastructure_id) \
             .first()
 
 
 meta.mapper(MetadataModel, metadata_model_table,
-            properties={'schema': orm.relation(MetadataSchema, backref='models')},
             extension=[vdm.sqlalchemy.Revisioner(metadata_model_revision_table)])
 
 vdm.sqlalchemy.modify_base_object_mapper(MetadataModel, core.Revision, core.State)

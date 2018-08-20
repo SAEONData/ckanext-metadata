@@ -55,26 +55,25 @@ class MetadataRecord(factory.Factory):
         organization_id = kwargs.pop('owner_org', None) or ckan_factories.Organization()['id']
         metadata_collection_id = kwargs.pop('metadata_collection_id', None) \
                                  or MetadataCollection(organization_id=organization_id)['id']
-        metadata_schema_id = kwargs.pop('metadata_schema_id', None) or MetadataSchema()['id']
+        metadata_standard_id = kwargs.pop('metadata_standard_id', None) or MetadataStandard()['id']
 
         package_dict = helpers.call_action('metadata_record_create',
                                            context=context,
                                            owner_org=organization_id,
                                            metadata_collection_id=metadata_collection_id,
-                                           metadata_schema_id=metadata_schema_id,
+                                           metadata_standard_id=metadata_standard_id,
                                            **kwargs)
         return package_dict
 
 
-class MetadataSchema(factory.Factory):
-    FACTORY_FOR = ckanext_model.MetadataSchema
+class MetadataStandard(factory.Factory):
+    FACTORY_FOR = ckanext_model.MetadataStandard
 
-    schema_name = factory.Sequence(lambda n: 'test_schema_{0:02d}'.format(n))
-    schema_version = '1.0'
-    schema_xsd = '<xsd/>'
-    base_schema_id = ''
-    title = factory.LazyAttribute(lambda obj: obj.schema_name.replace('_', ' ').title())
-    description = 'A test description for this test metadata schema.'
+    standard_name = factory.Sequence(lambda n: 'test_standard_{0:02d}'.format(n))
+    standard_version = '1.0'
+    parent_standard_id = ''
+    title = factory.LazyAttribute(lambda obj: obj.standard_name.replace('_', ' ').title())
+    description = 'A test description for this test metadata standard.'
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):
@@ -87,7 +86,7 @@ class MetadataSchema(factory.Factory):
 
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
 
-        return helpers.call_action('metadata_schema_create', context=context, **kwargs)
+        return helpers.call_action('metadata_standard_create', context=context, **kwargs)
 
 
 class MetadataModel(factory.Factory):
@@ -109,11 +108,11 @@ class MetadataModel(factory.Factory):
             assert False, "Positional args aren't supported, use keyword args."
 
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
-        metadata_schema_id = kwargs.pop('metadata_schema_id', None) or MetadataSchema()['id']
+        metadata_standard_id = kwargs.pop('metadata_standard_id', None) or MetadataStandard()['id']
 
         return helpers.call_action('metadata_model_create',
                                    context=context,
-                                   metadata_schema_id=metadata_schema_id,
+                                   metadata_standard_id=metadata_standard_id,
                                    **kwargs)
 
 

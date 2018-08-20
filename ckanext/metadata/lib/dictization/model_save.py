@@ -72,9 +72,9 @@ def metadata_model_dict_save(metadata_model_dict, context):
                              ckanext_model.metadata_model_table, context)
 
 
-def metadata_schema_dict_save(metadata_schema_dict, context):
-    return _object_dict_save(metadata_schema_dict, 'metadata_schema', ckanext_model.MetadataSchema,
-                             ckanext_model.metadata_schema_table, context)
+def metadata_standard_dict_save(metadata_standard_dict, context):
+    return _object_dict_save(metadata_standard_dict, 'metadata_standard', ckanext_model.MetadataStandard,
+                             ckanext_model.metadata_standard_table, context)
 
 
 def workflow_state_dict_save(workflow_state_dict, context):

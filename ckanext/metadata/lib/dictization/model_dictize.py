@@ -78,9 +78,9 @@ def metadata_model_dictize(metadata_model, context):
                            ckanext_model.metadata_model_revision_table, context)
 
 
-def metadata_schema_dictize(metadata_schema, context):
-    return _object_dictize(metadata_schema, ckanext_model.MetadataSchema, ckanext_model.MetadataSchemaRevision,
-                           ckanext_model.metadata_schema_revision_table, context)
+def metadata_standard_dictize(metadata_standard, context):
+    return _object_dictize(metadata_standard, ckanext_model.MetadataStandard, ckanext_model.MetadataStandardRevision,
+                           ckanext_model.metadata_standard_revision_table, context)
 
 
 def workflow_state_dictize(workflow_state, context):

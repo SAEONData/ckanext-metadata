@@ -17,57 +17,57 @@ log = logging.getLogger(__name__)
 
 
 @tk.side_effect_free
-def metadata_schema_show(context, data_dict):
+def metadata_standard_show(context, data_dict):
     """
-    Return the details of a metadata schema.
+    Return the details of a metadata standard.
 
-    :param id: the id or name of the metadata schema
+    :param id: the id or name of the metadata standard
     :type id: string
 
     :rtype: dictionary
     """
-    log.debug("Retrieving metadata schema: %r", data_dict)
+    log.debug("Retrieving metadata standard: %r", data_dict)
 
-    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
-    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
-    if metadata_schema is not None:
-        metadata_schema_id = metadata_schema.id
+    metadata_standard_id = tk.get_or_bust(data_dict, 'id')
+    metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
+    if metadata_standard is not None:
+        metadata_standard_id = metadata_standard.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
 
-    tk.check_access('metadata_schema_show', context, data_dict)
+    tk.check_access('metadata_standard_show', context, data_dict)
 
-    context['metadata_schema'] = metadata_schema
-    metadata_schema_dict = model_dictize.metadata_schema_dictize(metadata_schema, context)
+    context['metadata_standard'] = metadata_standard
+    metadata_standard_dict = model_dictize.metadata_standard_dictize(metadata_standard, context)
 
-    result_dict, errors = tk.navl_validate(metadata_schema_dict, schema.metadata_schema_show_schema(), context)
+    result_dict, errors = tk.navl_validate(metadata_standard_dict, schema.metadata_standard_show_schema(), context)
     return result_dict
 
 
 @tk.side_effect_free
-def metadata_schema_list(context, data_dict):
+def metadata_standard_list(context, data_dict):
     """
-    Return a list of names of the site's metadata schemas.
+    Return a list of names of the site's metadata standards.
     
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
 
     :rtype: list of strings
     """
-    log.debug("Retrieving metadata schema list: %r", data_dict)
-    tk.check_access('metadata_schema_list', context, data_dict)
+    log.debug("Retrieving metadata standard list: %r", data_dict)
+    tk.check_access('metadata_standard_list', context, data_dict)
     
     session = context['session']
     all_fields = asbool(data_dict.get('all_fields'))
     
-    metadata_schemas = session.query(ckanext_model.MetadataSchema.id, ckanext_model.MetadataSchema.name) \
+    metadata_standards = session.query(ckanext_model.MetadataStandard.id, ckanext_model.MetadataStandard.name) \
         .filter_by(state='active') \
         .all()
     result = []
-    for (id_, name) in metadata_schemas:
+    for (id_, name) in metadata_standards:
         if all_fields:
             data_dict['id'] = id_
-            result += [tk.get_action('metadata_schema_show')(context, data_dict)]
+            result += [tk.get_action('metadata_standard_show')(context, data_dict)]
         else:
             result += [name]
 
@@ -160,8 +160,8 @@ def metadata_model_dependent_record_list(context, data_dict):
     q = session.query(model.Package.id) \
         .join(model.PackageExtra) \
         .filter(model.Package.state == 'active') \
-        .filter(model.PackageExtra.key == 'metadata_schema_id') \
-        .filter(model.PackageExtra.value == metadata_model.metadata_schema_id)
+        .filter(model.PackageExtra.key == 'metadata_standard_id') \
+        .filter(model.PackageExtra.value == metadata_model.metadata_standard_id)
 
     if metadata_model.organization_id:
         q = q.filter(model.Package.owner_org == metadata_model.organization_id)
@@ -446,9 +446,9 @@ def metadata_record_validation_model_list(context, data_dict):
     Return a list of metadata models to be used for validating a metadata record.
 
     This comprises the following:
-    1. The default model defined for the record's metadata schema.
-    2. A model for that schema (optionally) defined for the owner organization.
-    3. Any models (optionally) defined for that schema for infrastructures linked to the record.
+    1. The default model defined for the record's metadata standard.
+    2. A model for that standard (optionally) defined for the owner organization.
+    3. Any models (optionally) defined for that standard for infrastructures linked to the record.
 
     :param id: the id or name of the metadata record
     :type id: string
@@ -485,12 +485,12 @@ def metadata_record_validation_model_list(context, data_dict):
         .filter(model.Member.state == 'active') \
         .all()
     infrastructure_ids = [infra_id for (infra_id,) in infrastructure_ids] + [None]
-    metadata_schema_id = session.query(model.PackageExtra.value) \
-        .filter_by(package_id=metadata_record_id, key='metadata_schema_id').scalar()
+    metadata_standard_id = session.query(model.PackageExtra.value) \
+        .filter_by(package_id=metadata_record_id, key='metadata_standard_id').scalar()
 
     MetadataModel = ckanext_model.MetadataModel
     metadata_model_names = session.query(MetadataModel.name) \
-        .filter_by(metadata_schema_id=metadata_schema_id, state='active') \
+        .filter_by(metadata_standard_id=metadata_standard_id, state='active') \
         .filter(or_(MetadataModel.organization_id == organization_id, MetadataModel.organization_id == None)) \
         .filter(or_(MetadataModel.infrastructure_id == infra_id for infra_id in infrastructure_ids)) \
         .all()

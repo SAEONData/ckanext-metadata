@@ -24,7 +24,7 @@ _model_map = {
     'metadata_collection': ckan_model.Group,
     'metadata_record': ckan_model.Package,
     'metadata_model': ckanext_model.MetadataModel,
-    'metadata_schema': ckanext_model.MetadataSchema,
+    'metadata_standard': ckanext_model.MetadataStandard,
     'workflow_state': ckanext_model.WorkflowState,
     'workflow_transition': ckanext_model.WorkflowTransition,
     'jsonpatch': JSONPatch,

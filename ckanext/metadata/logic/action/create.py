@@ -15,36 +15,34 @@ log = logging.getLogger(__name__)
 # nullable params must be supplied but may be empty
 # all other params must be supplied and must not be empty
 
-def metadata_schema_create(context, data_dict):
+def metadata_standard_create(context, data_dict):
     """
-    Create a new metadata schema.
+    Create a new metadata standard.
 
-    You must be authorized to create metadata schemas.
+    You must be authorized to create metadata standards.
 
-    :param id: the id of the metadata schema (optional - only sysadmins can set this)
+    :param id: the id of the metadata standard (optional - only sysadmins can set this)
     :type id: string
-    :param name: the name of the new metadata schema (optional - auto-generated if not supplied);
+    :param name: the name of the new metadata standard (optional - auto-generated if not supplied);
         must conform to standard naming rules
     :type name: string
-    :param title: the title of the metadata schema (optional)
+    :param title: the title of the metadata standard (optional)
     :type title: string
-    :param description: the description of the metadata schema (optional)
+    :param description: the description of the metadata standard (optional)
     :type description: string
-    :param schema_name: the name of the metadata schema
-    :type schema_name: string
-    :param schema_version: the version of the metadata schema (nullable)
-    :type schema_version: string
-    :param schema_xsd: the XSD document defining the schema (nullable)
-    :type schema_xsd: string
-    :param base_schema_id: the id or name of the metadata schema from which this schema is derived (nullable)
-    :type base_schema_id: string
+    :param standard_name: the name of the metadata standard
+    :type standard_name: string
+    :param standard_version: the version of the metadata standard (nullable)
+    :type standard_version: string
+    :param parent_standard_id: the id or name of the metadata standard from which this standard is derived (nullable)
+    :type parent_standard_id: string
 
-    :returns: the newly created metadata schema (unless 'return_id_only' is set to True
-              in the context, in which case just the metadata schema id will be returned)
+    :returns: the newly created metadata standard (unless 'return_id_only' is set to True
+              in the context, in which case just the metadata standard id will be returned)
     :rtype: dictionary
     """
-    log.info("Creating metadata schema: %r", data_dict)
-    tk.check_access('metadata_schema_create', context, data_dict)
+    log.info("Creating metadata standard: %r", data_dict)
+    tk.check_access('metadata_standard_create', context, data_dict)
 
     model = context['model']
     user = context['user']
@@ -52,25 +50,25 @@ def metadata_schema_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    data, errors = tk.navl_validate(data_dict, schema.metadata_schema_create_schema(), context)
+    data, errors = tk.navl_validate(data_dict, schema.metadata_standard_create_schema(), context)
     if errors:
         session.rollback()
         raise tk.ValidationError(errors)
 
-    metadata_schema = model_save.metadata_schema_dict_save(data, context)
+    metadata_standard = model_save.metadata_standard_dict_save(data, context)
 
     rev = model.repo.new_revision()
     rev.author = user
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Create metadata schema %s') % metadata_schema.id
+        rev.message = _(u'REST API: Create metadata standard %s') % metadata_standard.id
 
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_schema.id if return_id_only \
-        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema.id})
+    output = metadata_standard.id if return_id_only \
+        else tk.get_action('metadata_standard_show')(context, {'id': metadata_standard.id})
     return output
 
 
@@ -81,7 +79,7 @@ def metadata_model_create(context, data_dict):
     You must be authorized to create metadata models.
 
     A model must be one and only one of the following:
-    - the default for the given schema (no organization or infrastructure)
+    - the default for the given metadata standard (no organization or infrastructure)
     - associated with an organization
     - associated with an infrastructure
 
@@ -96,8 +94,8 @@ def metadata_model_create(context, data_dict):
     :type title: string
     :param description: the description of the metadata model (optional)
     :type description: string
-    :param metadata_schema_id: the id or name of the metadata schema from which this model is derived
-    :type metadata_schema_id: string
+    :param metadata_standard_id: the id or name of the metadata standard from which this model is derived
+    :type metadata_standard_id: string
     :param model_json: the JSON dictionary defining the model (nullable)
     :type model_json: string
     :param organization_id: the id or name of the associated organization (nullable)
@@ -281,8 +279,8 @@ def metadata_record_create(context, data_dict):
     :param infrastructures: the infrastructures associated with the record (nullable - may be an empty list);
         list of dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
     :type infrastructures: list of dictionaries
-    :param metadata_schema_id: the id or name of the metadata schema that describes the record's structure
-    :type metadata_schema_id: string
+    :param metadata_standard_id: the id or name of the metadata standard that describes the record's structure
+    :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content (nullable)
     :type metadata_json: string
     :param metadata_raw: original unmodified metadata (nullable)

@@ -11,39 +11,39 @@ from ckanext.metadata.lib.dictization import model_dictize
 log = logging.getLogger(__name__)
 
 
-def metadata_schema_delete(context, data_dict):
+def metadata_standard_delete(context, data_dict):
     """
-    Delete a metadata schema.
+    Delete a metadata standard.
 
-    You must be authorized to delete the metadata schema.
+    You must be authorized to delete the metadata standard.
 
-    :param id: the id or name of the metadata schema to delete
+    :param id: the id or name of the metadata standard to delete
     :type id: string
     """
-    log.info("Deleting metadata schema: %r", data_dict)
+    log.info("Deleting metadata standard: %r", data_dict)
 
     model = context['model']
     user = context['user']
     session = context['session']
     defer_commit = context.get('defer_commit', False)
 
-    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
-    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
-    if metadata_schema is not None:
-        metadata_schema_id = metadata_schema.id
+    metadata_standard_id = tk.get_or_bust(data_dict, 'id')
+    metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
+    if metadata_standard is not None:
+        metadata_standard_id = metadata_standard.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
 
-    tk.check_access('metadata_schema_delete', context, data_dict)
+    tk.check_access('metadata_standard_delete', context, data_dict)
 
     if session.query(model.Package) \
             .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
-            .filter(model.PackageExtra.key == 'metadata_schema_id') \
-            .filter(model.PackageExtra.value == metadata_schema_id) \
+            .filter(model.PackageExtra.key == 'metadata_standard_id') \
+            .filter(model.PackageExtra.value == metadata_standard_id) \
             .filter(model.Package.type == 'metadata_record') \
             .filter(model.Package.state != 'deleted') \
             .count() > 0:
-        raise tk.ValidationError(_('Metadata schema has dependent metadata records'))
+        raise tk.ValidationError(_('Metadata standard has dependent metadata records'))
 
     cascade_context = {
         'model': model,
@@ -52,20 +52,20 @@ def metadata_schema_delete(context, data_dict):
         'defer_commit': True,
     }
 
-    # clear the base_schema_id on any referencing metadata schemas - implying that
-    # such schemas are now 'root' schemas, no longer derived from this one
-    referencing_schemas = session.query(ckanext_model.MetadataSchema) \
-        .filter(ckanext_model.MetadataSchema.base_schema_id == metadata_schema_id) \
-        .filter(ckanext_model.MetadataSchema.state != 'deleted') \
+    # clear the parent_standard_id on any child metadata standards - implying that
+    # such standards are now 'root' standards, no longer derived from this one
+    child_standards = session.query(ckanext_model.MetadataStandard) \
+        .filter(ckanext_model.MetadataStandard.parent_standard_id == metadata_standard_id) \
+        .filter(ckanext_model.MetadataStandard.state != 'deleted') \
         .all()
-    for referencing_schema in referencing_schemas:
-        referencing_schema_dict = model_dictize.metadata_schema_dictize(referencing_schema, cascade_context)
-        referencing_schema_dict['base_schema_id'] = ''
-        tk.get_action('metadata_schema_update')(cascade_context, referencing_schema_dict)
+    for child_standard in child_standards:
+        child_standard_dict = model_dictize.metadata_standard_dictize(child_standard, cascade_context)
+        child_standard_dict['parent_standard_id'] = ''
+        tk.get_action('metadata_standard_update')(cascade_context, child_standard_dict)
 
     # cascade delete to dependent metadata models
     metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
-        .filter(ckanext_model.MetadataModel.metadata_schema_id == metadata_schema_id) \
+        .filter(ckanext_model.MetadataModel.metadata_standard_id == metadata_standard_id) \
         .filter(ckanext_model.MetadataModel.state != 'deleted') \
         .all()
     for (metadata_model_id,) in metadata_model_ids:
@@ -73,9 +73,9 @@ def metadata_schema_delete(context, data_dict):
 
     rev = model.repo.new_revision()
     rev.author = user
-    rev.message = _(u'REST API: Delete metadata schema %s') % metadata_schema_id
+    rev.message = _(u'REST API: Delete metadata standard %s') % metadata_standard_id
 
-    metadata_schema.delete()
+    metadata_standard.delete()
     if not defer_commit:
         model.repo.commit()
 

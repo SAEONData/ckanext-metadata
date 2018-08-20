@@ -132,14 +132,6 @@ def json_pointer_validator(value):
     return value
 
 
-def xsd_validator(value):
-    """
-    TODO
-    Check for well-formed XSD.
-    """
-    return value
-
-
 def deserialize_json(value):
     """
     Converts a JSON-format string to an object - for use in "show" schemas
@@ -360,45 +352,45 @@ def group_does_not_exist(group_id_or_name, context):
     return group_id_or_name
 
 
-def unique_metadata_schema_name_and_version(key, data, errors, context):
+def unique_metadata_standard_name_and_version(key, data, errors, context):
     """
     For use with the '__after' schema key.
     """
     id_ = data.get(key[:-1] + ('id',))
-    schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)))
-    schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)))
+    standard_name = _convert_missing(data.get(key[:-1] + ('standard_name',)))
+    standard_version = _convert_missing(data.get(key[:-1] + ('standard_version',)))
 
-    metadata_schema = ckanext_model.MetadataSchema.lookup(schema_name, schema_version)
-    if metadata_schema and metadata_schema.state != 'deleted' and metadata_schema.id != id_:
-        raise tk.Invalid(_("Unique constraint violation: %s") % '(schema_name, schema_version)')
+    metadata_standard = ckanext_model.MetadataStandard.lookup(standard_name, standard_version)
+    if metadata_standard and metadata_standard.state != 'deleted' and metadata_standard.id != id_:
+        raise tk.Invalid(_("Unique constraint violation: %s") % '(standard_name, standard_version)')
 
 
-def no_loops_in_metadata_schema_hierarchy(key, data, errors, context):
+def no_loops_in_metadata_standard_hierarchy(key, data, errors, context):
     """
-    Checks that the base schema specified in the data would not cause
-    a loop in the metadata schema hierarchy.
+    Checks that the parent standard specified in the data would not cause
+    a loop in the metadata standard hierarchy.
     """
-    metadata_schema = context.get('metadata_schema')
-    if not metadata_schema:
-        return  # it's a new schema - no children
+    metadata_standard = context.get('metadata_standard')
+    if not metadata_standard:
+        return  # it's a new object - no children
 
-    base_schema_id = data.get(key[:-1] + ('base_schema_id',))
-    parent = ckanext_model.MetadataSchema.get(base_schema_id) \
-        if base_schema_id is not None else None
+    parent_standard_id = data.get(key[:-1] + ('parent_standard_id',))
+    parent = ckanext_model.MetadataStandard.get(parent_standard_id) \
+        if parent_standard_id is not None else None
 
     while parent is not None:
-        if parent == metadata_schema:
-            raise tk.Invalid(_("Loop in metadata schema hierarchy"))
-        parent = ckanext_model.MetadataSchema.get(parent.base_schema_id) \
-            if parent.base_schema_id is not None else None
+        if parent == metadata_standard:
+            raise tk.Invalid(_("Loop in metadata standard hierarchy"))
+        parent = ckanext_model.MetadataStandard.get(parent.parent_standard_id) \
+            if parent.parent_standard_id is not None else None
 
 
-def metadata_model_unique_schema_organization_infrastructure(key, data, errors, context):
+def metadata_model_unique_standard_organization_infrastructure(key, data, errors, context):
     """
-    Checks the uniqueness of metadata_schema-organization-infrastructure for a metadata model.
+    Checks the uniqueness of metadata_standard-organization-infrastructure for a metadata model.
     For use with the '__after' schema key; group names should already have been converted to group ids.
     """
-    metadata_schema_id = data.get(key[:-1] + ('metadata_schema_id',))
+    metadata_standard_id = data.get(key[:-1] + ('metadata_standard_id',))
     organization_id = data.get(key[:-1] + ('organization_id',))
     infrastructure_id = data.get(key[:-1] + ('infrastructure_id',))
 
@@ -407,13 +399,13 @@ def metadata_model_unique_schema_organization_infrastructure(key, data, errors, 
 
     # if we're updating, missing value(s) in the input data imply a partial update, so get the
     # existing value(s) and check that the updated key does not violate uniqueness
-    metadata_schema_id = _convert_missing(metadata_schema_id, obj.metadata_schema_id if obj else None)
+    metadata_standard_id = _convert_missing(metadata_standard_id, obj.metadata_standard_id if obj else None)
     organization_id = _convert_missing(organization_id, obj.organization_id if obj else None)
     infrastructure_id = _convert_missing(infrastructure_id, obj.infrastructure_id if obj else None)
 
-    metadata_model = ckanext_model.MetadataModel.lookup(metadata_schema_id, organization_id, infrastructure_id)
+    metadata_model = ckanext_model.MetadataModel.lookup(metadata_standard_id, organization_id, infrastructure_id)
     if metadata_model and metadata_model.state != 'deleted' and metadata_model.id != id_:
-        raise tk.Invalid(_("Unique constraint violation: %s") % '(metadata_schema_id, organization_id, infrastructure_id)')
+        raise tk.Invalid(_("Unique constraint violation: %s") % '(metadata_standard_id, organization_id, infrastructure_id)')
 
 
 def metadata_model_check_organization_infrastructure(key, data, errors, context):
@@ -437,24 +429,24 @@ def metadata_model_check_organization_infrastructure(key, data, errors, context)
                            "infrastructure but not both."))
 
 
-def metadata_schema_name_generator(key, data, errors, context):
+def metadata_standard_name_generator(key, data, errors, context):
     """
-    Generates the name for a metadata schema if not supplied. For use with the '__after' schema key.
+    Generates the name for a metadata standard if not supplied. For use with the '__after' schema key.
     """
     name = _convert_missing(data.get(key[:-1] + ('name',)))
     if not name:
         id_ = _convert_missing(data.get(key[:-1] + ('id',)))
         if id_:
-            metadata_schema = ckanext_model.MetadataSchema.get(id_)
-            if metadata_schema:
+            metadata_standard = ckanext_model.MetadataStandard.get(id_)
+            if metadata_standard:
                 # for updates we want to re-generate the name only if it was previously auto-generated
-                autoname = _generate_name(metadata_schema.schema_name, metadata_schema.schema_version)
-                if metadata_schema.name != autoname:
+                autoname = _generate_name(metadata_standard.standard_name, metadata_standard.standard_version)
+                if metadata_standard.name != autoname:
                     return
 
-        schema_name = _convert_missing(data.get(key[:-1] + ('schema_name',)), '')
-        schema_version = _convert_missing(data.get(key[:-1] + ('schema_version',)), '')
-        name = _generate_name(schema_name, schema_version)
+        standard_name = _convert_missing(data.get(key[:-1] + ('standard_name',)), '')
+        standard_version = _convert_missing(data.get(key[:-1] + ('standard_version',)), '')
+        name = _generate_name(standard_name, standard_version)
         data[key[:-1] + ('name',)] = name
 
 
@@ -464,16 +456,16 @@ def metadata_model_name_generator(key, data, errors, context):
     """
     model = context['model']
 
-    def get_name_components(metadata_schema_id, organization_id, infrastructure_id):
-        metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+    def get_name_components(metadata_standard_id, organization_id, infrastructure_id):
+        metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
         organization = model.Group.get(organization_id) if organization_id else None
         infrastructure = model.Group.get(infrastructure_id) if infrastructure_id else None
 
-        metadata_schema_name = metadata_schema.name if metadata_schema else ''
+        metadata_standard_name = metadata_standard.name if metadata_standard else ''
         organization_name = organization.name if organization else ''
         infrastructure_name = infrastructure.name if infrastructure else ''
 
-        return metadata_schema_name, organization_name, infrastructure_name
+        return metadata_standard_name, organization_name, infrastructure_name
 
     name = _convert_missing(data.get(key[:-1] + ('name',)))
     if not name:
@@ -482,21 +474,21 @@ def metadata_model_name_generator(key, data, errors, context):
             metadata_model = ckanext_model.MetadataModel.get(id_)
             if metadata_model:
                 # for updates we want to re-generate the name only if it was previously auto-generated
-                metadata_schema_name, organization_name, infrastructure_name = get_name_components(
-                    metadata_model.metadata_schema_id,
+                metadata_standard_name, organization_name, infrastructure_name = get_name_components(
+                    metadata_model.metadata_standard_id,
                     metadata_model.organization_id,
                     metadata_model.infrastructure_id
                 )
-                autoname = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
+                autoname = _generate_name(metadata_standard_name, organization_name, infrastructure_name)
                 if metadata_model.name != autoname:
                     return
 
-        metadata_schema_name, organization_name, infrastructure_name = get_name_components(
-            _convert_missing(data.get(key[:-1] + ('metadata_schema_id',))),
+        metadata_standard_name, organization_name, infrastructure_name = get_name_components(
+            _convert_missing(data.get(key[:-1] + ('metadata_standard_id',))),
             _convert_missing(data.get(key[:-1] + ('organization_id',))),
             _convert_missing(data.get(key[:-1] + ('infrastructure_id',)))
         )
-        name = _generate_name(metadata_schema_name, organization_name, infrastructure_name)
+        name = _generate_name(metadata_standard_name, organization_name, infrastructure_name)
         data[key[:-1] + ('name',)] = name
 
 

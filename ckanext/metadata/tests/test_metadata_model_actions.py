@@ -22,24 +22,24 @@ from ckanext.metadata.tests import (
 
 class TestMetadataModelActions(ActionTestBase):
 
-    def _generate_and_validate_metadata_record(self, metadata_schema_id=None,
+    def _generate_and_validate_metadata_record(self, metadata_standard_id=None,
                                                add_infrastructure_to_record=False,
                                                add_organization_to_model=False,
                                                add_infrastructure_to_model=False):
         """
         Generate a metadata record and a metadata model, and validate the record using the model.
-        :param metadata_schema_id: specify the metadata schema to use
+        :param metadata_standard_id: specify the metadata standard to use
         :param add_infrastructure_to_record: assign an infrastructure to the record
         :param add_organization_to_model: associate the record's organization with the model
         :param add_infrastructure_to_model: associate the record's infrastructure with the model
         :return: tuple of new record and model dictionaries
         """
         metadata_record = ckanext_factories.MetadataRecord(
-            metadata_schema_id=metadata_schema_id,
+            metadata_standard_id=metadata_standard_id,
             infrastructures=[{'id': ckanext_factories.Infrastructure()['id']}] if add_infrastructure_to_record else [])
 
         metadata_model = ckanext_factories.MetadataModel(
-            metadata_schema_id=metadata_record['metadata_schema_id'],
+            metadata_standard_id=metadata_record['metadata_standard_id'],
             organization_id=metadata_record['owner_org'] if add_organization_to_model else '',
             infrastructure_id=metadata_record['infrastructures'][0]['id'] if add_infrastructure_to_model else '')
 
@@ -50,12 +50,12 @@ class TestMetadataModelActions(ActionTestBase):
 
     def _generate_and_validate_metadata_record_using_model(self, metadata_model):
         """
-        Generate a metadata record with the same schema and organization/infrastructure of the given model,
+        Generate a metadata record with the same standard and organization/infrastructure of the given model,
         and validate it using this model.
         :return: metadata record dict
         """
         metadata_record = ckanext_factories.MetadataRecord(
-            metadata_schema_id=metadata_model['metadata_schema_id'],
+            metadata_standard_id=metadata_model['metadata_standard_id'],
             owner_org=metadata_model['organization_id'],
             infrastructures=[{'id': metadata_model['infrastructure_id']}] if metadata_model['infrastructure_id'] else [])
 
@@ -72,23 +72,23 @@ class TestMetadataModelActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'validated', True)
 
     def test_create_valid(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
             'title': 'Test Metadata Model',
             'description': 'This is a test metadata model',
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
             'infrastructure_id': '',
             'model_json': '{ "testkey": "testvalue" }',
         }
         result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
-        assert obj.name == generate_name(metadata_schema['name'], '', '')
+        assert obj.name == generate_name(metadata_standard['name'], '', '')
 
     def test_create_valid_datacite(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
             'infrastructure_id': '',
             'model_json': load_example('saeon_datacite_model.json'),
@@ -97,10 +97,10 @@ class TestMetadataModelActions(ActionTestBase):
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_setname(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
             'name': 'test-metadata-model',
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
             'infrastructure_id': '',
             'model_json': '{ "testkey": "testvalue" }',
@@ -109,40 +109,40 @@ class TestMetadataModelActions(ActionTestBase):
         assert_object_matches_dict(obj, input_dict)
 
     def test_create_valid_with_organization_byname(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         organization = ckan_factories.Organization()
         input_dict = {
-            'metadata_schema_id': metadata_schema['name'],
+            'metadata_standard_id': metadata_standard['name'],
             'organization_id': organization['name'],
             'infrastructure_id': '',
             'model_json': '{}',
         }
         result, obj = self.test_action('metadata_model_create', **input_dict)
-        assert obj.metadata_schema_id == metadata_schema['id']
+        assert obj.metadata_standard_id == metadata_standard['id']
         assert obj.organization_id == organization['id']
         assert obj.infrastructure_id is None
-        assert obj.name == generate_name(metadata_schema['name'], organization['name'], '')
+        assert obj.name == generate_name(metadata_standard['name'], organization['name'], '')
 
     def test_create_valid_with_infrastructure_byname(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         infrastructure = ckanext_factories.Infrastructure()
         input_dict = {
-            'metadata_schema_id': metadata_schema['name'],
+            'metadata_standard_id': metadata_standard['name'],
             'organization_id': '',
             'infrastructure_id': infrastructure['name'],
             'model_json': '{}',
         }
         result, obj = self.test_action('metadata_model_create', **input_dict)
-        assert obj.metadata_schema_id == metadata_schema['id']
+        assert obj.metadata_standard_id == metadata_standard['id']
         assert obj.organization_id is None
         assert obj.infrastructure_id == infrastructure['id']
-        assert obj.name == generate_name(metadata_schema['name'], '', infrastructure['name'])
+        assert obj.name == generate_name(metadata_standard['name'], '', infrastructure['name'])
 
     def test_create_valid_sysadmin_setid(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
             'id': make_uuid(),
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
             'infrastructure_id': '',
             'model_json': '{}',
@@ -150,12 +150,12 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self.test_action('metadata_model_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_same_schema_different_organization(self):
+    def test_create_valid_same_standard_different_organization(self):
         organization1 = ckan_factories.Organization()
         organization2 = ckan_factories.Organization()
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization1['id'])
         input_dict = {
-            'metadata_schema_id': metadata_model['metadata_schema_id'],
+            'metadata_standard_id': metadata_model['metadata_standard_id'],
             'organization_id': organization2['id'],
             'infrastructure_id': '',
             'model_json': '{}',
@@ -163,12 +163,12 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_same_schema_different_infrastructure(self):
+    def test_create_valid_same_standard_different_infrastructure(self):
         infrastructure1 = ckanext_factories.Infrastructure()
         infrastructure2 = ckanext_factories.Infrastructure()
         metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure1['id'])
         input_dict = {
-            'metadata_schema_id': metadata_model['metadata_schema_id'],
+            'metadata_standard_id': metadata_model['metadata_standard_id'],
             'organization_id': '',
             'infrastructure_id': infrastructure2['id'],
             'model_json': '{}',
@@ -176,12 +176,12 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_same_organization_different_schema(self):
+    def test_create_valid_same_organization_different_standard(self):
         organization = ckan_factories.Organization()
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_standard_id': metadata_standard['id'],
             'organization_id': metadata_model['organization_id'],
             'infrastructure_id': '',
             'model_json': '{}',
@@ -189,12 +189,12 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_same_infrastructure_different_schema(self):
+    def test_create_valid_same_infrastructure_different_standard(self):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
             'infrastructure_id': metadata_model['infrastructure_id'],
             'model_json': '{}',
@@ -202,57 +202,57 @@ class TestMetadataModelActions(ActionTestBase):
         result, obj = self.test_action('metadata_model_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_invalidate_records_matching_schema(self):
+    def test_create_invalidate_records_matching_standard(self):
         """
         Create a model that will be used for validating an existing validated metadata record by virtue
-        of matching on the record's schema. This should invalidate the record.
+        of matching on the record's metadata standard. This should invalidate the record.
         """
         # add org to model to avoid unique key violation below
         metadata_record, _ = self._generate_and_validate_metadata_record(add_organization_to_model=True)
         result, obj = self.test_action('metadata_model_create',
-                                       metadata_schema_id=metadata_record['metadata_schema_id'],
+                                       metadata_standard_id=metadata_record['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id='',
                                        model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
-    def test_create_invalidate_records_matching_schema_organization(self):
+    def test_create_invalidate_records_matching_standard_organization(self):
         """
         Create a model that will be used for validating an existing validated metadata record by virtue
-        of matching on schema and organization. This should invalidate the record.
+        of matching on standard and organization. This should invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record()
         result, obj = self.test_action('metadata_model_create',
-                                       metadata_schema_id=metadata_record['metadata_schema_id'],
+                                       metadata_standard_id=metadata_record['metadata_standard_id'],
                                        organization_id=metadata_record['owner_org'],
                                        infrastructure_id='',
                                        model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
-    def test_create_invalidate_records_matching_schema_infrastructure(self):
+    def test_create_invalidate_records_matching_standard_infrastructure(self):
         """
         Create a model that will be used for validating an existing validated metadata record by virtue
-        of matching on schema and infrastructure. This should invalidate the record.
+        of matching on standard and infrastructure. This should invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
         result, obj = self.test_action('metadata_model_create',
-                                       metadata_schema_id=metadata_record['metadata_schema_id'],
+                                       metadata_standard_id=metadata_record['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id=metadata_record['infrastructures'][0]['id'],
                                        model_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_model_create', obj)
 
-    def test_create_no_invalidate_records_different_schema(self):
+    def test_create_no_invalidate_records_different_standard(self):
         """
-        Create a model with a different schema to that of an existing validated metadata record.
+        Create a model with a different standard to that of an existing validated metadata record.
         This should not invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record()
         call_action('metadata_model_create',
-                    metadata_schema_id=ckanext_factories.MetadataSchema()['id'],
+                    metadata_standard_id=ckanext_factories.MetadataStandard()['id'],
                     organization_id='',
                     infrastructure_id='',
                     model_json='{}')
@@ -260,12 +260,12 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_no_invalidate_records_different_organization(self):
         """
-        Create a model with the same schema but a different organization to that of an existing
+        Create a model with the same standard but a different organization to that of an existing
         validated metadata record. This should not invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record()
         call_action('metadata_model_create',
-                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    metadata_standard_id=metadata_record['metadata_standard_id'],
                     organization_id=ckan_factories.Organization()['id'],
                     infrastructure_id='',
                     model_json='{}')
@@ -273,12 +273,12 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_no_invalidate_records_different_infrastructure_1(self):
         """
-        Create a model with the same schema but a different infrastructure to that of an existing
+        Create a model with the same standard but a different infrastructure to that of an existing
         validated metadata record. This should not invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
         call_action('metadata_model_create',
-                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    metadata_standard_id=metadata_record['metadata_standard_id'],
                     organization_id='',
                     infrastructure_id=ckanext_factories.Infrastructure()['id'],
                     model_json='{}')
@@ -286,12 +286,12 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_no_invalidate_records_different_infrastructure_2(self):
         """
-        Create a model with the same schema but a different infrastructure to that of an existing
+        Create a model with the same standard but a different infrastructure to that of an existing
         validated metadata record. This should not invalidate the record.
         """
         metadata_record, _ = self._generate_and_validate_metadata_record()
         call_action('metadata_model_create',
-                    metadata_schema_id=metadata_record['metadata_schema_id'],
+                    metadata_standard_id=metadata_record['metadata_standard_id'],
                     organization_id='',
                     infrastructure_id=ckanext_factories.Infrastructure()['id'],
                     model_json='{}')
@@ -303,25 +303,25 @@ class TestMetadataModelActions(ActionTestBase):
                                        name=metadata_model['name'])
         assert_error(result, 'name', 'Duplicate name: Metadata Model')
 
-    def test_create_invalid_duplicate_schema(self):
+    def test_create_invalid_duplicate_standard(self):
         metadata_model = ckanext_factories.MetadataModel()
         result, obj = self.test_action('metadata_model_create', should_error=True,
-                                       metadata_schema_id=metadata_model['metadata_schema_id'])
+                                       metadata_standard_id=metadata_model['metadata_standard_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
-    def test_create_invalid_duplicate_schema_organization(self):
+    def test_create_invalid_duplicate_standard_organization(self):
         organization = ckan_factories.Organization()
         metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
         result, obj = self.test_action('metadata_model_create', should_error=True,
-                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model['metadata_standard_id'],
                                        organization_id=metadata_model['organization_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
-    def test_create_invalid_duplicate_schema_infrastructure(self):
+    def test_create_invalid_duplicate_standard_infrastructure(self):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
         result, obj = self.test_action('metadata_model_create', should_error=True,
-                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model['metadata_standard_id'],
                                        infrastructure_id=metadata_model['infrastructure_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
@@ -362,65 +362,65 @@ class TestMetadataModelActions(ActionTestBase):
 
     def test_create_invalid_missing_params(self):
         result, obj = self.test_action('metadata_model_create', should_error=True)
-        assert_error(result, 'metadata_schema_id', 'Missing parameter')
+        assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'organization_id', 'Missing parameter')
         assert_error(result, 'infrastructure_id', 'Missing parameter')
         assert_error(result, 'model_json', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
         result, obj = self.test_action('metadata_model_create', should_error=True,
-                                       metadata_schema_id='',
+                                       metadata_standard_id='',
                                        model_json='')
-        assert_error(result, 'metadata_schema_id', 'Missing value')
+        assert_error(result, 'metadata_standard_id', 'Missing value')
         assert_error(result, 'model_json', 'Missing value')
 
     def test_create_invalid_bad_references(self):
         result, obj = self.test_action('metadata_model_create', should_error=True,
-                                       metadata_schema_id='a',
+                                       metadata_standard_id='a',
                                        organization_id='b',
                                        infrastructure_id='c')
-        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
+        assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
 
     def test_create_invalid_deleted_references(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         organization = ckan_factories.Organization()
         infrastructure = ckanext_factories.Infrastructure()
-        call_action('metadata_schema_delete', id=metadata_schema['id'])
+        call_action('metadata_standard_delete', id=metadata_standard['id'])
         call_action('organization_delete', id=organization['id'])
         call_action('infrastructure_delete', id=infrastructure['id'])
 
         result, obj = self.test_action('metadata_model_create', should_error=True,
-                                       metadata_schema_id=metadata_schema['id'],
+                                       metadata_standard_id=metadata_standard['id'],
                                        organization_id=organization['id'],
                                        infrastructure_id=infrastructure['id'])
-        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
+        assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
 
     def test_update_valid(self):
         metadata_model = ckanext_factories.MetadataModel()
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
             'id': metadata_model['id'],
             'title': 'Updated Test Metadata Model',
             'description': 'Updated test metadata model description',
-            'metadata_schema_id': metadata_schema['id'],
+            'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
             'infrastructure_id': '',
             'model_json': '{ "testkey": "newtestvalue" }',
         }
         result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
-        assert obj.name == generate_name(metadata_schema['name'], '', '')
+        assert obj.name == generate_name(metadata_standard['name'], '', '')
 
     def test_update_valid_partial(self):
         metadata_model = ckanext_factories.MetadataModel()
         input_dict = {
             'id': metadata_model['id'],
             'name': 'updated-test-metadata-model',
-            'metadata_schema_id': metadata_model['metadata_schema_id'],
+            'metadata_standard_id': metadata_model['metadata_standard_id'],
             'organization_id': '',
             'infrastructure_id': '',
             'model_json': '{ "testkey": "newtestvalue" }',
@@ -434,7 +434,7 @@ class TestMetadataModelActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel()
         input_dict = {
             'id': metadata_model['id'],
-            'metadata_schema_id': metadata_model['metadata_schema_id'],
+            'metadata_standard_id': metadata_model['metadata_standard_id'],
             'organization_id': '',
             'infrastructure_id': '',
             'model_json': load_example('saeon_datacite_model.json'),
@@ -447,30 +447,30 @@ class TestMetadataModelActions(ActionTestBase):
         organization = ckan_factories.Organization()
         input_dict = {
             'id': metadata_model['id'],
-            'metadata_schema_id': metadata_model['metadata_schema_id'],
+            'metadata_standard_id': metadata_model['metadata_standard_id'],
             'organization_id': organization['id'],
             'infrastructure_id': '',
             'model_json': '{}',
         }
         result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
-        metadata_schema = ckanext_model.MetadataSchema.get(metadata_model['metadata_schema_id'])
-        assert obj.name == generate_name(metadata_schema.name, organization['name'], '')
+        metadata_standard = ckanext_model.MetadataStandard.get(metadata_model['metadata_standard_id'])
+        assert obj.name == generate_name(metadata_standard.name, organization['name'], '')
 
     def test_update_valid_set_infrastructure(self):
         metadata_model = ckanext_factories.MetadataModel()
         infrastructure = ckanext_factories.Infrastructure()
         input_dict = {
             'id': metadata_model['id'],
-            'metadata_schema_id': metadata_model['metadata_schema_id'],
+            'metadata_standard_id': metadata_model['metadata_standard_id'],
             'organization_id': '',
             'infrastructure_id': infrastructure['id'],
             'model_json': '{}',
         }
         result, obj = self.test_action('metadata_model_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
-        metadata_schema = ckanext_model.MetadataSchema.get(metadata_model['metadata_schema_id'])
-        assert obj.name == generate_name(metadata_schema.name, '', infrastructure['name'])
+        metadata_standard = ckanext_model.MetadataStandard.get(metadata_model['metadata_standard_id'])
+        assert obj.name == generate_name(metadata_standard.name, '', infrastructure['name'])
 
     def test_update_json_invalidate_records_1(self):
         """
@@ -483,7 +483,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         result, obj = self.test_action('metadata_model_update',
                                        id=metadata_model['id'],
-                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id='',
                                        model_json='{ "newtestkey": "newtestvalue" }')
@@ -505,7 +505,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         result, obj = self.test_action('metadata_model_update',
                                        id=metadata_model['id'],
-                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id=metadata_model['infrastructure_id'],
                                        model_json='{ "newtestkey": "newtestvalue" }')
@@ -527,7 +527,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         result, obj = self.test_action('metadata_model_update',
                                        id=metadata_model['id'],
-                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model['metadata_standard_id'],
                                        organization_id=metadata_model['organization_id'],
                                        infrastructure_id='',
                                        model_json='{ "newtestkey": "newtestvalue" }')
@@ -549,7 +549,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         result, obj = self.test_action('metadata_model_update',
                                        id=metadata_model['id'],
-                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id=metadata_record_1['infrastructures'][0]['id'],
                                        model_json=json.dumps(metadata_model['model_json']))
@@ -565,12 +565,12 @@ class TestMetadataModelActions(ActionTestBase):
         newly dependent on the model.
         """
         metadata_record_1, metadata_model_1 = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True, add_infrastructure_to_model=True)
-        metadata_record_2, metadata_model_2 = self._generate_and_validate_metadata_record(metadata_schema_id=metadata_record_1['metadata_schema_id'], add_organization_to_model=True)
+        metadata_record_2, metadata_model_2 = self._generate_and_validate_metadata_record(metadata_standard_id=metadata_record_1['metadata_standard_id'], add_organization_to_model=True)
         assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'])
 
         result, obj = self.test_action('metadata_model_update',
                                        id=metadata_model_1['id'],
-                                       metadata_schema_id=metadata_model_1['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model_1['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id='',
                                        model_json=json.dumps(metadata_model_1['model_json']))
@@ -591,7 +591,7 @@ class TestMetadataModelActions(ActionTestBase):
 
         result, obj = self.test_action('metadata_model_update',
                                        id=metadata_model['id'],
-                                       metadata_schema_id=metadata_model['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model['metadata_standard_id'],
                                        organization_id=metadata_record_1['owner_org'],
                                        infrastructure_id='',
                                        model_json=json.dumps(metadata_model['model_json']))
@@ -607,12 +607,12 @@ class TestMetadataModelActions(ActionTestBase):
         newly dependent on the model.
         """
         metadata_record_1, metadata_model_1 = self._generate_and_validate_metadata_record(add_organization_to_model=True)
-        metadata_record_2, metadata_model_2 = self._generate_and_validate_metadata_record(metadata_schema_id=metadata_record_1['metadata_schema_id'], add_organization_to_model=True)
+        metadata_record_2, metadata_model_2 = self._generate_and_validate_metadata_record(metadata_standard_id=metadata_record_1['metadata_standard_id'], add_organization_to_model=True)
         assert_metadata_model_has_dependent_records(metadata_model_1['id'], metadata_record_1['id'])
 
         result, obj = self.test_action('metadata_model_update',
                                        id=metadata_model_1['id'],
-                                       metadata_schema_id=metadata_model_1['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model_1['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id='',
                                        model_json=json.dumps(metadata_model_1['model_json']))
@@ -636,7 +636,7 @@ class TestMetadataModelActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel()
         result, obj = self.test_action('metadata_model_update', should_error=True,
                                        id=metadata_model['id'])
-        assert_error(result, 'metadata_schema_id', 'Missing parameter')
+        assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'organization_id', 'Missing parameter')
         assert_error(result, 'infrastructure_id', 'Missing parameter')
         assert_error(result, 'model_json', 'Missing parameter')
@@ -645,36 +645,36 @@ class TestMetadataModelActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel()
         result, obj = self.test_action('metadata_model_update', should_error=True,
                                        id=metadata_model['id'],
-                                       metadata_schema_id='',
+                                       metadata_standard_id='',
                                        model_json='')
-        assert_error(result, 'metadata_schema_id', 'Missing value')
+        assert_error(result, 'metadata_standard_id', 'Missing value')
         assert_error(result, 'model_json', 'Missing value')
 
-    def test_update_invalid_duplicate_schema(self):
+    def test_update_invalid_duplicate_standard(self):
         metadata_model1 = ckanext_factories.MetadataModel()
         metadata_model2 = ckanext_factories.MetadataModel()
         result, obj = self.test_action('metadata_model_update', should_error=True,
                                        id=metadata_model1['id'],
-                                       metadata_schema_id=metadata_model2['metadata_schema_id'])
+                                       metadata_standard_id=metadata_model2['metadata_standard_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
-    def test_update_invalid_duplicate_schema_organization(self):
+    def test_update_invalid_duplicate_standard_organization(self):
         organization = ckan_factories.Organization()
         metadata_model1 = ckanext_factories.MetadataModel()
         metadata_model2 = ckanext_factories.MetadataModel(organization_id=organization['id'])
         result, obj = self.test_action('metadata_model_update', should_error=True,
                                        id=metadata_model1['id'],
-                                       metadata_schema_id=metadata_model2['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model2['metadata_standard_id'],
                                        organization_id=metadata_model2['organization_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
-    def test_update_invalid_duplicate_schema_infrastructure(self):
+    def test_update_invalid_duplicate_standard_infrastructure(self):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_model1 = ckanext_factories.MetadataModel()
         metadata_model2 = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
         result, obj = self.test_action('metadata_model_update', should_error=True,
                                        id=metadata_model1['id'],
-                                       metadata_schema_id=metadata_model2['metadata_schema_id'],
+                                       metadata_standard_id=metadata_model2['metadata_standard_id'],
                                        infrastructure_id=metadata_model2['infrastructure_id'])
         assert_error(result, '__after', 'Unique constraint violation')
 
@@ -723,28 +723,28 @@ class TestMetadataModelActions(ActionTestBase):
         metadata_model = ckanext_factories.MetadataModel()
         result, obj = self.test_action('metadata_model_update', should_error=True,
                                        id=metadata_model['id'],
-                                       metadata_schema_id='a',
+                                       metadata_standard_id='a',
                                        organization_id='b',
                                        infrastructure_id='c')
-        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
+        assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
 
     def test_update_invalid_deleted_references(self):
         metadata_model = ckanext_factories.MetadataModel()
-        metadata_schema = ckanext_factories.MetadataSchema()
+        metadata_standard = ckanext_factories.MetadataStandard()
         organization = ckan_factories.Organization()
         infrastructure = ckanext_factories.Infrastructure()
-        call_action('metadata_schema_delete', id=metadata_schema['id'])
+        call_action('metadata_standard_delete', id=metadata_standard['id'])
         call_action('organization_delete', id=organization['id'])
         call_action('infrastructure_delete', id=infrastructure['id'])
 
         result, obj = self.test_action('metadata_model_create', should_error=True,
                                        id=metadata_model['id'],
-                                       metadata_schema_id=metadata_schema['id'],
+                                       metadata_standard_id=metadata_standard['id'],
                                        organization_id=organization['id'],
                                        infrastructure_id=infrastructure['id'])
-        assert_error(result, 'metadata_schema_id', 'Not found: Metadata Schema')
+        assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
         assert_error(result, 'organization_id', 'Not found: Organization')
         assert_error(result, 'infrastructure_id', 'Not found: Infrastructure')
 
