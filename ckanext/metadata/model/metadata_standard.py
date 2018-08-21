@@ -17,6 +17,7 @@ metadata_standard_table = Table(
     # we implement the self-relation "softly", otherwise revision table
     # auto-generation gets confused about how to join to this table
     Column('parent_standard_id', types.UnicodeText),  # ForeignKey('metadata_standard.id')),
+    Column('example_metadata_json', types.UnicodeText),
     UniqueConstraint('standard_name', 'standard_version')
 )
 

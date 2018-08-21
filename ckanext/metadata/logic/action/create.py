@@ -36,6 +36,8 @@ def metadata_standard_create(context, data_dict):
     :type standard_version: string
     :param parent_standard_id: the id or name of the metadata standard from which this standard is derived (nullable)
     :type parent_standard_id: string
+    :param example_metadata_json: example of a JSON metadata dictionary that conforms to this standard (nullable)
+    :type example_metadata_json: string
 
     :returns: the newly created metadata standard (unless 'return_id_only' is set to True
               in the context, in which case just the metadata standard id will be returned)

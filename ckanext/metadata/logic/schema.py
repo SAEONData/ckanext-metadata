@@ -245,6 +245,7 @@ def metadata_standard_create_schema():
         'standard_name': [v.not_empty, unicode],
         'standard_version': [v.not_missing, unicode],
         'parent_standard_id': [v.not_missing, unicode, v.object_exists('metadata_standard')],
+        'example_metadata_json': [v.not_missing, unicode, v.json_dict_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
@@ -268,6 +269,7 @@ def metadata_standard_show_schema():
     _make_show_schema(schema)
     schema.update({
         'parent_standard_id': [v.convert_id_to_name('metadata_standard')],
+        'example_metadata_json': [v.deserialize_json],
     })
     return schema
 
