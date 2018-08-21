@@ -23,7 +23,7 @@ _model_map = {
     'infrastructure': ckan_model.Group,
     'metadata_collection': ckan_model.Group,
     'metadata_record': ckan_model.Package,
-    'metadata_model': ckanext_model.MetadataModel,
+    'metadata_schema': ckanext_model.MetadataSchema,
     'metadata_standard': ckanext_model.MetadataStandard,
     'workflow_state': ckanext_model.WorkflowState,
     'workflow_transition': ckanext_model.WorkflowTransition,
@@ -126,19 +126,19 @@ def assert_group_has_member(group_id, object_id, object_table, capacity='public'
     assert member.state == state
 
 
-def assert_metadata_record_has_validation_models(metadata_record_id, *metadata_model_names):
+def assert_metadata_record_has_validation_schemas(metadata_record_id, *metadata_schema_names):
     """
-    Check that the given record has the expected set of validation models.
+    Check that the given record has the expected set of validation schemas.
     """
-    validation_model_list = call_action('metadata_record_validation_model_list', id=metadata_record_id)
-    assert set(validation_model_list) == set(metadata_model_names)
+    validation_schema_list = call_action('metadata_record_validation_schema_list', id=metadata_record_id)
+    assert set(validation_schema_list) == set(metadata_schema_names)
 
 
-def assert_metadata_model_has_dependent_records(metadata_model_id, *metadata_record_ids):
+def assert_metadata_schema_has_dependent_records(metadata_schema_id, *metadata_record_ids):
     """
-    Check that the given model has the expected set of dependent records.
+    Check that the given schema has the expected set of dependent records.
     """
-    dependent_record_list = call_action('metadata_model_dependent_record_list', id=metadata_model_id)
+    dependent_record_list = call_action('metadata_schema_dependent_record_list', id=metadata_schema_id)
     assert set(dependent_record_list) == set(metadata_record_ids)
 
 
@@ -237,10 +237,10 @@ class ActionTestBase(FunctionalTestBase):
 
         return result, obj
 
-    def assert_validate_activity_logged(self, metadata_record_id, *validation_models, **validation_errors):
+    def assert_validate_activity_logged(self, metadata_record_id, *validation_schemas, **validation_errors):
         """
-        :param validation_models: iterable of metadata model dictionaries
-        :param validation_errors: dictionary mapping metadata model keys to expected error patterns (regex's)
+        :param validation_schemas: iterable of metadata schema dictionaries
+        :param validation_errors: dictionary mapping metadata schema keys to expected error patterns (regex's)
         """
         activity_dict = call_action('metadata_record_validation_activity_show', id=metadata_record_id)
         assert activity_dict['user_id'] == self.normal_user['id']
@@ -248,11 +248,11 @@ class ActionTestBase(FunctionalTestBase):
         assert activity_dict['activity_type'] == 'metadata validation'
         assert activity_dict['data']['action'] == 'metadata_record_validate'
         logged_results = activity_dict['data']['results']
-        assert len(logged_results) == len(validation_models)
+        assert len(logged_results) == len(validation_schemas)
         logged_errors = {}
-        for validation_model in validation_models:
+        for validation_schema in validation_schemas:
             logged_result = next((result for result in logged_results
-                                  if result['metadata_model_id'] == validation_model['id']), None)
+                                  if result['metadata_schema_id'] == validation_schema['id']), None)
             assert logged_result
             logged_errors.update(logged_result['errors'])
         assert len(logged_errors) == len(validation_errors)

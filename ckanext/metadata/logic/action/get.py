@@ -75,57 +75,57 @@ def metadata_standard_list(context, data_dict):
 
 
 @tk.side_effect_free
-def metadata_model_show(context, data_dict):
+def metadata_schema_show(context, data_dict):
     """
-    Return the details of a metadata model.
+    Return the details of a metadata schema.
 
-    :param id: the id or name of the metadata model
+    :param id: the id or name of the metadata schema
     :type id: string
 
     :rtype: dictionary
     """
-    log.debug("Retrieving metadata model: %r", data_dict)
+    log.debug("Retrieving metadata schema: %r", data_dict)
 
-    metadata_model_id = tk.get_or_bust(data_dict, 'id')
-    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
-    if metadata_model is not None:
-        metadata_model_id = metadata_model.id
+    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
+    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+    if metadata_schema is not None:
+        metadata_schema_id = metadata_schema.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
-    tk.check_access('metadata_model_show', context, data_dict)
+    tk.check_access('metadata_schema_show', context, data_dict)
 
-    context['metadata_model'] = metadata_model
-    metadata_model_dict = model_dictize.metadata_model_dictize(metadata_model, context)
+    context['metadata_schema'] = metadata_schema
+    metadata_schema_dict = model_dictize.metadata_schema_dictize(metadata_schema, context)
 
-    result_dict, errors = tk.navl_validate(metadata_model_dict, schema.metadata_model_show_schema(), context)
+    result_dict, errors = tk.navl_validate(metadata_schema_dict, schema.metadata_schema_show_schema(), context)
     return result_dict
 
 
 @tk.side_effect_free
-def metadata_model_list(context, data_dict):
+def metadata_schema_list(context, data_dict):
     """
-    Return a list of names of the site's metadata models.
+    Return a list of names of the site's metadata schemas.
 
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
 
     :rtype: list of strings
     """
-    log.debug("Retrieving metadata model list: %r", data_dict)
-    tk.check_access('metadata_model_list', context, data_dict)
+    log.debug("Retrieving metadata schema list: %r", data_dict)
+    tk.check_access('metadata_schema_list', context, data_dict)
 
     session = context['session']
     all_fields = asbool(data_dict.get('all_fields'))
 
-    metadata_models = session.query(ckanext_model.MetadataModel.id, ckanext_model.MetadataModel.name) \
+    metadata_schemas = session.query(ckanext_model.MetadataSchema.id, ckanext_model.MetadataSchema.name) \
         .filter_by(state='active') \
         .all()
     result = []
-    for (id_, name) in metadata_models:
+    for (id_, name) in metadata_schemas:
         if all_fields:
             data_dict['id'] = id_
-            result += [tk.get_action('metadata_model_show')(context, data_dict)]
+            result += [tk.get_action('metadata_schema_show')(context, data_dict)]
         else:
             result += [name]
 
@@ -133,47 +133,47 @@ def metadata_model_list(context, data_dict):
 
 
 @tk.side_effect_free
-def metadata_model_dependent_record_list(context, data_dict):
+def metadata_schema_dependent_record_list(context, data_dict):
     """
     Return a list of ids of metadata records that are dependent on the given
-    metadata model for validation.
+    metadata schema for validation.
 
-    :param id: the id or name of the metadata model
+    :param id: the id or name of the metadata schema
     :type id: string
 
     :rtype: list of strings
     """
-    log.debug("Retrieving list of metadata records dependent on metadata model: %r", data_dict)
+    log.debug("Retrieving list of metadata records dependent on metadata schema: %r", data_dict)
 
     session = context['session']
     model = context['model']
 
-    metadata_model_id = tk.get_or_bust(data_dict, 'id')
-    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
-    if metadata_model is not None:
-        metadata_model_id = metadata_model.id
+    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
+    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+    if metadata_schema is not None:
+        metadata_schema_id = metadata_schema.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
-    tk.check_access('metadata_model_dependent_record_list', context, data_dict)
+    tk.check_access('metadata_schema_dependent_record_list', context, data_dict)
 
     q = session.query(model.Package.id) \
         .join(model.PackageExtra) \
         .filter(model.Package.state == 'active') \
         .filter(model.PackageExtra.key == 'metadata_standard_id') \
-        .filter(model.PackageExtra.value == metadata_model.metadata_standard_id)
+        .filter(model.PackageExtra.value == metadata_schema.metadata_standard_id)
 
-    if metadata_model.organization_id:
-        q = q.filter(model.Package.owner_org == metadata_model.organization_id)
+    if metadata_schema.organization_id:
+        q = q.filter(model.Package.owner_org == metadata_schema.organization_id)
 
-    if metadata_model.infrastructure_id:
+    if metadata_schema.infrastructure_id:
         q = q.join(model.Member, model.Member.table_id == model.Package.id) \
             .filter(model.Member.table_name == 'package') \
             .filter(model.Member.state == 'active') \
             .join(model.Group, model.Group.id == model.Member.group_id) \
             .filter(model.Group.type == 'infrastructure') \
             .filter(model.Group.state == 'active') \
-            .filter(model.Group.id == metadata_model.infrastructure_id)
+            .filter(model.Group.id == metadata_schema.infrastructure_id)
 
     return [metadata_record_id for (metadata_record_id,) in q.all()]
 
@@ -441,23 +441,23 @@ def metadata_record_list(context, data_dict):
 
 
 @tk.side_effect_free
-def metadata_record_validation_model_list(context, data_dict):
+def metadata_record_validation_schema_list(context, data_dict):
     """
-    Return a list of metadata models to be used for validating a metadata record.
+    Return a list of metadata schemas to be used for validating a metadata record.
 
     This comprises the following:
-    1. The default model defined for the record's metadata standard.
-    2. A model for that standard (optionally) defined for the owner organization.
-    3. Any models (optionally) defined for that standard for infrastructures linked to the record.
+    1. The default schema defined for the record's metadata standard.
+    2. A schema for that standard (optionally) defined for the owner organization.
+    3. Any schemas (optionally) defined for that standard for infrastructures linked to the record.
 
     :param id: the id or name of the metadata record
     :type id: string
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
 
-    :rtype: list of names (dictionaries if all_fields) of metadata models
+    :rtype: list of names (dictionaries if all_fields) of metadata schemas
     """
-    log.debug("Retrieving metadata models for metadata record validation: %r", data_dict)
+    log.debug("Retrieving metadata schemas for metadata record validation: %r", data_dict)
 
     model = context['model']
     session = context['session']
@@ -473,7 +473,7 @@ def metadata_record_validation_model_list(context, data_dict):
         else:
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
-    tk.check_access('metadata_record_validation_model_list', context, data_dict)
+    tk.check_access('metadata_record_validation_schema_list', context, data_dict)
 
     organization_id = metadata_record.owner_org
     infrastructure_ids = session.query(model.Group.id) \
@@ -488,20 +488,20 @@ def metadata_record_validation_model_list(context, data_dict):
     metadata_standard_id = session.query(model.PackageExtra.value) \
         .filter_by(package_id=metadata_record_id, key='metadata_standard_id').scalar()
 
-    MetadataModel = ckanext_model.MetadataModel
-    metadata_model_names = session.query(MetadataModel.name) \
+    MetadataSchema = ckanext_model.MetadataSchema
+    metadata_schema_names = session.query(MetadataSchema.name) \
         .filter_by(metadata_standard_id=metadata_standard_id, state='active') \
-        .filter(or_(MetadataModel.organization_id == organization_id, MetadataModel.organization_id == None)) \
-        .filter(or_(MetadataModel.infrastructure_id == infra_id for infra_id in infrastructure_ids)) \
+        .filter(or_(MetadataSchema.organization_id == organization_id, MetadataSchema.organization_id == None)) \
+        .filter(or_(MetadataSchema.infrastructure_id == infra_id for infra_id in infrastructure_ids)) \
         .all()
 
     result = []
     all_fields = asbool(data_dict.get('all_fields'))
-    for (metadata_model_name,) in metadata_model_names:
+    for (metadata_schema_name,) in metadata_schema_names:
         if all_fields:
-            result += [tk.get_action('metadata_model_show')(context, {'id': metadata_model_name})]
+            result += [tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_name})]
         else:
-            result += [metadata_model_name]
+            result += [metadata_schema_name]
 
     return result
 
@@ -547,15 +547,15 @@ def metadata_record_validation_activity_show(context, data_dict):
 @tk.side_effect_free
 def metadata_validity_check(context, data_dict):
     """
-    Check the validity of a metadata dictionary against a metadata model.
+    Check the validity of a metadata dictionary against a metadata schema.
 
     :param metadata_json: JSON dictionary of metadata record content
     :type metadata_json: string
-    :param model_json: JSON dictionary defining a metadata model
-    :type model_json: string
+    :param schema_json: JSON dictionary defining a metadata schema
+    :type schema_json: string
 
     :rtype: dictionary of metadata errors; empty dict implies that the metadata is 100% valid
-        against the given model
+        against the given schema
     """
     log.debug("Checking metadata validity")
     tk.check_access('metadata_validity_check', context, data_dict)
@@ -567,9 +567,9 @@ def metadata_validity_check(context, data_dict):
         raise tk.ValidationError(errors)
 
     metadata_json = json.loads(data['metadata_json'])
-    model_json = json.loads(data['model_json'])
+    schema_json = json.loads(data['schema_json'])
 
-    metadata_errors = MetadataValidator(model_json).validate(metadata_json)
+    metadata_errors = MetadataValidator(schema_json).validate(metadata_json)
     return metadata_errors
 
 

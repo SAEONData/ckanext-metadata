@@ -142,7 +142,7 @@ def metadata_record_show_schema():
 def metadata_validity_check_schema():
     schema = {
         'metadata_json': [v.not_empty, unicode, v.json_dict_validator],
-        'model_json': [v.not_empty, unicode, v.json_schema_validator],
+        'schema_json': [v.not_empty, unicode, v.json_schema_validator],
     }
     return schema
 
@@ -272,39 +272,39 @@ def metadata_standard_show_schema():
     return schema
 
 
-def metadata_model_create_schema():
+def metadata_schema_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_model')],
-        'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_model')],
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_schema')],
+        'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_schema')],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
         'organization_id': [v.not_missing, unicode, v.object_exists('organization')],
         'infrastructure_id': [v.not_missing, unicode, v.object_exists('infrastructure')],
-        'model_json': [v.not_empty, unicode, v.json_schema_validator],
+        'schema_json': [v.not_empty, unicode, v.json_schema_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
-        '__after': [v.metadata_model_name_generator,
-                    v.metadata_model_check_organization_infrastructure,
-                    v.metadata_model_unique_standard_organization_infrastructure,
+        '__after': [v.metadata_schema_name_generator,
+                    v.metadata_schema_check_organization_infrastructure,
+                    v.metadata_schema_unique_standard_organization_infrastructure,
                     ignore],
     }
     _make_create_schema(schema)
     return schema
 
 
-def metadata_model_update_schema():
-    schema = metadata_model_create_schema()
+def metadata_schema_update_schema():
+    schema = metadata_schema_create_schema()
     _make_update_schema(schema)
     return schema
 
 
-def metadata_model_show_schema():
-    schema = metadata_model_create_schema()
+def metadata_schema_show_schema():
+    schema = metadata_schema_create_schema()
     _make_show_schema(schema)
     schema.update({
-        'model_json': [v.deserialize_json],
+        'schema_json': [v.deserialize_json],
         'metadata_standard_id': [v.convert_id_to_name('metadata_standard')],
         'organization_id': [v.convert_id_to_name('organization')],
         'infrastructure_id': [v.convert_id_to_name('infrastructure')],

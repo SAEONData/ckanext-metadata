@@ -101,31 +101,31 @@ def metadata_standard_update(context, data_dict):
     return output
 
 
-def metadata_model_update(context, data_dict):
+def metadata_schema_update(context, data_dict):
     """
-    Update a metadata model.
+    Update a metadata schema.
 
-    You must be authorized to edit the metadata model.
+    You must be authorized to edit the metadata schema.
 
-    Changes to the model_json will cause dependent metadata records to be invalidated.
+    Changes to the schema_json will cause dependent metadata records to be invalidated.
     If any of metadata_standard_id, organization_id or infrastructure_id change, then
     ex-dependent and newly-dependent metadata records will also be invalidated.
 
     It is recommended to call
-    :py:func:`ckan.logic.action.get.metadata_model_show`, make the desired changes to
-    the result, and then call ``metadata_model_update()`` with it.
+    :py:func:`ckan.logic.action.get.metadata_schema_show`, make the desired changes to
+    the result, and then call ``metadata_schema_update()`` with it.
 
     For further parameters see
-    :py:func:`~ckanext.metadata.logic.action.create.metadata_model_create`.
+    :py:func:`~ckanext.metadata.logic.action.create.metadata_schema_create`.
 
-    :param id: the id or name of the metadata model to update
+    :param id: the id or name of the metadata schema to update
     :type id: string
 
-    :returns: the updated metadata model (unless 'return_id_only' is set to True
-              in the context, in which case just the metadata model id will be returned)
+    :returns: the updated metadata schema (unless 'return_id_only' is set to True
+              in the context, in which case just the metadata schema id will be returned)
     :rtype: dictionary
     """
-    log.info("Updating metadata model: %r", data_dict)
+    log.info("Updating metadata schema: %r", data_dict)
 
     model = context['model']
     user = context['user']
@@ -133,40 +133,40 @@ def metadata_model_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    metadata_model_id = tk.get_or_bust(data_dict, 'id')
-    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
-    if metadata_model is not None:
-        metadata_model_id = metadata_model.id
+    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
+    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+    if metadata_schema is not None:
+        metadata_schema_id = metadata_schema.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
-    tk.check_access('metadata_model_update', context, data_dict)
+    tk.check_access('metadata_schema_update', context, data_dict)
 
-    old_model_json = metadata_model.model_json
-    if old_model_json:
-        old_model_json = json.loads(old_model_json)
-    old_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
+    old_schema_json = metadata_schema.schema_json
+    if old_schema_json:
+        old_schema_json = json.loads(old_schema_json)
+    old_dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema_id})
 
     data_dict.update({
-        'id': metadata_model_id,
+        'id': metadata_schema_id,
     })
     context.update({
-        'metadata_model': metadata_model,
+        'metadata_schema': metadata_schema,
         'allow_partial_update': True,
     })
 
-    data, errors = tk.navl_validate(data_dict, schema.metadata_model_update_schema(), context)
+    data, errors = tk.navl_validate(data_dict, schema.metadata_schema_update_schema(), context)
     if errors:
         session.rollback()
         raise tk.ValidationError(errors)
 
-    metadata_model = model_save.metadata_model_dict_save(data, context)
-    new_model_json = metadata_model.model_json
-    if new_model_json:
-        new_model_json = json.loads(new_model_json)
-    new_dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
+    metadata_schema = model_save.metadata_schema_dict_save(data, context)
+    new_schema_json = metadata_schema.schema_json
+    if new_schema_json:
+        new_schema_json = json.loads(new_schema_json)
+    new_dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema_id})
 
-    if old_model_json != new_model_json:
+    if old_schema_json != new_schema_json:
         affected_record_ids = set(old_dependent_record_list) | set(new_dependent_record_list)
     else:
         affected_record_ids = set(old_dependent_record_list) ^ set(new_dependent_record_list)
@@ -176,13 +176,13 @@ def metadata_model_update(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Update metadata model %s') % metadata_model_id
+        rev.message = _(u'REST API: Update metadata schema %s') % metadata_schema_id
 
     invalidate_context = context.copy()
     invalidate_context.update({
         'defer_commit': True,
-        'trigger_action': 'metadata_model_update',
-        'trigger_object_id': metadata_model_id,
+        'trigger_action': 'metadata_schema_update',
+        'trigger_object_id': metadata_schema_id,
     })
     for metadata_record_id in affected_record_ids:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
@@ -190,8 +190,8 @@ def metadata_model_update(context, data_dict):
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_model_id if return_id_only \
-        else tk.get_action('metadata_model_show')(context, {'id': metadata_model_id})
+    output = metadata_schema_id if return_id_only \
+        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_id})
     return output
 
 
@@ -358,7 +358,7 @@ def metadata_record_update(context, data_dict):
         old_metadata_json = metadata_record.extras['metadata_json']
         if old_metadata_json:
             old_metadata_json = json.loads(old_metadata_json)
-        old_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id}))
+        old_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
 
     data_dict.update({
         'id': metadata_record_id,
@@ -381,17 +381,17 @@ def metadata_record_update(context, data_dict):
 
     # check if we need to invalidate the record
     if asbool(metadata_record.extras['validated']):
-        # ensure new validation model list sees infrastructure list changes
+        # ensure new validation schema list sees infrastructure list changes
         session.flush()
 
         new_metadata_json = metadata_record.extras['metadata_json']
         if new_metadata_json:
             new_metadata_json = json.loads(new_metadata_json)
-        new_validation_models = set(tk.get_action('metadata_record_validation_model_list')(context, {'id': metadata_record_id}))
+        new_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
 
-        # if either the metadata record content or the set of validation models for the record has changed,
+        # if either the metadata record content or the set of validation schemas for the record has changed,
         # then the record must be invalidated
-        if old_metadata_json != new_metadata_json or old_validation_models != new_validation_models:
+        if old_metadata_json != new_metadata_json or old_validation_schemas != new_validation_schemas:
             invalidate_context = context.copy()
             invalidate_context.update({
                 'defer_commit': True,
@@ -418,8 +418,8 @@ def metadata_record_invalidate(context, data_dict):
     Note: this function is typically called from within another action function
     whose effect triggers invalidation of the given metadata record. In such a
     case, the calling function should pass the following items in the context:
-    'trigger_action': the calling function name, e.g. 'metadata_model_update'
-    'trigger_object_id': the id of the object (e.g. a MetadataModel) being modified
+    'trigger_action': the calling function name, e.g. 'metadata_schema_update'
+    'trigger_object_id': the id of the object (e.g. a MetadataSchema) being modified
 
     :param id: the id or name of the metadata record to invalidate
     :type id: string
@@ -525,23 +525,23 @@ def metadata_record_validate(context, data_dict):
     if asbool(metadata_record.extras['validated']):
         return
 
-    validation_models = tk.get_action('metadata_record_validation_model_list')(context, {
+    validation_schemas = tk.get_action('metadata_record_validation_schema_list')(context, {
         'id': metadata_record_id,
         'all_fields': True,
     })
-    if not validation_models:
-        raise tk.ObjectNotFound(_('Could not find any metadata models for validating this metadata record'))
+    if not validation_schemas:
+        raise tk.ObjectNotFound(_('Could not find any metadata schemas for validating this metadata record'))
 
     # delegate the actual validation work to the pluggable action metadata_validity_check
     validation_results = []
     accumulated_errors = {}
-    for metadata_model in validation_models:
+    for metadata_schema in validation_schemas:
         validation_errors = tk.get_action('metadata_validity_check')(context, {
             'metadata_json': metadata_record.extras['metadata_json'],
-            'model_json': json.dumps(metadata_model['model_json']),
+            'schema_json': json.dumps(metadata_schema['schema_json']),
         })
         validation_result = {
-            'metadata_model_id': metadata_model['id'],
+            'metadata_schema_id': metadata_schema['id'],
             'errors': validation_errors,
         }
         validation_results += [validation_result]

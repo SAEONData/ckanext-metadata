@@ -73,9 +73,9 @@ def metadata_record_activity_dictize(activity, context):
     return activity_dict
 
 
-def metadata_model_dictize(metadata_model, context):
-    return _object_dictize(metadata_model, ckanext_model.MetadataModel, ckanext_model.MetadataModelRevision,
-                           ckanext_model.metadata_model_revision_table, context)
+def metadata_schema_dictize(metadata_schema, context):
+    return _object_dictize(metadata_schema, ckanext_model.MetadataSchema, ckanext_model.MetadataSchemaRevision,
+                           ckanext_model.metadata_schema_revision_table, context)
 
 
 def metadata_standard_dictize(metadata_standard, context):

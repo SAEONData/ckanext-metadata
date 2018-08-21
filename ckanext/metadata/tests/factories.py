@@ -89,12 +89,12 @@ class MetadataStandard(factory.Factory):
         return helpers.call_action('metadata_standard_create', context=context, **kwargs)
 
 
-class MetadataModel(factory.Factory):
-    FACTORY_FOR = ckanext_model.MetadataModel
+class MetadataSchema(factory.Factory):
+    FACTORY_FOR = ckanext_model.MetadataSchema
 
-    title = factory.Sequence(lambda n: 'Test Metadata Model {0:02d}'.format(n))
-    description = 'A test description for this test metadata model.'
-    model_json = '{"type": "object"}'
+    title = factory.Sequence(lambda n: 'Test Metadata Schema {0:02d}'.format(n))
+    description = 'A test description for this test metadata schema.'
+    schema_json = '{"type": "object"}'
     organization_id = ''
     infrastructure_id = ''
 
@@ -110,7 +110,7 @@ class MetadataModel(factory.Factory):
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
         metadata_standard_id = kwargs.pop('metadata_standard_id', None) or MetadataStandard()['id']
 
-        return helpers.call_action('metadata_model_create',
+        return helpers.call_action('metadata_schema_create',
                                    context=context,
                                    metadata_standard_id=metadata_standard_id,
                                    **kwargs)

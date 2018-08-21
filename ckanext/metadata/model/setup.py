@@ -11,8 +11,8 @@ def init_tables():
     tables = (
         metadata_standard_table,
         metadata_standard_revision_table,
-        metadata_model_table,
-        metadata_model_revision_table,
+        metadata_schema_table,
+        metadata_schema_revision_table,
         workflow_state_table,
         workflow_state_revision_table,
         workflow_transition_table,

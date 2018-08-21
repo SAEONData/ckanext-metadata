@@ -25,13 +25,13 @@ class TestOrganizationActions(ActionTestBase):
         self.test_action('organization_delete',
                          id=organization['id'])
 
-    def test_delete_valid_cascade_metadata_models(self):
+    def test_delete_valid_cascade_metadata_schemas(self):
         organization = self._generate_organization()
-        metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
+        metadata_schema = ckanext_factories.MetadataSchema(organization_id=organization['id'])
 
         self.test_action('organization_delete',
                          id=organization['id'])
-        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
+        assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'deleted'
 
     def test_delete_valid_cascade_metadata_collections(self):
         organization = self._generate_organization()
@@ -44,7 +44,7 @@ class TestOrganizationActions(ActionTestBase):
     def test_delete_with_dependencies(self):
         organization = self._generate_organization()
         metadata_collection = self._generate_metadata_collection(organization_id=organization['id'])
-        metadata_model = ckanext_factories.MetadataModel(organization_id=organization['id'])
+        metadata_schema = ckanext_factories.MetadataSchema(organization_id=organization['id'])
         metadata_record = ckanext_factories.MetadataRecord(owner_org=organization['id'],
                                                            metadata_collection_id=metadata_collection['id'])
 
@@ -52,10 +52,10 @@ class TestOrganizationActions(ActionTestBase):
                                        id=organization['id'])
         assert_error(result, 'message', 'Organization has dependent metadata records')
         assert ckan_model.Group.get(metadata_collection['id']).state == 'active'
-        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
+        assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'active'
 
         call_action('metadata_record_delete', id=metadata_record['id'])
         self.test_action('organization_delete',
                          id=organization['id'])
         assert ckan_model.Group.get(metadata_collection['id']).state == 'deleted'
-        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
+        assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'deleted'

@@ -53,7 +53,7 @@ def metadata_standard_show(context, data_dict):
     return {'success': True}
 
 
-def metadata_model_show(context, data_dict):
+def metadata_schema_show(context, data_dict):
     return {'success': True}
 
 
@@ -73,11 +73,11 @@ def metadata_standard_list(context, data_dict):
     return {'success': True}
 
 
-def metadata_model_list(context, data_dict):
+def metadata_schema_list(context, data_dict):
     return {'success': True}
 
 
-def metadata_model_dependent_record_list(context, data_dict):
+def metadata_schema_dependent_record_list(context, data_dict):
     return {'success': True}
 
 
@@ -93,7 +93,7 @@ def metadata_record_list(context, data_dict):
     return {'success': True}
 
 
-def metadata_record_validation_model_list(context, data_dict):
+def metadata_record_validation_schema_list(context, data_dict):
     return {'success': True}
 
 

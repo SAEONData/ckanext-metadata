@@ -105,15 +105,15 @@ class TestInfrastructureActions(ActionTestBase):
 
     def test_delete_with_dependencies(self):
         infrastructure = ckanext_factories.Infrastructure()
-        metadata_model = ckanext_factories.MetadataModel(infrastructure_id=infrastructure['id'])
+        metadata_schema = ckanext_factories.MetadataSchema(infrastructure_id=infrastructure['id'])
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
 
         result, obj = self.test_action('infrastructure_delete', should_error=True,
                                        id=infrastructure['id'])
         assert_error(result, 'message', 'Infrastructure has dependent metadata records')
-        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'active'
+        assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'active'
 
         call_action('metadata_record_delete', id=metadata_record['id'])
         self.test_action('infrastructure_delete',
                          id=infrastructure['id'])
-        assert ckanext_model.MetadataModel.get(metadata_model['id']).state == 'deleted'
+        assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'deleted'

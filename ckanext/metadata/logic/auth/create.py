@@ -33,7 +33,7 @@ def metadata_standard_create(context, data_dict):
     return {'success': True}
 
 
-def metadata_model_create(context, data_dict):
+def metadata_schema_create(context, data_dict):
     return {'success': True}
 
 

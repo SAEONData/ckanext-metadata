@@ -67,9 +67,9 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
             session.add(member_obj)
 
 
-def metadata_model_dict_save(metadata_model_dict, context):
-    return _object_dict_save(metadata_model_dict, 'metadata_model', ckanext_model.MetadataModel,
-                             ckanext_model.metadata_model_table, context)
+def metadata_schema_dict_save(metadata_schema_dict, context):
+    return _object_dict_save(metadata_schema_dict, 'metadata_schema', ckanext_model.MetadataSchema,
+                             ckanext_model.metadata_schema_table, context)
 
 
 def metadata_standard_dict_save(metadata_standard_dict, context):

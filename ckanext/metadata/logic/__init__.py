@@ -11,7 +11,7 @@ model_map = {
     'infrastructure': {'class': ckan_model.Group, 'desc': u'Infrastructure'},
     'metadata_collection': {'class': ckan_model.Group, 'desc': u'Metadata Collection'},
     'metadata_record': {'class': ckan_model.Package, 'desc': u'Metadata Record'},
-    'metadata_model': {'class': ckanext_model.MetadataModel, 'desc': u'Metadata Model'},
+    'metadata_schema': {'class': ckanext_model.MetadataSchema, 'desc': u'Metadata Schema'},
     'metadata_standard': {'class': ckanext_model.MetadataStandard, 'desc': u'Metadata Standard'},
     'workflow_state': {'class': ckanext_model.WorkflowState, 'desc': u'Workflow State'},
     'workflow_transition': {'class': ckanext_model.WorkflowTransition, 'desc': u'Workflow Transition'},

@@ -72,43 +72,43 @@ def metadata_standard_create(context, data_dict):
     return output
 
 
-def metadata_model_create(context, data_dict):
+def metadata_schema_create(context, data_dict):
     """
-    Create a new metadata model.
+    Create a new metadata schema.
 
-    You must be authorized to create metadata models.
+    You must be authorized to create metadata schemas.
 
-    A model must be one and only one of the following:
+    A metadata schema must be one and only one of the following:
     - the default for the given metadata standard (no organization or infrastructure)
     - associated with an organization
     - associated with an infrastructure
 
-    Any metadata records that are now dependent on this model are invalidated.
+    Any metadata records that are now dependent on this schema are invalidated.
 
-    :param id: the id of the metadata model (optional - only sysadmins can set this)
+    :param id: the id of the metadata schema (optional - only sysadmins can set this)
     :type id: string
-    :param name: the name of the new metadata model (optional - auto-generated if not supplied);
+    :param name: the name of the new metadata schema (optional - auto-generated if not supplied);
         must conform to standard naming rules
     :type name: string
-    :param title: the title of the metadata model (optional)
+    :param title: the title of the metadata schema (optional)
     :type title: string
-    :param description: the description of the metadata model (optional)
+    :param description: the description of the metadata schema (optional)
     :type description: string
-    :param metadata_standard_id: the id or name of the metadata standard from which this model is derived
+    :param metadata_standard_id: the id or name of the metadata standard for which this schema is defined
     :type metadata_standard_id: string
-    :param model_json: the JSON dictionary defining the model (nullable)
-    :type model_json: string
+    :param schema_json: the JSON dictionary defining the schema (nullable)
+    :type schema_json: string
     :param organization_id: the id or name of the associated organization (nullable)
     :type organization_id: string
     :param infrastructure_id: the id or name of the associated infrastructure (nullable)
     :type infrastructure_id: string
 
-    :returns: the newly created metadata model (unless 'return_id_only' is set to True
-              in the context, in which case just the metadata model id will be returned)
+    :returns: the newly created metadata schema (unless 'return_id_only' is set to True
+              in the context, in which case just the metadata schema id will be returned)
     :rtype: dictionary
     """
-    log.info("Creating metadata model: %r", data_dict)
-    tk.check_access('metadata_model_create', context, data_dict)
+    log.info("Creating metadata schema: %r", data_dict)
+    tk.check_access('metadata_schema_create', context, data_dict)
 
     model = context['model']
     user = context['user']
@@ -116,12 +116,12 @@ def metadata_model_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
-    data, errors = tk.navl_validate(data_dict, schema.metadata_model_create_schema(), context)
+    data, errors = tk.navl_validate(data_dict, schema.metadata_schema_create_schema(), context)
     if errors:
         session.rollback()
         raise tk.ValidationError(errors)
 
-    metadata_model = model_save.metadata_model_dict_save(data, context)
+    metadata_schema = model_save.metadata_schema_dict_save(data, context)
 
     # creating the revision also flushes the session which gives us the new object id
     rev = model.repo.new_revision()
@@ -129,14 +129,14 @@ def metadata_model_create(context, data_dict):
     if 'message' in context:
         rev.message = context['message']
     else:
-        rev.message = _(u'REST API: Create metadata model %s') % metadata_model.id
+        rev.message = _(u'REST API: Create metadata schema %s') % metadata_schema.id
 
-    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model.id})
+    dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema.id})
     invalidate_context = context.copy()
     invalidate_context.update({
         'defer_commit': True,
-        'trigger_action': 'metadata_model_create',
-        'trigger_object_id': metadata_model.id,
+        'trigger_action': 'metadata_schema_create',
+        'trigger_object_id': metadata_schema.id,
     })
     for metadata_record_id in dependent_record_list:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
@@ -144,8 +144,8 @@ def metadata_model_create(context, data_dict):
     if not defer_commit:
         model.repo.commit()
 
-    output = metadata_model.id if return_id_only \
-        else tk.get_action('metadata_model_show')(context, {'id': metadata_model.id})
+    output = metadata_schema.id if return_id_only \
+        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema.id})
     return output
 
 

@@ -63,13 +63,13 @@ def metadata_standard_delete(context, data_dict):
         child_standard_dict['parent_standard_id'] = ''
         tk.get_action('metadata_standard_update')(cascade_context, child_standard_dict)
 
-    # cascade delete to dependent metadata models
-    metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
-        .filter(ckanext_model.MetadataModel.metadata_standard_id == metadata_standard_id) \
-        .filter(ckanext_model.MetadataModel.state != 'deleted') \
+    # cascade delete to dependent metadata schemas
+    metadata_schema_ids = session.query(ckanext_model.MetadataSchema.id) \
+        .filter(ckanext_model.MetadataSchema.metadata_standard_id == metadata_standard_id) \
+        .filter(ckanext_model.MetadataSchema.state != 'deleted') \
         .all()
-    for (metadata_model_id,) in metadata_model_ids:
-        tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
+    for (metadata_schema_id,) in metadata_schema_ids:
+        tk.get_action('metadata_schema_delete')(cascade_context, {'id': metadata_schema_id})
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -80,47 +80,47 @@ def metadata_standard_delete(context, data_dict):
         model.repo.commit()
 
 
-def metadata_model_delete(context, data_dict):
+def metadata_schema_delete(context, data_dict):
     """
-    Delete a metadata model.
+    Delete a metadata schema.
 
-    You must be authorized to delete the metadata model.
+    You must be authorized to delete the metadata schema.
 
-    Any metadata records that were dependent on this model are invalidated.
+    Any metadata records that were dependent on this schema are invalidated.
 
-    :param id: the id or name of the metadata model to delete
+    :param id: the id or name of the metadata schema to delete
     :type id: string
     """
-    log.info("Deleting metadata model: %r", data_dict)
+    log.info("Deleting metadata schema: %r", data_dict)
 
     model = context['model']
     user = context['user']
     defer_commit = context.get('defer_commit', False)
 
-    metadata_model_id = tk.get_or_bust(data_dict, 'id')
-    metadata_model = ckanext_model.MetadataModel.get(metadata_model_id)
-    if metadata_model is not None:
-        metadata_model_id = metadata_model.id
+    metadata_schema_id = tk.get_or_bust(data_dict, 'id')
+    metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
+    if metadata_schema is not None:
+        metadata_schema_id = metadata_schema.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Model')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Schema')))
 
-    tk.check_access('metadata_model_delete', context, data_dict)
+    tk.check_access('metadata_schema_delete', context, data_dict)
 
     rev = model.repo.new_revision()
     rev.author = user
-    rev.message = _(u'REST API: Delete metadata model %s') % metadata_model_id
+    rev.message = _(u'REST API: Delete metadata schema %s') % metadata_schema_id
 
-    dependent_record_list = tk.get_action('metadata_model_dependent_record_list')(context, {'id': metadata_model_id})
+    dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema_id})
     invalidate_context = context.copy()
     invalidate_context.update({
         'defer_commit': True,
-        'trigger_action': 'metadata_model_delete',
-        'trigger_object_id': metadata_model_id,
+        'trigger_action': 'metadata_schema_delete',
+        'trigger_object_id': metadata_schema_id,
     })
     for metadata_record_id in dependent_record_list:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
 
-    metadata_model.delete()
+    metadata_schema.delete()
     if not defer_commit:
         model.repo.commit()
 
@@ -159,19 +159,19 @@ def infrastructure_delete(context, data_dict):
             .count() > 0:
         raise tk.ValidationError(_('Infrastructure has dependent metadata records'))
 
-    # cascade delete to dependent metadata models
+    # cascade delete to dependent metadata schemas
     cascade_context = {
         'model': model,
         'user': user,
         'session': session,
         'defer_commit': True,
     }
-    metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
-        .filter(ckanext_model.MetadataModel.infrastructure_id == infrastructure_id) \
-        .filter(ckanext_model.MetadataModel.state != 'deleted') \
+    metadata_schema_ids = session.query(ckanext_model.MetadataSchema.id) \
+        .filter(ckanext_model.MetadataSchema.infrastructure_id == infrastructure_id) \
+        .filter(ckanext_model.MetadataSchema.state != 'deleted') \
         .all()
-    for (metadata_model_id,) in metadata_model_ids:
-        tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
+    for (metadata_schema_id,) in metadata_schema_ids:
+        tk.get_action('metadata_schema_delete')(cascade_context, {'id': metadata_schema_id})
 
     data_dict['type'] = 'infrastructure'
     context['invoked_api'] = 'infrastructure_delete'
@@ -400,13 +400,13 @@ def organization_delete(context, data_dict):
     for (metadata_collection_id,) in metadata_collection_ids:
         tk.get_action('metadata_collection_delete')(cascade_context, {'id': metadata_collection_id})
 
-    # cascade delete to dependent metadata models
-    metadata_model_ids = session.query(ckanext_model.MetadataModel.id) \
-        .filter(ckanext_model.MetadataModel.organization_id == organization_id) \
-        .filter(ckanext_model.MetadataModel.state != 'deleted') \
+    # cascade delete to dependent metadata schemas
+    metadata_schema_ids = session.query(ckanext_model.MetadataSchema.id) \
+        .filter(ckanext_model.MetadataSchema.organization_id == organization_id) \
+        .filter(ckanext_model.MetadataSchema.state != 'deleted') \
         .all()
-    for (metadata_model_id,) in metadata_model_ids:
-        tk.get_action('metadata_model_delete')(cascade_context, {'id': metadata_model_id})
+    for (metadata_schema_id,) in metadata_schema_ids:
+        tk.get_action('metadata_schema_delete')(cascade_context, {'id': metadata_schema_id})
 
     # delete membership relations
     for member in session.query(model.Member) \
