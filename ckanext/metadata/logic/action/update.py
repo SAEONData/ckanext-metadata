@@ -9,7 +9,7 @@ from ckan.common import _
 from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata.lib.dictization import model_dictize
+from ckanext.metadata.logic.metadata_validator import MetadataValidator
 
 log = logging.getLogger(__name__)
 
@@ -328,8 +328,6 @@ def metadata_record_update(context, data_dict):
 
     :param id: the id or name of the metadata record to update
     :type id: string
-    :param name: the name of the metadata record (optional)
-    :type name: string
 
     :returns: the updated metadata record (unless 'return_id_only' is set to True
               in the context, in which case just the record id will be returned)
@@ -374,6 +372,7 @@ def metadata_record_update(context, data_dict):
         'defer_commit': True,
         'return_id_only': True,
         'allow_partial_update': True,
+        'message': _(u'REST API: Update metadata record %s') % metadata_record_id
     })
 
     tk.get_action('package_update')(context, data_dict)
@@ -406,6 +405,55 @@ def metadata_record_update(context, data_dict):
     output = metadata_record_id if return_id_only \
         else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
     return output
+
+
+def metadata_record_setname(context, data_dict):
+    """
+    Update the name of a metadata record. This should normally only be called internally
+    during metadata validation in order to copy the identifier (DOI) from the metadata JSON
+    into the name attribute of the object. This action assumes that the initial name value
+    (set by metadata_record_create) is equal to the id, and only updates the name if it is
+    still currently equal to the id. That is, once a record identifier is set, it never
+    changes, ever.
+
+    You must be authorized to update the metadata record's name.
+
+    :param id: the id or name of the metadata record to update
+    :type id: string
+    :param name: the name of the metadata record
+    :type name: string
+    """
+    log.info("Updating metadata record name: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_record_id, new_name = tk.get_or_bust(data_dict, ['id', 'name'])
+    metadata_record = model.Package.get(metadata_record_id)
+    if metadata_record is not None and metadata_record.type == 'metadata_record':
+        metadata_record_id = metadata_record.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_setname', context, data_dict)
+
+    if metadata_record.name != metadata_record_id:  # name has previously been set
+        if new_name != metadata_record.name:
+            raise tk.ValidationError(_("The name of a metadata record cannot be changed once it has been set"))
+        return
+
+    metadata_record.name = new_name
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Set name of metadata record %s') % metadata_record_id
+
+    if not defer_commit:
+        model.repo.commit()
 
 
 def metadata_record_invalidate(context, data_dict):
@@ -532,14 +580,12 @@ def metadata_record_validate(context, data_dict):
     if not validation_schemas:
         raise tk.ObjectNotFound(_('Could not find any metadata schemas for validating this metadata record'))
 
-    # delegate the actual validation work to the pluggable action metadata_validity_check
     validation_results = []
     accumulated_errors = {}
     for metadata_schema in validation_schemas:
-        validation_errors = tk.get_action('metadata_validity_check')(context, {
-            'metadata_json': metadata_record.extras['metadata_json'],
-            'schema_json': json.dumps(metadata_schema['schema_json']),
-        })
+        metadata_dict = json.loads(metadata_record.extras['metadata_json'])
+        schema_dict = metadata_schema['schema_json']
+        validation_errors = MetadataValidator(schema_dict, metadata_record_id).validate(metadata_dict)
         validation_result = {
             'metadata_schema_id': metadata_schema['id'],
             'errors': validation_errors,

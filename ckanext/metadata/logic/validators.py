@@ -298,7 +298,7 @@ def owner_org_owns_metadata_collection(key, data, errors, context):
 
 def metadata_record_id_name_generator(key, data, errors, context):
     """
-    Generates id and name for a new metadata record where these values have not been supplied.
+    Generates id and name for a new metadata record.
     For use with the '__after' schema key.
     """
     if errors.get(key[:-1] + ('id',)):
@@ -306,7 +306,6 @@ def metadata_record_id_name_generator(key, data, errors, context):
 
     model = context['model']
     id_ = _convert_missing(data.get(key[:-1] + ('id',)))
-    name = _convert_missing(data.get(key[:-1] + ('name',)))
 
     if id_ and model.Package.get(id_):
         return  # we only need to generate on create
@@ -314,9 +313,7 @@ def metadata_record_id_name_generator(key, data, errors, context):
     if not id_:
         id_ = _make_uuid()
         data[key[:-1] + ('id',)] = id_
-    if not name:
-        name = 'metadata-' + id_
-        data[key[:-1] + ('name',)] = name
+    data[key[:-1] + ('name',)] = id_
 
 
 def metadata_record_infrastructures_not_missing(key, data, errors, context):

@@ -11,7 +11,6 @@ ignore_missing = tk.get_validator('ignore_missing')
 default = tk.get_validator('default')
 package_id_does_not_exist = tk.get_validator('package_id_does_not_exist')
 name_validator = tk.get_validator('name_validator')
-package_name_validator = tk.get_validator('package_name_validator')
 group_name_validator = tk.get_validator('group_name_validator')
 empty_if_not_sysadmin = tk.get_validator('empty_if_not_sysadmin')
 ignore_not_sysadmin = tk.get_validator('ignore_not_sysadmin')
@@ -43,9 +42,9 @@ def _make_update_schema(schema):
 
     # allow name to be optional for updates
     if 'name' in schema:
-        for i, validator in enumerate(schema['name']):
-            if validator is v.not_empty:
-                schema['name'][i] = ignore_missing
+        if v.not_empty in schema['name']:
+            schema['name'].remove(v.not_empty)
+        schema['name'].insert(0, ignore_missing)
 
 
 def _make_show_schema(schema):
@@ -81,7 +80,7 @@ def metadata_record_create_schema():
 
         # from the default package schema
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, package_id_does_not_exist],
-        'name': [ignore_missing, unicode, name_validator, package_name_validator],
+        'name': [],
         'title': [ignore_missing, unicode],
         'state': [ignore_not_package_admin, ignore_missing],
         'owner_org': [v.not_empty, v.object_exists('organization'), owner_org_validator, unicode],
@@ -113,6 +112,7 @@ def metadata_record_create_schema():
 def metadata_record_update_schema():
     schema = metadata_record_create_schema()
     _make_update_schema(schema)
+    schema['__after'] = [v.owner_org_owns_metadata_collection, ignore]
     return schema
 
 
@@ -136,14 +136,6 @@ def metadata_record_show_schema():
         'private': [],
         'extras': _extras_schema(),
     })
-    return schema
-
-
-def metadata_validity_check_schema():
-    schema = {
-        'metadata_json': [v.not_empty, unicode, v.json_dict_validator],
-        'schema_json': [v.not_empty, unicode, v.json_schema_validator],
-    }
     return schema
 
 

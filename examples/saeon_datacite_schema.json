@@ -163,7 +163,18 @@
         "identifier": {
             "type": "object",
             "properties": {
-                "identifier": {"type": "string", "format": "doi"},
+                "identifier": {
+                    "type": "string",
+                    "format": "doi",
+                    "execute": {
+                        "format": "doi", "$comment": "workaround for draft 6",
+                        "action": "metadata_record_setname",
+                        "param": "name"
+                    },
+                    "$comment": "if & then are only available from draft 7",
+                    "if": {"format": "doi"},
+                    "then": {"execute": {"action": "metadata_record_setname", "param": "name"}}
+                },
                 "identifierType": {"type": "string", "enum": ["DOI"]}
             },
             "required": ["identifier", "identifierType"]
@@ -180,6 +191,7 @@
                     "affiliation": {"type": "string", "$comment": "Shouldn't this be an array?"}
                 },
                 "required": ["creatorName"],
+                "$comment": "if & then are only available from draft 7",
                 "if": {"required": ["nameIdentifier"]},
                 "then": {"required": ["nameIdentifierScheme"]}
             },
@@ -233,6 +245,7 @@
                     "affiliation": {"type": "string", "$comment": "Shouldn't this be an array?"}
                 },
                 "required": ["contributorName"],
+                "$comment": "if & then are only available from draft 7",
                 "if": {"required": ["nameIdentifier"]},
                 "then": {"required": ["nameIdentifierScheme"]}
             },
@@ -286,6 +299,7 @@
                     "schemeType": {"type": "string"}
                 },
                 "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"],
+                "$comment": "if & else are only available from draft 7",
                 "if": {
                     "properties": {
                         "relationType": {"enum": ["HasMetadata", "IsMetadataFor"]}

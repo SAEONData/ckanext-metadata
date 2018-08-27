@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 from ckanext.metadata.logic.json_validator import JSONValidator
-from ckanext.metadata.logic.json_validator_functions import vocabulary_validator
+from ckanext.metadata.logic.json_validator_functions import vocabulary_validator, execute_validator
 
 
 class MetadataValidator(JSONValidator):
@@ -17,6 +17,7 @@ class MetadataValidator(JSONValidator):
     def _validators(cls):
         return {
             'vocabulary': vocabulary_validator,
+            'execute': execute_validator,
         }
 
     @classmethod
