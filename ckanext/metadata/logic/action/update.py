@@ -411,10 +411,8 @@ def metadata_record_setname(context, data_dict):
     """
     Update the name of a metadata record. This should normally only be called internally
     during metadata validation in order to copy the identifier (DOI) from the metadata JSON
-    into the name attribute of the object. This action assumes that the initial name value
-    (set by metadata_record_create) is equal to the id, and only updates the name if it is
-    still currently equal to the id. That is, once a record identifier is set, it never
-    changes, ever.
+    into the name attribute of the package object. Note that the name can only be updated if
+    the record is currently private.
 
     You must be authorized to update the metadata record's name.
 
@@ -430,18 +428,24 @@ def metadata_record_setname(context, data_dict):
     defer_commit = context.get('defer_commit', False)
 
     metadata_record_id, new_name = tk.get_or_bust(data_dict, ['id', 'name'])
-    metadata_record = model.Package.get(metadata_record_id)
-    if metadata_record is not None and metadata_record.type == 'metadata_record':
+    metadata_record = context.get('metadata_record')
+
+    if metadata_record:
         metadata_record_id = metadata_record.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is not None and metadata_record.type == 'metadata_record':
+            metadata_record_id = metadata_record.id
+        else:
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_setname', context, data_dict)
 
-    if metadata_record.name != metadata_record_id:  # name has previously been set
-        if new_name != metadata_record.name:
-            raise tk.ValidationError(_("The name of a metadata record cannot be changed once it has been set"))
+    if new_name == metadata_record.name:
         return
+
+    if not metadata_record.private:
+        raise tk.ValidationError(_("The name of a metadata record cannot be changed once it has been published"))
 
     metadata_record.name = new_name
 
@@ -585,7 +589,8 @@ def metadata_record_validate(context, data_dict):
     for metadata_schema in validation_schemas:
         metadata_dict = json.loads(metadata_record.extras['metadata_json'])
         schema_dict = metadata_schema['schema_json']
-        validation_errors = MetadataValidator(schema_dict, metadata_record_id).validate(metadata_dict)
+        json_validator = MetadataValidator(schema_dict, metadata_record_id, context)
+        validation_errors = json_validator.validate(metadata_dict)
         validation_result = {
             'metadata_schema_id': metadata_schema['id'],
             'errors': validation_errors,

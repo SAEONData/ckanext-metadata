@@ -269,9 +269,6 @@ def metadata_record_create(context, data_dict):
 
     :param id: the id of the metadata record (optional - only sysadmins can set this)
     :type id: string
-    :param name: the name of the new metadata record (optional - auto-generated if not supplied);
-        must conform to package naming rules
-    :type name: string
     :param title: the title of the metadata record (optional)
     :type title: string
     :param owner_org: the id or name of the organization to which this record belongs

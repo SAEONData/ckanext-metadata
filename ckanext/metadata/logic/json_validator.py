@@ -14,13 +14,15 @@ class JSONValidator(object):
     Encapsulates the JSON Schema validation capabilities supported by the jsonschema library.
     """
 
-    def __init__(self, schema, object_id=None):
+    def __init__(self, schema, object_id=None, context=None):
         """
         Check the given schema and create a validator for it.
         :param schema: JSON schema dictionary
         :type schema: dict
         :param object_id: the id of the object that this validator relates to (optional)
         :type object_id: string
+        :param context: caller's context (optional)
+        :type context: dict
         """
         jsonschema_validator_cls = jsonschema.validators.validator_for(schema)
         jsonschema_validator_cls.check_schema(schema)
@@ -35,8 +37,9 @@ class JSONValidator(object):
 
         self.jsonschema_validator = jsonschema_validator_cls(
             schema, format_checker=jsonschema.FormatChecker(formats))
-        if object_id:
-            self.jsonschema_validator.object_id = object_id
+
+        self.jsonschema_validator.object_id = object_id
+        self.jsonschema_validator.context = context
 
     @classmethod
     def _validators(cls):

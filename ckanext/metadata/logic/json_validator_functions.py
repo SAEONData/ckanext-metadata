@@ -84,7 +84,6 @@ def execute_validator(validator, execute_dict, instance, schema):
     """
     if validator.is_type(instance, 'string') and validator.is_type(execute_dict, 'object'):
         action_name = execute_dict.get('action')
-        object_id = getattr(validator, 'object_id', None)
         param_name = execute_dict.get('param')
         param_value = instance
 
@@ -97,7 +96,7 @@ def execute_validator(validator, execute_dict, instance, schema):
                 yield jsonschema.ValidationError(_("Cannot execute action with the provided value"))
                 return
 
-        if not object_id:
+        if not validator.object_id:
             yield jsonschema.ValidationError(_("object_id is not available"))
 
         try:
@@ -107,7 +106,9 @@ def execute_validator(validator, execute_dict, instance, schema):
             return
 
         try:
-            action_func({'defer_commit': True}, {'id': object_id, param_name: param_value})
+            context = validator.context.copy()
+            context['defer_commit'] = True
+            action_func(context, {'id': validator.object_id, param_name: param_value})
         except tk.ValidationError, e:
             message = e.error_dict.get('message') or e.error_dict
             yield jsonschema.ValidationError(message)
