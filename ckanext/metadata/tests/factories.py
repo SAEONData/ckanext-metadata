@@ -35,7 +35,6 @@ class MetadataCollection(factory.Factory):
 class MetadataRecord(factory.Factory):
     FACTORY_FOR = ckan_model.Package
 
-    name = factory.Sequence(lambda n: 'test_record_{0:02d}'.format(n))
     title = 'Test Metadata Record'
     metadata_json = '{ "testkey": "testvalue" }'
     metadata_raw = '<xml/>'

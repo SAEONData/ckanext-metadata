@@ -87,7 +87,7 @@ class TestMetadataRecordActions(ActionTestBase):
         """
         assert obj.type == 'metadata_record'
         assert obj.title == kwargs.pop('title', input_dict.get('title'))
-        assert obj.name == kwargs.pop('name', 'metadata-' + obj.id)
+        assert obj.name == kwargs.pop('name', obj.id)
         assert obj.owner_org == kwargs.pop('owner_org', self.owner_org['id'])
         assert obj.private == kwargs.pop('private', True)
         assert_package_has_extra(obj.id, 'metadata_collection_id', kwargs.pop('metadata_collection_id', self.metadata_collection['id']))
@@ -102,6 +102,8 @@ class TestMetadataRecordActions(ActionTestBase):
     def test_create_valid(self):
         input_dict = self._make_input_dict()
         input_dict.update({
+            # the following fields are set automatically, so any values provided as input should be ignored
+            'name': 'ignore',
             'type': 'ignore',
             'validated': 'ignore',
             'errors': 'ignore',
@@ -110,12 +112,6 @@ class TestMetadataRecordActions(ActionTestBase):
         })
         result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
-
-    def test_create_valid_setname(self):
-        input_dict = self._make_input_dict()
-        input_dict['name'] = 'test-metadata-record'
-        result, obj = self.test_action('metadata_record_create', **input_dict)
-        self._assert_metadata_record_ok(obj, input_dict, name=input_dict['name'])
 
     def test_create_valid_owner_org_byname(self):
         input_dict = self._make_input_dict()
@@ -174,12 +170,6 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'metadata_collection_id', 'Missing value')
         assert_error(result, 'metadata_standard_id', 'Missing value')
 
-    def test_create_invalid_duplicate_name(self):
-        metadata_record = self._generate_metadata_record()
-        result, obj = self.test_action('metadata_record_create', should_error=True,
-                                       name=metadata_record['name'])
-        assert_error(result, 'name', 'That URL is already in use.')
-
     def test_create_invalid_not_json(self):
         result, obj = self.test_action('metadata_record_create', should_error=True,
                                        metadata_json='not json')
@@ -235,7 +225,6 @@ class TestMetadataRecordActions(ActionTestBase):
 
         input_dict = {
             'id': metadata_record['id'],
-            'name': 'updated-test-metadata-record',
             'title': 'Updated Test Metadata Record',
             'owner_org': self.owner_org['id'],
             'metadata_collection_id': new_metadata_collection['id'],
@@ -247,6 +236,8 @@ class TestMetadataRecordActions(ActionTestBase):
                 {'id': infrastructure2['name']},
                 {'id': new_infrastructure['name']},
             ],
+            # the following fields are set automatically, so any values provided as input should be ignored
+            'name': 'ignore',
             'type': 'ignore',
             'validated': 'ignore',
             'errors': 'ignore',
@@ -384,14 +375,6 @@ class TestMetadataRecordActions(ActionTestBase):
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=True)
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
-
-    def test_update_invalid_duplicate_name(self):
-        metadata_record1 = self._generate_metadata_record()
-        metadata_record2 = self._generate_metadata_record()
-        result, obj = self.test_action('metadata_record_update', should_error=True,
-                                       id=metadata_record1['id'],
-                                       name=metadata_record2['name'])
-        assert_error(result, 'name', 'That URL is already in use.')
 
     def test_update_invalid_missing_params(self):
         metadata_record = self._generate_metadata_record()
