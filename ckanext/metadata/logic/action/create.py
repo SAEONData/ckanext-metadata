@@ -479,3 +479,15 @@ def metadata_record_workflow_annotation_create(context, data_dict):
         },
     }
     return tk.get_action('jsonpatch_create')(context, jsonpatch_data)
+
+
+def metadata_standard_index_create(context, data_dict):
+    """
+    Placeholder function for initializing a metadata search index.
+    May be implemented as required by another plugin.
+
+    You must be authorized to create a search index.
+
+    :param id: the id or name of the metadata standard
+    :type id: string
+    """

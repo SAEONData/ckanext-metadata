@@ -402,6 +402,9 @@ def metadata_record_update(context, data_dict):
     if not defer_commit:
         model.repo.commit()
 
+    if not metadata_record.private:
+        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+
     output = metadata_record_id if return_id_only \
         else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
     return output
@@ -675,8 +678,9 @@ def metadata_record_workflow_state_override(context, data_dict):
 
     tk.check_access('metadata_record_workflow_state_override', context, data_dict)
 
-    metadata_record.extras['workflow_state_id'] = workflow_state_id
+    update_search_index = metadata_record.private != workflow_state.metadata_records_private
     metadata_record.private = workflow_state.metadata_records_private
+    metadata_record.extras['workflow_state_id'] = workflow_state_id
 
     activity_context = context.copy()
     activity_context.update({
@@ -710,6 +714,10 @@ def metadata_record_workflow_state_override(context, data_dict):
 
     if not defer_commit:
         model.repo.commit()
+
+    if update_search_index:
+        context['metadata_record'] = metadata_record
+        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
 
     return activity_dict
 
@@ -780,6 +788,8 @@ def workflow_state_update(context, data_dict):
 
         for metadata_record in metadata_records:
             metadata_record.private = workflow_state.metadata_records_private
+    else:
+        metadata_records = []
 
     rev = model.repo.new_revision()
     rev.author = user
@@ -790,6 +800,11 @@ def workflow_state_update(context, data_dict):
 
     if not defer_commit:
         model.repo.commit()
+
+    for metadata_record in metadata_records:
+        index_context = context.copy()
+        index_context['metadata_record'] = metadata_record
+        tk.get_action('metadata_record_index_update')(index_context, {'id': metadata_record.id})
 
     output = workflow_state_id if return_id_only \
         else tk.get_action('workflow_state_show')(context, {'id': workflow_state_id})
@@ -875,8 +890,11 @@ def metadata_record_workflow_state_transition(context, data_dict):
     })
 
     if not workflow_errors:
-        metadata_record.extras['workflow_state_id'] = target_workflow_state_id
+        update_search_index = metadata_record.private != target_workflow_state.metadata_records_private
         metadata_record.private = target_workflow_state.metadata_records_private
+        metadata_record.extras['workflow_state_id'] = target_workflow_state_id
+    else:
+        update_search_index = False
 
     activity_context = context.copy()
     activity_context.update({
@@ -912,6 +930,10 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     if not defer_commit:
         model.repo.commit()
+
+    if update_search_index:
+        context['metadata_record'] = metadata_record
+        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
 
     return activity_dict
 
@@ -958,11 +980,12 @@ def metadata_record_workflow_state_revert(context, data_dict):
         target_workflow_state_id = target_workflow_state.id
         metadata_record_private = target_workflow_state.metadata_records_private
     else:
-        target_workflow_state_id =''
+        target_workflow_state_id = ''
         metadata_record_private = True
 
-    metadata_record.extras['workflow_state_id'] = target_workflow_state_id
+    update_search_index = metadata_record.private != metadata_record_private
     metadata_record.private = metadata_record_private
+    metadata_record.extras['workflow_state_id'] = target_workflow_state_id
 
     activity_context = context.copy()
     activity_context.update({
@@ -997,4 +1020,20 @@ def metadata_record_workflow_state_revert(context, data_dict):
     if not defer_commit:
         model.repo.commit()
 
+    if update_search_index:
+        context['metadata_record'] = metadata_record
+        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+
     return activity_dict
+
+
+def metadata_record_index_update(context, data_dict):
+    """
+    Placeholder function for adding/updating/deleting a metadata record in a search index.
+    May be implemented as required by another plugin.
+
+    You must be authorized to update the search index.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+    """

@@ -73,6 +73,10 @@ def metadata_record_workflow_state_revert(context, data_dict):
     return {'success': True}
 
 
+def metadata_record_index_update(context, data_dict):
+    return {'success': True}
+
+
 def workflow_state_update(context, data_dict):
     return {'success': True}
 
