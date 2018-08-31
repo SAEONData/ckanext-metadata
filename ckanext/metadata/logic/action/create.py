@@ -491,3 +491,4 @@ def metadata_standard_index_create(context, data_dict):
     :param id: the id or name of the metadata standard
     :type id: string
     """
+    tk.check_access('metadata_standard_index_create', context, data_dict)

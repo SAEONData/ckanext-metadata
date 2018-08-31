@@ -1037,3 +1037,4 @@ def metadata_record_index_update(context, data_dict):
     :param id: the id or name of the metadata record
     :type id: string
     """
+    tk.check_access('metadata_record_index_update', context, data_dict)
