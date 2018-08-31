@@ -71,7 +71,7 @@ class MetadataStandard(factory.Factory):
     standard_name = factory.Sequence(lambda n: 'test_standard_{0:02d}'.format(n))
     standard_version = '1.0'
     parent_standard_id = ''
-    example_metadata_json = '{ "testkey": "testvalue" }'
+    metadata_template_json = '{ "testkey": "testvalue" }'
     title = factory.LazyAttribute(lambda obj: obj.standard_name.replace('_', ' ').title())
     description = 'A test description for this test metadata standard.'
 
