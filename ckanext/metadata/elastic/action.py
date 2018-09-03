@@ -31,7 +31,7 @@ def metadata_standard_index_create(original_action, context, data_dict):
              metadata_standard.name, metadata_standard.metadata_template_json)
 
     template_record_json = json.dumps({
-        'metadata_json': metadata_standard.metadata_template_json,
+        'metadata_json': json.loads(metadata_standard.metadata_template_json),
         'organization': 'Organization Title',
         'collection': 'Collection Title',
         'infrastructures': ['Infrastructure 1 Title', 'Infrastructure 2 Title'],
@@ -85,7 +85,7 @@ def metadata_record_index_update(original_action, context, data_dict):
         infrastructure_titles = [title for (title,) in infrastructure_titles]
 
         record_json = json.dumps({
-            'metadata_json': metadata_record.extras['metadata_json'],
+            'metadata_json': json.loads(metadata_record.extras['metadata_json']),
             'organization': organization_title,
             'collection': collection_title,
             'infrastructures': infrastructure_titles,
