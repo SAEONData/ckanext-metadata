@@ -450,6 +450,10 @@ def metadata_record_setname(context, data_dict):
     if not metadata_record.private:
         raise tk.ValidationError(_("The name of a metadata record cannot be changed once it has been published"))
 
+    test_record = model.Package.get(new_name)
+    if test_record and test_record.id != metadata_record_id:
+        raise tk.ValidationError(_("The name '{}' is already in use").format(new_name))
+
     metadata_record.name = new_name
 
     rev = model.repo.new_revision()
