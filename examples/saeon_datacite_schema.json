@@ -191,9 +191,9 @@
                     "affiliation": {"type": "string", "$comment": "Shouldn't this be an array?"}
                 },
                 "required": ["creatorName"],
-                "$comment": "if & then are only available from draft 7",
-                "if": {"required": ["nameIdentifier"]},
-                "then": {"required": ["nameIdentifierScheme"]}
+                "dependencies": {
+                    "nameIdentifier": ["nameIdentifierScheme"]
+                }
             },
             "minItems": 1,
             "uniqueItems": true
@@ -245,9 +245,9 @@
                     "affiliation": {"type": "string", "$comment": "Shouldn't this be an array?"}
                 },
                 "required": ["contributorName"],
-                "$comment": "if & then are only available from draft 7",
-                "if": {"required": ["nameIdentifier"]},
-                "then": {"required": ["nameIdentifierScheme"]}
+                "dependencies": {
+                    "nameIdentifier": ["nameIdentifierScheme"]
+                }
             },
             "uniqueItems": true
         },
