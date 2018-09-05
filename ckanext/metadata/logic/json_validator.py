@@ -5,8 +5,20 @@ import jsonschema
 import jsonschema.validators
 import re
 import ast
+from jsonpointer import resolve_pointer, JsonPointerException
+from collections import deque
+
+import ckan.plugins.toolkit as tk
 
 log = logging.getLogger(__name__)
+
+
+def add_post_validation_task(self, action_func, data_dict, error_path):
+    self.tasks += [{
+        'action_func': action_func,
+        'data_dict': data_dict,
+        'error_path': error_path,
+    }]
 
 
 class JSONValidator(object):
@@ -27,6 +39,7 @@ class JSONValidator(object):
         jsonschema_validator_cls = jsonschema.validators.validator_for(schema)
         jsonschema_validator_cls.check_schema(schema)
         jsonschema_validator_cls.VALIDATORS.update(self._validators())
+        jsonschema_validator_cls.add_post_validation_task = add_post_validation_task
 
         formats = self._formats()
         if 'uri' in formats:
@@ -39,7 +52,8 @@ class JSONValidator(object):
             schema, format_checker=jsonschema.FormatChecker(formats))
 
         self.jsonschema_validator.object_id = object_id
-        self.jsonschema_validator.context = context
+        self.jsonschema_validator.context = context or {}
+        self.jsonschema_validator.tasks = []
 
     @classmethod
     def _validators(cls):
@@ -104,6 +118,7 @@ class JSONValidator(object):
             else:
                 node[index] += [message]
 
+        self.jsonschema_validator.root_instance = instance.copy()
         errors = {}
         clear_empties(instance)
 
@@ -116,17 +131,47 @@ class JSONValidator(object):
                 required_key = ast.literal_eval(match.group('key'))
                 error.path.append(required_key)
 
+            elif error.schema_path[-1] == 'not' and error.validator_value == {}:
+                error.message = 'This key may not be present in the dictionary'
+
             elif error.schema_path[-1] == 'minItems':
                 error.path.append('__minItems')
                 error.message = 'Array has too few items'
-
-            elif error.schema_path[-1] == 'not' and error.validator_value == {}:
-                error.message = 'This key may not be present in the dictionary'
 
             elif error.schema_path[-1] == 'uniqueObjects':
                 error.path.append('__uniqueObjects')
                 error.message = 'Array has non-unique objects'
 
+            elif error.schema_path[-1] == 'contains':
+                error.path.append('__contains')
+                error.message = 'Array does not contain a required item'
+
+            elif error.schema_path[-1] == 'task':
+                error.path.append('__task')
+
             add_error(errors, error.path, error.message)
+
+        for task in self.jsonschema_validator.tasks:
+            error_path = deque(task['error_path'].split('/'))
+            error_path.popleft()  # remove the leading empty string
+            error_path.append('__task')
+            try:
+                # if error_path resolves to a location in the errors dict, we don't want to process the task
+                resolve_pointer(errors, task['error_path'])
+                add_error(errors, error_path, 'Task not executed due to other errors in the instance')
+                continue
+            except JsonPointerException:
+                # error_path does not resolve, therefore we have no error and can process the task
+                pass
+
+            try:
+                context = self.jsonschema_validator.context.copy()
+                context['defer_commit'] = True
+                task['action_func'](context, task['data_dict'])
+            except tk.ValidationError, e:
+                message = e.error_dict.get('message') or e.error_dict
+                add_error(errors, error_path, message)
+            except Exception, e:
+                add_error(errors, error_path, e.message)
 
         return errors

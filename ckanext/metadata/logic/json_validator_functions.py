@@ -5,6 +5,7 @@ import jsonschema.validators
 from datetime import datetime
 import re
 import urlparse
+from jsonpointer import resolve_pointer, JsonPointerException
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -76,44 +77,56 @@ def unique_objects_validator(validator, key_properties, instance, schema):
             key_objects += [key_object]
 
 
-def execute_validator(validator, execute_dict, instance, schema):
+def task_validator(validator, task_dict, instance, schema):
     """
-    "execute" keyword validator: calls the specified API action with data_dict
-    { 'id': validator.object_id, 'param': instance }, where 'param' is the name
-    of the parameter given by the "param" subschema.
+    "task" keyword validator: adds a task to the validator, which will call the specified action
+    (for the object currently being validated) post-validation if this instance is otherwise valid.
+    A task looks like:
+    {
+        'action': API action name,
+        'params': array of [{
+            'param': a key in the data_dict to be passed to the action,
+            'valueRelPath': JSON pointer into this instance where the value is located
+        }],
+        'errorAbsPath': JSON pointer into the whole document; the task will only be executed if
+            the instance at this location contains no errors
+    }
     """
-    if validator.is_type(instance, 'string') and validator.is_type(execute_dict, 'object'):
-        action_name = execute_dict.get('action')
-        param_name = execute_dict.get('param')
-        param_value = instance
+    if validator.is_type(task_dict, 'object'):
+        action_name = task_dict.get('action', '')
+        params = task_dict.get('params', [])
+        error_path = task_dict.get('errorAbsPath', '')
 
-        # Hack: workaround for Draft 6; this should be removed once we have "if" and "then" keywords (Draft 7)
-        format_ = execute_dict.get('format')
-        if format_:
-            try:
-                validator.format_checker.check(instance, format_)
-            except jsonschema.FormatError:
-                yield jsonschema.ValidationError(_("Cannot execute action with the provided value"))
-                return
-
-        if not validator.object_id:
-            yield jsonschema.ValidationError(_("object_id is not available"))
-
+        errors = False
         try:
             action_func = tk.get_action(action_name)
         except:
+            errors = True
             yield jsonschema.ValidationError(_("Action '{}' not found".format(action_name)))
-            return
+
+        if not validator.object_id:
+            errors = True
+            yield jsonschema.ValidationError(_("object_id is not available"))
+
+        data_dict = {'id': validator.object_id}
+        try:
+            for param in params:
+                data_dict[param['param']] = resolve_pointer(instance, param['valueRelPath'])
+        except (TypeError, KeyError):
+            errors = True
+            yield jsonschema.ValidationError(_("Invalid params array"))
+        except JsonPointerException:
+            errors = True
+            yield jsonschema.ValidationError(_("valueRelPath: invalid JSON pointer"))
 
         try:
-            context = validator.context.copy()
-            context['defer_commit'] = True
-            action_func(context, {'id': validator.object_id, param_name: param_value})
-        except tk.ValidationError, e:
-            message = e.error_dict.get('message') or e.error_dict
-            yield jsonschema.ValidationError(message)
-        except Exception, e:
-            yield jsonschema.ValidationError(e.message)
+            resolve_pointer(validator.root_instance, error_path)
+        except JsonPointerException:
+            errors = True
+            yield jsonschema.ValidationError(_("errorAbsPath: invalid JSON pointer"))
+
+        if not errors:
+            validator.add_post_validation_task(action_func, data_dict, error_path)
 
 
 @checks_format('doi')
