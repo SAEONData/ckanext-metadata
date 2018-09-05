@@ -467,6 +467,61 @@ def metadata_record_setname(context, data_dict):
         model.repo.commit()
 
 
+def metadata_record_seturl(context, data_dict):
+    """
+    Update the url of a metadata record. This should normally only be called internally
+    during metadata validation in order to copy the download link from the metadata JSON
+    into the url attribute of the package object. Note that the url can only be updated if
+    the record is currently private.
+
+    You must be authorized to update the metadata record's url.
+
+    :param id: the id or name of the metadata record to update
+    :type id: string
+    :param url: the url of the metadata record
+    :type url: string
+    """
+    log.info("Updating metadata record url: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_record_id, new_url = tk.get_or_bust(data_dict, ['id', 'url'])
+    metadata_record = context.get('metadata_record')
+
+    if metadata_record:
+        metadata_record_id = metadata_record.id
+    else:
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is not None and metadata_record.type == 'metadata_record':
+            metadata_record_id = metadata_record.id
+        else:
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    tk.check_access('metadata_record_seturl', context, data_dict)
+
+    if new_url == metadata_record.url:
+        return
+
+    if not metadata_record.private:
+        raise tk.ValidationError(_("The url of a metadata record cannot be changed once it has been published"))
+
+    # Todo: test whether the url is already associated with another metadata record?
+
+    metadata_record.url = new_url
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Set url of metadata record %s') % metadata_record_id
+
+    if not defer_commit:
+        model.repo.commit()
+
+
 def metadata_record_invalidate(context, data_dict):
     """
     Mark a metadata record as not validated, and log the change to

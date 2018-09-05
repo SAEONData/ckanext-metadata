@@ -86,6 +86,7 @@ def metadata_record_create_schema():
         'owner_org': [v.not_empty, v.object_exists('organization'), owner_org_validator, unicode],
         'type': [],
         'private': [],
+        'url': [],
 
         # extension-specific fields
         'metadata_collection_id': [v.not_empty, unicode, v.object_exists('metadata_collection'), convert_to_extras],

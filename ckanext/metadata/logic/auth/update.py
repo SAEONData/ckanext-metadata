@@ -53,6 +53,10 @@ def metadata_record_setname(context, data_dict):
     return {'success': True}
 
 
+def metadata_record_seturl(context, data_dict):
+    return {'success': True}
+
+
 def metadata_record_validate(context, data_dict):
     return {'success': True}
 
