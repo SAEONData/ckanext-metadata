@@ -90,6 +90,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert obj.name == kwargs.pop('name', obj.id)
         assert obj.owner_org == kwargs.pop('owner_org', self.owner_org['id'])
         assert obj.private == kwargs.pop('private', True)
+        assert obj.url == kwargs.pop('url', '')
         assert_package_has_extra(obj.id, 'metadata_collection_id', kwargs.pop('metadata_collection_id', self.metadata_collection['id']))
         assert_package_has_extra(obj.id, 'metadata_standard_id', kwargs.pop('metadata_standard_id', self.metadata_standard['id']))
         assert_package_has_extra(obj.id, 'metadata_json', input_dict['metadata_json'], is_json=True)
@@ -109,6 +110,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'errors': 'ignore',
             'workflow_state_id': 'ignore',
             'private': 'ignore',
+            'url': 'ignore',
         })
         result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
@@ -243,11 +245,11 @@ class TestMetadataRecordActions(ActionTestBase):
             'errors': 'ignore',
             'workflow_state_id': 'ignore',
             'private': 'ignore',
+            'url': 'ignore',
         }
         result, obj = self.test_action('metadata_record_update', **input_dict)
 
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         metadata_collection_id=new_metadata_collection['id'],
                                         metadata_standard_id=new_metadata_standard['id'])
         assert_group_has_member(infrastructure1['id'], obj.id, 'package', state='deleted')
@@ -262,17 +264,13 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict = self._make_input_dict()
         input_dict.update({
             'id': metadata_record['id'],
-            'name': 'updated-test-metadata-record',
+            'title': 'Updated Test Metadata Record',
             'metadata_json': '{ "newtestkey": "newtestvalue" }',
             'infrastructures': [{'id': infrastructure['id']}],
         })
-        del input_dict['title']
-
         result, obj = self.test_action('metadata_record_update', **input_dict)
 
-        self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
-                                        title=metadata_record['title'])
+        self._assert_metadata_record_ok(obj, input_dict)
         assert_group_has_member(infrastructure['id'], obj.id, 'package')
 
     def test_update_json_invalidate(self):
@@ -284,7 +282,6 @@ class TestMetadataRecordActions(ActionTestBase):
 
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         validated=False)
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
@@ -299,7 +296,6 @@ class TestMetadataRecordActions(ActionTestBase):
 
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         metadata_standard_id=new_metadata_standard['id'],
                                         validated=False)
         assert_metadata_record_has_validation_schemas(metadata_record['id'])
@@ -322,7 +318,6 @@ class TestMetadataRecordActions(ActionTestBase):
         })
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=False)
@@ -344,7 +339,6 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         validated=False)
         assert_metadata_record_has_validation_schemas(metadata_record['id'], new_metadata_schema['name'])
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
@@ -358,7 +352,6 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         validated=True)
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
 
@@ -370,7 +363,6 @@ class TestMetadataRecordActions(ActionTestBase):
         })
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         owner_org=new_organization['id'],
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=True)
@@ -470,14 +462,20 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self.test_action('metadata_record_invalidate',
                                        id=metadata_record['id'])
         self._assert_metadata_record_ok(obj, input_dict,
-                                        name=input_dict['name'],
                                         validated=False)
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
         self.assert_invalidate_activity_logged(metadata_record['id'], None, None)
 
     def test_validate_datacite(self):
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        download_link = next((resource['href']
+                              for resource in metadata_dict['onlineResources']
+                              if resource['func'] == 'download'))
+
         metadata_record = self._generate_metadata_record(
-            metadata_json=load_example('saeon_datacite_record.json'))
+            metadata_json=metadata_json)
         metadata_schema = ckanext_factories.MetadataSchema(
             metadata_standard_id=metadata_record['metadata_standard_id'],
             schema_json=load_example('saeon_datacite_schema.json'))
@@ -487,6 +485,8 @@ class TestMetadataRecordActions(ActionTestBase):
         self.test_action('metadata_record_validate', id=metadata_record['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', True)
         assert_package_has_extra(metadata_record['id'], 'errors', '{}')
+        assert_package_has_attribute(metadata_record['id'], 'name', identifier)
+        assert_package_has_attribute(metadata_record['id'], 'url', download_link)
         self.assert_validate_activity_logged(metadata_record['id'], metadata_schema)
 
     def test_workflow_annotations_valid(self):

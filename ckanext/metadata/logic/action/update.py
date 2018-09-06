@@ -365,6 +365,8 @@ def metadata_record_update(context, data_dict):
         'errors': metadata_record.extras['errors'],
         'workflow_state_id': metadata_record.extras['workflow_state_id'],
         'private': metadata_record.private,
+        'name': metadata_record.name,
+        'url': metadata_record.url,
     })
     context.update({
         'schema': schema.metadata_record_update_schema(),

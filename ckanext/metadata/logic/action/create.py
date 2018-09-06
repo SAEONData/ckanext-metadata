@@ -305,6 +305,7 @@ def metadata_record_create(context, data_dict):
         'errors': '{}',
         'workflow_state_id': '',
         'private': True,
+        'url': '',
     })
     context.update({
         'schema': schema.metadata_record_create_schema(),

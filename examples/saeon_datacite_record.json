@@ -3,7 +3,10 @@
         {"desc": "Original Metadata Record",
          "func": "metadata",
          "href": "http://qa.dirisa.org/Portals/test-mike/testcustmike/metadata/metadata.2018-02-28.9981326861/getOriginalXml",
-         "name": "Original Metadata Record"}],
+         "name": "Original Metadata Record"},
+        {"desc": "Download Dataset",
+         "func": "download",
+         "href": "http://example.net"}],
     "alternateIdentifiers": [{
         "alternateIdentifier": "http://schema.datacite.org/schema/meta/kernel-3.1/example/datacite-example-full-v3.1.xml",
         "alternateIdentifierType": "URL"}],
