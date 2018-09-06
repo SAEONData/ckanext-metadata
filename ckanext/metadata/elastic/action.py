@@ -30,14 +30,7 @@ def metadata_standard_index_create(original_action, context, data_dict):
     log.info("Initializing search index from metadata standard %s: %r",
              metadata_standard.name, metadata_standard.metadata_template_json)
 
-    template_record_json = json.dumps({
-        'record_id': 'DOI',
-        'metadata_json': json.loads(metadata_standard.metadata_template_json),
-        'organization': 'Organization Title',
-        'collection': 'Collection Title',
-        'infrastructures': ['Infrastructure 1 Title', 'Infrastructure 2 Title'],
-    })
-    client.initialize_index(metadata_standard.name, template_record_json)
+    client.initialize_index(metadata_standard.name, metadata_standard.metadata_template_json)
 
 
 @tk.chained_action
@@ -86,14 +79,8 @@ def metadata_record_index_update(original_action, context, data_dict):
             .all()
         infrastructure_titles = [title for (title,) in infrastructure_titles]
 
-        record_json = json.dumps({
-            'record_id': metadata_record.name,
-            'metadata_json': json.loads(metadata_record.extras['metadata_json']),
-            'organization': organization_title,
-            'collection': collection_title,
-            'infrastructures': infrastructure_titles,
-        })
-        client.push_record(index_name, record_json)
+        client.push_record(index_name, metadata_record.name, metadata_record.extras['metadata_json'],
+                           organization_title, collection_title, infrastructure_titles)
 
 
 @tk.chained_action
