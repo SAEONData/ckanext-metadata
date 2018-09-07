@@ -185,7 +185,17 @@
                     "nameIdentifier": {"type": "string"},
                     "nameIdentifierScheme": {"type": "string"},
                     "schemeURI": {"type": "string", "format": "uri"},
-                    "affiliation": {"type": "string", "$comment": "Shouldn't this be an array?"}
+                    "affiliations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "affiliation": {"type": "string"}
+                            },
+                            "required": ["affiliation"]
+                        },
+                        "uniqueItems": true
+                    }
                 },
                 "required": ["creatorName"],
                 "dependencies": {
@@ -239,7 +249,17 @@
                     "nameIdentifier": {"type": "string"},
                     "nameIdentifierScheme": {"type": "string"},
                     "schemeURI": {"type": "string", "format": "uri"},
-                    "affiliation": {"type": "string", "$comment": "Shouldn't this be an array?"}
+                    "affiliations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "affiliation": {"type": "string"}
+                            },
+                            "required": ["affiliation"]
+                        },
+                        "uniqueItems": true
+                    }
                 },
                 "required": ["contributorName"],
                 "dependencies": {
