@@ -56,12 +56,13 @@ def metadata_record_index_update(original_action, context, data_dict):
     index_name = session.query(ckanext_model.MetadataStandard.name) \
         .filter_by(id=metadata_record.extras['metadata_standard_id']) \
         .scalar()
+    record_id = metadata_record.id
 
     if metadata_record.private:
-        log.debug("Removing metadata record from search index: %s", metadata_record.name)
-        client.delete_record(index_name, metadata_record.name)
+        log.debug("Removing metadata record from search index: %s", record_id)
+        client.delete_record(index_name, record_id)
     else:
-        log.debug("Adding metadata record to search index: %s", metadata_record.name)
+        log.debug("Adding metadata record to search index: %s", record_id)
 
         organization_title = session.query(model.Group.title) \
             .filter_by(id=metadata_record.owner_org) \
@@ -79,7 +80,7 @@ def metadata_record_index_update(original_action, context, data_dict):
             .all()
         infrastructure_titles = [title for (title,) in infrastructure_titles]
 
-        client.push_record(index_name, metadata_record.name, metadata_record.extras['metadata_json'],
+        client.push_record(index_name, record_id, metadata_record.extras['metadata_json'],
                            organization_title, collection_title, infrastructure_titles)
 
 
