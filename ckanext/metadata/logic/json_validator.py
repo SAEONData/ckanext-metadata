@@ -115,6 +115,11 @@ class JSONValidator(object):
 
             if path:
                 add_error(node[index], path, message)
+            elif type(node[index]) is dict:
+                # we'll arrive here if we previously added an error at a leaf node and subsequently
+                # want to add an error at a parent/ancestor of that leaf; we must add a "dummy" key
+                # for the error message list
+                add_error(node[index], deque(('_',)), message)
             else:
                 node[index] += [message]
 
