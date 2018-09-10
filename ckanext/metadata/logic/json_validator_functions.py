@@ -6,6 +6,7 @@ from datetime import datetime
 import re
 import urlparse
 from jsonpointer import resolve_pointer, JsonPointerException
+import sys
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -127,6 +128,19 @@ def task_validator(validator, task_dict, instance, schema):
 
         if not errors:
             validator.add_post_validation_task(action_func, data_dict, error_path)
+
+
+def item_cardinality_validator(validator, item_cardinality, instance, schema):
+    """
+    "itemCardinality" keyword validator: checks that items matching the given schema have at
+    least "minCount" and at most "maxCount" occurrences in the array.
+    """
+    if validator.is_type(instance, 'array'):
+        matches = [item for item in instance if validator.is_valid(item, item_cardinality)]
+        if len(matches) < item_cardinality.get('minCount', 0):
+            yield jsonschema.ValidationError(_("Array contains too few items that match the given schema"))
+        if len(matches) > item_cardinality.get('maxCount', sys.maxint):
+            yield jsonschema.ValidationError(_("Array contains too many items that match the given schema"))
 
 
 @checks_format('doi')

@@ -154,6 +154,9 @@ class JSONValidator(object):
             elif error.schema_path[-1] == 'task':
                 error.path.append('__task')
 
+            elif error.schema_path[-1] == 'itemCardinality':
+                error.path.append('__itemCardinality')
+
             add_error(errors, error.path, error.message)
 
         for task in self.jsonschema_validator.tasks:

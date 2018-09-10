@@ -406,7 +406,7 @@
                     "desc": {"type": "string"}
                 },
                 "required": ["href", "func"],
-                "$comment": "this is a better way to conditionally specify the download link task, but if-then is only available from Draft 7",
+                "$comment": "if-then is only available from Draft 7",
                 "if": {
                     "properties": {
                         "func": {"const": "download"}
@@ -423,22 +423,14 @@
                     }
                 }
             },
-            "contains": {
-                "$comment": "ensure that a download link is present in the online resources array",
+            "uniqueItems": true,
+            "itemCardinality": {
+                "minCount": 1,
+                "maxCount": 1,
                 "properties": {
                     "func": {"const": "download"}
-                },
-                "task": {
-                    "$comment": "an error in the task will manifest as a 'contains' error, so asap we switch to the if-then method above",
-                    "action": "metadata_record_seturl",
-                    "params": [{
-                        "param": "url",
-                        "valueRelPath": "/href"
-                    }],
-                    "errorAbsPath": "/onlineResources"
                 }
-            },
-            "uniqueItems": true
+            }
         }
     },
 

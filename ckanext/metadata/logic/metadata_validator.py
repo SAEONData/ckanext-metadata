@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 from ckanext.metadata.logic.json_validator import JSONValidator
-from ckanext.metadata.logic.json_validator_functions import vocabulary_validator, task_validator
+from ckanext.metadata.logic.json_validator_functions import vocabulary_validator, task_validator, item_cardinality_validator
 
 
 class MetadataValidator(JSONValidator):
@@ -18,6 +18,7 @@ class MetadataValidator(JSONValidator):
         return {
             'vocabulary': vocabulary_validator,
             'task': task_validator,
+            'itemCardinality': item_cardinality_validator,
         }
 
     @classmethod
