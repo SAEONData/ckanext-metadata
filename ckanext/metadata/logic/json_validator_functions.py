@@ -75,6 +75,7 @@ def unique_objects_validator(validator, key_properties, instance, schema):
             key_object = {k: v for k, v in obj.items() if k in key_properties}
             if key_object in key_objects:
                 yield jsonschema.ValidationError(_("%r has non-unique objects") % (instance,))
+                return
             key_objects += [key_object]
 
 

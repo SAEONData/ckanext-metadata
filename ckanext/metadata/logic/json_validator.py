@@ -143,6 +143,10 @@ class JSONValidator(object):
                 error.path.append('__minItems')
                 error.message = 'Array has too few items'
 
+            elif error.schema_path[-1] == 'uniqueItems':
+                error.path.append('__uniqueItems')
+                error.message = 'Array has non-unique items'
+
             elif error.schema_path[-1] == 'uniqueObjects':
                 error.path.append('__uniqueObjects')
                 error.message = 'Array has non-unique objects'
