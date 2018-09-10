@@ -429,3 +429,16 @@ def organization_delete(context, data_dict):
     organization.delete()
     if not defer_commit:
         model.repo.commit()
+
+
+def metadata_standard_index_delete(context, data_dict):
+    """
+    Placeholder function for deleting a metadata search index.
+    May be implemented as required by another plugin.
+
+    You must be authorized to delete a search index.
+
+    :param id: the id or name of the metadata standard
+    :type id: string
+    """
+    tk.check_access('metadata_standard_index_delete', context, data_dict)

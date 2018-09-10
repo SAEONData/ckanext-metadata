@@ -17,6 +17,7 @@ class ElasticPlugin(p.SingletonPlugin):
     def get_actions(self):
         return {
             'metadata_standard_index_create': action.metadata_standard_index_create,
+            'metadata_standard_index_delete': action.metadata_standard_index_delete,
             'metadata_record_index_update': action.metadata_record_index_update,
             'organization_update': action.organization_update,
             'infrastructure_update': action.infrastructure_update,

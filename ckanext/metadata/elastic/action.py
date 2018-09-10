@@ -34,6 +34,26 @@ def metadata_standard_index_create(original_action, context, data_dict):
 
 
 @tk.chained_action
+def metadata_standard_index_delete(original_action, context, data_dict):
+    """
+    Delete a metadata search index.
+
+    :param id: the id or name of the metadata standard
+    :type id: string
+    """
+    original_action(context, data_dict)
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    metadata_standard = ckanext_model.MetadataStandard.get(id_)
+    if metadata_standard is None:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
+
+    log.info("Deleting search index for metadata standard %s", metadata_standard.name)
+
+    client.delete_index(metadata_standard.name)
+
+
+@tk.chained_action
 def metadata_record_index_update(original_action, context, data_dict):
     """
     Add/update/delete a metadata record in a search index.

@@ -22,6 +22,10 @@ def initialize_index(index_name, metadata_template_json):
     _call_agent('create_index', index=index_name, metadata_json=metadata_template_json)
 
 
+def delete_index(index_name):
+    _call_agent('delete_index', index=index_name)
+
+
 def push_record(index_name, record_id, metadata_json, organization, collection, infrastructures):
     _call_agent('add', index=index_name, record_id=record_id, metadata_json=metadata_json,
                 organization=organization, collection=collection, infrastructures=infrastructures)
