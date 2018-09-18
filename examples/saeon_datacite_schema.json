@@ -322,12 +322,8 @@
                         "relationType": {"enum": ["HasMetadata", "IsMetadataFor"]}
                     }
                 },
-                "else": {
-                    "properties": {
-                        "relatedMetadataScheme": false,
-                        "schemeURI": false,
-                        "schemeType": false
-                    }
+                "then": {
+                    "required": ["relatedMetadataScheme", "schemeURI", "schemeType"]
                 }
             },
             "uniqueItems": true
