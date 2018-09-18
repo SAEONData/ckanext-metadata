@@ -12,6 +12,11 @@ This extension has been developed and tested with CKAN version 2.7.4.
 Extension [ckanext-jsonpatch](https://github.com/SAEONData/ckanext-jsonpatch) is required
 for metadata workflows.
 
+RabbitMQ server is required for [Elastic search agent](https://github.com/SAEONData/elastic-search-agent)
+integration:
+
+    sudo apt install rabbitmq-server
+
 ## Installation
 
 Activate your CKAN virtual environment:
@@ -34,9 +39,9 @@ Create the required database tables:
     cd /usr/lib/ckan/default/src/ckanext-metadata
     paster metadata initdb -c /etc/ckan/default/development.ini
 
-Open your CKAN configuration file (e.g. `/etc/ckan/default/production.ini`) and
-add `metadata` to the list of plugins :
+Add the `metadata`, `jsonpatch` and (optionally, for Elastic search agent integration) `elastic` to the
+list of plugins in your CKAN configuration file (e.g. `/etc/ckan/default/production.ini`):
 
-    ckan.plugins = ... metadata
+    ckan.plugins = ... metadata jsonpatch elastic
 
 Restart your CKAN instance.
