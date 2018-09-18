@@ -29,9 +29,9 @@
                 "RightsHolder",
                 "Sponsor",
                 "Supervisor",
-                "WorkPackageLeader"
-            ],
-            "$comment": "excludes \"Other\""
+                "WorkPackageLeader",
+                "Other"
+            ]
         },
         "date": {
             "type": "string",
@@ -75,9 +75,9 @@
                 "Software",
                 "Sound",
                 "Text",
-                "Workflow"
-            ],
-            "$comment": "excludes \"Other\""
+                "Workflow",
+                "Other"
+            ]
         },
         "relatedIdentifierType": {
             "type": "string",
@@ -316,7 +316,7 @@
                     "schemeType": {"type": "string"}
                 },
                 "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"],
-                "$comment": "if & else are only available from draft 7",
+                "$comment": "if-then is only available from Draft 7",
                 "if": {
                     "properties": {
                         "relationType": {"enum": ["HasMetadata", "IsMetadataFor"]}
