@@ -2,9 +2,21 @@
     "$schema": "http://json-schema.org/draft-06/schema#",
 
     "definitions": {
-        "personName": {
+        "nameType": {
             "type": "string",
-            "pattern": "^[^,]+, [^,]+$"
+            "enum": [
+                "Organizational",
+                "Personal"
+            ]
+        },
+        "titleType": {
+            "type": "string",
+            "enum": [
+                "AlternativeTitle",
+                "Subtitle",
+                "TranslatedTitle",
+                "Other"
+            ]
         },
         "contributorType": {
             "type": "string",
@@ -15,7 +27,6 @@
                 "DataManager",
                 "Distributor",
                 "Editor",
-                "Funder",
                 "HostingInstitution",
                 "Producer",
                 "ProjectLeader",
@@ -57,7 +68,8 @@
                 "Issued",
                 "Submitted",
                 "Updated",
-                "Valid"
+                "Valid",
+                "Other"
             ]
         },
         "resourceTypeGeneral": {
@@ -65,6 +77,7 @@
             "enum": [
                 "Audiovisual",
                 "Collection",
+                "DataPaper",
                 "Dataset",
                 "Event",
                 "Image",
@@ -89,6 +102,7 @@
                 "EAN13",
                 "EISSN",
                 "Handle",
+                "IGSN",
                 "ISBN",
                 "ISSN",
                 "ISTC",
@@ -110,8 +124,12 @@
                 "IsSupplementedBy",
                 "IsContinuedBy",
                 "Continues",
+                "IsDescribedBy",
+                "Describes",
                 "HasMetadata",
                 "IsMetadataFor",
+                "HasVersion",
+                "IsVersionOf",
                 "IsNewVersionOf",
                 "IsPreviousVersionOf",
                 "IsPartOf",
@@ -128,7 +146,9 @@
                 "IsReviewedBy",
                 "Reviews",
                 "IsDerivedFrom",
-                "IsSourceOf"
+                "IsSourceOf",
+                "IsRequiredBy",
+                "Requires"
             ]
         },
         "descriptionType": {
@@ -138,21 +158,31 @@
                 "Methods",
                 "SeriesInformation",
                 "TableOfContents",
+                "TechnicalInfo",
                 "Other"
             ]
         },
-        "onlineResourceType": {
+        "funderIdentifierType": {
             "type": "string",
             "enum": [
-                "download",
-                "information",
-                "offlineaccess",
-                "order",
-                "search",
-                "related",
-                "link",
-                "metadata",
-                "ethics"
+                "ISNI",
+                "GRID",
+                "Crossref Funder ID",
+                "Other"
+            ]
+        },
+        "linkedResourceType": {
+            "type": "string",
+            "enum": [
+                "Download",
+                "Information",
+                "OfflineAccess",
+                "Order",
+                "Search",
+                "Related",
+                "Link",
+                "Metadata",
+                "Ethics"
             ]
         }
     },
@@ -166,22 +196,17 @@
                 "identifier": {"type": "string", "format": "doi"},
                 "identifierType": {"type": "string", "enum": ["DOI"]}
             },
-            "required": ["identifier", "identifierType"],
-            "task": {
-                "action": "metadata_record_setname",
-                "params": [{
-                    "param": "name",
-                    "valueRelPath": "/identifier"
-                }],
-                "errorAbsPath": "/identifier"
-            }
+            "required": ["identifier", "identifierType"]
         },
         "creators": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "creatorName": {"$ref": "#/definitions/personName"},
+                    "creatorName": {"type": "string"},
+                    "nameType": {"$ref": "#/definitions/nameType"},
+                    "givenName": {"type": "string"},
+                    "familyName": {"type": "string"},
                     "nameIdentifier": {"type": "string"},
                     "nameIdentifierScheme": {"type": "string"},
                     "schemeURI": {"type": "string", "format": "uri"},
@@ -211,7 +236,7 @@
                 "type": "object",
                 "properties": {
                     "title": {"type": "string"},
-                    "titleType": {"type": "string"}
+                    "titleType": {"$ref": "#/definitions/titleType"}
                 },
                 "required": ["title"]
             },
@@ -232,7 +257,8 @@
                 "properties": {
                     "subject": {"type": "string"},
                     "subjectScheme": {"type": "string"},
-                    "schemeURI": {"type": "string", "format": "uri"}
+                    "schemeURI": {"type": "string", "format": "uri"},
+                    "valueURI": {"type": "string", "format": "uri"}
                 },
                 "required": ["subject"]
             },
@@ -244,8 +270,11 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "contributorName": {"$ref": "#/definitions/personName"},
                     "contributorType": {"$ref": "#/definitions/contributorType"},
+                    "contributorName": {"type": "string"},
+                    "nameType": {"$ref": "#/definitions/nameType"},
+                    "givenName": {"type": "string"},
+                    "familyName": {"type": "string"},
                     "nameIdentifier": {"type": "string"},
                     "nameIdentifierScheme": {"type": "string"},
                     "schemeURI": {"type": "string", "format": "uri"},
@@ -261,7 +290,7 @@
                         "uniqueItems": true
                     }
                 },
-                "required": ["contributorName"],
+                "required": ["contributorType", "contributorName"],
                 "dependencies": {
                     "nameIdentifier": ["nameIdentifierScheme"]
                 }
@@ -274,7 +303,8 @@
                 "type": "object",
                 "properties": {
                     "date": {"$ref": "#/definitions/date"},
-                    "dateType": {"$ref": "#/definitions/dateType"}
+                    "dateType": {"$ref": "#/definitions/dateType"},
+                    "dateInformation": {"type": "string"}
                 },
                 "required": ["date", "dateType"]
             },
@@ -285,10 +315,12 @@
             "vocabulary": "language-tags"
         },
         "resourceType": {
-            "type": "string"
-        },
-        "resourceTypeGeneral": {
-            "$ref": "#/definitions/resourceTypeGeneral"
+            "type": "object",
+            "properties": {
+                "resourceType": {"type": "string"},
+                "resourceTypeGeneral": {"$ref": "#/definitions/resourceTypeGeneral"}
+            },
+            "required": ["resourceType", "resourceTypeGeneral"]
         },
         "alternateIdentifiers": {
             "type": "array",
@@ -313,17 +345,23 @@
                     "relationType": {"$ref": "#/definitions/relationType"},
                     "relatedMetadataScheme": {"type": "string"},
                     "schemeURI": {"type": "string", "format": "uri"},
-                    "schemeType": {"type": "string"}
+                    "schemeType": {"type": "string"},
+                    "resourceTypeGeneral": {"$ref": "#/definitions/resourceTypeGeneral"}
                 },
                 "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"],
-                "$comment": "if-then is only available from Draft 7",
+                "$comment": "if-then is only available from JSON Schema Draft 7",
                 "if": {
                     "properties": {
                         "relationType": {"enum": ["HasMetadata", "IsMetadataFor"]}
                     }
                 },
-                "then": {
-                    "required": ["relatedMetadataScheme", "schemeURI", "schemeType"]
+                "else": {
+                    "$comment": "these properties may only be used with relation types HasMetadata/IsMetadataFor",
+                    "properties": {
+                        "relatedMetadataScheme": false,
+                        "schemeURI": false,
+                        "schemeType": false
+                    }
                 }
             },
             "uniqueItems": true
@@ -353,7 +391,7 @@
         "version": {
             "type": "string"
         },
-        "rights": {
+        "rightsList": {
             "type": "array",
             "items": {
                 "type": "object",
@@ -366,7 +404,7 @@
             "minItems": 1,
             "maxItems": 1
         },
-        "description": {
+        "descriptions": {
             "type": "array",
             "items": {
                 "type": "object",
@@ -384,47 +422,105 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "geoLocationPoint": {"type": "string", "format": "geolocation-point"},
-                    "geoLocationBox": {"type": "string", "format": "geolocation-box"},
-                    "geoLocationPlace": {"type": "string"}
+                    "geoLocationPlace": {"type": "string"},
+                    "geoLocationPoint": {
+                        "type": "object",
+                        "properties": {
+                            "pointLongitude": {"type": "string", "format": "longitude"},
+                            "pointLatitude": {"type": "string", "format": "latitude"}
+                        },
+                        "required": ["pointLongitude", "pointLatitude"]
+                    },
+                    "geoLocationBox": {
+                        "type": "object",
+                        "properties": {
+                            "westBoundLongitude": {"type": "string", "format": "longitude"},
+                            "eastBoundLongitude": {"type": "string", "format": "longitude"},
+                            "southBoundLatitude": {"type": "string", "format": "latitude"},
+                            "northBoundLatitude": {"type": "string", "format": "latitude"}
+                        },
+                        "required": ["westBoundLongitude", "eastBoundLongitude", "southBoundLatitude", "northBoundLatitude"]
+                    },
+                    "geoLocationPolygons": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "polygonPoints": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "pointLongitude": {"type": "string", "format": "longitude"},
+                                            "pointLatitude": {"type": "string", "format": "latitude"}
+                                        },
+                                        "required": ["pointLongitude", "pointLatitude"]
+                                    },
+                                    "minItems": 4
+                                },
+                                "inPolygonPoint": {
+                                    "type": "object",
+                                    "properties": {
+                                        "pointLongitude": {"type": "string", "format": "longitude"},
+                                        "pointLatitude": {"type": "string", "format": "latitude"}
+                                    },
+                                    "required": ["pointLongitude", "pointLatitude"]
+                                }
+                            }
+                        },
+                        "uniqueItems": true
+                    }
                 }
             },
             "uniqueItems": true
         },
-        "onlineResources": {
+        "fundingReferences": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "href": {"type": "string", "format": "url"},
-                    "func": {"$ref": "#/definitions/onlineResourceType"},
-                    "name": {"type": "string"},
-                    "desc": {"type": "string"}
+                    "funderName": {"type": "string"},
+                    "funderIdentifier": {"type": "string"},
+                    "funderIdentifierType": {"$ref": "#/definitions/funderIdentifierType"},
+                    "awardNumber": {"type": "string"},
+                    "awardURI": {"type": "string", "format": "uri"},
+                    "awardTitle": {"type": "string"}
                 },
-                "required": ["href", "func"],
-                "$comment": "if-then is only available from Draft 7",
-                "if": {
-                    "properties": {
-                        "func": {"const": "download"}
-                    }
-                },
-                "then": {
-                    "task": {
-                        "action": "metadata_record_seturl",
-                        "params": [{
-                            "param": "url",
-                            "valueRelPath": "/href"
-                        }],
-                        "errorAbsPath": "/onlineResources"
-                    }
-                }
+                "required": ["funderName"]
             },
-            "uniqueItems": true,
-            "itemCardinality": {
-                "minCount": 1,
-                "maxCount": 1,
-                "properties": {
-                    "func": {"const": "download"}
+            "uniqueItems": true
+        },
+        "linkedResources": {
+            "type": "object",
+            "properties": {
+                "immutableResource": {
+                    "type": "object",
+                    "properties": {
+                        "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
+                        "resourceURL": {"type": "string", "format": "url"},
+                        "resourceName": {"type": "string"},
+                        "resourceDescription": {"type": "string"},
+                        "resourceChecksum": {"type": "string"},
+                        "checksumAlgorithm": {"type": "string"}
+                    },
+                    "required": ["linkedResourceType", "resourceURL"],
+                    "dependencies": {
+                        "resourceChecksum": ["checksumAlgorithm"]
+                    }
+                },
+                "additionalResources": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
+                            "resourceURL": {"type": "string", "format": "url"},
+                            "resourceName": {"type": "string"},
+                            "resourceDescription": {"type": "string"}
+                        },
+                        "required": ["linkedResourceType", "resourceURL"]
+                    },
+                    "uniqueItems": true
                 }
             }
         }
@@ -438,8 +534,7 @@
         "publicationYear",
         "subjects",
         "resourceType",
-        "resourceTypeGeneral",
         "alternateIdentifiers",
-        "onlineResources"
+        "linkedResources"
     ]
 }
