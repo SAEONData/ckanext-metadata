@@ -9,6 +9,30 @@
                 "Personal"
             ]
         },
+        "nameIdentifiers": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "nameIdentifier": {"type": "string"},
+                    "nameIdentifierScheme": {"type": "string"},
+                    "schemeURI": {"type": "string", "format": "uri"}
+                },
+                "required": ["nameIdentifier", "nameIdentifierScheme"]
+            },
+            "uniqueItems": true
+        },
+        "affiliations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "affiliation": {"type": "string"}
+                },
+                "required": ["affiliation"]
+            },
+            "uniqueItems": true
+        },
         "titleType": {
             "type": "string",
             "enum": [
@@ -207,25 +231,10 @@
                     "nameType": {"$ref": "#/definitions/nameType"},
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
-                    "nameIdentifier": {"type": "string"},
-                    "nameIdentifierScheme": {"type": "string"},
-                    "schemeURI": {"type": "string", "format": "uri"},
-                    "affiliations": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "affiliation": {"type": "string"}
-                            },
-                            "required": ["affiliation"]
-                        },
-                        "uniqueItems": true
-                    }
+                    "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
+                    "affiliations": {"$ref": "#/definitions/affiliations"}
                 },
-                "required": ["creatorName"],
-                "dependencies": {
-                    "nameIdentifier": ["nameIdentifierScheme"]
-                }
+                "required": ["creatorName"]
             },
             "minItems": 1,
             "uniqueItems": true
@@ -275,25 +284,10 @@
                     "nameType": {"$ref": "#/definitions/nameType"},
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
-                    "nameIdentifier": {"type": "string"},
-                    "nameIdentifierScheme": {"type": "string"},
-                    "schemeURI": {"type": "string", "format": "uri"},
-                    "affiliations": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "affiliation": {"type": "string"}
-                            },
-                            "required": ["affiliation"]
-                        },
-                        "uniqueItems": true
-                    }
+                    "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
+                    "affiliations": {"$ref": "#/definitions/affiliations"}
                 },
-                "required": ["contributorType", "contributorName"],
-                "dependencies": {
-                    "nameIdentifier": ["nameIdentifierScheme"]
-                }
+                "required": ["contributorType", "contributorName"]
             },
             "uniqueItems": true
         },
