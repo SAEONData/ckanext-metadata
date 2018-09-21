@@ -17,7 +17,6 @@ class MetadataValidator(JSONValidator):
     def _validators(cls):
         return {
             'vocabulary': vocabulary_validator,
-            'task': task_validator,
             'itemCardinality': item_cardinality_validator,
         }
 
@@ -35,6 +34,6 @@ class MetadataValidator(JSONValidator):
             'yearmonth-range',
             'date-range',
             'datetime-range',
-            'geolocation-point',
-            'geolocation-box',
+            'longitude',
+            'latitude',
         ]

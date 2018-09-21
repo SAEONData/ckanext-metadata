@@ -17,8 +17,6 @@ checks_format = jsonschema.FormatChecker.cls_checks
 
 DOI_RE = re.compile(r'^10\.\d+(\.\d+)*/.+$')
 TIME_RE = re.compile(r'^(?P<h>\d{2}):(?P<m>\d{2})(:(?P<s>\d{2})(\.\d+)?)?(Z|[+-](?P<tzh>\d{2}):(?P<tzm>\d{2}))$')
-GEO_POINT_RE = re.compile(r'^(?P<lat>[+-]?\d+(\.\d+)?)\s+(?P<lon>[+-]?\d+(\.\d+)?)$')
-GEO_BOX_RE = re.compile(r'^(?P<lat1>[+-]?\d+(\.\d+)?)\s+(?P<lon1>[+-]?\d+(\.\d+)?)\s+(?P<lat2>[+-]?\d+(\.\d+)?)\s+(?P<lon2>[+-]?\d+(\.\d+)?)$')
 
 
 def vocabulary_validator(validator, vocabulary_name, instance, schema):
@@ -271,35 +269,21 @@ def is_datetime_range(instance):
     return _is_range(instance, is_datetime)
 
 
-@checks_format('geolocation-point')
-def is_geolocation_point(instance):
+@checks_format('longitude')
+def is_longitude(instance):
     if not isinstance(instance, basestring):
         return True
-    match = re.match(GEO_POINT_RE, instance)
-    if match:
-        lat, lon = match.group('lat', 'lon')
-        if (
-                -90 <= float(lat) <= 90 and
-                -180 <= float(lon) <= 180
-        ):
-            return True
-    return False
+    try:
+        return -180 <= float(instance) <= 180
+    except ValueError:
+        return False
 
 
-@checks_format('geolocation-box')
-def is_geolocation_box(instance):
+@checks_format('latitude')
+def is_latitude(instance):
     if not isinstance(instance, basestring):
         return True
-    match = re.match(GEO_BOX_RE, instance)
-    if match:
-        lat1, lon1, lat2, lon2 = match.group('lat1', 'lon1', 'lat2', 'lon2')
-        if (
-                -90 <= float(lat1) <= 90 and
-                -180 <= float(lon1) <= 180 and
-                -90 <= float(lat2) <= 90 and
-                -180 <= float(lon2) <= 180 and
-                float(lat1) <= float(lat2) and
-                float(lon1) <= float(lon2)
-        ):
-            return True
-    return False
+    try:
+        return -90 <= float(instance) <= 90
+    except ValueError:
+        return False
