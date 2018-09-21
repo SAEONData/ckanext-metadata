@@ -516,7 +516,8 @@
                     },
                     "uniqueItems": true
                 }
-            }
+            },
+            "required": ["immutableResource"]
         }
     },
 
@@ -527,8 +528,11 @@
         "publisher",
         "publicationYear",
         "subjects",
+        "dates",
         "resourceType",
         "alternateIdentifiers",
+        "rightsList",
+        "descriptions",
         "linkedResources"
     ]
 }
