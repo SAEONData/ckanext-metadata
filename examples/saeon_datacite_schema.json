@@ -302,7 +302,13 @@
                 },
                 "required": ["date", "dateType"]
             },
-            "uniqueItems": true
+            "uniqueItems": true,
+            "itemCardinality": {
+                "minCount": 1,
+                "properties": {
+                    "dateType": {"const": "Collected"}
+                }
+            }
         },
         "language": {
             "type": "string",
@@ -408,8 +414,13 @@
                 },
                 "required": ["description", "descriptionType"]
             },
-            "minItems": 1,
-            "uniqueItems": true
+            "uniqueItems": true,
+            "itemCardinality": {
+                "minCount": 1,
+                "properties": {
+                    "descriptionType": {"const": "Abstract"}
+                }
+            }
         },
         "geoLocations": {
             "type": "array",
