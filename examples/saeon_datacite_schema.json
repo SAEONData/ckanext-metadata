@@ -186,6 +186,14 @@
                 "Other"
             ]
         },
+        "geoLocationPoint": {
+            "type": "object",
+            "properties": {
+                "pointLongitude": {"type": "string", "format": "longitude"},
+                "pointLatitude": {"type": "string", "format": "latitude"}
+            },
+            "required": ["pointLongitude", "pointLatitude"]
+        },
         "funderIdentifierType": {
             "type": "string",
             "enum": [
@@ -428,14 +436,7 @@
                 "type": "object",
                 "properties": {
                     "geoLocationPlace": {"type": "string"},
-                    "geoLocationPoint": {
-                        "type": "object",
-                        "properties": {
-                            "pointLongitude": {"type": "string", "format": "longitude"},
-                            "pointLatitude": {"type": "string", "format": "latitude"}
-                        },
-                        "required": ["pointLongitude", "pointLatitude"]
-                    },
+                    "geoLocationPoint": {"$ref": "#/definitions/geoLocationPoint"},
                     "geoLocationBox": {
                         "type": "object",
                         "properties": {
@@ -453,24 +454,10 @@
                             "properties": {
                                 "polygonPoints": {
                                     "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "pointLongitude": {"type": "string", "format": "longitude"},
-                                            "pointLatitude": {"type": "string", "format": "latitude"}
-                                        },
-                                        "required": ["pointLongitude", "pointLatitude"]
-                                    },
+                                    "items": {"$ref": "#/definitions/geoLocationPoint"},
                                     "minItems": 4
                                 },
-                                "inPolygonPoint": {
-                                    "type": "object",
-                                    "properties": {
-                                        "pointLongitude": {"type": "string", "format": "longitude"},
-                                        "pointLatitude": {"type": "string", "format": "latitude"}
-                                    },
-                                    "required": ["pointLongitude", "pointLatitude"]
-                                }
+                                "inPolygonPoint": {"$ref": "#/definitions/geoLocationPoint"}
                             }
                         },
                         "uniqueItems": true
