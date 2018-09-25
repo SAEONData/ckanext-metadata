@@ -22,12 +22,13 @@ TIME_RE = re.compile(r'^(?P<h>\d{2}):(?P<m>\d{2})(:(?P<s>\d{2})(\.\d+)?)?(Z|[+-]
 def vocabulary_validator(validator, vocabulary_name, instance, schema):
     """
     "vocabulary" keyword validator function: checks that instance is a tag from the named vocabulary.
+    The check is case-insensitive.
     """
     if validator.is_type(instance, 'string'):
         try:
             vocabulary = tk.get_action('vocabulary_show')(data_dict={'id': vocabulary_name})
-            tags = [tag['name'] for tag in vocabulary['tags']]
-            if instance not in tags:
+            tags = [tag['name'].lower() for tag in vocabulary['tags']]
+            if instance.lower() not in tags:
                 yield jsonschema.ValidationError(_('Tag not found in vocabulary'))
         except tk.ObjectNotFound:
             yield jsonschema.ValidationError("%s: %s '%s'" % (_('Not found'), _('Vocabulary'), vocabulary_name))
