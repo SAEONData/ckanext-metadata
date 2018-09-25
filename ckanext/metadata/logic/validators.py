@@ -178,6 +178,18 @@ def augmented_schema_validator(schema):
 
     return callable_
 
+
+def schema_attribute_validator(schema):
+    """
+    Checks that the supplied value is a key in the given schema.
+    """
+    def callable_(key, data, errors, context):
+        value = data.get(key)
+        if value not in schema:
+            raise tk.Invalid(_("The supplied attribute does not exist in the given schema"))
+
+    return callable_
+
 # endregion
 
 
@@ -551,5 +563,42 @@ def workflow_transition_graph_validator(key, data, errors, context):
 
     if ckanext_model.WorkflowState.revert_path_exists(from_state_id, to_state_id):
         raise tk.Invalid(_("Backward transition in workflow state graph"))
+
+
+def metadata_template_json_path_validator(key, data, errors, context):
+    """
+    Checks that the supplied JSON path is valid for the metadata template JSON of
+    the supplied metadata standard. For use with the '__after' schema key in the
+    metadata_json_attr_map_* schemas.
+    """
+    json_path = data.get(key[:-1] + ('json_path',))
+    metadata_standard_id = data.get(key[:-1] + ('metadata_standard_id',))
+    metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
+    metadata_template_dict = json.loads(metadata_standard.metadata_template_json)
+    try:
+        jsonpointer.resolve_pointer(metadata_template_dict, json_path)
+    except jsonpointer.JsonPointerException:
+        raise tk.Invalid(_("The supplied JSON path is not valid for the metadata template of the supplied metadata standard"))
+
+
+def metadata_json_attr_map_unique(key, data, errors, context):
+    """
+    Checks that for the given metadata standard, the JSON path and record attribute values
+    are not already present in some other mapping object(s). For use with the '__after' schema key.
+    """
+    id_ = data.get(key[:-1] + ('id',))
+    json_path = data.get(key[:-1] + ('json_path',))
+    record_attr = data.get(key[:-1] + ('record_attr',))
+    metadata_standard_id = data.get(key[:-1] + ('metadata_standard_id',))
+
+    mapping_obj = ckanext_model.MetadataJSONAttrMap.lookup_by_json_path(metadata_standard_id, json_path)
+    if mapping_obj and mapping_obj.state != 'deleted' and mapping_obj.id != id_:
+        errors.setdefault(key[:-1] + ('json_path',), [])
+        errors[key[:-1] + ('json_path',)].append(_("Unique constraint violation: %s") % '(metadata_standard_id, json_path)')
+
+    mapping_obj = ckanext_model.MetadataJSONAttrMap.lookup_by_record_attr(metadata_standard_id, record_attr)
+    if mapping_obj and mapping_obj.state != 'deleted' and mapping_obj.id != id_:
+        errors.setdefault(key[:-1] + ('record_attr',), [])
+        errors[key[:-1] + ('record_attr',)].append(_("Unique constraint violation: %s") % '(metadata_standard_id, record_attr)')
 
 # endregion

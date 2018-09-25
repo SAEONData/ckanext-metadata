@@ -267,6 +267,39 @@ def metadata_standard_show_schema():
     return schema
 
 
+def metadata_json_attr_map_create_schema():
+    schema = {
+        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_json_attr_map')],
+        'json_path': [v.not_empty, unicode, v.json_pointer_validator],
+        'record_attr': [v.not_empty, unicode, v.schema_attribute_validator(metadata_record_create_schema())],
+        'is_key': [v.not_missing, boolean_validator],
+        'is_extra': [v.not_missing, boolean_validator],
+        'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
+
+        # post-validation
+        '__after': [v.metadata_template_json_path_validator,
+                    v.metadata_json_attr_map_unique,
+                    ignore],
+    }
+    _make_create_schema(schema)
+    return schema
+
+
+def metadata_json_attr_map_update_schema():
+    schema = metadata_json_attr_map_create_schema()
+    _make_update_schema(schema)
+    return schema
+
+
+def metadata_json_attr_map_show_schema():
+    schema = metadata_json_attr_map_create_schema()
+    _make_show_schema(schema)
+    schema.update({
+        'metadata_standard_id': [v.convert_id_to_name('metadata_standard')],
+    })
+    return schema
+
+
 def metadata_schema_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_schema')],

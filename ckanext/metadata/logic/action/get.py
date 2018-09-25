@@ -805,3 +805,77 @@ def workflow_transition_list(context, data_dict):
             result += [id_]
 
     return result
+
+
+@tk.side_effect_free
+def metadata_json_attr_map_show(context, data_dict):
+    """
+    Return a metadata JSON attribute map definition.
+
+    :param id: the id of the metadata JSON attribute map
+    :type id: string
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving metadata JSON attribute map: %r", data_dict)
+
+    metadata_json_attr_map_id = tk.get_or_bust(data_dict, 'id')
+    metadata_json_attr_map = ckanext_model.MetadataJSONAttrMap.get(metadata_json_attr_map_id)
+    if metadata_json_attr_map is not None:
+        metadata_json_attr_map_id = metadata_json_attr_map.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata JSON Attribute Map')))
+
+    tk.check_access('metadata_json_attr_map_show', context, data_dict)
+
+    context['metadata_json_attr_map'] = metadata_json_attr_map
+    metadata_json_attr_map_dict = model_dictize.metadata_json_attr_map_dictize(metadata_json_attr_map, context)
+
+    result_dict, errors = tk.navl_validate(metadata_json_attr_map_dict, schema.metadata_json_attr_map_show_schema(), context)
+    return result_dict
+
+
+@tk.side_effect_free
+def metadata_json_attr_map_list(context, data_dict):
+    """
+    Return a list of ids of the metadata JSON attribute maps for a metadata standard.
+
+    :param metadata_standard_id: the id or name of the metadata standard
+    :type metadata_standard_id: string
+    :param all_fields: return dictionaries instead of just ids (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving metadata JSON attribute map list: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+    metadata_standard = context.get('metadata_standard')
+
+    if metadata_standard:
+        metadata_standard_id = metadata_standard.id
+    else:
+        metadata_standard_id = tk.get_or_bust(data_dict, 'id')
+        metadata_standard = model.Package.get(metadata_standard_id)
+        if metadata_standard is not None:
+            metadata_standard_id = metadata_standard.id
+        else:
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
+
+    tk.check_access('metadata_json_attr_map_list', context, data_dict)
+
+    metadata_json_attr_maps = session.query(ckanext_model.MetadataJSONAttrMap.id) \
+        .filter_by(metadata_standard_id=metadata_standard_id) \
+        .filter_by(state='active') \
+        .all()
+    result = []
+    for (id_,) in metadata_json_attr_maps:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('metadata_json_attr_map_show')(context, data_dict)]
+        else:
+            result += [id_]
+
+    return result

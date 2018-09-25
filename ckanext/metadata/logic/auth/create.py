@@ -63,3 +63,7 @@ def metadata_record_workflow_annotation_create(context, data_dict):
 
 def metadata_standard_index_create(context, data_dict):
     return {'success': True}
+
+
+def metadata_json_attr_map_create(context, data_dict):
+    return {'success': True}

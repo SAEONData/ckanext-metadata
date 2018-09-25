@@ -63,3 +63,7 @@ def organization_delete(context, data_dict):
 
 def metadata_standard_index_delete(context, data_dict):
     return {'success': True}
+
+
+def metadata_json_attr_map_delete(context, data_dict):
+    return {'success': True}

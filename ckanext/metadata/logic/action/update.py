@@ -412,118 +412,6 @@ def metadata_record_update(context, data_dict):
     return output
 
 
-def metadata_record_setname(context, data_dict):
-    """
-    Update the name of a metadata record. This should normally only be called internally
-    during metadata validation in order to copy the identifier (DOI) from the metadata JSON
-    into the name attribute of the package object. Note that the name can only be updated if
-    the record is currently private.
-
-    You must be authorized to update the metadata record's name.
-
-    :param id: the id or name of the metadata record to update
-    :type id: string
-    :param name: the name of the metadata record
-    :type name: string
-    """
-    log.info("Updating metadata record name: %r", data_dict)
-
-    model = context['model']
-    user = context['user']
-    defer_commit = context.get('defer_commit', False)
-
-    metadata_record_id, new_name = tk.get_or_bust(data_dict, ['id', 'name'])
-    metadata_record = context.get('metadata_record')
-
-    if metadata_record:
-        metadata_record_id = metadata_record.id
-    else:
-        metadata_record = model.Package.get(metadata_record_id)
-        if metadata_record is not None and metadata_record.type == 'metadata_record':
-            metadata_record_id = metadata_record.id
-        else:
-            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
-
-    tk.check_access('metadata_record_setname', context, data_dict)
-
-    if new_name == metadata_record.name:
-        return
-
-    if not metadata_record.private:
-        raise tk.ValidationError(_("The name of a metadata record cannot be changed once it has been published"))
-
-    test_record = model.Package.get(new_name)
-    if test_record and test_record.id != metadata_record_id:
-        raise tk.ValidationError(_("The name '{}' is already in use").format(new_name))
-
-    metadata_record.name = new_name
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
-    else:
-        rev.message = _(u'REST API: Set name of metadata record %s') % metadata_record_id
-
-    if not defer_commit:
-        model.repo.commit()
-
-
-def metadata_record_seturl(context, data_dict):
-    """
-    Update the url of a metadata record. This should normally only be called internally
-    during metadata validation in order to copy the download link from the metadata JSON
-    into the url attribute of the package object. Note that the url can only be updated if
-    the record is currently private.
-
-    You must be authorized to update the metadata record's url.
-
-    :param id: the id or name of the metadata record to update
-    :type id: string
-    :param url: the url of the metadata record
-    :type url: string
-    """
-    log.info("Updating metadata record url: %r", data_dict)
-
-    model = context['model']
-    user = context['user']
-    defer_commit = context.get('defer_commit', False)
-
-    metadata_record_id, new_url = tk.get_or_bust(data_dict, ['id', 'url'])
-    metadata_record = context.get('metadata_record')
-
-    if metadata_record:
-        metadata_record_id = metadata_record.id
-    else:
-        metadata_record = model.Package.get(metadata_record_id)
-        if metadata_record is not None and metadata_record.type == 'metadata_record':
-            metadata_record_id = metadata_record.id
-        else:
-            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
-
-    tk.check_access('metadata_record_seturl', context, data_dict)
-
-    if new_url == metadata_record.url:
-        return
-
-    if not metadata_record.private:
-        raise tk.ValidationError(_("The url of a metadata record cannot be changed once it has been published"))
-
-    # Todo: test whether the url is already associated with another metadata record?
-
-    metadata_record.url = new_url
-
-    rev = model.repo.new_revision()
-    rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
-    else:
-        rev.message = _(u'REST API: Set url of metadata record %s') % metadata_record_id
-
-    if not defer_commit:
-        model.repo.commit()
-
-
 def metadata_record_invalidate(context, data_dict):
     """
     Mark a metadata record as not validated, and log the change to
@@ -1099,3 +987,70 @@ def metadata_record_index_update(context, data_dict):
     :type id: string
     """
     tk.check_access('metadata_record_index_update', context, data_dict)
+
+
+def metadata_json_attr_map_update(context, data_dict):
+    """
+    Update a metadata JSON attribute map.
+
+    You must be authorized to edit the metadata JSON attribute map.
+
+    It is recommended to call
+    :py:func:`ckan.logic.action.get.metadata_json_attr_map_show`, make the desired changes to
+    the result, and then call ``metadata_json_attr_map_update()`` with it.
+
+    For further parameters see
+    :py:func:`~ckanext.metadata.logic.action.create.metadata_json_attr_map_create`.
+
+    :param id: the id of the metadata JSON attribute map to update
+    :type id: string
+
+    :returns: the updated metadata JSON attribute map (unless 'return_id_only' is set to True
+              in the context, in which case just the id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Updating metadata JSON attribute map: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    metadata_json_attr_map_id = tk.get_or_bust(data_dict, 'id')
+    metadata_json_attr_map = ckanext_model.MetadataJSONAttrMap.get(metadata_json_attr_map_id)
+    if metadata_json_attr_map is not None:
+        metadata_json_attr_map_id = metadata_json_attr_map.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata JSON Attribute Map')))
+
+    tk.check_access('metadata_json_attr_map_update', context, data_dict)
+
+    data_dict.update({
+        'id': metadata_json_attr_map_id,
+    })
+    context.update({
+        'metadata_json_attr_map': metadata_json_attr_map,
+        'allow_partial_update': True,
+    })
+
+    data, errors = tk.navl_validate(data_dict, schema.metadata_json_attr_map_update_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    metadata_json_attr_map = model_save.metadata_json_attr_map_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Update metadata JSON attribute map %s') % metadata_json_attr_map_id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = metadata_json_attr_map_id if return_id_only \
+        else tk.get_action('metadata_json_attr_map_show')(context, {'id': metadata_json_attr_map_id})
+    return output

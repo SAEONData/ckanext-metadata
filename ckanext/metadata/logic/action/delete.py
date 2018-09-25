@@ -442,3 +442,37 @@ def metadata_standard_index_delete(context, data_dict):
     :type id: string
     """
     tk.check_access('metadata_standard_index_delete', context, data_dict)
+
+
+def metadata_json_attr_map_delete(context, data_dict):
+    """
+    Delete a metadata JSON attribute map.
+
+    You must be authorized to delete the metadata JSON attribute map.
+
+    :param id: the id or name of the metadata JSON attribute map to delete
+    :type id: string
+    """
+    log.info("Deleting metadata JSON attribute map: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_json_attr_map_id = tk.get_or_bust(data_dict, 'id')
+    metadata_json_attr_map = ckanext_model.MetadataJSONAttrMap.get(metadata_json_attr_map_id)
+    if metadata_json_attr_map is not None:
+        metadata_json_attr_map_id = metadata_json_attr_map.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata JSON Attribute Map')))
+
+    tk.check_access('metadata_json_attr_map_delete', context, data_dict)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    rev.message = _(u'REST API: Delete metadata JSON attribute map %s') % metadata_json_attr_map_id
+
+    metadata_json_attr_map.delete()
+    if not defer_commit:
+        model.repo.commit()

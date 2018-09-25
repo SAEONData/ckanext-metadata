@@ -494,3 +494,61 @@ def metadata_standard_index_create(context, data_dict):
     :type id: string
     """
     tk.check_access('metadata_standard_index_create', context, data_dict)
+
+
+def metadata_json_attr_map_create(context, data_dict):
+    """
+    Create a one-to-one mapping from a metadata JSON element to a metadata record attribute.
+
+    The existence of such a mapping has two primary effects:
+    1. For attributes constituting a unique key (is_key == True), the key values in an
+       incoming metadata JSON dictionary are used to determine whether to create a new
+       record or update an existing one.
+    2. When a metadata record is created or updated, metadata JSON values are copied into
+       metadata record attributes for each such defined mapping.
+
+    :param id: the id of the object (optional - only sysadmins can set this)
+    :type id: string
+    :param json_path: JSON pointer to a location in a metadata record dictionary
+    :type json_path: string
+    :param record_attr: the name of an attribute in the metadata record schema
+    :type record_attr: string
+    :param is_key: indicates whether the attribute forms part of a unique key for metadata records
+    :type is_key: boolean
+    :param is_extra: True if the attribute is a package extra; False if it's a native package attribute
+    :type is_extra: boolean
+    :param metadata_standard_id: the id or name of the metadata standard for which this mapping is defined
+    :type metadata_standard_id: string
+
+    :returns: the newly created MetadataJSONAttrMap object
+    :rtype: dictionary
+    """
+    log.info("Creating metadata JSON attribute mapping: %r", data_dict)
+    tk.check_access('metadata_json_attr_map_create', context, data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    data, errors = tk.navl_validate(data_dict, schema.metadata_json_attr_map_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    metadata_json_attr_map = model_save.metadata_json_attr_map_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Create metadata JSON attribute mapping %s') % metadata_json_attr_map.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = metadata_json_attr_map.id if return_id_only \
+        else tk.get_action('metadata_json_attr_map_show')(context, {'id': metadata_json_attr_map.id})
+    return output

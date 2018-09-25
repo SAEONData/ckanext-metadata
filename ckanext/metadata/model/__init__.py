@@ -7,6 +7,13 @@ from metadata_standard import (
     metadata_standard_revision_table,
 )
 
+from metadata_json_attr_map import (
+    MetadataJSONAttrMap,
+    MetadataJSONAttrMapRevision,
+    metadata_json_attr_map_table,
+    metadata_json_attr_map_revision_table,
+)
+
 from metadata_schema import (
     MetadataSchema,
     MetadataSchemaRevision,

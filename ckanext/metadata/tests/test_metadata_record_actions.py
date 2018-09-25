@@ -467,15 +467,8 @@ class TestMetadataRecordActions(ActionTestBase):
         self.assert_invalidate_activity_logged(metadata_record['id'], None, None)
 
     def test_validate_datacite(self):
-        metadata_json = load_example('saeon_datacite_record.json')
-        metadata_dict = json.loads(metadata_json)
-        identifier = metadata_dict['identifier']['identifier']
-        download_link = next((resource['href']
-                              for resource in metadata_dict['onlineResources']
-                              if resource['func'] == 'download'))
-
         metadata_record = self._generate_metadata_record(
-            metadata_json=metadata_json)
+            metadata_json=load_example('saeon_datacite_record.json'))
         metadata_schema = ckanext_factories.MetadataSchema(
             metadata_standard_id=metadata_record['metadata_standard_id'],
             schema_json=load_example('saeon_datacite_schema.json'))
@@ -485,9 +478,6 @@ class TestMetadataRecordActions(ActionTestBase):
         self.test_action('metadata_record_validate', id=metadata_record['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', True)
         assert_package_has_extra(metadata_record['id'], 'errors', '{}')
-        assert_package_has_attribute(metadata_record['id'], 'name', identifier)
-        # TODO: metadata_record_seturl will only fire once we've updated to JSON Schema Draft 7
-        # assert_package_has_attribute(metadata_record['id'], 'url', download_link)
         self.assert_validate_activity_logged(metadata_record['id'], metadata_schema)
 
     def test_workflow_annotations_valid(self):
