@@ -104,13 +104,11 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict = self._make_input_dict()
         input_dict.update({
             # the following fields are set automatically, so any values provided as input should be ignored
-            'name': 'ignore',
             'type': 'ignore',
             'validated': 'ignore',
             'errors': 'ignore',
             'workflow_state_id': 'ignore',
             'private': 'ignore',
-            'url': 'ignore',
         })
         result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
@@ -239,13 +237,11 @@ class TestMetadataRecordActions(ActionTestBase):
                 {'id': new_infrastructure['name']},
             ],
             # the following fields are set automatically, so any values provided as input should be ignored
-            'name': 'ignore',
             'type': 'ignore',
             'validated': 'ignore',
             'errors': 'ignore',
             'workflow_state_id': 'ignore',
             'private': 'ignore',
-            'url': 'ignore',
         }
         result, obj = self.test_action('metadata_record_update', **input_dict)
 
@@ -525,7 +521,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record_dict, obj = self.test_action('metadata_record_show', id=metadata_record['id'])
         metadata_record_augmented_dict, _ = self.test_action('metadata_record_workflow_augmented_show',
                                                              id=metadata_record['id'])
-        self._assert_metadata_record_ok(obj, metadata_record, name=metadata_record['name'])
+        self._assert_metadata_record_ok(obj, metadata_record)
         assert metadata_record_augmented_dict.pop('annotation1_key') == json.loads(annotation1_value)
         assert metadata_record_augmented_dict.pop('annotation2_key') == json.loads(annotation2_value)
         assert metadata_record_dict == metadata_record_augmented_dict

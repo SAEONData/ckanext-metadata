@@ -22,7 +22,6 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
             'json_path': '/identifier/identifier',
             'record_attr': 'name',
             'is_key': True,
-            'is_extra': False,
             'metadata_standard_id': metadata_standard['id'],
         }
         result, obj = self.test_action('metadata_json_attr_map_create', **input_dict)
@@ -35,7 +34,6 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
             'json_path': '/identifier/identifier',
             'record_attr': 'name',
             'is_key': False,
-            'is_extra': True,
             'metadata_standard_id': metadata_standard['name'],
         }
         result, obj = self.test_action('metadata_json_attr_map_create', **input_dict)
@@ -50,7 +48,6 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
             'json_path': '/identifier/identifier',
             'record_attr': 'name',
             'is_key': True,
-            'is_extra': False,
             'metadata_standard_id': metadata_standard['id'],
         }
         result, obj = self.test_action('metadata_json_attr_map_create', sysadmin=True, check_auth=True, **input_dict)
@@ -104,7 +101,6 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
             'json_path': '/c/d',
             'record_attr': 'notes',
             'is_key': False,
-            'is_extra': False,
             'metadata_standard_id': metadata_json_attr_map['metadata_standard_id'],
         }
         result, obj = self.test_action('metadata_json_attr_map_update', **input_dict)

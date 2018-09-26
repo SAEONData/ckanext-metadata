@@ -12,7 +12,6 @@ metadata_json_attr_map_table = Table(
     Column('json_path', types.UnicodeText, nullable=False),
     Column('record_attr', types.UnicodeText, nullable=False),
     Column('is_key', types.Boolean, nullable=False),
-    Column('is_extra', types.Boolean, nullable=False),
     Column('metadata_standard_id', types.UnicodeText, ForeignKey('metadata_standard.id'), nullable=False),
     UniqueConstraint('metadata_standard_id', 'record_attr'),
     UniqueConstraint('metadata_standard_id', 'json_path'),

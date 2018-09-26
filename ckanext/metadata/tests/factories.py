@@ -193,7 +193,6 @@ class MetadataJSONAttrMap(factory.Factory):
     json_path = '/a/b'
     record_attr = 'name'
     is_key = True
-    is_extra = False
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):

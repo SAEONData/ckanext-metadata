@@ -515,8 +515,6 @@ def metadata_json_attr_map_create(context, data_dict):
     :type record_attr: string
     :param is_key: indicates whether the attribute forms part of a unique key for metadata records
     :type is_key: boolean
-    :param is_extra: True if the attribute is a package extra; False if it's a native package attribute
-    :type is_extra: boolean
     :param metadata_standard_id: the id or name of the metadata standard for which this mapping is defined
     :type metadata_standard_id: string
 

@@ -11,6 +11,9 @@ ignore_missing = tk.get_validator('ignore_missing')
 default = tk.get_validator('default')
 package_id_does_not_exist = tk.get_validator('package_id_does_not_exist')
 name_validator = tk.get_validator('name_validator')
+package_name_validator = tk.get_validator('package_name_validator')
+package_version_validator = tk.get_validator('package_version_validator')
+email_validator = tk.get_validator('email_validator')
 group_name_validator = tk.get_validator('group_name_validator')
 empty_if_not_sysadmin = tk.get_validator('empty_if_not_sysadmin')
 ignore_not_sysadmin = tk.get_validator('ignore_not_sysadmin')
@@ -78,15 +81,12 @@ def metadata_record_create_schema():
         '__before': [v.metadata_record_infrastructures_not_missing,
                      ignore],
 
-        # from the default package schema
+        # native package fields with special usage
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, package_id_does_not_exist],
-        'name': [],
-        'title': [ignore_missing, unicode],
-        'state': [ignore_not_package_admin, ignore_missing],
         'owner_org': [v.not_empty, v.object_exists('organization'), owner_org_validator, unicode],
+        'state': [ignore_not_package_admin, ignore_missing],
         'type': [],
         'private': [],
-        'url': [],
 
         # extension-specific fields
         'metadata_collection_id': [v.not_empty, unicode, v.object_exists('metadata_collection'), convert_to_extras],
@@ -106,7 +106,33 @@ def metadata_record_create_schema():
                     v.owner_org_owns_metadata_collection,
                     ignore],
     }
+
+    # optional native package fields
+    schema.update(metadata_json_attr_mappable_schema())
+
     _make_create_schema(schema)
+    return schema
+
+
+def metadata_json_attr_mappable_schema():
+    """
+    Defines the metadata record (package) fields that may be referenced by MetadataJSONAttrMap.record_attr.
+    These fields may optionally be provided as input to the metadata_record_create|update actions; but
+    if they are defined in a mapping, the mapping will override any input values with the corresponding
+    values in the metadata JSON.
+    """
+    schema = {
+        'name': [ignore_missing, unicode, name_validator, package_name_validator],
+        'title': [ignore_missing, unicode],
+        'author': [ignore_missing, unicode],
+        'author_email': [ignore_missing, unicode, email_validator],
+        'maintainer': [ignore_missing, unicode],
+        'maintainer_email': [ignore_missing, unicode, email_validator],
+        'license_id': [ignore_missing, unicode],
+        'notes': [ignore_missing, unicode],
+        'url': [ignore_missing, unicode, v.url_validator],
+        'version': [ignore_missing, unicode, package_version_validator],
+    }
     return schema
 
 
@@ -271,9 +297,8 @@ def metadata_json_attr_map_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_json_attr_map')],
         'json_path': [v.not_empty, unicode, v.json_pointer_validator],
-        'record_attr': [v.not_empty, unicode, v.schema_attribute_validator(metadata_record_create_schema())],
+        'record_attr': [v.not_empty, unicode, v.schema_attribute_validator(metadata_json_attr_mappable_schema())],
         'is_key': [v.not_missing, boolean_validator],
-        'is_extra': [v.not_missing, boolean_validator],
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
 
         # post-validation
