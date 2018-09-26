@@ -571,14 +571,15 @@ def metadata_template_json_path_validator(key, data, errors, context):
     the supplied metadata standard. For use with the '__after' schema key in the
     metadata_json_attr_map_* schemas.
     """
-    json_path = data.get(key[:-1] + ('json_path',))
-    metadata_standard_id = data.get(key[:-1] + ('metadata_standard_id',))
+    json_path = _convert_missing(data.get(key[:-1] + ('json_path',)), '')
+    metadata_standard_id = _convert_missing(data.get(key[:-1] + ('metadata_standard_id',)))
     metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
-    metadata_template_dict = json.loads(metadata_standard.metadata_template_json)
-    try:
-        jsonpointer.resolve_pointer(metadata_template_dict, json_path)
-    except jsonpointer.JsonPointerException:
-        raise tk.Invalid(_("The supplied JSON path is not valid for the metadata template of the supplied metadata standard"))
+    if metadata_standard:
+        metadata_template_dict = json.loads(metadata_standard.metadata_template_json)
+        try:
+            jsonpointer.resolve_pointer(metadata_template_dict, json_path)
+        except jsonpointer.JsonPointerException:
+            raise tk.Invalid(_("The supplied JSON path is not valid for the metadata template of the supplied metadata standard"))
 
 
 def metadata_json_attr_map_unique(key, data, errors, context):
@@ -587,9 +588,9 @@ def metadata_json_attr_map_unique(key, data, errors, context):
     are not already present in some other mapping object(s). For use with the '__after' schema key.
     """
     id_ = data.get(key[:-1] + ('id',))
-    json_path = data.get(key[:-1] + ('json_path',))
-    record_attr = data.get(key[:-1] + ('record_attr',))
-    metadata_standard_id = data.get(key[:-1] + ('metadata_standard_id',))
+    json_path = _convert_missing(data.get(key[:-1] + ('json_path',)))
+    record_attr = _convert_missing(data.get(key[:-1] + ('record_attr',)))
+    metadata_standard_id = _convert_missing(data.get(key[:-1] + ('metadata_standard_id',)))
 
     mapping_obj = ckanext_model.MetadataJSONAttrMap.lookup_by_json_path(metadata_standard_id, json_path)
     if mapping_obj and mapping_obj.state != 'deleted' and mapping_obj.id != id_:

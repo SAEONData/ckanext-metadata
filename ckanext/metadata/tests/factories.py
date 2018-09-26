@@ -185,3 +185,30 @@ class WorkflowTransition(factory.Factory):
                                    from_state_id=from_state_id,
                                    to_state_id=to_state_id,
                                    **kwargs)
+
+
+class MetadataJSONAttrMap(factory.Factory):
+    FACTORY_FOR = ckanext_model.MetadataJSONAttrMap
+
+    json_path = '/a/b'
+    record_attr = 'name'
+    is_key = True
+    is_extra = False
+
+    @classmethod
+    def _build(cls, target_class, *args, **kwargs):
+        raise NotImplementedError(".build() isn't supported in CKAN")
+
+    @classmethod
+    def _create(cls, target_class, *args, **kwargs):
+        if args:
+            assert False, "Positional args aren't supported, use keyword args."
+
+        context = {'user': ckan_factories._get_action_user_name(kwargs)}
+        metadata_standard_id = kwargs.pop('metadata_standard_id', None) or MetadataStandard(
+            metadata_template_json='{"a": {"b": "foo"}, "c": {"d": "bar"}}')['id']
+
+        return helpers.call_action('metadata_json_attr_map_create',
+                                   context=context,
+                                   metadata_standard_id=metadata_standard_id,
+                                   **kwargs)

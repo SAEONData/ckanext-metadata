@@ -87,6 +87,11 @@ def workflow_transition_dict_save(workflow_transition_dict, context):
                              ckanext_model.workflow_transition_table, context)
 
 
+def metadata_json_attr_map_dict_save(metadata_json_attr_map_dict, context):
+    return _object_dict_save(metadata_json_attr_map_dict, 'metadata_json_attr_map', ckanext_model.MetadataJSONAttrMap,
+                             ckanext_model.metadata_json_attr_map_table, context)
+
+
 def _object_dict_save(object_dict, model_name, model_class, table, context):
     session = context['session']
     obj = context.get(model_name)

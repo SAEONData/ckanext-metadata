@@ -28,6 +28,7 @@ _model_map = {
     'workflow_state': ckanext_model.WorkflowState,
     'workflow_transition': ckanext_model.WorkflowTransition,
     'jsonpatch': JSONPatch,
+    'metadata_json_attr_map': ckanext_model.MetadataJSONAttrMap,
 }
 
 

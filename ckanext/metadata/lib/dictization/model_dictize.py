@@ -93,6 +93,11 @@ def workflow_transition_dictize(workflow_transition, context):
                            ckanext_model.workflow_transition_revision_table, context)
 
 
+def metadata_json_attr_map_dictize(metadata_json_attr_map, context):
+    return _object_dictize(metadata_json_attr_map, ckanext_model.MetadataJSONAttrMap, ckanext_model.MetadataJSONAttrMapRevision,
+                           ckanext_model.metadata_json_attr_map_revision_table, context)
+
+
 def _object_dictize(obj, model_class, rev_model_class, rev_table, context):
     is_latest_revision = not(context.get('revision_id') or context.get('revision_date'))
     execute = _execute if is_latest_revision else _execute_with_revision
