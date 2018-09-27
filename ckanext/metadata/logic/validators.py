@@ -186,7 +186,7 @@ def schema_attribute_validator(schema):
     def callable_(key, data, errors, context):
         value = data.get(key)
         if value not in schema:
-            raise tk.Invalid(_("The supplied attribute does not exist in the given schema"))
+            raise tk.Invalid(_("The specified attribute cannot be used"))
 
     return callable_
 

@@ -6,7 +6,6 @@ from ckanext.metadata.tests import (
     ActionTestBase,
     make_uuid,
     assert_object_matches_dict,
-    assert_group_has_extra,
     assert_error,
     factories as ckanext_factories,
     load_example,
@@ -94,6 +93,40 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
         result, obj = self.test_action('metadata_json_attr_map_create', should_error=True, **input_dict)
         assert_error(result, 'record_attr', 'Unique constraint violation')
 
+    def test_create_invalid_bad_json_path(self):
+        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True,
+                                       json_path='foo')
+        assert_error(result, 'json_path', 'Invalid JSON pointer')
+
+    def test_create_invalid_json_path(self):
+        metadata_standard = ckanext_factories.MetadataStandard(
+            metadata_template_json=load_example('saeon_datacite_record.json'))
+        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True,
+                                       metadata_standard_id=metadata_standard['id'],
+                                       json_path='/identifier/foo')
+        assert_error(result, '__after', 'The supplied JSON path is not valid for the metadata template of the supplied metadata standard')
+
+    def test_create_invalid_record_attr(self):
+        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True,
+                                       record_attr='owner_org')
+        assert_error(result, 'record_attr', 'The specified attribute cannot be used')
+
+    def test_create_invalid_missing_params(self):
+        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True)
+        assert_error(result, 'json_path', 'Missing parameter')
+        assert_error(result, 'record_attr', 'Missing parameter')
+        assert_error(result, 'is_key', 'Missing parameter')
+        assert_error(result, 'metadata_standard_id', 'Missing parameter')
+
+    def test_create_invalid_missing_values(self):
+        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True,
+                                       json_path='',
+                                       record_attr='',
+                                       metadata_standard_id='')
+        assert_error(result, 'json_path', 'Missing value')
+        assert_error(result, 'record_attr', 'Missing value')
+        assert_error(result, 'metadata_standard_id', 'Missing value')
+
     def test_update_valid(self):
         metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
         input_dict = {
@@ -105,6 +138,22 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
         }
         result, obj = self.test_action('metadata_json_attr_map_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
+
+    def test_update_invalid_bad_metadata_standard(self):
+        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
+        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
+                                       id=metadata_json_attr_map['id'],
+                                       metadata_standard_id='foo')
+        assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
+
+    def test_update_invalid_deleted_metadata_standard(self):
+        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
+        metadata_standard = ckanext_factories.MetadataStandard()
+        call_action('metadata_standard_delete', id=metadata_standard['id'])
+        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
+                                       id=metadata_json_attr_map['id'],
+                                       metadata_standard_id=metadata_standard['id'])
+        assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
 
     def test_update_invalid_duplicate_standard_jsonpath(self):
         metadata_json_attr_map1 = ckanext_factories.MetadataJSONAttrMap()
@@ -127,6 +176,50 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
         }
         result, obj = self.test_action('metadata_json_attr_map_update', should_error=True, **input_dict)
         assert_error(result, 'record_attr', 'Unique constraint violation')
+
+    def test_update_invalid_bad_json_path(self):
+        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
+        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
+                                       id=metadata_json_attr_map['id'],
+                                       json_path='foo')
+        assert_error(result, 'json_path', 'Invalid JSON pointer')
+
+    def test_update_invalid_json_path(self):
+        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
+        metadata_standard = ckanext_factories.MetadataStandard(
+            metadata_template_json=load_example('saeon_datacite_record.json'))
+        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
+                                       id=metadata_json_attr_map['id'],
+                                       metadata_standard_id=metadata_standard['id'],
+                                       json_path='/identifier/foo')
+        assert_error(result, '__after', 'The supplied JSON path is not valid for the metadata template of the supplied metadata standard')
+
+    def test_update_invalid_record_attr(self):
+        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
+        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
+                                       id=metadata_json_attr_map['id'],
+                                       record_attr='owner_org')
+        assert_error(result, 'record_attr', 'The specified attribute cannot be used')
+
+    def test_update_invalid_missing_params(self):
+        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
+        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
+                                       id=metadata_json_attr_map['id'])
+        assert_error(result, 'json_path', 'Missing parameter')
+        assert_error(result, 'record_attr', 'Missing parameter')
+        assert_error(result, 'is_key', 'Missing parameter')
+        assert_error(result, 'metadata_standard_id', 'Missing parameter')
+
+    def test_update_invalid_missing_values(self):
+        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
+        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
+                                       id=metadata_json_attr_map['id'],
+                                       json_path='',
+                                       record_attr='',
+                                       metadata_standard_id='')
+        assert_error(result, 'json_path', 'Missing value')
+        assert_error(result, 'record_attr', 'Missing value')
+        assert_error(result, 'metadata_standard_id', 'Missing value')
 
     def test_delete_valid(self):
         metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
