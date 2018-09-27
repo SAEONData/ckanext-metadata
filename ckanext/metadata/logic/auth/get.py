@@ -101,6 +101,10 @@ def metadata_record_validation_activity_show(context, data_dict):
     return {'success': True}
 
 
+def metadata_validity_check(context, data_dict):
+    return {'success': True}
+
+
 def metadata_record_workflow_rules_check(context, data_dict):
     return {'success': True}
 

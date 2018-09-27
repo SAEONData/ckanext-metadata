@@ -545,6 +545,35 @@ def metadata_record_validation_activity_show(context, data_dict):
 
 
 @tk.side_effect_free
+def metadata_validity_check(context, data_dict):
+    """
+    Check the validity of a metadata dictionary against a metadata schema.
+
+    :param metadata_json: JSON dictionary of metadata record content
+    :type metadata_json: string
+    :param schema_json: JSON dictionary defining a metadata schema
+    :type schema_json: string
+
+    :rtype: dictionary of metadata errors; empty dict implies that the metadata is 100% valid
+        against the given schema
+    """
+    log.debug("Checking metadata validity")
+    tk.check_access('metadata_validity_check', context, data_dict)
+
+    session = context['session']
+    data, errors = tk.navl_validate(data_dict, schema.metadata_validity_check_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    metadata_dict = json.loads(data['metadata_json'])
+    schema_dict = json.loads(data['schema_json'])
+
+    metadata_errors = MetadataValidator(schema_dict).validate(metadata_dict)
+    return metadata_errors
+
+
+@tk.side_effect_free
 def metadata_record_workflow_rules_check(context, data_dict):
     """
     Evaluate whether a metadata record passes the rules for a workflow state.

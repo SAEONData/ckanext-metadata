@@ -94,13 +94,23 @@ def task_validator(validator, task_dict, instance, schema):
         'errorAbsPath': JSON pointer into the whole document; the task will only be executed if
             the instance at this location contains no errors
     }
+
+    Note: Validation is usually expected to be a side effect-free process. However, because
+    a task likely will cause side effects (i.e. updates to DB objects, besides validation logs),
+    we require 'allow_side_effects': True to be set in the context; if False (the default),
+    the task is not run and an explanatory error is added.
     """
     if validator.is_type(task_dict, 'object'):
+        allow_side_effects = validator.context.get('allow_side_effects', False)
         action_name = task_dict.get('action', '')
         params = task_dict.get('params', [])
         error_path = task_dict.get('errorAbsPath', '')
-
         errors = False
+
+        if not allow_side_effects:
+            errors = True
+            yield jsonschema.ValidationError(_("Task cannot be run in this context"))
+
         try:
             action_func = tk.get_action(action_name)
         except:

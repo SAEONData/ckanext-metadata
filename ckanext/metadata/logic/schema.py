@@ -166,6 +166,14 @@ def metadata_record_show_schema():
     return schema
 
 
+def metadata_validity_check_schema():
+    schema = {
+        'metadata_json': [v.not_empty, unicode, v.json_dict_validator],
+        'schema_json': [v.not_empty, unicode, v.json_schema_validator],
+    }
+    return schema
+
+
 def metadata_record_workflow_rules_check_schema():
     schema = {
         'metadata_record_json': [v.not_empty, unicode, v.json_dict_validator],
