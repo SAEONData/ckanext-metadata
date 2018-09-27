@@ -596,10 +596,10 @@ def metadata_record_workflow_rules_check(context, data_dict):
         session.rollback()
         raise tk.ValidationError(errors)
 
-    metadata_record_json = json.loads(data['metadata_record_json'])
-    workflow_rules_json = json.loads(data['workflow_rules_json'])
+    metadata_record_dict = json.loads(data['metadata_record_json'])
+    workflow_rules_dict = json.loads(data['workflow_rules_json'])
 
-    workflow_errors = WorkflowValidator(workflow_rules_json).validate(metadata_record_json)
+    workflow_errors = WorkflowValidator(workflow_rules_dict).validate(metadata_record_dict)
     return workflow_errors
 
 

@@ -10,6 +10,7 @@ from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, ME
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.metadata_validator import MetadataValidator
+from ckanext.metadata.logic.workflow_validator import WorkflowValidator
 
 log = logging.getLogger(__name__)
 
@@ -538,11 +539,11 @@ def metadata_record_validate(context, data_dict):
     accumulated_errors = {}
     for metadata_schema in validation_schemas:
         validate_context = context.copy()
-        validate_context.update({
-            'allow_side_effects': True,
-        })
+        validate_context['allow_side_effects'] = True
+
         metadata_dict = json.loads(metadata_record.extras['metadata_json'])
         schema_dict = metadata_schema['schema_json']
+
         json_validator = MetadataValidator(schema_dict, metadata_record_id, validate_context)
         validation_errors = json_validator.validate(metadata_dict)
         validation_result = {
@@ -834,11 +835,13 @@ def metadata_record_workflow_state_transition(context, data_dict):
     jsonpatch_ids = tk.get_action('metadata_record_workflow_annotation_list')(
         context, {'id': metadata_record_id})
 
+    validate_context = context.copy()
+    validate_context['allow_side_effects'] = True
+
     # test whether the augmented metadata record passes the rules for the target state
-    workflow_errors = tk.get_action('metadata_record_workflow_rules_check')(context, {
-        'metadata_record_json': json.dumps(metadata_record_dict),
-        'workflow_rules_json': target_workflow_state.workflow_rules_json,
-    })
+    workflow_rules_dict = json.loads(target_workflow_state.workflow_rules_json)
+    json_validator = WorkflowValidator(workflow_rules_dict, metadata_record_id, validate_context)
+    workflow_errors = json_validator.validate(metadata_record_dict)
 
     if not workflow_errors:
         update_search_index = metadata_record.private != target_workflow_state.metadata_records_private
