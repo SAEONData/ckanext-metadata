@@ -500,9 +500,11 @@ def metadata_json_attr_map_create(context, data_dict):
     Create a one-to-one mapping from a metadata JSON element to a metadata record attribute.
 
     The existence of such a mapping has two primary effects:
-    1. For attributes constituting a unique key (is_key == True), the key values in an
-       incoming metadata JSON dictionary are used to determine whether to create a new
-       record or update an existing one.
+    1. For key attributes (is_key == True), the key values in an incoming metadata JSON dictionary
+       are used to determine whether to create a new record or update an existing one. Note that
+       where there are multiple key attributes, each is considered to be unique on its own, and
+       related to every other key attribute in a one-to-one manner. Therefore, a match must be
+       on all key attributes; a partial match is an error.
     2. When a metadata record is created or updated, metadata JSON values are copied into
        metadata record attributes for each such defined mapping.
 
@@ -512,7 +514,7 @@ def metadata_json_attr_map_create(context, data_dict):
     :type json_path: string
     :param record_attr: the name of an attribute in the metadata record schema
     :type record_attr: string
-    :param is_key: indicates whether the attribute forms part of a unique key for metadata records
+    :param is_key: indicates whether the attribute is a unique key for metadata records
     :type is_key: boolean
     :param metadata_standard_id: the id or name of the metadata standard for which this mapping is defined
     :type metadata_standard_id: string
