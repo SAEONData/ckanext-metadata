@@ -283,10 +283,6 @@ def metadata_record_create(context, data_dict):
     :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content (nullable)
     :type metadata_json: string
-    :param metadata_raw: original unmodified metadata (nullable)
-    :type metadata_raw: string
-    :param metadata_url: URL pointing to original unmodified metadata (nullable)
-    :type metadata_url: string
 
     :returns: the newly created metadata record (unless 'return_id_only' is set to True
               in the context, in which case just the metadata record id will be returned)

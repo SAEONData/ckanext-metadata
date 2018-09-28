@@ -95,8 +95,6 @@ def metadata_record_create_schema():
         },
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard'), convert_to_extras],
         'metadata_json': [v.not_missing, unicode, v.json_dict_validator, convert_to_extras],
-        'metadata_raw': [v.not_missing, unicode, convert_to_extras],
-        'metadata_url': [v.not_missing, unicode, v.url_validator, convert_to_extras],
         'validated': [convert_to_extras],
         'errors': [convert_to_extras],
         'workflow_state_id': [convert_to_extras],
@@ -150,8 +148,6 @@ def metadata_record_show_schema():
         'owner_org': [v.convert_id_to_name('organization')],
         'metadata_standard_id': [convert_from_extras, v.convert_id_to_name('metadata_standard')],
         'metadata_json': [convert_from_extras, v.deserialize_json],
-        'metadata_raw': [convert_from_extras],
-        'metadata_url': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras, v.convert_id_to_name('metadata_collection')],
         'infrastructures': {
             'id': [v.convert_id_to_name('infrastructure')],

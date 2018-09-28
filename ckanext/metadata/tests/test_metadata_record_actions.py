@@ -70,8 +70,6 @@ class TestMetadataRecordActions(ActionTestBase):
             'infrastructures': [],
             'metadata_standard_id': self.metadata_standard['id'],
             'metadata_json': '{ "testkey": "testvalue" }',
-            'metadata_raw': '<xml/>',
-            'metadata_url': 'http://example.net/',
         }
 
     @staticmethod
@@ -93,8 +91,6 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(obj.id, 'metadata_collection_id', kwargs.pop('metadata_collection_id', self.metadata_collection['id']))
         assert_package_has_extra(obj.id, 'metadata_standard_id', kwargs.pop('metadata_standard_id', self.metadata_standard['id']))
         assert_package_has_extra(obj.id, 'metadata_json', input_dict['metadata_json'], is_json=True)
-        assert_package_has_extra(obj.id, 'metadata_raw', input_dict['metadata_raw'])
-        assert_package_has_extra(obj.id, 'metadata_url', input_dict['metadata_url'])
         assert_package_has_extra(obj.id, 'validated', kwargs.pop('validated', False))
         assert_package_has_extra(obj.id, 'errors', kwargs.pop('errors', {}), is_json=True)
         assert_package_has_extra(obj.id, 'workflow_state_id', kwargs.pop('workflow_state_id', ''))
@@ -157,8 +153,6 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'infrastructures', 'Missing parameter')
         assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
-        assert_error(result, 'metadata_raw', 'Missing parameter')
-        assert_error(result, 'metadata_url', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
         result, obj = self.test_action('metadata_record_create', should_error=True,
@@ -229,8 +223,6 @@ class TestMetadataRecordActions(ActionTestBase):
             'metadata_collection_id': new_metadata_collection['id'],
             'metadata_standard_id': new_metadata_standard['id'],
             'metadata_json': '{ "newtestkey": "newtestvalue" }',
-            'metadata_raw': '<updated_xml/>',
-            'metadata_url': 'http://updated.example.net/',
             'infrastructures': [
                 {'id': infrastructure2['name']},
                 {'id': new_infrastructure['name']},
@@ -372,8 +364,6 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'infrastructures', 'Missing parameter')
         assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
-        assert_error(result, 'metadata_raw', 'Missing parameter')
-        assert_error(result, 'metadata_url', 'Missing parameter')
 
     def test_update_invalid_missing_values(self):
         metadata_record = self._generate_metadata_record()

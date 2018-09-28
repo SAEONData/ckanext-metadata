@@ -37,8 +37,6 @@ class MetadataRecord(factory.Factory):
 
     title = 'Test Metadata Record'
     metadata_json = '{ "testkey": "testvalue" }'
-    metadata_raw = '<xml/>'
-    metadata_url = 'http://example.net/'
     infrastructures = []
 
     @classmethod
