@@ -878,7 +878,6 @@ def metadata_json_attr_map_list(context, data_dict):
     """
     log.debug("Retrieving metadata JSON attribute map list: %r", data_dict)
 
-    model = context['model']
     session = context['session']
     all_fields = asbool(data_dict.get('all_fields'))
     metadata_standard = context.get('metadata_standard')
@@ -886,8 +885,8 @@ def metadata_json_attr_map_list(context, data_dict):
     if metadata_standard:
         metadata_standard_id = metadata_standard.id
     else:
-        metadata_standard_id = tk.get_or_bust(data_dict, 'id')
-        metadata_standard = model.Package.get(metadata_standard_id)
+        metadata_standard_id = tk.get_or_bust(data_dict, 'metadata_standard_id')
+        metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
         if metadata_standard is not None:
             metadata_standard_id = metadata_standard.id
         else:
