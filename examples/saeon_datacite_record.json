@@ -171,27 +171,20 @@
             "awardTitle": "Full DataCite XML Example"
         }
     ],
-    "linkedResources": {
-        "immutableResource": {
-            "linkedResourceType": "Download",
-            "resourceURL": "http://www.saeon.ac.za/MainFrame",
-            "resourceChecksum": "80cbe7583174e9aded0fe8a9637b2ab5",
-            "checksumAlgorithm": "md5",
-            "resourceName": "SAEON Banner Image",
-            "resourceDescription": "Banner image on the SAEON website"
-        },
-        "additionalResources": [
-            {
-                "linkedResourceType": "Information",
-                "resourceURL": "http://www.saeon.ac.za/about-saeon",
-                "resourceName": "About SAEON",
-                "resourceDescription": "Background info about SAEON"
-            },
-            {
-                "linkedResourceType": "Metadata",
-                "resourceURL": "https://schema.datacite.org/meta/kernel-4.1/example/datacite-example-full-v4.1.xml",
-                "resourceName": "Original Metadata Record"
-            }
-        ]
-    }
+    "immutableResource": {
+        "resourceURL": "https://schema.datacite.org/meta/kernel-4.1/example/datacite-example-full-v4.1.xml",
+        "resourceChecksum": "1f4d92f643bf831131f7bd26bdb6d3e3",
+        "checksumAlgorithm": "md5",
+        "resourceName": "Full DataCite XML Example",
+        "resourceDescription": "A complete example of a DataCite 4.1-compliant XML metadata record"
+    },
+    "linkedResources": [
+        {
+            "linkedResourceType": "Information",
+            "resourceURL": "https://schema.datacite.org/meta/kernel-4.1/doc/DataCite-MetadataKernel_v4.1.pdf",
+            "resourceName": "DataCite 4.1 Specification",
+            "resourceDescription": "DataCite metadata schema documentation for the publication and citation of research data"
+        }
+    ],
+    "originalMetadata": "<?xml version=\"1.0\"?><resource>...the original metadata...</resource>"
 }

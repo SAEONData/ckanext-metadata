@@ -206,15 +206,13 @@
         "linkedResourceType": {
             "type": "string",
             "enum": [
-                "Download",
                 "Information",
                 "OfflineAccess",
-                "Order",
-                "Search",
-                "Related",
-                "Link",
+                "ConditionalAccess",
+                "Query",
                 "Metadata",
-                "Ethics"
+                "Ethics",
+                "QualityAssessment"
             ]
         }
     },
@@ -482,45 +480,40 @@
             },
             "uniqueItems": true
         },
-        "linkedResources": {
+        "immutableResource": {
             "type": "object",
             "properties": {
-                "immutableResource": {
-                    "type": "object",
-                    "properties": {
-                        "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
-                        "resourceURL": {"type": "string", "format": "url"},
-                        "resourceName": {"type": "string"},
-                        "resourceDescription": {"type": "string"},
-                        "resourceChecksum": {"type": "string"},
-                        "checksumAlgorithm": {"type": "string"}
-                    },
-                    "required": ["linkedResourceType", "resourceURL"],
-                    "dependencies": {
-                        "resourceChecksum": ["checksumAlgorithm"]
-                    }
-                },
-                "additionalResources": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
-                            "resourceURL": {"type": "string", "format": "url"},
-                            "resourceName": {"type": "string"},
-                            "resourceDescription": {"type": "string"}
-                        },
-                        "required": ["linkedResourceType", "resourceURL"]
-                    },
-                    "uniqueItems": true
-                }
+                "resourceURL": {"type": "string", "format": "url"},
+                "resourceName": {"type": "string"},
+                "resourceDescription": {"type": "string"},
+                "resourceChecksum": {"type": "string"},
+                "checksumAlgorithm": {"type": "string"}
             },
-            "required": ["immutableResource"]
+            "required": ["resourceURL"],
+            "dependencies": {
+                "resourceChecksum": ["checksumAlgorithm"]
+            }
+        },
+        "linkedResources": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
+                    "resourceURL": {"type": "string", "format": "url"},
+                    "resourceName": {"type": "string"},
+                    "resourceDescription": {"type": "string"}
+                },
+                "required": ["linkedResourceType", "resourceURL"]
+            },
+            "uniqueItems": true
+        },
+        "originalMetadata": {
+            "type": "string"
         }
     },
 
     "required": [
-        "identifier",
         "creators",
         "titles",
         "publisher",
@@ -530,7 +523,11 @@
         "resourceType",
         "alternateIdentifiers",
         "rightsList",
-        "descriptions",
-        "linkedResources"
-    ]
+        "descriptions"
+    ],
+
+    "dependencies": {
+        "identifier": ["immutableResource"],
+        "immutableResource": ["identifier"]
+    }
 }
