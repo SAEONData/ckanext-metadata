@@ -34,7 +34,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': 'DataCite',
             'standard_version': '1.0',
             'parent_standard_id': '',
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -45,7 +45,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': 'DataCite',
             'standard_version': '1.0',
             'parent_standard_id': metadata_standard['id'],
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -56,7 +56,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': 'DataCite',
             'standard_version': '1.0',
             'parent_standard_id': metadata_standard['name'],
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_create', **input_dict)
         input_dict['parent_standard_id'] = metadata_standard['id']
@@ -68,7 +68,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': 'DataCite',
             'standard_version': '1.0',
             'parent_standard_id': '',
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_create', sysadmin=True, check_auth=True, **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -79,7 +79,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': metadata_standard['standard_name'],
             'standard_version': metadata_standard['standard_version'] + 'a',
             'parent_standard_id': '',
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -90,7 +90,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': metadata_standard['standard_name'] + '_foo',
             'standard_version': metadata_standard['standard_version'],
             'parent_standard_id': '',
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -110,8 +110,10 @@ class TestMetadataStandardActions(ActionTestBase):
 
     def test_create_invalid_missing_values(self):
         result, obj = self.test_action('metadata_standard_create', should_error=True,
-                                       standard_name='')
+                                       standard_name='',
+                                       metadata_template_json='')
         assert_error(result, 'standard_name', 'Missing value')
+        assert_error(result, 'metadata_template_json', 'Missing value')
 
     def test_create_invalid_duplicate(self):
         metadata_standard = ckanext_factories.MetadataStandard()
@@ -178,7 +180,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': metadata_standard['standard_name'],
             'standard_version': metadata_standard['standard_name'],
             'parent_standard_id': '',
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -193,7 +195,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': metadata_standard1['standard_name'],
             'standard_version': metadata_standard1['standard_version'],
             'parent_standard_id': metadata_standard2['id'],
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -207,7 +209,7 @@ class TestMetadataStandardActions(ActionTestBase):
             'standard_name': metadata_standard3['standard_name'],
             'standard_version': metadata_standard3['standard_version'],
             'parent_standard_id': metadata_standard1['id'],
-            'metadata_template_json': '',
+            'metadata_template_json': '{}',
         }
         result, obj = self.test_action('metadata_standard_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -235,8 +237,10 @@ class TestMetadataStandardActions(ActionTestBase):
         metadata_standard = ckanext_factories.MetadataStandard()
         result, obj = self.test_action('metadata_standard_update', should_error=True,
                                        id=metadata_standard['id'],
-                                       standard_name='')
+                                       standard_name='',
+                                       metadata_template_json='')
         assert_error(result, 'standard_name', 'Missing value')
+        assert_error(result, 'metadata_template_json', 'Missing value')
 
     def test_update_invalid_duplicate(self):
         metadata_standard1 = ckanext_factories.MetadataStandard()

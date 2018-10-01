@@ -37,7 +37,7 @@ def metadata_standard_create(context, data_dict):
     :param parent_standard_id: the id or name of the metadata standard from which this standard is derived (nullable)
     :type parent_standard_id: string
     :param metadata_template_json: a complete example of a JSON metadata dictionary that conforms to this standard;
-        may be used for initializing a search index (nullable)
+        may be used for initializing a search index
     :type metadata_template_json: string
 
     :returns: the newly created metadata standard (unless 'return_id_only' is set to True
@@ -281,7 +281,7 @@ def metadata_record_create(context, data_dict):
     :type infrastructures: list of dictionaries
     :param metadata_standard_id: the id or name of the metadata standard that describes the record's structure
     :type metadata_standard_id: string
-    :param metadata_json: JSON dictionary of metadata record content (nullable)
+    :param metadata_json: JSON dictionary of metadata record content
     :type metadata_json: string
 
     :returns: the newly created metadata record (unless 'return_id_only' is set to True
