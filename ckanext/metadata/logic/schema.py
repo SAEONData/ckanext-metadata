@@ -106,13 +106,13 @@ def metadata_record_create_schema():
     }
 
     # optional native package fields
-    schema.update(metadata_json_attr_mappable_schema())
+    schema.update(metadata_record_attr_mappable_schema())
 
     _make_create_schema(schema)
     return schema
 
 
-def metadata_json_attr_mappable_schema():
+def metadata_record_attr_mappable_schema():
     """
     Defines the metadata record (package) fields that may be referenced by MetadataJSONAttrMap.record_attr.
     These fields may optionally be provided as input to the metadata_record_create|update actions; but
@@ -301,7 +301,7 @@ def metadata_json_attr_map_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_json_attr_map')],
         'json_path': [v.not_empty, unicode, v.json_pointer_validator],
-        'record_attr': [v.not_empty, unicode, v.schema_attribute_validator(metadata_json_attr_mappable_schema())],
+        'record_attr': [v.not_empty, unicode, v.schema_attribute_validator(metadata_record_attr_mappable_schema())],
         'is_key': [v.not_missing, boolean_validator],
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
 
