@@ -268,10 +268,14 @@ def metadata_record_create(context, data_dict):
 
     You must be authorized to create metadata records.
 
+    Note that if the incoming record matches an existing one on key attributes mapped from
+    the metadata JSON, then we switch to doing an update instead.
+
     :param id: the id of the metadata record (optional - only sysadmins can set this)
     :type id: string
-    :param title: the title of the metadata record (optional)
-    :type title: string
+    :param name: the name of the metadata record (optional - set to id if not supplied);
+        must conform to standard naming rules
+    :type name: string
     :param owner_org: the id or name of the organization to which this record belongs
     :type owner_org: string
     :param metadata_collection_id: the id or name of the metadata collection to which this record will be added
@@ -283,6 +287,13 @@ def metadata_record_create(context, data_dict):
     :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content
     :type metadata_json: string
+
+    The following native package fields may also optionally be supplied:
+        title, author, author_email, maintainer, maintainer_email, license_id, notes, url, version
+    See :py:func:`ckan.logic.action.create.package_create` for more information.
+
+    Note that these fields (as well as 'name') may be used in metadata JSON attribute mappings, in which
+    case the input value(s) are ignored and overridden by the mapped element(s) from the metadata JSON.
 
     :returns: the newly created metadata record (unless 'return_id_only' is set to True
               in the context, in which case just the metadata record id will be returned)
@@ -309,8 +320,41 @@ def metadata_record_create(context, data_dict):
         'return_id_only': True,
     })
 
+    existing_records = set()
+    attr_map_exc = None
+    try:
+        # map values from the metadata JSON into the data_dict
+        attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
+            'metadata_standard_id': data_dict.get('metadata_standard_id'),
+            'metadata_json': data_dict.get('metadata_json'),
+        })
+        data_dict.update(attr_map['data_dict'])
+
+        # check if we match an existing record on key attributes; in which case do an update instead
+        for key_attr in attr_map['key_attrs']:
+            existing_records |= set(tk.get_action('metadata_record_find_by_attr')(context, {
+                'attr_name': key_attr,
+                'attr_value': data_dict[key_attr],
+            }))
+    except tk.ValidationError, e:
+        # if there is an error in attribute map processing, we save it for later;
+        # rather allow metadata record schema validation errors to take priority
+        attr_map_exc = e
+
+    if len(existing_records) == 1:
+        log.info('Existing record found; switching to metadata_record_update')
+        data_dict['id'] = existing_records.pop()
+        return tk.get_action('metadata_record_update')(context, data_dict)
+
+    if len(existing_records) > 1:
+        raise tk.ValidationError(_("Multiple existing metadata records found with the given key attribute values"))
+
+    # it's new metadata; create the package object
     metadata_record_id = tk.get_action('package_create')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
+
+    if attr_map_exc:
+        raise attr_map_exc
 
     if not defer_commit:
         model.repo.commit()

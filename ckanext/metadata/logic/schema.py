@@ -329,6 +329,14 @@ def metadata_json_attr_map_show_schema():
     return schema
 
 
+def metadata_json_attr_map_apply_schema():
+    schema = {
+        'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
+        'metadata_json': [v.not_empty, unicode, v.json_dict_validator],
+    }
+    return schema
+
+
 def metadata_schema_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_schema')],

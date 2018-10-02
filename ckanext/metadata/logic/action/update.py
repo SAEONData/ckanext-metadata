@@ -340,6 +340,7 @@ def metadata_record_update(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    redirected_from_create = context.get('invoked_api') == 'metadata_record_create'
 
     metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
@@ -350,15 +351,6 @@ def metadata_record_update(context, data_dict):
 
     tk.check_access('metadata_record_update', context, data_dict)
 
-    context['metadata_record'] = metadata_record
-
-    # if it's a validated record, get some current state info for checking whether we need to invalidate it
-    if asbool(metadata_record.extras['validated']):
-        old_metadata_json = metadata_record.extras['metadata_json']
-        if old_metadata_json:
-            old_metadata_json = json.loads(old_metadata_json)
-        old_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
-
     data_dict.update({
         'id': metadata_record_id,
         'type': 'metadata_record',
@@ -368,6 +360,7 @@ def metadata_record_update(context, data_dict):
         'private': metadata_record.private,
     })
     context.update({
+        'metadata_record': metadata_record,
         'schema': schema.metadata_record_update_schema(),
         'invoked_api': 'metadata_record_update',
         'defer_commit': True,
@@ -375,6 +368,45 @@ def metadata_record_update(context, data_dict):
         'allow_partial_update': True,
         'message': _(u'REST API: Update metadata record %s') % metadata_record_id
     })
+
+    attr_map_exc = None
+
+    if redirected_from_create:
+        # we've already done the attribute mapping in metadata_record_create
+        pass
+    else:
+        existing_records = set()
+        try:
+            # map values from the metadata JSON into the data_dict
+            attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
+                'metadata_standard_id': data_dict.get('metadata_standard_id'),
+                'metadata_json': data_dict.get('metadata_json'),
+            })
+            data_dict.update(attr_map['data_dict'])
+
+            # check that we don't match another existing record on key attributes
+            for key_attr in attr_map['key_attrs']:
+                existing_records |= set(tk.get_action('metadata_record_find_by_attr')(context, {
+                    'attr_name': key_attr,
+                    'attr_value': data_dict[key_attr],
+                }))
+        except tk.ValidationError, e:
+            # if there is an error in attribute map processing, we save it for later;
+            # rather allow metadata record schema validation errors to take priority
+            attr_map_exc = e
+
+        if len(existing_records) == 1:
+            if existing_records.pop() != metadata_record_id:
+                raise tk.ValidationError(_("Cannot update record; another record exists with the given key attribute values"))
+        elif len(existing_records) > 1:
+            raise tk.ValidationError(_("Multiple existing metadata records found with the given key attribute values"))
+
+    # if it's a validated record, get some current state info for checking whether we need to invalidate it
+    if asbool(metadata_record.extras['validated']):
+        old_metadata_json = metadata_record.extras['metadata_json']
+        if old_metadata_json:
+            old_metadata_json = json.loads(old_metadata_json)
+        old_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
 
     tk.get_action('package_update')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
@@ -399,6 +431,9 @@ def metadata_record_update(context, data_dict):
                 'trigger_object_id': metadata_record_id,
             })
             tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
+
+    if attr_map_exc:
+        raise attr_map_exc
 
     if not defer_commit:
         model.repo.commit()

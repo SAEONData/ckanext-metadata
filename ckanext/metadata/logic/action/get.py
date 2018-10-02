@@ -4,6 +4,7 @@ import logging
 from paste.deploy.converters import asbool
 from sqlalchemy import or_
 import json
+import jsonpointer
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -429,6 +430,44 @@ def metadata_record_list(context, data_dict):
             .filter(model.Member.state == 'active')
 
     metadata_records = metadata_records_q.all()
+    result = []
+    for (id_, name) in metadata_records:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('metadata_record_show')(context, data_dict)]
+        else:
+            result += [name]
+
+    return result
+
+
+@tk.side_effect_free
+def metadata_record_find_by_attr(context, data_dict):
+    """
+    Return a list of metadata record names with the given (native) package attribute value.
+
+    :param attr_name: package attribute name
+    :type attr_name: string
+    :param attr_value: package attribute value
+    :type attr_value: string
+    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
+    :type all_fields: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving metadata records by package attribute: %r", data_dict)
+    tk.check_access('metadata_record_find_by_attr', context, data_dict)
+
+    model = context['model']
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+    attr_name, attr_value = tk.get_or_bust(data_dict, ['attr_name', 'attr_value'])
+
+    metadata_records = session.query(model.Package.id, model.Package.name) \
+        .filter_by(type='metadata_record', state='active') \
+        .filter_by(**{attr_name: attr_value}) \
+        .all()
+
     result = []
     for (id_, name) in metadata_records:
         if all_fields:
@@ -880,17 +919,13 @@ def metadata_json_attr_map_list(context, data_dict):
 
     session = context['session']
     all_fields = asbool(data_dict.get('all_fields'))
-    metadata_standard = context.get('metadata_standard')
 
-    if metadata_standard:
+    metadata_standard_id = tk.get_or_bust(data_dict, 'metadata_standard_id')
+    metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
+    if metadata_standard is not None:
         metadata_standard_id = metadata_standard.id
     else:
-        metadata_standard_id = tk.get_or_bust(data_dict, 'metadata_standard_id')
-        metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
-        if metadata_standard is not None:
-            metadata_standard_id = metadata_standard.id
-        else:
-            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
 
     tk.check_access('metadata_json_attr_map_list', context, data_dict)
 
@@ -905,5 +940,60 @@ def metadata_json_attr_map_list(context, data_dict):
             result += [tk.get_action('metadata_json_attr_map_show')(context, data_dict)]
         else:
             result += [id_]
+
+    return result
+
+
+@tk.side_effect_free
+def metadata_json_attr_map_apply(context, data_dict):
+    """
+    Construct a data dictionary by mapping (non-empty) values from the given metadata
+    JSON document, for all of the metadata JSON attribute map objects for the given
+    metadata standard.
+
+    :param metadata_standard_id: the id or name of the metadata standard
+    :type metadata_standard_id: string
+    :param metadata_json: JSON dictionary of metadata content
+    :type metadata_json: string
+
+    :rtype: dictionary {
+                'data_dict': dict of mapped attribute-value pairs,
+                'key_attrs': list of key attributes (from is_key)
+            }
+    """
+    log.debug("Applying metadata JSON attribute mappings to metadata dict: %r", data_dict)
+    tk.check_access('metadata_json_attr_map_apply', context, data_dict)
+
+    session = context['session']
+    data, errors = tk.navl_validate(data_dict, schema.metadata_json_attr_map_apply_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    metadata_standard_id = data['metadata_standard_id']
+    metadata_dict = json.loads(data['metadata_json'])
+
+    metadata_json_attr_maps = session.query(ckanext_model.MetadataJSONAttrMap) \
+        .filter_by(metadata_standard_id=metadata_standard_id) \
+        .filter_by(state='active') \
+        .all()
+
+    result = {
+        'data_dict': {},
+        'key_attrs': [],
+    }
+    for metadata_json_attr_map in metadata_json_attr_maps:
+        attr = metadata_json_attr_map.record_attr
+        path = metadata_json_attr_map.json_path
+        try:
+            value = jsonpointer.resolve_pointer(metadata_dict, path)
+            if not value:
+                continue
+            result['data_dict'][attr] = value
+            if metadata_json_attr_map.is_key:
+                result['key_attrs'] += [attr]
+        except jsonpointer.JsonPointerException:
+            # the specified path is not in the metadata; ignore
+            continue
 
     return result
