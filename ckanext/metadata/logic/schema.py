@@ -120,7 +120,7 @@ def metadata_record_attr_mappable_schema():
     values in the metadata JSON.
     """
     schema = {
-        'name': [ignore_missing, unicode, name_validator, package_name_validator],
+        'name': [ignore_missing, unicode, package_name_validator],
         'title': [ignore_missing, unicode],
         'author': [ignore_missing, unicode],
         'author_email': [ignore_missing, unicode, email_validator],
