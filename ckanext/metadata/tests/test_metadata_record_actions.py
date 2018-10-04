@@ -26,7 +26,8 @@ class TestMetadataRecordActions(ActionTestBase):
         super(TestMetadataRecordActions, self).setup()
         self.owner_org = self._generate_organization()
         self.metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'])
-        self.metadata_standard = ckanext_factories.MetadataStandard()
+        self.metadata_standard = ckanext_factories.MetadataStandard(
+            metadata_template_json=load_example('saeon_datacite_record.json'))
 
     def _generate_organization(self, **kwargs):
         return ckan_factories.Organization(user=self.normal_user, **kwargs)
@@ -88,12 +89,21 @@ class TestMetadataRecordActions(ActionTestBase):
         assert obj.name == kwargs.pop('name', obj.id)
         assert obj.owner_org == kwargs.pop('owner_org', self.owner_org['id'])
         assert obj.private == kwargs.pop('private', True)
+        assert obj.url == kwargs.pop('url', None)
         assert_package_has_extra(obj.id, 'metadata_collection_id', kwargs.pop('metadata_collection_id', self.metadata_collection['id']))
         assert_package_has_extra(obj.id, 'metadata_standard_id', kwargs.pop('metadata_standard_id', self.metadata_standard['id']))
         assert_package_has_extra(obj.id, 'metadata_json', input_dict['metadata_json'], is_json=True)
         assert_package_has_extra(obj.id, 'validated', kwargs.pop('validated', False))
         assert_package_has_extra(obj.id, 'errors', kwargs.pop('errors', {}), is_json=True)
         assert_package_has_extra(obj.id, 'workflow_state_id', kwargs.pop('workflow_state_id', ''))
+
+    def _define_attribute_map(self, json_path, record_attr, is_key=False):
+        return ckanext_factories.MetadataJSONAttrMap(
+            json_path=json_path,
+            record_attr=record_attr,
+            is_key=is_key,
+            metadata_standard_id=self.metadata_standard['id']
+        )
 
     def test_create_valid(self):
         input_dict = self._make_input_dict()
@@ -134,6 +144,159 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict['id'] = make_uuid()
         result, obj = self.test_action('metadata_record_create', sysadmin=True, check_auth=True, **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
+
+    def test_create_valid_map_attributes(self):
+        """
+        Test copying of metadata element values into package attributes via metadata JSON
+        attribute mappings.
+        """
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        url = metadata_dict['immutableResource']['resourceURL']
+        title = metadata_dict['titles'][0]['title']
+
+        self._define_attribute_map('/identifier/identifier', 'name')
+        self._define_attribute_map('/immutableResource/resourceURL', 'url')
+        self._define_attribute_map('/titles/0/title', 'title')
+
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict, name=identifier, title=title, url=url)
+
+    def test_create_valid_no_map_empty_attributes(self):
+        """
+        Test that when values do not exist in the metadata JSON for the defined mappings,
+        the target attributes are left unchanged.
+        """
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        del metadata_dict['identifier']
+        metadata_dict['immutableResource']['resourceURL'] = ''
+        metadata_dict['titles'][0] = {}
+        metadata_json = json.dumps(metadata_dict)
+
+        self._define_attribute_map('/identifier/identifier', 'name')
+        self._define_attribute_map('/immutableResource/resourceURL', 'url')
+        self._define_attribute_map('/titles/0/title', 'title')
+
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict)
+
+    def test_create_valid_map_attributes_update_existing(self):
+        """
+        Test that we switch to an update when matching on key attributes, while non-key
+        attributes play no part in matching.
+        """
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        url = metadata_dict['immutableResource']['resourceURL']
+        title = metadata_dict['titles'][0]['title']
+
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+        self._define_attribute_map('/titles/0/title', 'title', is_key=False)
+
+        metadata_record = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record['name'] == identifier
+        assert metadata_record['url'] == url
+        assert metadata_record['title'] == title
+
+        metadata_dict['titles'][0]['title'] = 'Updated Title'
+        metadata_json = json.dumps(metadata_dict)
+
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict, title='Updated Title', name=identifier, url=url)
+        assert result['id'] == obj.id == metadata_record['id']
+
+    def test_create_invalid_map_attributes_mismatched_keys(self):
+        """
+        Test that we fail an attempt to create (update) a record when incoming key attributes
+        match different existing records.
+        """
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier1 = metadata_dict['identifier']['identifier']
+        url1 = metadata_dict['immutableResource']['resourceURL']
+        identifier2 = 'A.different.identifier'
+        url2 = 'http://a.different.url'
+
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_record1 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record1['name'] == identifier1
+        assert metadata_record1['url'] == url1
+
+        metadata_dict['identifier']['identifier'] = identifier2
+        metadata_dict['immutableResource']['resourceURL'] = url2
+        metadata_json = json.dumps(metadata_dict)
+        metadata_record2 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record2['name'] == identifier2
+        assert metadata_record2['url'] == url2
+
+        metadata_dict['immutableResource']['resourceURL'] = url1
+        metadata_json = json.dumps(metadata_dict)
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_create', should_error=True, **input_dict)
+        assert_error(result, 'message', 'Cannot unambiguously match an existing record for the given key attribute values')
+
+    def test_create_invalid_map_attributes_partial_keys_1(self):
+        """
+        Test that we fail an attempt to create (update) a record when some of the incoming key
+        attributes do not match the existing record.
+        """
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        url = metadata_dict['immutableResource']['resourceURL']
+
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_record = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record['name'] == identifier
+        assert metadata_record['url'] == url
+
+        metadata_dict['identifier']['identifier'] = 'foo'
+        metadata_json = json.dumps(metadata_dict)
+
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_create', should_error=True, **input_dict)
+        assert_error(result, 'message', 'Cannot unambiguously match an existing record for the given key attribute values')
+
+    def test_create_invalid_map_attributes_partial_keys_2(self):
+        """
+        Test that we fail an attempt to create (update) a record when some of the incoming key
+        attributes required to match the existing record are not provided.
+        """
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        url = metadata_dict['immutableResource']['resourceURL']
+
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_record = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record['name'] == identifier
+        assert metadata_record['url'] == url
+
+        del metadata_dict['identifier']
+        metadata_json = json.dumps(metadata_dict)
+
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_create', should_error=True, **input_dict)
+        assert_error(result, 'message', 'Cannot unambiguously match an existing record for the given key attribute values')
 
     def test_create_invalid_nonsysadmin_setid(self):
         result, obj = self.test_action('metadata_record_create', should_error=True, check_auth=True,
@@ -356,6 +519,200 @@ class TestMetadataRecordActions(ActionTestBase):
                                         metadata_collection_id=new_metadata_collection['id'],
                                         validated=True)
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
+
+    def test_update_valid_map_attributes(self):
+        """
+        Test copying of metadata element values into package attributes via metadata JSON
+        attribute mappings.
+        """
+        metadata_record = self._generate_metadata_record()
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        url = metadata_dict['immutableResource']['resourceURL']
+        title = metadata_dict['titles'][0]['title']
+
+        self._define_attribute_map('/identifier/identifier', 'name')
+        self._define_attribute_map('/immutableResource/resourceURL', 'url')
+        self._define_attribute_map('/titles/0/title', 'title')
+
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict, name=identifier, title=title, url=url)
+
+    def test_update_valid_no_map_empty_attributes(self):
+        """
+        Test that when values do not exist in the metadata JSON for the defined mappings,
+        the target attributes are left unchanged.
+        """
+        metadata_record = self._generate_metadata_record()
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        del metadata_dict['identifier']
+        metadata_dict['immutableResource']['resourceURL'] = ''
+        metadata_dict['titles'][0] = {}
+        metadata_json = json.dumps(metadata_dict)
+
+        self._define_attribute_map('/identifier/identifier', 'name')
+        self._define_attribute_map('/immutableResource/resourceURL', 'url')
+        self._define_attribute_map('/titles/0/title', 'title')
+
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict)
+
+    def test_update_valid_modify_key_attributes(self):
+        """
+        Test that we are able to update elements in the JSON that are defined in key
+        attribute mappings.
+        """
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier1 = metadata_dict['identifier']['identifier']
+        url1 = metadata_dict['immutableResource']['resourceURL']
+        identifier2 = 'A.different.identifier'
+        url2 = 'http://a.different.url'
+
+        metadata_record = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record['name'] == identifier1
+        assert metadata_record['url'] == url1
+
+        metadata_dict['identifier']['identifier'] = identifier2
+        metadata_dict['immutableResource']['resourceURL'] = url2
+        metadata_json = json.dumps(metadata_dict)
+
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict, name=identifier2, url=url2)
+
+    def test_update_invalid_map_attributes_mismatched_keys(self):
+        """
+        Test that we fail an attempt to update a record when incoming key attributes
+        match different existing records.
+        """
+        metadata_record = self._generate_metadata_record()
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier1 = metadata_dict['identifier']['identifier']
+        url1 = metadata_dict['immutableResource']['resourceURL']
+        identifier2 = 'A.different.identifier'
+        url2 = 'http://a.different.url'
+
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_record1 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record1['name'] == identifier1
+        assert metadata_record1['url'] == url1
+
+        metadata_dict['identifier']['identifier'] = identifier2
+        metadata_dict['immutableResource']['resourceURL'] = url2
+        metadata_json = json.dumps(metadata_dict)
+        metadata_record2 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record2['name'] == identifier2
+        assert metadata_record2['url'] == url2
+
+        metadata_dict['immutableResource']['resourceURL'] = url1
+        metadata_json = json.dumps(metadata_dict)
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', should_error=True, **input_dict)
+        assert_error(result, 'message', 'Cannot unambiguously match an existing record for the given key attribute values')
+
+    def test_update_invalid_map_attributes_partial_keys_1(self):
+        """
+        Test that we fail an attempt to update a record when some of the incoming key
+        attributes do not match the existing record.
+        """
+        metadata_record = self._generate_metadata_record()
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        url = metadata_dict['immutableResource']['resourceURL']
+
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_record1 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record1['name'] == identifier
+        assert metadata_record1['url'] == url
+
+        metadata_dict['identifier']['identifier'] = 'foo'
+        metadata_json = json.dumps(metadata_dict)
+
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', should_error=True, **input_dict)
+        assert_error(result, 'message', 'Cannot unambiguously match an existing record for the given key attribute values')
+
+    def test_update_invalid_map_attributes_partial_keys_2(self):
+        """
+        Test that we fail an attempt to create (update) a record when some of the incoming key
+        attributes required to match the existing record are not provided.
+        """
+        metadata_record = self._generate_metadata_record()
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier = metadata_dict['identifier']['identifier']
+        url = metadata_dict['immutableResource']['resourceURL']
+
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_record1 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record1['name'] == identifier
+        assert metadata_record1['url'] == url
+
+        del metadata_dict['identifier']
+        metadata_json = json.dumps(metadata_dict)
+
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', should_error=True, **input_dict)
+        assert_error(result, 'message', 'Cannot unambiguously match an existing record for the given key attribute values')
+
+    def test_update_invalid_modify_key_attributes_match_another_record(self):
+        """
+        Test that we fail an attempt to update key elements in the JSON if those keys are
+        already in use by another record.
+        """
+        self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
+        self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
+
+        metadata_json = load_example('saeon_datacite_record.json')
+        metadata_dict = json.loads(metadata_json)
+        identifier1 = metadata_dict['identifier']['identifier']
+        url1 = metadata_dict['immutableResource']['resourceURL']
+        identifier2 = 'A.different.identifier'
+        url2 = 'http://a.different.url'
+
+        metadata_record = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record['name'] == identifier1
+        assert metadata_record['url'] == url1
+
+        metadata_dict['identifier']['identifier'] = identifier2
+        metadata_dict['immutableResource']['resourceURL'] = url2
+        metadata_json = json.dumps(metadata_dict)
+
+        metadata_record1 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record1['name'] == identifier2
+        assert metadata_record1['url'] == url2
+
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', should_error=True, **input_dict)
+        assert_error(result, 'message', 'Cannot update record; another record exists with the given key attribute values')
 
     def test_update_invalid_missing_params(self):
         metadata_record = self._generate_metadata_record()

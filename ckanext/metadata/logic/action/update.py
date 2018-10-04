@@ -340,7 +340,7 @@ def metadata_record_update(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
-    redirected_from_create = context.get('invoked_api') == 'metadata_record_create'
+    redirect_from_create = context.get('redirect_from_create', False)
 
     metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
@@ -350,6 +350,31 @@ def metadata_record_update(context, data_dict):
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     tk.check_access('metadata_record_update', context, data_dict)
+
+    if redirect_from_create:
+        # we've already done the attribute mapping and record matching in metadata_record_create
+        pass
+    else:
+        # this is (mostly) duplicating the schema validation that will be done in package_update below,
+        # but we want to validate before doing the attribute mappings
+        data, errors = tk.navl_validate(data_dict, schema.metadata_record_update_schema(), context)
+        if errors:
+            session.rollback()
+            raise tk.ValidationError(errors)
+
+        # map values from the metadata JSON into the data_dict
+        attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
+            'metadata_standard_id': data_dict.get('metadata_standard_id'),
+            'metadata_json': data_dict.get('metadata_json'),
+        })
+        data_dict.update(attr_map['data_dict'])
+
+        # check that an existing record matched on key attributes mapped from the JSON is the
+        # same record that we are updating; note that we should not find a match if we are actually
+        # updating key attributes
+        matching_record_id = tk.get_action('metadata_record_attr_match')(context, attr_map['key_dict'])
+        if matching_record_id and matching_record_id != metadata_record_id:
+            raise tk.ValidationError(_("Cannot update record; another record exists with the given key attribute values"))
 
     data_dict.update({
         'id': metadata_record_id,
@@ -368,38 +393,6 @@ def metadata_record_update(context, data_dict):
         'allow_partial_update': True,
         'message': _(u'REST API: Update metadata record %s') % metadata_record_id
     })
-
-    attr_map_exc = None
-
-    if redirected_from_create:
-        # we've already done the attribute mapping in metadata_record_create
-        pass
-    else:
-        existing_records = set()
-        try:
-            # map values from the metadata JSON into the data_dict
-            attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
-                'metadata_standard_id': data_dict.get('metadata_standard_id'),
-                'metadata_json': data_dict.get('metadata_json'),
-            })
-            data_dict.update(attr_map['data_dict'])
-
-            # check that we don't match another existing record on key attributes
-            for key_attr in attr_map['key_attrs']:
-                existing_records |= set(tk.get_action('metadata_record_find_by_attr')(context, {
-                    'attr_name': key_attr,
-                    'attr_value': data_dict[key_attr],
-                }))
-        except tk.ValidationError, e:
-            # if there is an error in attribute map processing, we save it for later;
-            # rather allow metadata record schema validation errors to take priority
-            attr_map_exc = e
-
-        if len(existing_records) == 1:
-            if existing_records.pop() != metadata_record_id:
-                raise tk.ValidationError(_("Cannot update record; another record exists with the given key attribute values"))
-        elif len(existing_records) > 1:
-            raise tk.ValidationError(_("Multiple existing metadata records found with the given key attribute values"))
 
     # if it's a validated record, get some current state info for checking whether we need to invalidate it
     if asbool(metadata_record.extras['validated']):
@@ -431,9 +424,6 @@ def metadata_record_update(context, data_dict):
                 'trigger_object_id': metadata_record_id,
             })
             tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
-
-    if attr_map_exc:
-        raise attr_map_exc
 
     if not defer_commit:
         model.repo.commit()

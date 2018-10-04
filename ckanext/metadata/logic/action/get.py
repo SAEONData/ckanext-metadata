@@ -442,41 +442,48 @@ def metadata_record_list(context, data_dict):
 
 
 @tk.side_effect_free
-def metadata_record_find_by_attr(context, data_dict):
+def metadata_record_attr_match(context, data_dict):
     """
-    Return a list of metadata record names with the given (native) package attribute value.
+    Return the id of a metadata record that unambiguously matches all the supplied attribute
+    name-value pairs, or None if not found. If there is any ambiguity, a validation error is
+    raised.
 
-    :param attr_name: package attribute name
-    :type attr_name: string
-    :param attr_value: package attribute value
-    :type attr_value: string
-    :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
-    :type all_fields: boolean
-
-    :rtype: list of strings
+    :rtype: string
     """
-    log.debug("Retrieving metadata records by package attribute: %r", data_dict)
-    tk.check_access('metadata_record_find_by_attr', context, data_dict)
+    log.debug("Retrieving metadata record that matches on key attributes: %r", data_dict)
+    tk.check_access('metadata_record_attr_match', context, data_dict)
 
     model = context['model']
     session = context['session']
-    all_fields = asbool(data_dict.get('all_fields'))
-    attr_name, attr_value = tk.get_or_bust(data_dict, ['attr_name', 'attr_value'])
 
-    metadata_records = session.query(model.Package.id, model.Package.name) \
-        .filter_by(type='metadata_record', state='active') \
-        .filter_by(**{attr_name: attr_value}) \
-        .all()
+    matching_record_id = None
+    is_valid = True
+    for i, (attr_name, attr_value) in enumerate(data_dict.iteritems()):
+        record_list = session.query(model.Package.id) \
+            .filter_by(type='metadata_record', state='active') \
+            .filter_by(**{attr_name: attr_value}) \
+            .all()
+        record_list = [id_ for (id_,) in record_list]
 
-    result = []
-    for (id_, name) in metadata_records:
-        if all_fields:
-            data_dict['id'] = id_
-            result += [tk.get_action('metadata_record_show')(context, data_dict)]
+        if len(record_list) > 1:
+            # this situation might arise if, for example, records were created before setting up
+            # JSON attribute mappings for the specified key attributes
+            raise tk.ValidationError(_("Multiple records already exist with the value '%s' for the key attribute '%s'")
+                                     % (attr_value, attr_name))
+        if i == 0:
+            # first iteration decides whether or not we have a match;
+            # the remaining iterations must match (or not) in exactly the same way
+            if len(record_list) == 1:
+                matching_record_id = record_list[0]
+        elif matching_record_id is not None:
+            is_valid = is_valid and len(record_list) == 1 and record_list[0] == matching_record_id
         else:
-            result += [name]
+            is_valid = is_valid and len(record_list) == 0
 
-    return result
+        if not is_valid:
+            raise tk.ValidationError(_("Cannot unambiguously match an existing record for the given key attribute values"))
+
+    return matching_record_id
 
 
 @tk.side_effect_free
@@ -947,9 +954,13 @@ def metadata_json_attr_map_list(context, data_dict):
 @tk.side_effect_free
 def metadata_json_attr_map_apply(context, data_dict):
     """
-    Construct a data dictionary by mapping (non-empty) values from the given metadata
-    JSON document, for all of the metadata JSON attribute map objects for the given
-    metadata standard.
+    Construct a (partial) data dictionary for creating/updating a metadata record by
+    mapping values from the given metadata JSON document, using the metadata JSON
+    attribute maps that have been defined for the given metadata standard.
+
+    Note that missing or empty elements in the JSON are not copied into the resultant
+    data_dict. However, the resultant key_dict includes every key attribute mapping,
+    regardless of whether the source element is present or not.
 
     :param metadata_standard_id: the id or name of the metadata standard
     :type metadata_standard_id: string
@@ -957,8 +968,8 @@ def metadata_json_attr_map_apply(context, data_dict):
     :type metadata_json: string
 
     :rtype: dictionary {
-                'data_dict': dict of mapped attribute-value pairs,
-                'key_attrs': list of key attributes (from is_key)
+                'data_dict': dict of mapped attribute-value pairs, excluding empties
+                'key_dict': dict of key mapped attribute-value pairs, including empties
             }
     """
     log.debug("Applying metadata JSON attribute mappings to metadata dict: %r", data_dict)
@@ -980,20 +991,22 @@ def metadata_json_attr_map_apply(context, data_dict):
 
     result = {
         'data_dict': {},
-        'key_attrs': [],
+        'key_dict': {},
     }
     for metadata_json_attr_map in metadata_json_attr_maps:
         attr = metadata_json_attr_map.record_attr
         path = metadata_json_attr_map.json_path
+        is_key = metadata_json_attr_map.is_key
+
+        # empty or non-existent elements are mapped to empty strings
         try:
-            value = jsonpointer.resolve_pointer(metadata_dict, path)
-            if not value:
-                continue
-            result['data_dict'][attr] = value
-            if metadata_json_attr_map.is_key:
-                result['key_attrs'] += [attr]
+            value = jsonpointer.resolve_pointer(metadata_dict, path) or ''
         except jsonpointer.JsonPointerException:
-            # the specified path is not in the metadata; ignore
-            continue
+            value = ''
+
+        if value:
+            result['data_dict'][attr] = value
+        if is_key:
+            result['key_dict'][attr] = value
 
     return result

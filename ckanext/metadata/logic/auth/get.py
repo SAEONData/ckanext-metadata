@@ -149,5 +149,5 @@ def metadata_json_attr_map_apply(context, data_dict):
     return {'success': True}
 
 
-def metadata_record_find_by_attr(context, data_dict):
+def metadata_record_attr_match(context, data_dict):
     return {'success': True}

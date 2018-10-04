@@ -303,9 +303,33 @@ def metadata_record_create(context, data_dict):
     tk.check_access('metadata_record_create', context, data_dict)
 
     model = context['model']
+    session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
 
+    # this is (mostly) duplicating the schema validation that will be done in package_create below,
+    # but we want to validate before doing the attribute mappings
+    data, errors = tk.navl_validate(data_dict, schema.metadata_record_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    # map values from the metadata JSON into the data_dict
+    attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
+        'metadata_standard_id': data_dict.get('metadata_standard_id'),
+        'metadata_json': data_dict.get('metadata_json'),
+    })
+    data_dict.update(attr_map['data_dict'])
+
+    # check if we match an existing record on key attributes mapped from the JSON; if so, switch to an update
+    matching_record_id = tk.get_action('metadata_record_attr_match')(context, attr_map['key_dict'])
+    if matching_record_id:
+        log.info('Existing record found; switching to metadata_record_update')
+        data_dict['id'] = matching_record_id
+        context['redirect_from_create'] = True
+        return tk.get_action('metadata_record_update')(context, data_dict)
+
+    # it's new metadata; create the package object
     data_dict.update({
         'type': 'metadata_record',
         'validated': False,
@@ -319,42 +343,8 @@ def metadata_record_create(context, data_dict):
         'defer_commit': True,
         'return_id_only': True,
     })
-
-    existing_records = set()
-    attr_map_exc = None
-    try:
-        # map values from the metadata JSON into the data_dict
-        attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
-            'metadata_standard_id': data_dict.get('metadata_standard_id'),
-            'metadata_json': data_dict.get('metadata_json'),
-        })
-        data_dict.update(attr_map['data_dict'])
-
-        # check if we match an existing record on key attributes; in which case do an update instead
-        for key_attr in attr_map['key_attrs']:
-            existing_records |= set(tk.get_action('metadata_record_find_by_attr')(context, {
-                'attr_name': key_attr,
-                'attr_value': data_dict[key_attr],
-            }))
-    except tk.ValidationError, e:
-        # if there is an error in attribute map processing, we save it for later;
-        # rather allow metadata record schema validation errors to take priority
-        attr_map_exc = e
-
-    if len(existing_records) == 1:
-        log.info('Existing record found; switching to metadata_record_update')
-        data_dict['id'] = existing_records.pop()
-        return tk.get_action('metadata_record_update')(context, data_dict)
-
-    if len(existing_records) > 1:
-        raise tk.ValidationError(_("Multiple existing metadata records found with the given key attribute values"))
-
-    # it's new metadata; create the package object
     metadata_record_id = tk.get_action('package_create')(context, data_dict)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
-
-    if attr_map_exc:
-        raise attr_map_exc
 
     if not defer_commit:
         model.repo.commit()
