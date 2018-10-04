@@ -158,10 +158,12 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self.test_action('metadata_record_create', should_error=True,
                                        owner_org='',
                                        metadata_collection_id='',
-                                       metadata_standard_id='')
+                                       metadata_standard_id='',
+                                       metadata_json='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
         assert_error(result, 'metadata_standard_id', 'Missing value')
+        assert_error(result, 'metadata_json', 'Missing value')
 
     def test_create_invalid_not_json(self):
         result, obj = self.test_action('metadata_record_create', should_error=True,
@@ -371,10 +373,12 @@ class TestMetadataRecordActions(ActionTestBase):
                                        id=metadata_record['id'],
                                        owner_org='',
                                        metadata_collection_id='',
-                                       metadata_standard_id='')
+                                       metadata_standard_id='',
+                                       metadata_json='')
         assert_error(result, 'owner_org', 'Missing value')
         assert_error(result, 'metadata_collection_id', 'Missing value')
         assert_error(result, 'metadata_standard_id', 'Missing value')
+        assert_error(result, 'metadata_json', 'Missing value')
 
     def test_update_invalid_not_json(self):
         metadata_record = self._generate_metadata_record()
