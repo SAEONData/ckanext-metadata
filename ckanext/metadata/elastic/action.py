@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 import logging
-import json
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -27,10 +26,9 @@ def metadata_standard_index_create(original_action, context, data_dict):
     if metadata_standard is None:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
 
-    log.info("Initializing search index from metadata standard %s: %r",
-             metadata_standard.name, metadata_standard.metadata_template_json)
+    log.info("Initializing search index from metadata standard %s", metadata_standard.name)
 
-    client.initialize_index(metadata_standard.name, metadata_standard.metadata_template_json)
+    return client.initialize_index(metadata_standard.name, metadata_standard.metadata_template_json)
 
 
 @tk.chained_action
@@ -50,7 +48,7 @@ def metadata_standard_index_delete(original_action, context, data_dict):
 
     log.info("Deleting search index for metadata standard %s", metadata_standard.name)
 
-    client.delete_index(metadata_standard.name)
+    return client.delete_index(metadata_standard.name)
 
 
 @tk.chained_action
