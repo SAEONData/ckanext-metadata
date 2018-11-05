@@ -41,20 +41,8 @@
             "const": true
         },
         "errors": {
-            "$comment": "this sub-schema checks that 'identifier' etc are not in the errors dict",
             "type": "object",
-            "properties": {
-                "identifier": {"not": {}},
-                "creators": {"not": {}},
-                "titles": {"not": {}},
-                "publisher": {"not": {}},
-                "publicationYear": {"not": {}},
-                "subjects": {"not": {}},
-                "resourceType": {"not": {}},
-                "resourceTypeGeneral": {"not": {}},
-                "alternateIdentifiers": {"not": {}},
-                "onlineResources": {"not": {}}
-            }
+            "maxProperties": 0
         },
         "immutableResource": {
             "properties": {

@@ -1093,7 +1093,7 @@ class TestMetadataRecordActions(ActionTestBase):
                          workflow_state_id=workflow_state_published['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
                                              *jsonpatch_ids, **{
-                                                 'errors/identifier': 'This key may not be present in the dictionary',
+                                                 'errors/__maxProperties': 'Object must be empty',
                                                  'quality_control/__minItems': 'Array has too few items',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
