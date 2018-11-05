@@ -56,19 +56,15 @@
                 "onlineResources": {"not": {}}
             }
         },
-        "onlineResources": {
-            "$comment": "online resources are fully validated in the metadata schema; we just add a url check here",
+        "immutableResource": {
+            "properties": {
+                "resourceURL": {"urlTest": true}
+            }
+        },
+        "linkedResources": {
             "items": {
-                "$comment": "if-then is only available from Draft 7",
-                "if": {
-                    "properties": {
-                        "func": {"const": "download"}
-                    }
-                },
-                "then": {
-                    "properties": {
-                        "href": {"urlTest": true}
-                    }
+                "properties": {
+                    "resourceURL": {"urlTest": true}
                 }
             }
         }
