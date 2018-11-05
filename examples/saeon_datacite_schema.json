@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
 
     "definitions": {
         "nameType": {
@@ -355,7 +355,6 @@
                     "resourceTypeGeneral": {"$ref": "#/definitions/resourceTypeGeneral"}
                 },
                 "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"],
-                "$comment": "if-then is only available from JSON Schema Draft 7",
                 "if": {
                     "properties": {
                         "relationType": {"enum": ["HasMetadata", "IsMetadataFor"]}
