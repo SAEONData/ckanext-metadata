@@ -33,7 +33,8 @@
                 },
                 "required": ["userid", "date"]
             },
-            "minItems": 1
+            "minItems": 1,
+            "uniqueObjects": ["userid"]
         },
         "validated": {
             "type": "boolean",
