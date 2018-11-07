@@ -1,0 +1,33 @@
+{% extends "page.html" %}
+
+{% block subtitle %}{{ _('Infrastructures') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  <li class="active"><a href="">{{ _('Infrastructures') }}</a></li>
+{% endblock %}
+
+{% block page_primary_action %}
+  {% if h.check_access('infrastructure_create') %}
+    {% link_for _('Add Infrastructure'),
+      controller='ckanext.metadata.controllers.infrastructure:InfrastructureController',
+      action='new', class_='btn btn-primary', icon='plus-square' %}
+  {% endif %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <h1 class="hide-heading">{{ _('Infrastructures') }}</h1>
+  {% block infrastructure_list %}
+    {% if c.infrastructures %}
+      {% snippet "infrastructure/snippets/infrastructure_list.html", infrastructures=c.infrastructures %}
+    {% else %}
+      <p class="empty">
+        {{ _('There are currently no infrastructures for this site') }}.
+        {% if h.check_access('infrastructure_create') %}
+          {% link_for _('How about creating one?'),
+            controller='ckanext.metadata.controllers.infrastructure:InfrastructureController',
+            action='new' %}</a>.
+        {% endif %}
+      </p>
+    {% endif %}
+  {% endblock %}
+{% endblock %}

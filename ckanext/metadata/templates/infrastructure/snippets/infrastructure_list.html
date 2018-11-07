@@ -1,0 +1,9 @@
+{% block infrastructure_list %}
+  <ul class="media-grid" data-module="media-grid">
+    {% block infrastructure_list_inner %}
+      {% for infrastructure in infrastructures %}
+        {% snippet "infrastructure/snippets/infrastructure_item.html", infrastructure=infrastructure, position=loop.index %}
+      {% endfor %}
+    {% endblock %}
+  </ul>
+{% endblock %}

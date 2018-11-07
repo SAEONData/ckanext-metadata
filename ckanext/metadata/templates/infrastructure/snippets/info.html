@@ -1,0 +1,32 @@
+{% block info %}
+<div class="module context-info">
+  <section class="module-content">
+    {% block inner %}
+      {% block image %}
+      <div class="image">
+        <a href="{{ infrastructure.url }}">
+          <img src="{{ infrastructure.image_display_url or h.url_for_static('/base/images/placeholder-group.png') }}" width="190" height="118" alt="{{ infrastructure.name }}" />
+        </a>
+      </div>
+      {% endblock %}
+      {% block heading %}
+      <h1 class="heading">
+        {{ h.get_translated(infrastructure, 'title') or infrastructure.display_name }}
+        {% if infrastructure.state == 'deleted' %}
+          [{{ _('Deleted') }}]
+        {% endif %}
+      </h1>
+      {% endblock %}
+      {% block description %}
+      {% if h.get_translated(infrastructure, 'description') %}
+        <p>
+          {{ h.markdown_extract(h.get_translated(infrastructure, 'description'), 180) }}
+          {% link_for _('read more'), controller='ckanext.metadata.controllers.infrastructure:InfrastructureController',
+            action='about', id=infrastructure.name %}
+        </p>
+      {% endif %}
+      {% endblock %}
+    {% endblock %}
+  </section>
+</div>
+{% endblock %}

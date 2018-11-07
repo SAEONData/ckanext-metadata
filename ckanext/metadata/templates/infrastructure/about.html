@@ -1,0 +1,16 @@
+{% extends "infrastructure/read.html" %}
+
+{% block subtitle %}{{ _('About') }} - {{ super() }}{% endblock %}
+
+{% block primary_content_inner %}
+  <h1>
+    {% block page_heading %}
+      {{ h.get_translated(c.infrastructure, 'title') or c.infrastructure.display_name }}
+    {% endblock %}
+  </h1>
+  {% block infrastructure_description %}
+    {% if h.get_translated(c.infrastructure, 'description') %}
+      {{ h.render_markdown(h.get_translated(c.infrastructure, 'description')) }}
+    {% endif %}
+  {% endblock %}
+{% endblock %}
