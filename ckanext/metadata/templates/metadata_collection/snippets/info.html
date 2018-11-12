@@ -1,0 +1,11 @@
+{% extends "group/snippets/info.html" %}
+
+{% block description %}
+  {% if h.get_translated(group, 'description') %}
+    <p>
+      {{ h.markdown_extract(h.get_translated(group, 'description'), 180) }}
+      {% link_for _('read more'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
+        action='about', id=group.name %}
+    </p>
+  {% endif %}
+{% endblock %}

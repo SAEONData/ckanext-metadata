@@ -88,3 +88,53 @@ class InfrastructureUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         if group_type == 'infrastructure':
             facets_dict['groups'] = tk._('Infrastructures')
         return facets_dict
+
+
+class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
+    """
+    Plugin providing user interfaces for metadata_collection objects.
+    """
+    p.implements(p.IConfigurer)
+    p.implements(p.IGroupForm, inherit=True)
+    p.implements(p.IFacets, inherit=True)
+
+    def update_config(self, config):
+        tk.add_template_directory(config, 'templates')
+
+    def group_controller(self):
+        return 'ckanext.metadata.controllers.metadata_collection:MetadataCollectionController'
+
+    def group_types(self):
+        return ['metadata_collection']
+
+    def form_to_db_schema(self):
+        return schema.metadata_collection_create_schema()
+
+    def db_to_form_schema(self):
+        return schema.metadata_collection_show_schema()
+
+    def index_template(self):
+        return 'metadata_collection/index.html'
+
+    def read_template(self):
+        return 'metadata_collection/read.html'
+
+    def about_template(self):
+        return 'metadata_collection/about.html'
+
+    def activity_template(self):
+        return 'metadata_collection/activity_stream.html'
+
+    def new_template(self):
+        return  'metadata_collection/new.html'
+
+    def edit_template(self):
+        return 'metadata_collection/edit.html'
+
+    def group_form(self):
+        return 'metadata_collection/new_group_form.html'
+
+    def group_facets(self, facets_dict, group_type, package_type):
+        if group_type == 'metadata_collection':
+            facets_dict['groups'] = tk._('Metadata Collections')
+        return facets_dict

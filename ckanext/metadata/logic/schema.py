@@ -223,6 +223,8 @@ def metadata_collection_show_schema():
     schema.update({
         'organization_id': [convert_from_extras, v.convert_id_to_name('organization')],
         'extras': _extras_schema(),
+        'num_followers': [],
+        'package_count': [],
     })
     return schema
 

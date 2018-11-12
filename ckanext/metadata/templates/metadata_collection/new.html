@@ -1,0 +1,18 @@
+{% extends "group/new.html" %}
+
+{% block page_heading %}{{ _('Create a Metadata Collection') }}{% endblock %}
+{% block subtitle %}{{ _('Create a Metadata Collection') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  <li>{{ h.nav_link(_('Metadata Collections'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='index') }}</li>
+  <li class="active">
+    {% block breadcrumb_link %}
+      {{ h.nav_link(_('Create a Metadata Collection'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
+        action='new', id=c.metadata_collection.name) }}
+    {% endblock %}
+  </li>
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_collection/snippets/helper.html" %}
+{% endblock %}
