@@ -4,6 +4,7 @@ import re
 
 import ckan.plugins.toolkit as tk
 from ckan.controllers.group import GroupController
+from ckan.lib.render import TemplateNotFound
 
 
 class InfrastructureController(GroupController):
@@ -34,7 +35,7 @@ class InfrastructureController(GroupController):
         """
         try:
             return tk.check_access(self._substitute_name(action_name), *args, **kw)
-        except KeyError:
+        except ValueError:
             return tk.check_access(action_name, *args, **kw)
 
     def _render_template(self, template_name, group_type):
@@ -44,5 +45,5 @@ class InfrastructureController(GroupController):
         """
         try:
             return tk.render(self._substitute_name(template_name), extra_vars={'group_type': group_type})
-        except KeyError:
+        except TemplateNotFound:
             return tk.render(template_name, extra_vars={'group_type': group_type})

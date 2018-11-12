@@ -75,6 +75,15 @@ class InfrastructureUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
     def activity_template(self):
         return 'infrastructure/activity_stream.html'
 
+    def new_template(self):
+        return  'infrastructure/new.html'
+
+    def edit_template(self):
+        return 'infrastructure/edit.html'
+
+    def group_form(self):
+        return 'infrastructure/new_group_form.html'
+
     def group_facets(self, facets_dict, group_type, package_type):
         if group_type == 'infrastructure':
             facets_dict['groups'] = tk._('Infrastructures')
