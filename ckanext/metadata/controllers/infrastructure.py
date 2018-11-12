@@ -1,56 +1,48 @@
 # encoding: utf-8
 
+import re
+
 import ckan.plugins.toolkit as tk
-from ckan import model
-from ckan.common import _
+from ckan.controllers.group import GroupController
 
 
-class InfrastructureController(tk.BaseController):
+class InfrastructureController(GroupController):
 
-    items_per_page = 20
+    group_types = ['infrastructure']
 
-    def index(self):
-        context = {'model': model, 'session': model.Session,
-                   'user': tk.c.user, 'auth_user_obj': tk.c.userobj,
-                   'for_view': True}
-        data_dict = {'all_fields': True}
-        tk.c.infrastructures = tk.get_action('infrastructure_list')(context, data_dict)
-        return tk.render('infrastructure/index.html')
-
-    def read(self, id):
-        tk.c.infrastructure = self._get_infrastructure_dict(id)
-        return tk.render('infrastructure/read.html')
-
-    def new(self):
-        pass
-
-    def edit(self, id):
-        pass
-
-    def delete(self, id):
-        pass
-
-    def about(self, id):
-        tk.c.infrastructure = self._get_infrastructure_dict(id)
-        return tk.render('infrastructure/about.html')
-
-    def activity(self, id, offset=0):
-        context = {'model': model, 'session': model.Session,
-                   'user': tk.c.user, 'auth_user_obj': tk.c.userobj,
-                   'for_view': True}
-        tk.c.infrastructure = self._get_infrastructure_dict(id)
-        try:
-            tk.c.group_activity_stream = tk.get_action('group_activity_list_html')(context, {'id': id, 'offset': offset})
-        except tk.ValidationError:
-            tk.abort(400)
-        return tk.render('infrastructure/activity_stream.html')
+    def _guess_group_type(self, expecting_name=False):
+        return 'infrastructure'
 
     @staticmethod
-    def _get_infrastructure_dict(id):
-        context = {'model': model, 'session': model.Session,
-                   'user': tk.c.user, 'auth_user_obj': tk.c.userobj,
-                   'for_view': True}
+    def _substitute_name(name):
+        return re.sub('^group', 'infrastructure', name)
+
+    def _action(self, action_name):
+        """
+        Return the corresponding 'infrastructure_' action if it exists,
+        otherwise fall back to the given 'group_' action.
+        """
         try:
-            return tk.get_action('infrastructure_show')(context, {'id': id})
-        except (tk.ObjectNotFound, tk.NotAuthorized):
-            tk.abort(404, '%s: %s' % (_('Not found'), _('Infrastructure')))
+            return tk.get_action(self._substitute_name(action_name))
+        except KeyError:
+            return tk.get_action(action_name)
+
+    def _check_access(self, action_name, *args, **kw):
+        """
+        Check access for the corresponding 'infrastructure_' action if it exists,
+        otherwise fall back to the given 'group_' action.
+        """
+        try:
+            return tk.check_access(self._substitute_name(action_name), *args, **kw)
+        except KeyError:
+            return tk.check_access(action_name, *args, **kw)
+
+    def _render_template(self, template_name, group_type):
+        """
+        Render the corresponding 'infrastructure_' template if it exists,
+        otherwise fall back to the given 'group_' template.
+        """
+        try:
+            return tk.render(self._substitute_name(template_name), extra_vars={'group_type': group_type})
+        except KeyError:
+            return tk.render(template_name, extra_vars={'group_type': group_type})

@@ -210,7 +210,7 @@ def infrastructure_show(context, data_dict):
         'include_tags': False,
         'include_users': False,
         'include_groups': False,
-        'include_followers': False,
+        'include_followers': True,
     })
     context.update({
         'schema': schema.infrastructure_show_schema(),
@@ -279,7 +279,7 @@ def metadata_collection_show(context, data_dict):
         'include_tags': False,
         'include_users': False,
         'include_groups': False,
-        'include_followers': False,
+        'include_followers': True,
     })
     context.update({
         'schema': schema.metadata_collection_show_schema(),

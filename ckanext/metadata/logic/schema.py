@@ -256,6 +256,10 @@ def infrastructure_update_schema():
 def infrastructure_show_schema():
     schema = infrastructure_create_schema()
     _make_show_schema(schema)
+    schema.update({
+        'num_followers': [],
+        'package_count': [],
+    })
     return schema
 
 
