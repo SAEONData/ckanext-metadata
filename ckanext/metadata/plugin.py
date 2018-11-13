@@ -97,6 +97,7 @@ class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
     p.implements(p.IConfigurer)
     p.implements(p.IGroupForm, inherit=True)
     p.implements(p.IFacets, inherit=True)
+    p.implements(p.IRoutes, inherit=True)
 
     def update_config(self, config):
         tk.add_template_directory(config, 'templates')
@@ -138,3 +139,20 @@ class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         if group_type == 'metadata_collection':
             facets_dict['groups'] = tk._('Metadata Collections')
         return facets_dict
+
+    def after_map(self, map):
+        """
+        Replace the routes that are automatically set up for our group type, because we want metadata
+        collections to be accessible under their respective organizations rather than at the top level.
+        """
+        metadata_collection_routes = [route for route in map.matchlist if route.name and route.name.startswith('metadata_collection_')]
+        for route in metadata_collection_routes:
+            kwargs = {'controller': route.defaults['controller'],
+                      'ckan_icon': tk.config['routes.named_routes'][route.name]['icon']}
+            if 'action' in route.defaults:
+                kwargs['action'] = route.defaults['action']
+            if route.reqs:
+                kwargs['requirements'] = route.reqs
+            map.connect(route.name, '/organization/{organization_id}' + route.routepath, **kwargs)
+            map.matchlist.remove(route)
+        return map
