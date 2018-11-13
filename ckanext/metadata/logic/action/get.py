@@ -294,6 +294,8 @@ def metadata_collection_list(context, data_dict):
     """
     Return a list of names of the site's metadata collections.
 
+    :param owner_org: the id or name of the organization that owns the collections (optional filter)
+    :type owner_org: string
     :param all_fields: return group dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
 
@@ -302,19 +304,36 @@ def metadata_collection_list(context, data_dict):
     log.debug("Retrieving metadata collection list: %r", data_dict)
     tk.check_access('metadata_collection_list', context, data_dict)
 
-    data_dict.update({
-        'type': 'metadata_collection',
-        'include_dataset_count': True,
-        'include_extras': True,
-        'include_tags': False,
-        'include_users': False,
-        'include_groups': False,
-    })
-    context.update({
-        'invoked_api': 'metadata_collection_list',
-    })
+    model = context['model']
+    session = context['session']
 
-    return tk.get_action('group_list')(context, data_dict)
+    owner_org = data_dict.get('owner_org')
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    metadata_collections_q = session.query(model.Group.id, model.Group.name) \
+        .filter_by(type='metadata_collection', state='active')
+
+    if owner_org:
+        organization = model.Group.get(owner_org)
+        if organization is None or \
+                organization.type != 'organization' or \
+                organization.state != 'active':
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Organization')))
+        owner_org = organization.id
+        metadata_collections_q = metadata_collections_q.join(model.GroupExtra) \
+            .filter(model.GroupExtra.key == 'organization_id') \
+            .filter(model.GroupExtra.value == owner_org)
+
+    metadata_collections = metadata_collections_q.all()
+    result = []
+    for (id_, name) in metadata_collections:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('metadata_collection_show')(context, data_dict)]
+        else:
+            result += [name]
+
+    return result
 
 
 @tk.side_effect_free
