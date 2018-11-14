@@ -5,20 +5,14 @@
 {% block subtitle %}{{ h.get_translated(c.group_dict, 'title') or c.group_dict.display_name }} - {{ _('Metadata Collections') }}{% endblock %}
 
 {% block breadcrumb_content %}
-  <li>{% link_for _('Metadata Collections'), named_route='/metadata_collection' %}</li>
-  <li class="active">{% link_for h.get_translated(c.group_dict, 'title') or c.group_dict.display_name |truncate(35),
-    controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id=c.group_dict.name %}</li>
+  {% snippet "metadata_collection/snippets/breadcrumb_content_outer.html" %}
+  {% snippet "metadata_collection/snippets/breadcrumb_content_item.html" %}
 {% endblock %}
 
 {% block content_action %}
-  {% if h.check_access('metadata_collection_update', {'id': c.group_dict.id}) %}
-    {% link_for _('Manage'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
-      action='edit', id=c.group_dict.name, class_='btn', icon='wrench' %}
-  {% endif %}
+  {% snippet "metadata_collection/snippets/group_action_manage.html" %}
 {% endblock %}
 
 {% block content_primary_nav %}
-  {{ h.build_nav_icon('metadata_collection_read', _('Datasets'), id=c.group_dict.name) }}
-  {{ h.build_nav_icon('metadata_collection_activity', _('Activity Stream'), id=c.group_dict.name, offset=0) }}
-  {{ h.build_nav_icon('metadata_collection_about', _('About'), id=c.group_dict.name) }}
+  {% snippet "metadata_collection/snippets/group_content_nav.html" %}
 {% endblock %}

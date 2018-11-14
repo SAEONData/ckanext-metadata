@@ -3,7 +3,7 @@
 {% block subtitle %}{{ _('Metadata Collections') }}{% endblock %}
 
 {% block breadcrumb_content %}
-  <li class="active">{% link_for _('Metadata Collections'), named_route='/metadata_collection' %}</li>
+  {% snippet "metadata_collection/snippets/breadcrumb_content_outer.html" %}
 {% endblock %}
 
 {% block page_header %}{% endblock %}
@@ -22,7 +22,7 @@
   {% block groups_list %}
     {% if c.page.items or request.params %}
       {% if c.page.items %}
-        {% snippet "group/snippets/group_list.html", groups=c.page.items %}
+        {% snippet "metadata_collection/snippets/group_list.html", groups=c.page.items, organization_id=c.org_dict.name %}
       {% endif %}
     {% else %}
       <p class="empty">

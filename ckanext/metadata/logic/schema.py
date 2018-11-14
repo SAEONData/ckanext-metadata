@@ -225,6 +225,7 @@ def metadata_collection_show_schema():
         'extras': _extras_schema(),
         'num_followers': [],
         'package_count': [],
+        'display_name': [],
     })
     return schema
 
@@ -261,6 +262,7 @@ def infrastructure_show_schema():
     schema.update({
         'num_followers': [],
         'package_count': [],
+        'display_name': [],
     })
     return schema
 
