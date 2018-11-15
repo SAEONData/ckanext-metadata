@@ -402,6 +402,7 @@ def metadata_record_update(context, data_dict):
         old_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
 
     tk.get_action('package_update')(context, data_dict)
+    model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], context)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
 
     # check if we need to invalidate the record

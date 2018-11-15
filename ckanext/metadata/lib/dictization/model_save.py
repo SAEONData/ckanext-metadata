@@ -7,6 +7,55 @@ import ckanext.metadata.model as ckanext_model
 from ckan.common import _
 
 
+def metadata_record_collection_membership_save(metadata_collection_id, context):
+    """
+    Save the member record representing the metadata record's membership of its metadata
+    collection. Modified from ckan.lib.dictization.model_save.package_membership_list_save.
+    """
+    model = context['model']
+    session = context['session']
+    user = context.get('user')
+    package = context.get('package')
+    capacity = 'public'
+
+    members = session.query(model.Member) \
+        .join(model.Group, model.Member.group_id==model.Group.id) \
+        .filter(model.Group.type == 'metadata_collection') \
+        .filter(model.Member.table_id == package.id) \
+        .filter(model.Member.table_name == 'package')
+
+    collection_members = dict((member.group, member) for member in members)
+
+    new_collection = model.Group.get(metadata_collection_id)
+
+    # Remove any metadata collection groups we are no longer in (there should be max 1 of these)
+    for old_collection in set(collection_members.keys()) - {new_collection}:
+        member_obj = collection_members[old_collection]
+        if member_obj and member_obj.state == 'deleted':
+            continue
+        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
+            member_obj.capacity = capacity
+            member_obj.state = 'deleted'
+            session.add(member_obj)
+
+    # Add the record to the new metadata collection group
+    member_obj = collection_members.get(new_collection)
+    if member_obj and member_obj.state == 'active':
+        return
+    if authz.has_user_permission_for_group_or_org(new_collection.id, user, 'read'):
+        if member_obj:
+            member_obj.capacity = capacity
+            member_obj.state = 'active'
+        else:
+            member_obj = model.Member(group=new_collection,
+                                      group_id=new_collection.id,
+                                      table_name='package',
+                                      table_id=package.id,
+                                      capacity=capacity,
+                                      state='active')
+        session.add(member_obj)
+
+
 def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
     """
     Modified from ckan.lib.dictization.model_save.package_membership_list_save

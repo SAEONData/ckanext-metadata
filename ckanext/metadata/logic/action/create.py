@@ -344,6 +344,7 @@ def metadata_record_create(context, data_dict):
         'return_id_only': True,
     })
     metadata_record_id = tk.get_action('package_create')(context, data_dict)
+    model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], context)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
 
     if not defer_commit:

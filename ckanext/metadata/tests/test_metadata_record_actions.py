@@ -90,12 +90,14 @@ class TestMetadataRecordActions(ActionTestBase):
         assert obj.owner_org == kwargs.pop('owner_org', self.owner_org['id'])
         assert obj.private == kwargs.pop('private', True)
         assert obj.url == kwargs.pop('url', None)
-        assert_package_has_extra(obj.id, 'metadata_collection_id', kwargs.pop('metadata_collection_id', self.metadata_collection['id']))
+        metadata_collection_id = kwargs.pop('metadata_collection_id', self.metadata_collection['id'])
+        assert_package_has_extra(obj.id, 'metadata_collection_id', metadata_collection_id)
         assert_package_has_extra(obj.id, 'metadata_standard_id', kwargs.pop('metadata_standard_id', self.metadata_standard['id']))
         assert_package_has_extra(obj.id, 'metadata_json', input_dict['metadata_json'], is_json=True)
         assert_package_has_extra(obj.id, 'validated', kwargs.pop('validated', False))
         assert_package_has_extra(obj.id, 'errors', kwargs.pop('errors', {}), is_json=True)
         assert_package_has_extra(obj.id, 'workflow_state_id', kwargs.pop('workflow_state_id', ''))
+        assert_group_has_member(metadata_collection_id, obj.id, 'package')
 
     def _define_attribute_map(self, json_path, record_attr, is_key=False):
         return ckanext_factories.MetadataJSONAttrMap(
@@ -407,6 +409,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_group_has_member(infrastructure1['id'], obj.id, 'package', state='deleted')
         assert_group_has_member(infrastructure2['id'], obj.id, 'package')
         assert_group_has_member(new_infrastructure['id'], obj.id, 'package')
+        assert_group_has_member(self.metadata_collection['id'], obj.id, 'package', state='deleted')
 
     def test_update_valid_partial(self):
         infrastructure = self._generate_infrastructure()
