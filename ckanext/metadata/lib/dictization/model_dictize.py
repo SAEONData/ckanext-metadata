@@ -27,7 +27,7 @@ def metadata_record_dictize(pkg, context):
         q = select([package_rev]).where(package_rev.c.id == pkg.id)
         result = execute(q, package_rev, context).first()
     if not result:
-        raise tk.NotFound
+        raise tk.ObjectNotFound
     result_dict = d.table_dictize(result, context)
     # strip whitespace from title
     if result_dict.get('title'):
