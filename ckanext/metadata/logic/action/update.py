@@ -304,7 +304,8 @@ def metadata_collection_update(context, data_dict):
         'allow_partial_update': True,
     })
 
-    metadata_collection_dict = tk.get_action('group_update')(context, data_dict)
+    tk.get_action('group_update')(context, data_dict)
+    model_save.metadata_collection_organization_membership_save(metadata_collection.extras['organization_id'], context)
 
     if not defer_commit:
         model.repo.commit()

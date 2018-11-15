@@ -56,6 +56,59 @@ def metadata_record_collection_membership_save(metadata_collection_id, context):
         session.add(member_obj)
 
 
+def metadata_collection_organization_membership_save(organization_id, context):
+    """
+    Save the member record representing the metadata collections's membership of its organization.
+    Modified from ckan.lib.dictization.model_save.package_membership_list_save.
+    """
+    model = context['model']
+    session = context['session']
+    user = context.get('user')
+    collection = context.get('group')
+    capacity = 'parent'
+
+    members = session.query(model.Member) \
+        .join(model.Group, model.Member.group_id==model.Group.id) \
+        .filter(model.Group.type == 'organization') \
+        .filter(model.Member.table_id == collection.id) \
+        .filter(model.Member.table_name == 'group')
+
+    organization_members = dict((member.group, member) for member in members)
+
+    new_organization = model.Group.get(organization_id)
+
+    # Remove any organizations we are no longer in (there should be max 1 of these)
+    for old_organization in set(organization_members.keys()) - {new_organization}:
+        member_obj = organization_members[old_organization]
+        if member_obj and member_obj.state == 'deleted':
+            continue
+        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
+            member_obj.capacity = capacity
+            member_obj.state = 'deleted'
+            session.add(member_obj)
+        else:
+            raise tk.NotAuthorized
+
+    # Add the collection to the new organization
+    member_obj = organization_members.get(new_organization)
+    if member_obj and member_obj.state == 'active':
+        return
+    if authz.has_user_permission_for_group_or_org(new_organization.id, user, 'read'):
+        if member_obj:
+            member_obj.capacity = capacity
+            member_obj.state = 'active'
+        else:
+            member_obj = model.Member(group=new_organization,
+                                      group_id=new_organization.id,
+                                      table_name='group',
+                                      table_id=collection.id,
+                                      capacity=capacity,
+                                      state='active')
+        session.add(member_obj)
+    else:
+        raise tk.NotAuthorized
+
+
 def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
     """
     Save the member records representing the metadata record's membership of its infrastructure

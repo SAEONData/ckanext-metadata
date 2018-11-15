@@ -251,8 +251,9 @@ def metadata_collection_create(context, data_dict):
 
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
     # - addition of the creating user as a member is done (committed) without consideration for defer_commit
-    # - but it does not make much difference to us here
+    # - this will be a (minor) problem if saving of organization membership fails for whatever reason
     metadata_collection_id = tk.get_action('group_create')(context, data_dict)
+    model_save.metadata_collection_organization_membership_save(data_dict['organization_id'], context)
 
     if not defer_commit:
         model.repo.commit()
