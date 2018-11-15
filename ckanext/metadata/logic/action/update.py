@@ -304,7 +304,8 @@ def metadata_collection_update(context, data_dict):
         'allow_partial_update': True,
     })
 
-    metadata_collection_dict = tk.get_action('group_update')(context, data_dict)
+    tk.get_action('group_update')(context, data_dict)
+    model_save.metadata_collection_organization_membership_save(metadata_collection.extras['organization_id'], context)
 
     if not defer_commit:
         model.repo.commit()
@@ -402,6 +403,7 @@ def metadata_record_update(context, data_dict):
         old_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
 
     tk.get_action('package_update')(context, data_dict)
+    model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], context)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
 
     # check if we need to invalidate the record

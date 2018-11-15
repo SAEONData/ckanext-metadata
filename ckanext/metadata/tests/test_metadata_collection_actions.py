@@ -8,6 +8,7 @@ from ckanext.metadata.tests import (
     make_uuid,
     assert_object_matches_dict,
     assert_group_has_extra,
+    assert_group_has_member,
     assert_error,
     factories as ckanext_factories,
 )
@@ -16,7 +17,7 @@ from ckanext.metadata.tests import (
 class TestMetadataCollectionActions(ActionTestBase):
 
     def test_create_valid(self):
-        organization = ckan_factories.Organization()
+        organization = ckan_factories.Organization(user=self.normal_user)
         input_dict = {
             'name': 'test-metadata-collection',
             'title': 'Test Metadata Collection',
@@ -29,9 +30,10 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_group_has_extra(obj.id, 'organization_id', input_dict['organization_id'])
         del input_dict['organization_id']
         assert_object_matches_dict(obj, input_dict)
+        assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
 
     def test_create_valid_organization_byname(self):
-        organization = ckan_factories.Organization()
+        organization = ckan_factories.Organization(user=self.normal_user)
         input_dict = {
             'name': 'test-metadata-collection',
             'organization_id': organization['name'],
@@ -41,9 +43,10 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert obj.is_organization == False
         assert obj.name == input_dict['name']
         assert_group_has_extra(obj.id, 'organization_id', organization['id'])
+        assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
 
     def test_create_valid_sysadmin_setid(self):
-        organization = ckan_factories.Organization()
+        organization = ckan_factories.Organization(user=self.normal_user)
         input_dict = {
             'id': make_uuid(),
             'name': 'test-metadata-collection',
@@ -55,6 +58,7 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_group_has_extra(obj.id, 'organization_id', input_dict['organization_id'])
         del input_dict['organization_id']
         assert_object_matches_dict(obj, input_dict)
+        assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
 
     def test_create_invalid_duplicate_name(self):
         metadata_collection = ckanext_factories.MetadataCollection()
