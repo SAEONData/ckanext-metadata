@@ -24,7 +24,10 @@ class MetadataCollection(factory.Factory):
             assert False, "Positional args aren't supported, use keyword args."
 
         context = {'user': ckan_factories._get_action_user_name(kwargs)}
-        organization_id = kwargs.pop('organization_id', None) or ckan_factories.Organization()['id']
+        org_kwargs = {}
+        if 'user' in kwargs:
+            org_kwargs['user'] = kwargs['user']
+        organization_id = kwargs.pop('organization_id', None) or ckan_factories.Organization(**org_kwargs)['id']
 
         return helpers.call_action('metadata_collection_create',
                                    context=context,

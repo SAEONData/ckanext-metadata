@@ -37,6 +37,8 @@ def metadata_record_collection_membership_save(metadata_collection_id, context):
             member_obj.capacity = capacity
             member_obj.state = 'deleted'
             session.add(member_obj)
+        else:
+            raise tk.NotAuthorized
 
     # Add the record to the new metadata collection group
     member_obj = collection_members.get(new_collection)
@@ -54,6 +56,8 @@ def metadata_record_collection_membership_save(metadata_collection_id, context):
                                       capacity=capacity,
                                       state='active')
         session.add(member_obj)
+    else:
+        raise tk.NotAuthorized
 
 
 def metadata_collection_organization_membership_save(organization_id, context):
@@ -147,6 +151,8 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
             member_obj.capacity = capacity
             member_obj.state = 'deleted'
             session.add(member_obj)
+        else:
+            raise tk.NotAuthorized
 
     # Add any new infrastructure groups
     for infrastructure in infrastructures:
@@ -165,6 +171,8 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
                                           capacity=capacity,
                                           state='active')
             session.add(member_obj)
+        else:
+            raise tk.NotAuthorized
 
 
 def metadata_schema_dict_save(metadata_schema_dict, context):
