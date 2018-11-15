@@ -58,7 +58,8 @@ def metadata_record_collection_membership_save(metadata_collection_id, context):
 
 def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
     """
-    Modified from ckan.lib.dictization.model_save.package_membership_list_save
+    Save the member records representing the metadata record's membership of its infrastructure
+    groups. Modified from ckan.lib.dictization.model_save.package_membership_list_save
     """
     allow_partial_update = context.get("allow_partial_update", False)
     if infrastructure_dicts is None and allow_partial_update:
@@ -74,7 +75,7 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
         .join(model.Group, model.Member.group_id==model.Group.id) \
         .filter(model.Group.type == 'infrastructure') \
         .filter(model.Member.table_id == package.id) \
-        .filter(model.Member.capacity != 'organization')
+        .filter(model.Member.table_name == 'package')
 
     infrastructure_members = dict((member.group, member) for member in members)
 
@@ -89,8 +90,7 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
         member_obj = infrastructure_members[infrastructure]
         if member_obj and member_obj.state == 'deleted':
             continue
-        if authz.has_user_permission_for_group_or_org(
-                member_obj.group_id, user, 'read'):
+        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
             member_obj.capacity = capacity
             member_obj.state = 'deleted'
             session.add(member_obj)
@@ -100,9 +100,7 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
         member_obj = infrastructure_members.get(infrastructure)
         if member_obj and member_obj.state == 'active':
             continue
-        if authz.has_user_permission_for_group_or_org(
-                infrastructure.id, user, 'read'):
-            member_obj = infrastructure_members.get(infrastructure)
+        if authz.has_user_permission_for_group_or_org(infrastructure.id, user, 'read'):
             if member_obj:
                 member_obj.capacity = capacity
                 member_obj.state = 'active'
