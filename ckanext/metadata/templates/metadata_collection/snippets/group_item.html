@@ -3,10 +3,9 @@ Renders a media item for a metadata collection. This should be used in a list.
 Copied from ckan/templates/group/snippets/group_item.html; modified {% set url = ... %}.
 
 group - A group dict.
-organization_id - id/name of the owner org
 
 #}
-{% set url = h.url_for('metadata_collection_read', action='read', id=group.name, organization_id=organization_id) %}
+{% set url = h.url_for('metadata_collection_read', action='read', id=group.name, organization_id=c.org_dict.name) %}
 {% block item %}
 <li class="media-item">
   {% block item_inner %}

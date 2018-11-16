@@ -10,7 +10,8 @@
 
 {% block page_primary_action %}
   {% if h.check_access('metadata_collection_create') %}
-    {% link_for _('Add Metadata Collection'), named_route='/metadata_collection/new', class_='btn btn-primary', icon='plus-square' %}
+    {% link_for _('Add Metadata Collection'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
+      organization_id=c.org_dict.name, action='new', class_='btn btn-primary', icon='plus-square' %}
   {% endif %}
 {% endblock %}
 
@@ -22,13 +23,14 @@
   {% block groups_list %}
     {% if c.page.items or request.params %}
       {% if c.page.items %}
-        {% snippet "metadata_collection/snippets/group_list.html", groups=c.page.items, organization_id=c.org_dict.name %}
+        {% snippet "metadata_collection/snippets/group_list.html", groups=c.page.items %}
       {% endif %}
     {% else %}
       <p class="empty">
         {{ _('There are currently no metadata collections for this site') }}.
         {% if h.check_access('metadata_collection_create') %}
-          {% link_for _('How about creating one?'), named_route='/metadata_collection/new' %}</a>.
+          {% link_for _('How about creating one?'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
+            organization_id=c.org_dict.name, action='new' %}.
         {% endif %}
       </p>
     {% endif %}

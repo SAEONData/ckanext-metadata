@@ -5,7 +5,7 @@
     <p>
       {{ h.markdown_extract(h.get_translated(group, 'description'), 180) }}
       {% link_for _('read more'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
-        action='about', id=group.name %}
+        action='about', id=group.name, organization_id=c.org_dict.name %}
     </p>
   {% endif %}
 {% endblock %}

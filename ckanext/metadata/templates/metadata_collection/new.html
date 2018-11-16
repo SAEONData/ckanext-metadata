@@ -4,11 +4,11 @@
 {% block subtitle %}{{ _('Create a Metadata Collection') }}{% endblock %}
 
 {% block breadcrumb_content %}
-  <li>{{ h.nav_link(_('Metadata Collections'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='index') }}</li>
+  {% snippet "metadata_collection/snippets/breadcrumb_content_outer.html" %}
   <li class="active">
     {% block breadcrumb_link %}
-      {{ h.nav_link(_('Create a Metadata Collection'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
-        action='new', id=c.metadata_collection.name) }}
+      {{ h.nav_link(_('Create a Metadata Collection'), action='new', organization_id=c.org_dict.name,
+        controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController') }}
     {% endblock %}
   </li>
 {% endblock %}

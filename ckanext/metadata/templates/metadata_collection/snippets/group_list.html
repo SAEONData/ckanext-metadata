@@ -2,6 +2,6 @@
 
 {% block group_list_inner %}
   {% for group in groups %}
-    {% snippet "metadata_collection/snippets/group_item.html", group=group, organization_id=organization_id, position=loop.index %}
+    {% snippet "metadata_collection/snippets/group_item.html", group=group, position=loop.index %}
   {% endfor %}
 {% endblock %}

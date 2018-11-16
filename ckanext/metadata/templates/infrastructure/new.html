@@ -7,8 +7,8 @@
   <li>{{ h.nav_link(_('Infrastructures'), controller='ckanext.metadata.controllers.infrastructure:InfrastructureController', action='index') }}</li>
   <li class="active">
     {% block breadcrumb_link %}
-      {{ h.nav_link(_('Create an Infrastructure'), controller='ckanext.metadata.controllers.infrastructure:InfrastructureController',
-        action='new', id=c.infrastructure.name) }}
+      {{ h.nav_link(_('Create an Infrastructure'), action='new',
+        controller='ckanext.metadata.controllers.infrastructure:InfrastructureController') }}
     {% endblock %}
   </li>
 {% endblock %}

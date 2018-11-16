@@ -1,27 +1,20 @@
 {% extends "group/edit.html" %}
 
 {% block breadcrumb_content %}
-  <li>{% link_for _('Metadata Collections'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
-    action='index' %}</li>
-  {% block breadcrumb_content_inner %}
-    <li>{% link_for h.get_translated(group, 'title') or group.display_name |truncate(35),
-      controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id=group.name %}</li>
-    <li class="active">{% link_for _('Manage'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
-      action='edit', id=group.name %}</li>
-  {% endblock %}
+  {% snippet "metadata_collection/snippets/breadcrumb_content_outer.html" %}
+  {% snippet "metadata_collection/snippets/breadcrumb_content_item.html" %}
+  {% snippet "metadata_collection/snippets/breadcrumb_content_manage.html" %}
 {% endblock %}
 
 {% block page_heading_class %}hide-heading{% endblock %}
 {% block page_heading %}{{ _('Edit Metadata Collection') }}{% endblock %}
 
 {% block content_action %}
-  {% link_for _('View'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
-    action='read', id=c.group_dict.name, class_='btn', icon='eye' %}
+  {% snippet "metadata_collection/snippets/group_action_view.html" %}
 {% endblock %}
 
 {% block content_primary_nav %}
-  {{ h.build_nav_icon('metadata_collection_edit', _('Edit'), id=c.group_dict.name) }}
-  {{ h.build_nav_icon('metadata_collection_members', _('Members'), id=c.group_dict.name) }}
+  {% snippet "metadata_collection/snippets/group_nav_edit.html" %}
 {% endblock %}
 
 {% block secondary_content %}

@@ -7,11 +7,12 @@
 
   {% block basic_fields %}
     {% set attrs = {'data-module': 'slug-preview-target'} %}
+    {{ form.hidden('organization_id', c.org_dict.name) }}
     {{ form.input('title', label=_('Name'), id='field-name', placeholder=_('The Metadata Collection'), value=data.title, error=errors.title, classes=['control-full'], attrs=attrs) }}
 
     {# Perhaps these should be moved into the controller? #}
-    {% set prefix = h.url_for(controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id='') %}
-    {% set domain = h.url_for(controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id='', qualified=true) %}
+    {% set prefix = h.url_for(controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id='', organization_id=c.org_dict.name) %}
+    {% set domain = h.url_for(controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id='', organization_id=c.org_dict.name, qualified=true) %}
     {% set domain = domain|replace("http://", "")|replace("https://", "") %}
     {% set attrs = {'data-module': 'slug-preview-slug', 'data-module-prefix': domain, 'data-module-placeholder': '<metadata_collection>'} %}
 
@@ -31,7 +32,7 @@
   <div class="form-actions">
     {% block delete_button %}
       {% if h.check_access('metadata_collection_delete', {'id': data.id})  %}
-        <a class="btn btn-danger pull-left" href="{% url_for controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='delete', id=data.id %}" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this Metadata Collection?') }}">{% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
+        <a class="btn btn-danger pull-left" href="{% url_for controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='delete', id=data.id, organization_id=c.org_dict.name %}" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this Metadata Collection?') }}">{% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
       {% endif %}
     {% endblock %}
     <button class="btn btn-primary" name="save" type="submit">{% block save_text %}{{ _('Save Metadata Collection') }}{% endblock %}</button>
