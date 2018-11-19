@@ -47,6 +47,7 @@ class InfrastructureUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
     p.implements(p.IConfigurer)
     p.implements(p.IGroupForm, inherit=True)
     p.implements(p.IFacets, inherit=True)
+    p.implements(p.IRoutes, inherit=True)
 
     def update_config(self, config):
         tk.add_template_directory(config, 'templates')
@@ -88,6 +89,12 @@ class InfrastructureUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         if group_type == 'infrastructure':
             facets_dict['groups'] = tk._('Infrastructures')
         return facets_dict
+
+    def after_map(self, map):
+        # icons are not correctly set for automatically generated plugin routes, so we do it here
+        tk.config['routes.named_routes']['infrastructure_read']['icon'] = 'sitemap'
+
+        return map
 
 
 class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
@@ -155,6 +162,11 @@ class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
                 kwargs['requirements'] = route.reqs
             map.connect(route.name, '/organization/{organization_id}' + route.routepath, **kwargs)
             map.matchlist.remove(route)
+
+        # icons are not correctly set for automatically generated plugin routes, so we do it here
+        tk.config['routes.named_routes']['metadata_collection_read']['icon'] = 'sitemap'
+        tk.config['routes.named_routes']['metadata_collection_index']['icon'] = 'folder-open'
+
         return map
 
 
