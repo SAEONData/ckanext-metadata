@@ -16,3 +16,7 @@
 {% block content_primary_nav %}
   {% snippet "metadata_collection/snippets/group_nav_read.html" %}
 {% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_collection/snippets/info.html", group=c.group_dict, show_nums=false %}
+{% endblock %}
