@@ -168,36 +168,3 @@ class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         tk.config['routes.named_routes']['metadata_collection_index']['icon'] = 'folder-open'
 
         return map
-
-
-class OrganizationUIPlugin(p.SingletonPlugin, tk.DefaultOrganizationForm):
-    """
-    Plugin which modifies the UI for organizations.
-    """
-    p.implements(p.IConfigurer)
-    p.implements(p.IGroupForm, inherit=True)
-    p.implements(p.IRoutes, inherit=True)
-
-    def update_config(self, config):
-        tk.add_template_directory(config, 'templates')
-
-    def group_controller(self):
-        return 'organization'
-
-    def group_types(self):
-        return ['organization']
-
-    def read_template(self):
-        return 'org_modified/read.html'
-
-    def about_template(self):
-        return 'org_modified/about.html'
-
-    def activity_template(self):
-        return 'org_modified/activity_stream.html'
-
-    def after_map(self, map):
-        # icons are not correctly set for automatically generated plugin routes, so we do it here
-        tk.config['routes.named_routes']['organization_read']['icon'] = 'sitemap'
-
-        return map

@@ -30,7 +30,6 @@ setup(
         metadata = ckanext.metadata.plugin:MetadataFrameworkPlugin
         metadata_infrastructure_ui = ckanext.metadata.plugin:InfrastructureUIPlugin
         metadata_collection_ui = ckanext.metadata.plugin:MetadataCollectionUIPlugin
-        metadata_organization_ui = ckanext.metadata.plugin:OrganizationUIPlugin
         elastic = ckanext.metadata.elastic.plugin:ElasticPlugin
 
         [paste.paster_command]
