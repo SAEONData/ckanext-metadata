@@ -28,7 +28,7 @@ setup(
     entry_points='''
         [ckan.plugins]
         metadata_framework = ckanext.metadata.plugin:MetadataFrameworkPlugin
-        metadata_infrastructures = ckanext.metadata.plugin:InfrastructurePlugin
+        metadata_infrastructure_ui = ckanext.metadata.plugin:InfrastructureUIPlugin
         metadata_elasticsearch = ckanext.metadata.elastic.plugin:ElasticSearchPlugin
 
         [paste.paster_command]

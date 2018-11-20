@@ -103,7 +103,7 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         return map
 
 
-class InfrastructurePlugin(p.SingletonPlugin, tk.DefaultGroupForm):
+class InfrastructureUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
     """
     Plugin providing user interfaces for infrastructure-type group objects.
 
