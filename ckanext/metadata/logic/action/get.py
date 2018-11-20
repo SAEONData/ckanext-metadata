@@ -233,19 +233,22 @@ def infrastructure_list(context, data_dict):
     log.debug("Retrieving infrastructure list: %r", data_dict)
     tk.check_access('infrastructure_list', context, data_dict)
 
-    data_dict.update({
-        'type': 'infrastructure',
-        'include_dataset_count': True,
-        'include_extras': True,
-        'include_tags': False,
-        'include_users': False,
-        'include_groups': False,
-    })
-    context.update({
-        'invoked_api': 'infrastructure_list',
-    })
-    
-    return tk.get_action('group_list')(context, data_dict)
+    model = context['model']
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    infrastructures = session.query(model.Group.id, model.Group.name) \
+        .filter_by(type='infrastructure', state='active') \
+        .all()
+    result = []
+    for (id_, name) in infrastructures:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('infrastructure_show')(context, data_dict)]
+        else:
+            result += [name]
+
+    return result
 
 
 @tk.side_effect_free
