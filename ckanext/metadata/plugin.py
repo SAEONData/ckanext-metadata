@@ -2,10 +2,9 @@
 
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
-from ckanext.metadata.logic import schema
 
 
-class MetadataFrameworkPlugin(p.SingletonPlugin):
+class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
 
     p.implements(p.IActions)
     p.implements(p.IAuthFunctions)
@@ -45,12 +44,6 @@ class MetadataFrameworkPlugin(p.SingletonPlugin):
 
     def group_types(self):
         return ['metadata_collection']
-
-    def form_to_db_schema(self):
-        return schema.metadata_collection_create_schema()
-
-    def db_to_form_schema(self):
-        return schema.metadata_collection_show_schema()
 
     def index_template(self):
         return 'metadata_collection/index.html'
@@ -131,12 +124,6 @@ class InfrastructurePlugin(p.SingletonPlugin, tk.DefaultGroupForm):
 
     def group_types(self):
         return ['infrastructure']
-
-    def form_to_db_schema(self):
-        return schema.infrastructure_create_schema()
-
-    def db_to_form_schema(self):
-        return schema.infrastructure_show_schema()
 
     def index_template(self):
         return 'infrastructure/index.html'

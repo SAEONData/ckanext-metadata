@@ -166,7 +166,7 @@ def assert_error(error_dict, key, pattern):
 
 class ActionTestBase(FunctionalTestBase):
 
-    _load_plugins = 'metadata', 'jsonpatch'
+    _load_plugins = 'metadata_framework', 'jsonpatch'
 
     @classmethod
     def setup_class(cls):
