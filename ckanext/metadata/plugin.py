@@ -1,20 +1,18 @@
 # encoding: utf-8
 
-import logging
-
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 from ckanext.metadata.logic import schema
 
-log = logging.getLogger(__name__)
-
 
 class MetadataFrameworkPlugin(p.SingletonPlugin):
-    """
-    Plugin providing CRUDs and APIs for metadata framework entities.
-    """
+
     p.implements(p.IActions)
     p.implements(p.IAuthFunctions)
+    p.implements(p.IConfigurer)
+    p.implements(p.IGroupForm, inherit=True)
+    p.implements(p.IFacets, inherit=True)
+    p.implements(p.IRoutes)
 
     def get_actions(self):
         return self._get_logic_functions('ckanext.metadata.logic.action')
@@ -38,73 +36,6 @@ class MetadataFrameworkPlugin(p.SingletonPlugin):
                     logic_functions[key] = value
 
         return logic_functions
-
-
-class InfrastructureUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
-    """
-    Plugin providing user interfaces for infrastructure objects.
-    """
-    p.implements(p.IConfigurer)
-    p.implements(p.IGroupForm, inherit=True)
-    p.implements(p.IFacets, inherit=True)
-    p.implements(p.IRoutes, inherit=True)
-
-    def update_config(self, config):
-        tk.add_template_directory(config, 'templates')
-
-    def group_controller(self):
-        return 'ckanext.metadata.controllers.infrastructure:InfrastructureController'
-
-    def group_types(self):
-        return ['infrastructure']
-
-    def form_to_db_schema(self):
-        return schema.infrastructure_create_schema()
-
-    def db_to_form_schema(self):
-        return schema.infrastructure_show_schema()
-
-    def index_template(self):
-        return 'infrastructure/index.html'
-
-    def read_template(self):
-        return 'infrastructure/read.html'
-
-    def about_template(self):
-        return 'infrastructure/about.html'
-
-    def activity_template(self):
-        return 'infrastructure/activity_stream.html'
-
-    def new_template(self):
-        return  'infrastructure/new.html'
-
-    def edit_template(self):
-        return 'infrastructure/edit.html'
-
-    def group_form(self):
-        return 'infrastructure/new_group_form.html'
-
-    def group_facets(self, facets_dict, group_type, package_type):
-        if group_type == 'infrastructure':
-            facets_dict['groups'] = tk._('Infrastructures')
-        return facets_dict
-
-    def after_map(self, map):
-        # icons are not correctly set for automatically generated plugin routes, so we do it here
-        tk.config['routes.named_routes']['infrastructure_read']['icon'] = 'sitemap'
-
-        return map
-
-
-class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
-    """
-    Plugin providing user interfaces for metadata_collection objects.
-    """
-    p.implements(p.IConfigurer)
-    p.implements(p.IGroupForm, inherit=True)
-    p.implements(p.IFacets, inherit=True)
-    p.implements(p.IRoutes, inherit=True)
 
     def update_config(self, config):
         tk.add_template_directory(config, 'templates')
@@ -147,6 +78,9 @@ class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
             facets_dict['groups'] = tk._('Metadata Collections')
         return facets_dict
 
+    def before_map(self, map):
+        return map
+
     def after_map(self, map):
         """
         Replace the routes that are automatically set up for our group type, because we want metadata
@@ -167,4 +101,64 @@ class MetadataCollectionUIPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         tk.config['routes.named_routes']['metadata_collection_read']['icon'] = 'sitemap'
         tk.config['routes.named_routes']['metadata_collection_index']['icon'] = 'folder-open'
 
+        return map
+
+
+class InfrastructurePlugin(p.SingletonPlugin, tk.DefaultGroupForm):
+    """
+    Plugin providing user interfaces for infrastructure-type group objects.
+
+    This must be a standalone plugin, since the MetadataFrameworkPlugin already implements
+    IGroupForm for metadata collections. This separation also allows for metadata platforms
+    which do not need to use infrastructure objects to exclude them from the UI.
+    """
+    p.implements(p.IConfigurer)
+    p.implements(p.IGroupForm, inherit=True)
+    p.implements(p.IFacets, inherit=True)
+    p.implements(p.IRoutes, inherit=True)
+
+    def update_config(self, config):
+        tk.add_template_directory(config, 'templates')
+
+    def group_controller(self):
+        return 'ckanext.metadata.controllers.infrastructure:InfrastructureController'
+
+    def group_types(self):
+        return ['infrastructure']
+
+    def form_to_db_schema(self):
+        return schema.infrastructure_create_schema()
+
+    def db_to_form_schema(self):
+        return schema.infrastructure_show_schema()
+
+    def index_template(self):
+        return 'infrastructure/index.html'
+
+    def read_template(self):
+        return 'infrastructure/read.html'
+
+    def about_template(self):
+        return 'infrastructure/about.html'
+
+    def activity_template(self):
+        return 'infrastructure/activity_stream.html'
+
+    def new_template(self):
+        return 'infrastructure/new.html'
+
+    def edit_template(self):
+        return 'infrastructure/edit.html'
+
+    def group_form(self):
+        return 'infrastructure/new_group_form.html'
+
+    def group_facets(self, facets_dict, group_type, package_type):
+        if group_type == 'infrastructure':
+            facets_dict['groups'] = tk._('Infrastructures')
+        return facets_dict
+
+    def after_map(self, map):
+        # icons are not correctly set for automatically generated plugin routes, so we do it here
+        tk.config['routes.named_routes']['infrastructure_read']['icon'] = 'sitemap'
         return map

@@ -1,13 +1,10 @@
 # encoding: utf-8
 
-import logging
 import ckan.plugins as p
 import ckanext.metadata.elastic.action as action
 
-log = logging.getLogger(__name__)
 
-
-class ElasticPlugin(p.SingletonPlugin):
+class ElasticSearchPlugin(p.SingletonPlugin):
     """
     Provides integration with the Elastic search agent.
     """

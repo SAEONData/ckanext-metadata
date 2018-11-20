@@ -27,13 +27,12 @@ setup(
     package_data={},
     entry_points='''
         [ckan.plugins]
-        metadata = ckanext.metadata.plugin:MetadataFrameworkPlugin
-        metadata_infrastructure_ui = ckanext.metadata.plugin:InfrastructureUIPlugin
-        metadata_collection_ui = ckanext.metadata.plugin:MetadataCollectionUIPlugin
-        elastic = ckanext.metadata.elastic.plugin:ElasticPlugin
+        metadata_framework = ckanext.metadata.plugin:MetadataFrameworkPlugin
+        metadata_infrastructures = ckanext.metadata.plugin:InfrastructurePlugin
+        metadata_elasticsearch = ckanext.metadata.elastic.plugin:ElasticSearchPlugin
 
         [paste.paster_command]
-        metadata = ckanext.metadata.command:MetadataFrameworkCommand
+        metadata_framework = ckanext.metadata.command:MetadataFrameworkCommand
 
         [babel.extractors]
         ckan = ckan.lib.extract:extract_ckan

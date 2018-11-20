@@ -37,11 +37,12 @@ In a production environment, you'll probably want to pin a specific
 Create the required database tables:
 
     cd /usr/lib/ckan/default/src/ckanext-metadata
-    paster metadata initdb -c /etc/ckan/default/development.ini
+    paster metadata_framework initdb -c /etc/ckan/default/development.ini
 
-Add the `metadata`, `jsonpatch` and (optionally, for Elastic search agent integration) `elastic` to the
+Add `metadata_framework`, `jsonpatch`, `metadata_infrastructures` (optional, for infrastructure-type groups to
+be configurable in the UI), and `metadata_elasticsearch` (optional, for Elastic search agent integration) to the
 list of plugins in your CKAN configuration file (e.g. `/etc/ckan/default/production.ini`):
 
-    ckan.plugins = ... metadata jsonpatch elastic
+    ckan.plugins = ... metadata_framework jsonpatch metadata_infrastructures metadata_elasticsearch
 
 Restart your CKAN instance.
