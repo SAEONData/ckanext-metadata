@@ -79,6 +79,12 @@ class MetadataFrameworkPlugin(p.SingletonPlugin):
         return facets_dict
 
     def before_map(self, map):
+        controller = 'ckanext.metadata.controllers.metadata_standard:MetadataStandardController'
+        map.connect('metadata_standard_index', '/metadata_standard', controller=controller, action='index')
+
+        controller = 'ckanext.metadata.controllers.workflow_state:WorkflowStateController'
+        map.connect('workflow_state_index', '/workflow_state', controller=controller, action='index')
+
         return map
 
     def after_map(self, map):

@@ -1,0 +1,16 @@
+{% ckan_extends %}
+
+{#
+  TODO: Navigation tab availability should depend on the user's privileges,
+  as well as on whether the relevant plugins have been enabled.
+#}
+
+{% block header_site_navigation_tabs %}
+  {{ h.build_nav_main(
+    ('organizations_index', _('Organizations')),
+    ('infrastructure_index', _('Infrastructures')),
+    ('metadata_standard_index', _('Schemas')),
+    ('workflow_state_index', _('Workflows')),
+    ('about', _('About'))
+  ) }}
+{% endblock %}
