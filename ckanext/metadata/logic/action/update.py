@@ -6,7 +6,8 @@ from paste.deploy.converters import asbool
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
-from ckanext.metadata.logic import schema, METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
+from ckanext.metadata.logic import schema
+from ckanext.metadata.common import METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.metadata_validator import MetadataValidator

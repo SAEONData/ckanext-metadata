@@ -5,7 +5,7 @@ from sqlalchemy.sql import select
 import ckan.plugins.toolkit as tk
 import ckan.lib.dictization as d
 import ckan.lib.dictization.model_dictize as ckan_model_dictize
-import ckanext.metadata.model as ckanext_model
+from ckanext.metadata.common import model_info
 
 
 def metadata_record_dictize(pkg, context):
@@ -74,31 +74,30 @@ def metadata_record_activity_dictize(activity, context):
 
 
 def metadata_schema_dictize(metadata_schema, context):
-    return _object_dictize(metadata_schema, ckanext_model.MetadataSchema, ckanext_model.MetadataSchemaRevision,
-                           ckanext_model.metadata_schema_revision_table, context)
+    return _object_dictize('metadata_schema', metadata_schema, context)
 
 
 def metadata_standard_dictize(metadata_standard, context):
-    return _object_dictize(metadata_standard, ckanext_model.MetadataStandard, ckanext_model.MetadataStandardRevision,
-                           ckanext_model.metadata_standard_revision_table, context)
+    return _object_dictize('metadata_standard', metadata_standard, context)
 
 
 def workflow_state_dictize(workflow_state, context):
-    return _object_dictize(workflow_state, ckanext_model.WorkflowState, ckanext_model.WorkflowStateRevision,
-                           ckanext_model.workflow_state_revision_table, context)
+    return _object_dictize('workflow_state', workflow_state, context)
 
 
 def workflow_transition_dictize(workflow_transition, context):
-    return _object_dictize(workflow_transition, ckanext_model.WorkflowTransition, ckanext_model.WorkflowTransitionRevision,
-                           ckanext_model.workflow_transition_revision_table, context)
+    return _object_dictize('workflow_transition', workflow_transition, context)
 
 
 def metadata_json_attr_map_dictize(metadata_json_attr_map, context):
-    return _object_dictize(metadata_json_attr_map, ckanext_model.MetadataJSONAttrMap, ckanext_model.MetadataJSONAttrMapRevision,
-                           ckanext_model.metadata_json_attr_map_revision_table, context)
+    return _object_dictize('metadata_json_attr_map', metadata_json_attr_map, context)
 
 
-def _object_dictize(obj, model_class, rev_model_class, rev_table, context):
+def _object_dictize(model_name, obj, context):
+    model_class = model_info[model_name]['model']
+    rev_model_class = model_info[model_name]['rev_model']
+    rev_table = model_info[model_name]['rev_table']
+
     is_latest_revision = not(context.get('revision_id') or context.get('revision_date'))
     execute = _execute if is_latest_revision else _execute_with_revision
     if is_latest_revision:

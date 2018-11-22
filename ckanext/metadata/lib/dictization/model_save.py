@@ -3,8 +3,8 @@
 import ckan.authz as authz
 import ckan.lib.dictization as d
 import ckan.plugins.toolkit as tk
-import ckanext.metadata.model as ckanext_model
 from ckan.common import _
+from ckanext.metadata.common import model_info
 
 
 def metadata_record_collection_membership_save(metadata_collection_id, context):
@@ -176,31 +176,29 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
 
 
 def metadata_schema_dict_save(metadata_schema_dict, context):
-    return _object_dict_save(metadata_schema_dict, 'metadata_schema', ckanext_model.MetadataSchema,
-                             ckanext_model.metadata_schema_table, context)
+    return _object_dict_save('metadata_schema', metadata_schema_dict, context)
 
 
 def metadata_standard_dict_save(metadata_standard_dict, context):
-    return _object_dict_save(metadata_standard_dict, 'metadata_standard', ckanext_model.MetadataStandard,
-                             ckanext_model.metadata_standard_table, context)
+    return _object_dict_save('metadata_standard', metadata_standard_dict, context)
 
 
 def workflow_state_dict_save(workflow_state_dict, context):
-    return _object_dict_save(workflow_state_dict, 'workflow_state', ckanext_model.WorkflowState,
-                             ckanext_model.workflow_state_table, context)
+    return _object_dict_save('workflow_state', workflow_state_dict, context)
 
 
 def workflow_transition_dict_save(workflow_transition_dict, context):
-    return _object_dict_save(workflow_transition_dict, 'workflow_transition', ckanext_model.WorkflowTransition,
-                             ckanext_model.workflow_transition_table, context)
+    return _object_dict_save('workflow_transition', workflow_transition_dict, context)
 
 
 def metadata_json_attr_map_dict_save(metadata_json_attr_map_dict, context):
-    return _object_dict_save(metadata_json_attr_map_dict, 'metadata_json_attr_map', ckanext_model.MetadataJSONAttrMap,
-                             ckanext_model.metadata_json_attr_map_table, context)
+    return _object_dict_save('metadata_json_attr_map', metadata_json_attr_map_dict, context)
 
 
-def _object_dict_save(object_dict, model_name, model_class, table, context):
+def _object_dict_save(model_name, object_dict, context):
+    model_class = model_info[model_name]['model']
+    table = model_info[model_name]['table']
+
     session = context['session']
     obj = context.get(model_name)
     if obj:
