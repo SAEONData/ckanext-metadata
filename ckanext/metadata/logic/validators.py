@@ -12,7 +12,7 @@ from ckan.common import _, config
 import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.json_validator import JSONValidator
-from ckanext.metadata.logic import model_map
+from ckanext.metadata.common import model_info
 
 convert_to_extras = tk.get_validator('convert_to_extras')
 
@@ -199,8 +199,8 @@ def object_name_validator(model_name):
     """
     Checks that the supplied object name is not already in use for the given model.
     """
-    model_class = model_map[model_name]['class']
-    model_desc = model_map[model_name]['desc']
+    model_class = model_info[model_name]['model']
+    model_desc = model_info[model_name]['desc']
 
     def callable_(key, data, errors, context):
         session = context['session']
@@ -221,8 +221,8 @@ def object_exists(model_name):
     """
     Checks that an object exists and is not deleted, and converts name to id if applicable.
     """
-    model_class = model_map[model_name]['class']
-    model_desc = model_map[model_name]['desc']
+    model_class = model_info[model_name]['model']
+    model_desc = model_info[model_name]['desc']
 
     def callable_(key, data, errors, context):
         object_id_or_name = data.get(key)
@@ -244,8 +244,8 @@ def object_does_not_exist(model_name):
     """
     Checks that an object id/name is not already in use.
     """
-    model_class = model_map[model_name]['class']
-    model_desc = model_map[model_name]['desc']
+    model_class = model_info[model_name]['model']
+    model_desc = model_info[model_name]['desc']
 
     def callable_(key, data, errors, context):
         object_id_or_name = data.get(key)
@@ -267,7 +267,7 @@ def convert_id_to_name(model_name):
     If True, the object id is converted to name; if False (the default) the id is left unaltered.
     """
     convert_nested_ids_to_names = tk.asbool(config.get('ckan.metadata.convert_nested_ids_to_names', False))
-    model_class = model_map[model_name]['class']
+    model_class = model_info[model_name]['model']
 
     def callable_(key, data, errors, context):
         if convert_nested_ids_to_names:
