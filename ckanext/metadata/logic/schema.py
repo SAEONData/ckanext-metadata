@@ -301,6 +301,7 @@ def metadata_standard_show_schema():
     schema.update({
         'parent_standard_id': [v.convert_id_to_name('metadata_standard')],
         'metadata_template_json': [v.deserialize_json],
+        'display_name': [],
     })
     return schema
 
@@ -381,6 +382,7 @@ def metadata_schema_show_schema():
         'metadata_standard_id': [v.convert_id_to_name('metadata_standard')],
         'organization_id': [v.convert_id_to_name('organization')],
         'infrastructure_id': [v.convert_id_to_name('infrastructure')],
+        'display_name': [],
     })
     return schema
 

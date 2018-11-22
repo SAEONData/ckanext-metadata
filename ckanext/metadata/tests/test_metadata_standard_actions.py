@@ -313,6 +313,7 @@ class TestMetadataStandardActions(ActionTestBase):
                          id=metadata_standard1['id'])
         metadata_standard2['parent_standard_id'] = None
         del metadata_standard2['revision_id']
+        del metadata_standard2['display_name']
         assert_object_matches_dict(ckanext_model.MetadataStandard.get(metadata_standard2['id']), metadata_standard2, json_values=('metadata_template_json',))
 
     def test_delete_with_dependencies(self):

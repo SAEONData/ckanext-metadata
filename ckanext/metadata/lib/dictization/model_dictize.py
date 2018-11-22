@@ -6,6 +6,7 @@ import ckan.plugins.toolkit as tk
 import ckan.lib.dictization as d
 import ckan.lib.dictization.model_dictize as ckan_model_dictize
 from ckanext.metadata.common import model_info
+import ckanext.metadata.model as model_ext
 
 
 def metadata_record_dictize(pkg, context):
@@ -74,11 +75,35 @@ def metadata_record_activity_dictize(activity, context):
 
 
 def metadata_schema_dictize(metadata_schema, context):
-    return _object_dictize('metadata_schema', metadata_schema, context)
+
+    def group_display_name(group_id):
+        group = model.Group.get(group_id)
+        group_dict = ckan_model_dictize.group_dictize(
+            group, context, include_groups=False, include_tags=False, include_users=False, include_extras=False)
+        return group_dict['display_name']
+
+    model = context['model']
+    metadata_schema_dict = _object_dictize('metadata_schema', metadata_schema, context)
+    metadata_standard = model_ext.MetadataStandard.get(metadata_schema.metadata_standard_id)
+    metadata_standard_dict = metadata_standard_dictize(metadata_standard, context)
+    metadata_schema_dict['display_name'] = metadata_standard_dict['display_name']
+    if metadata_schema.organization_id:
+        linked_display_name = group_display_name(metadata_schema.organization_id)
+    elif metadata_schema.infrastructure_id:
+        linked_display_name = group_display_name(metadata_schema.infrastructure_id)
+    else:
+        linked_display_name = None
+    if linked_display_name:
+        metadata_schema_dict['display_name'] += ' ({})'.format(linked_display_name)
+    return metadata_schema_dict
 
 
 def metadata_standard_dictize(metadata_standard, context):
-    return _object_dictize('metadata_standard', metadata_standard, context)
+    metadata_standard_dict = _object_dictize('metadata_standard', metadata_standard, context)
+    metadata_standard_dict['display_name'] = metadata_standard.standard_name
+    if metadata_standard.standard_version:
+        metadata_standard_dict['display_name'] += ' ' + metadata_standard.standard_version
+    return metadata_standard_dict
 
 
 def workflow_state_dictize(workflow_state, context):
