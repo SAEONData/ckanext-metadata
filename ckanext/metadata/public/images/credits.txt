@@ -1,0 +1,3 @@
+metadata_schema: Icon by IBM-Design from iconscout (search term: schema)
+metadata_standard: Icon made by Smashicons from www.flaticon.com (search term: standard)
+workflow_state: Icon made by Freepik from www.flaticon.com (search term: to do list)
