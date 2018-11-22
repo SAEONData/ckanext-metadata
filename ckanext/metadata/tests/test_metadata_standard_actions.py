@@ -112,7 +112,6 @@ class TestMetadataStandardActions(ActionTestBase):
                                        standard_name='',
                                        metadata_template_json='')
         assert_error(result, 'standard_name', 'Missing value')
-        assert_error(result, 'metadata_template_json', 'Missing value')
 
     def test_create_invalid_duplicate(self):
         metadata_standard = ckanext_factories.MetadataStandard()
@@ -237,7 +236,6 @@ class TestMetadataStandardActions(ActionTestBase):
                                        standard_name='',
                                        metadata_template_json='')
         assert_error(result, 'standard_name', 'Missing value')
-        assert_error(result, 'metadata_template_json', 'Missing value')
 
     def test_update_invalid_duplicate(self):
         metadata_standard1 = ckanext_factories.MetadataStandard()

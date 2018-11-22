@@ -275,7 +275,7 @@ def metadata_standard_create_schema():
         'standard_name': [v.not_empty, unicode],
         'standard_version': [v.not_missing, unicode],
         'parent_standard_id': [v.not_missing, unicode, v.object_exists('metadata_standard')],
-        'metadata_template_json': [v.not_empty, unicode, v.json_dict_validator],
+        'metadata_template_json': [v.not_missing, unicode, v.json_dict_validator],
         'state': [ignore_not_sysadmin, ignore_missing],
 
         # post-validation
