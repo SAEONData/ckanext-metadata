@@ -1,0 +1,19 @@
+{% extends "metadata_standard/edit_page.html" %}
+
+{% block page_heading %}{{ _('Create a Metadata Standard') }}{% endblock %}
+{% block page_header %}{% endblock %}
+{% block subtitle %}{{ _('Create a Metadata Standard') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  {% snippet "metadata_standard/snippets/breadcrumb_content_outer.html" %}
+  <li class="active">
+    {% block breadcrumb_link %}
+      {{ h.nav_link(_('Create a Metadata Standard'), action='new',
+        controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController') }}
+    {% endblock %}
+  </li>
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_standard/snippets/helper.html" %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% import "macros/form.html" as form %}
+
+<form id="metadata-standard-form" class="form-horizontal" action="" method="post">
+  {{ form.errors(error_summary) }}
+  {{ form.input('standard_name', label=_('Name'), id='field-standard-name', placeholder=_('The name of the metadata standard'), value=data.standard_name, error=errors.standard_name, classes=['control-full'], is_required=true) }}
+  {{ form.input('standard_version', label=_('Version'), id='field-standard-version', placeholder=_('The version of the metadata standard'), value=data.standard_version, error=errors.standard_version, classes=['control-medium']) }}
+  {{ form.select('parent_standard_id', label=_('Parent Standard'), id='field-parent-standard', options=c.metadata_standard_list, selected=data.parent_standard_id, error=errors.parent_standard_id, classes=['control-medium']) }}
+  {{ form.markdown('description', label=_('Description'), id='field-description', placeholder=_('A little information about the metadata standard...'), value=data.description, error=errors.description) }}
+  {{ form.textarea('metadata_template_json', label=_('Metadata Template'), id='field-metadata-template-json', placeholder=_('A complete example of a JSON metadata dictionary that conforms to this standard'), value=data.metadata_template_json, error=errors.metadata_template_json, classes=['pre']) }}
+
+  {{ form.required_message() }}
+
+  <div class="form-actions">
+    {% if action == "edit" %}
+      {% if h.check_access('group_delete', {'id': data.id})  %}
+        <a class="btn btn-danger pull-left" href="{% url_for controller=controller, action='delete', id=data.id %}" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this Group?') }}">{% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
+      {% endif %}
+    {% endif %}
+    <button class="btn btn-primary" name="save" type="submit">
+      {%- if action == "edit" -%}
+        {{ _('Update Metadata Standard') }}
+      {%- else -%}
+        {{ _('Create Metadata Standard') }}
+      {%- endif -%}
+    </button>
+  </div>
+</form>

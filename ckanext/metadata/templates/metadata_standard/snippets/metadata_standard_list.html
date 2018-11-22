@@ -1,0 +1,19 @@
+{#
+Display a grid of metadata_standard items.
+
+metadata_standards - A list of metadata_standards.
+
+Example:
+
+    {% snippet "metadata_standard/snippets/metadata_standard_list.html" %}
+
+#}
+{% block metadata_standard_list %}
+  <ul class="media-grid" data-module="media-grid">
+    {% block metadata_standard_list_inner %}
+      {% for metadata_standard in metadata_standards %}
+        {% snippet "metadata_standard/snippets/metadata_standard_item.html", metadata_standard=metadata_standard, position=loop.index %}
+      {% endfor %}
+    {% endblock %}
+  </ul>
+{% endblock %}

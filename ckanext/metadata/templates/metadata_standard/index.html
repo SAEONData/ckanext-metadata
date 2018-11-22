@@ -1,10 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Metadata Standards</title>
-</head>
-<body>
-This is where the metadata standards go!
-</body>
-</html>
+{% extends "page.html" %}
+
+{% block subtitle %}{{ _('Metadata Standards') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  <li class="active">{% link_for _('Metadata Standards'), action='index',
+    controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController' %}</li>
+{% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% block page_primary_action %}
+  {% if h.check_access('metadata_standard_create') %}
+    {% link_for _('Add Metadata Standard'), action='new', class_='btn btn-primary', icon='plus-square',
+      controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController' %}
+  {% endif %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <h1 class="hide-heading">{{ _('Metadata Standard') }}</h1>
+  {% block metadata_standards_list %}
+    {% if c.page.items or request.params %}
+      {% if c.page.items %}
+        {% snippet "metadata_standard/snippets/metadata_standard_list.html", metadata_standards=c.page.items %}
+      {% endif %}
+    {% else %}
+      <p class="empty">
+        {{ _('There are currently no metadata standards for this site') }}.
+        {% if h.check_access('metadata_standard_create') %}
+          {% link_for _('How about creating one?'), action='new',
+            controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController' %}</a>.
+        {% endif %}
+      </p>
+    {% endif %}
+  {% endblock %}
+  {% block page_pagination %}
+    {{ c.page.pager(q=c.q or '', sort=c.sort_by_selected or '') }}
+  {% endblock %}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_standard/snippets/helper.html" %}
+{% endblock %}

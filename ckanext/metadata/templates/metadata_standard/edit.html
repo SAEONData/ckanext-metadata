@@ -1,0 +1,25 @@
+{% extends "metadata_standard/edit_page.html" %}
+
+{% block page_heading_class %}hide-heading{% endblock %}
+{% block page_heading %}{{ _('Edit Metadata Standard') }}{% endblock %}
+{% block subtitle %}
+  {{ _('Manage') }} - {{ c.metadata_standard.display_name }} - {{ _('Metadata Standards') }}
+{% endblock %}
+
+{% block breadcrumb_content %}
+  {% snippet "metadata_standard/snippets/breadcrumb_content_outer.html" %}
+  {% snippet "metadata_standard/snippets/breadcrumb_content_item.html" %}
+  {% snippet "metadata_standard/snippets/breadcrumb_content_manage.html" %}
+{% endblock %}
+
+{% block content_action %}
+  {% snippet "metadata_standard/snippets/action_view.html" %}
+{% endblock %}
+
+{% block content_primary_nav %}
+  {% snippet "metadata_standard/snippets/nav_edit.html" %}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_standard/snippets/info.html", metadata_standard=c.metadata_standard %}
+{% endblock %}

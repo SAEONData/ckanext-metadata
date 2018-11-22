@@ -1,0 +1,41 @@
+{#
+Renders a media item for a metadata_standard. This should be used in a list.
+
+metadata_standard - A metadata_standard dict.
+
+Example:
+
+    <ul class="media-grid">
+      {% for metadata_standard in metadata_standards %}
+        {% snippet "metadata_standard/snippets/metadata_standard_item.html", metadata_standard=metadata_standard %}
+      {% endfor %}
+    </ul>
+#}
+{% set url = h.url_for('metadata_standard_read', action='read', id=metadata_standard.name) %}
+{% block item %}
+<li class="media-item">
+  {% block item_inner %}
+    {% block image %}
+      <img src="{{ h.url_for_static('/images/metadata_standard.png') }}" alt="{{ metadata_standard.name }}" class="media-image">
+    {% endblock %}
+    {% block title %}
+      <h3 class="media-heading">{{ metadata_standard.display_name }}</h3>
+    {% endblock %}
+    {% block description %}
+      {% if h.get_translated(metadata_standard, 'description') %}
+        <p>{{ h.markdown_extract(h.get_translated(metadata_standard, 'description'), extract_length=80) }}</p>
+      {% endif %}
+    {% endblock %}
+    {% block schemas %}
+    {% endblock %}
+    {% block link %}
+    <a href="{{ url }}" title="{{ _('View {name}').format(name=metadata_standard.display_name) }}" class="media-view">
+      <span>{{ _('View {name}').format(name=metadata_standard.display_name) }}</span>
+    </a>
+    {% endblock %}
+  {% endblock %}
+</li>
+{% endblock %}
+{% if position is divisibleby 3 %}
+  <li class="clearfix js-hide"></li>
+{% endif %}

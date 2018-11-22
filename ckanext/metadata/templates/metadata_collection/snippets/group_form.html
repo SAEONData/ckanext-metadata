@@ -14,7 +14,7 @@
     {% set prefix = h.url_for(controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id='', organization_id=c.org_dict.name) %}
     {% set domain = h.url_for(controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController', action='read', id='', organization_id=c.org_dict.name, qualified=true) %}
     {% set domain = domain|replace("http://", "")|replace("https://", "") %}
-    {% set attrs = {'data-module': 'slug-preview-slug', 'data-module-prefix': domain, 'data-module-placeholder': '<metadata_collection>'} %}
+    {% set attrs = {'data-module': 'slug-preview-slug', 'data-module-prefix': domain, 'data-module-placeholder': '<metadata-collection>'} %}
 
     {{ form.prepend('name', label=_('URL'), prepend=prefix, id='field-url', placeholder=_('the-metadata-collection'), value=data.name, error=errors.name, attrs=attrs, is_required=true) }}
 

@@ -1,0 +1,32 @@
+{% block info %}
+<div class="module context-info">
+  <section class="module-content">
+    {% block inner %}
+      {% block image %}
+      <div class="image">
+        <a href="{{ metadata_standard.url }}">
+          <img src="{{ h.url_for_static('/images/metadata_standard.png') }}" width="190" height="118" alt="{{ metadata_standard.name }}" />
+        </a>
+      </div>
+      {% endblock %}
+      {% block heading %}
+      <h1 class="heading">
+        {{ metadata_standard.display_name }}
+        {% if metadata_standard.state == 'deleted' %}
+          [{{ _('Deleted') }}]
+        {% endif %}
+      </h1>
+      {% endblock %}
+      {% block description %}
+        {% if h.get_translated(metadata_standard, 'description') %}
+          <p>
+            {{ h.markdown_extract(h.get_translated(metadata_standard, 'description'), 180) }}
+            {% link_for _('read more'), action='about', id=metadata_standard.name,
+              controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController' %}
+          </p>
+        {% endif %}
+      {% endblock %}
+    {% endblock %}
+  </section>
+</div>
+{% endblock %}

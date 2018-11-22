@@ -1,0 +1,4 @@
+<li>
+  {% link_for c.metadata_standard.display_name |truncate(35), action='read', id=c.metadata_standard.name,
+    controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController' %}
+</li>

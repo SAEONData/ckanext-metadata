@@ -38,6 +38,7 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
 
     def update_config(self, config):
         tk.add_template_directory(config, 'templates')
+        tk.add_public_directory(config, 'public')
 
     def group_controller(self):
         return 'ckanext.metadata.controllers.metadata_collection:MetadataCollectionController'
@@ -74,6 +75,7 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
     def before_map(self, map):
         controller = 'ckanext.metadata.controllers.metadata_standard:MetadataStandardController'
         map.connect('metadata_standard_index', '/metadata_standard', controller=controller, action='index')
+        map.connect('metadata_standard_new', '/metadata_standard/new', controller=controller, action='new')
 
         controller = 'ckanext.metadata.controllers.workflow_state:WorkflowStateController'
         map.connect('workflow_state_index', '/workflow_state', controller=controller, action='index')
