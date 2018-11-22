@@ -73,7 +73,6 @@ class MetadataStandard(factory.Factory):
     standard_version = '1.0'
     parent_standard_id = ''
     metadata_template_json = '{ "testkey": "testvalue" }'
-    title = factory.LazyAttribute(lambda obj: obj.standard_name.replace('_', ' ').title())
     description = 'A test description for this test metadata standard.'
 
     @classmethod
@@ -93,7 +92,6 @@ class MetadataStandard(factory.Factory):
 class MetadataSchema(factory.Factory):
     FACTORY_FOR = ckanext_model.MetadataSchema
 
-    title = factory.Sequence(lambda n: 'Test Metadata Schema {0:02d}'.format(n))
     description = 'A test description for this test metadata schema.'
     schema_json = '{"type": "object"}'
     organization_id = ''

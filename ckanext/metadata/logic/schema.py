@@ -271,7 +271,6 @@ def metadata_standard_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_standard')],
         'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_standard')],
-        'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'standard_name': [v.not_empty, unicode],
         'standard_version': [v.not_missing, unicode],
@@ -350,7 +349,6 @@ def metadata_schema_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_schema')],
         'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_schema')],
-        'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
         'organization_id': [v.not_missing, unicode, v.object_exists('organization')],

@@ -10,7 +10,6 @@ metadata_schema_table = Table(
     'metadata_schema', meta.metadata,
     Column('id', types.UnicodeText, primary_key=True, default=_types.make_uuid),
     Column('name', types.UnicodeText, nullable=False, unique=True),
-    Column('title', types.UnicodeText),
     Column('description', types.UnicodeText),
     Column('metadata_standard_id', types.UnicodeText, ForeignKey('metadata_standard.id'), nullable=False),
     Column('organization_id', types.UnicodeText, ForeignKey('group.id')),

@@ -10,7 +10,6 @@ metadata_standard_table = Table(
     'metadata_standard', meta.metadata,
     Column('id', types.UnicodeText, primary_key=True, default=_types.make_uuid),
     Column('name', types.UnicodeText, nullable=False, unique=True),
-    Column('title', types.UnicodeText),
     Column('description', types.UnicodeText),
     Column('standard_name', types.UnicodeText, nullable=False),
     Column('standard_version', types.UnicodeText, nullable=False),

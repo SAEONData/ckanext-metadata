@@ -17,7 +17,6 @@ class TestMetadataStandardActions(ActionTestBase):
 
     def test_create_valid(self):
         input_dict = {
-            'title': 'Test Metadata Standard',
             'description': 'This is a test metadata standard',
             'standard_name': 'DataCite',
             'standard_version': '1.0',
@@ -161,7 +160,6 @@ class TestMetadataStandardActions(ActionTestBase):
         metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
             'id': metadata_standard['id'],
-            'title': 'Updated Test Metadata Standard',
             'description': 'Updated test metadata standard description',
             'standard_name': 'Updated Standard Name',
             'standard_version': 'v99',
@@ -184,7 +182,6 @@ class TestMetadataStandardActions(ActionTestBase):
         }
         result, obj = self.test_action('metadata_standard_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
-        assert obj.title == metadata_standard['title']
         assert obj.description == metadata_standard['description']
 
     def test_update_valid_change_parent_1(self):

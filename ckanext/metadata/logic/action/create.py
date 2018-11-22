@@ -26,8 +26,6 @@ def metadata_standard_create(context, data_dict):
     :param name: the name of the new metadata standard (optional - auto-generated if not supplied);
         must conform to standard naming rules
     :type name: string
-    :param title: the title of the metadata standard (optional)
-    :type title: string
     :param description: the description of the metadata standard (optional)
     :type description: string
     :param standard_name: the name of the metadata standard
@@ -93,8 +91,6 @@ def metadata_schema_create(context, data_dict):
     :param name: the name of the new metadata schema (optional - auto-generated if not supplied);
         must conform to standard naming rules
     :type name: string
-    :param title: the title of the metadata schema (optional)
-    :type title: string
     :param description: the description of the metadata schema (optional)
     :type description: string
     :param metadata_standard_id: the id or name of the metadata standard for which this schema is defined

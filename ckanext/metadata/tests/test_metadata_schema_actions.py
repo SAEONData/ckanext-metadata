@@ -74,7 +74,6 @@ class TestMetadataSchemaActions(ActionTestBase):
     def test_create_valid(self):
         metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
-            'title': 'Test Metadata Schema',
             'description': 'This is a test metadata schema',
             'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
@@ -404,7 +403,6 @@ class TestMetadataSchemaActions(ActionTestBase):
         metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
             'id': metadata_schema['id'],
-            'title': 'Updated Test Metadata Schema',
             'description': 'Updated test metadata schema description',
             'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
@@ -427,7 +425,6 @@ class TestMetadataSchemaActions(ActionTestBase):
         }
         result, obj = self.test_action('metadata_schema_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
-        assert obj.title == metadata_schema['title']
         assert obj.description == metadata_schema['description']
 
     def test_update_valid_datacite(self):
