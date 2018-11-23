@@ -4,7 +4,7 @@ Displays a test for results of a search.
 
 query        - The text that was searched for
 count        - The number of results for the search
-type         - Search result type (dataset, group, organization, infrastructure, metadata_collection)
+type         - Search result type (dataset, group, organization, infrastructure, metadata_collection, metadata_standard)
 
 Example:
 
@@ -40,6 +40,12 @@ Example:
   {% set text_query_none = _('No metadata collections found for "{query}"') %}
   {% set text_no_query = ungettext('{number} metadata collection found', '{number} metadata collections found', count) %}
   {% set text_no_query_none = _('No metadata collections found') %}
+
+{% elif type == 'metadata_standard' %}
+  {% set text_query = ungettext('{number} metadata standard found for "{query}"', '{number} metadata standards found for "{query}"', count) %}
+  {% set text_query_none = _('No metadata standards found for "{query}"') %}
+  {% set text_no_query = ungettext('{number} metadata standard found', '{number} metadata standards found', count) %}
+  {% set text_no_query_none = _('No metadata standards found') %}
 {%- endif -%}
 
 {% if query %}

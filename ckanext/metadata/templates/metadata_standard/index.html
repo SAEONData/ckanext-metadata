@@ -18,6 +18,12 @@
 
 {% block primary_content_inner %}
   <h1 class="hide-heading">{{ _('Metadata Standard') }}</h1>
+  {% block metadata_standards_search_form %}
+    {% snippet 'snippets/search_form.html', form_id='metadata-standard-search-form', type='metadata_standard',
+      query=c.q, sorting_selected=c.sort_by_selected, count=c.page.item_count,
+      placeholder=_('Search metadata standards...'), show_empty=request.params, no_bottom_border=true if c.page.items,
+      sorting = [(_('Name Ascending'), 'display_name asc'), (_('Name Descending'), 'display_name desc')] %}
+  {% endblock %}
   {% block metadata_standards_list %}
     {% if c.page.items or request.params %}
       {% if c.page.items %}
