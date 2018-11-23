@@ -80,27 +80,12 @@ class MetadataStandardController(tk.BaseController):
         data = data or {}
         errors = errors or {}
         error_summary = error_summary or {}
-        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new'}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
+                'parent_standard_lookup_list': self._parent_standard_lookup_list()}
 
         tk.c.is_sysadmin = authz.is_sysadmin(tk.c.user)
-        tk.c.metadata_standard_list = [''] + tk.get_action('metadata_standard_list')(context, {})
         tk.c.form = tk.render('metadata_standard/edit_form.html', extra_vars=vars)
         return tk.render('metadata_standard/new.html')
-
-    def _save_new(self, context):
-        try:
-            data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
-            context['message'] = data_dict.get('log_message', '')
-            metadata_standard = tk.get_action('metadata_standard_create')(context, data_dict)
-            tk.h.redirect_to('metadata_standard_read', id=metadata_standard['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized):
-            tk.abort(404, tk._('Metadata standard not found'))
-        except dict_fns.DataError:
-            tk.abort(400, tk._(u'Integrity Error'))
-        except tk.ValidationError, e:
-            errors = e.error_dict
-            error_summary = e.error_summary
-            return self.new(data_dict, errors, error_summary)
 
     def edit(self, id, data=None, errors=None, error_summary=None):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
@@ -124,11 +109,39 @@ class MetadataStandardController(tk.BaseController):
             tk.abort(403, tk._('User %r not authorized to edit %s') % (tk.c.user, id))
 
         errors = errors or {}
-        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit'}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
+                'parent_standard_lookup_list': self._parent_standard_lookup_list(exclude=id)}
 
-        tk.c.metadata_standard_list = [''] + tk.get_action('metadata_standard_list')(context, {})
         tk.c.form = tk.render('metadata_standard/edit_form.html', extra_vars=vars)
         return tk.render('metadata_standard/edit.html')
+
+    @staticmethod
+    def _parent_standard_lookup_list(exclude=None):
+        """
+        Return a list of {'value': name, 'text': display_name} dicts for populating the
+        parent standard select control.
+        :param exclude: name of standard to exclude (if it's the one being edited)
+        """
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        metadata_standards = tk.get_action('metadata_standard_list')(context, {'all_fields': True})
+        return [{'value': '', 'text': '(None)'}] + \
+               [{'value': metadata_standard['name'], 'text': metadata_standard['display_name']}
+                for metadata_standard in metadata_standards if metadata_standard['name'] != exclude]
+
+    def _save_new(self, context):
+        try:
+            data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
+            context['message'] = data_dict.get('log_message', '')
+            metadata_standard = tk.get_action('metadata_standard_create')(context, data_dict)
+            tk.h.redirect_to('metadata_standard_read', id=metadata_standard['name'])
+        except (tk.ObjectNotFound, tk.NotAuthorized):
+            tk.abort(404, tk._('Metadata standard not found'))
+        except dict_fns.DataError:
+            tk.abort(400, tk._(u'Integrity Error'))
+        except tk.ValidationError, e:
+            errors = e.error_dict
+            error_summary = e.error_summary
+            return self.new(data_dict, errors, error_summary)
 
     def _save_edit(self, id, context):
         try:
