@@ -73,6 +73,9 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         return facets_dict
 
     def before_map(self, map):
+        controller = 'ckanext.metadata.controllers.organization:OrganizationController'
+        map.connect('organization_datasets', '/organization/datasets/{id}', controller=controller, action='datasets', ckan_icon='site-map')
+
         controller = 'ckanext.metadata.controllers.metadata_standard:MetadataStandardController'
         map.connect('metadata_standard_index', '/metadata_standard', controller=controller, action='index')
         map.connect('metadata_standard_new', '/metadata_standard/new', controller=controller, action='new')
@@ -101,6 +104,7 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         # icons are not correctly set for automatically generated plugin routes, so we do it here
         tk.config['routes.named_routes']['metadata_collection_read']['icon'] = 'sitemap'
         tk.config['routes.named_routes']['metadata_collection_index']['icon'] = 'folder-open'
+        tk.config['routes.named_routes']['organization_datasets']['icon'] = 'sitemap'
 
         # re-route organization_read to our controller
         org_read_routes = [route for route in map.matchlist if route.name and route.name == 'organization_read']

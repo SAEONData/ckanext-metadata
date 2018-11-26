@@ -13,8 +13,8 @@
     {% link_for _('Add Metadata Collection'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
       organization_id=c.org_dict.name, action='new', class_='btn btn-primary', icon='plus-square' %}
   {% endif %}
-  {% link_for _('Back to organization'), controller='organization', action='read',
-    id=c.org_dict.name, class_='btn pull-right', icon='arrow-left' %}
+  {% link_for _('Back to organization'), controller='ckanext.metadata.controllers.organization:OrganizationController',
+    action='read', id=c.org_dict.name, class_='btn pull-right', icon='arrow-left' %}
 {% endblock %}
 
 {% block primary_content_inner %}

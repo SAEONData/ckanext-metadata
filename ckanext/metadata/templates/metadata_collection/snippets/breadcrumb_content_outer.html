@@ -1,4 +1,5 @@
 <li>{% link_for _('Organizations'), controller='organization', action='index' %}</li>
-<li>{% link_for c.org_dict.display_name|truncate(35), controller='organization', action='read', id=c.org_dict.name %}</li>
+<li>{% link_for c.org_dict.display_name|truncate(35), controller='ckanext.metadata.controllers.organization:OrganizationController',
+  action='read', id=c.org_dict.name %}</li>
 <li>{% link_for _('Metadata Collections'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
   action='index', organization_id=c.org_dict.name %}</li>

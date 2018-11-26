@@ -3,9 +3,10 @@
 import ckan.plugins.toolkit as tk
 import ckan.model as model
 import ckan.lib.helpers as helpers
+from ckan.controllers.organization import OrganizationController as CKANOrganizationController
 
 
-class OrganizationController(tk.BaseController):
+class OrganizationController(CKANOrganizationController):
 
     def read(self, id):
         """
@@ -45,7 +46,7 @@ class OrganizationController(tk.BaseController):
                 msg = str(e)
             tk.h.flash_error(msg)
             tk.c.page = helpers.Page([], 0)
-            return tk.render('organization/read.html')
+            return tk.render('organization/metadata_collections.html')
 
         data_dict_page_results = {
             'owner_org': id,
@@ -65,4 +66,7 @@ class OrganizationController(tk.BaseController):
         )
 
         tk.c.page.items = page_results
-        return tk.render('organization/read.html')
+        return tk.render('organization/metadata_collections.html')
+
+    def datasets(self, id):
+        return super(OrganizationController, self).read(id)
