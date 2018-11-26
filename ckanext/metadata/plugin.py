@@ -102,6 +102,13 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         tk.config['routes.named_routes']['metadata_collection_read']['icon'] = 'sitemap'
         tk.config['routes.named_routes']['metadata_collection_index']['icon'] = 'folder-open'
 
+        # re-route organization_read to our controller
+        org_read_routes = [route for route in map.matchlist if route.name and route.name == 'organization_read']
+        for route in org_read_routes:
+            map.matchlist.remove(route)
+        controller = 'ckanext.metadata.controllers.organization:OrganizationController'
+        map.connect('organization_read', '/organization/{id}', controller=controller, action='read', ckan_icon='folder-open')
+
         return map
 
 

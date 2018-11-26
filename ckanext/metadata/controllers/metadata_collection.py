@@ -82,9 +82,8 @@ class MetadataCollectionController(GroupController):
         page = tk.h.get_page_number(tk.request.params) or 1
         items_per_page = 21
 
-        context = {'model': model, 'session': model.Session,
-                   'user': tk.c.user, 'for_view': True,
-                   'with_private': False}
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user,
+                   'for_view': True, 'with_private': True}
 
         q = tk.c.q = tk.request.params.get('q', '')
         sort_by = tk.c.sort_by_selected = tk.request.params.get('sort')
