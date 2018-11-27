@@ -109,6 +109,8 @@ def metadata_schema_list(context, data_dict):
     """
     Return a list of names of the site's metadata schemas.
 
+    :param metadata_standard_id: the id or name of the associated metadata standard (optional filter)
+    :type metadata_standard_id: string
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
 
@@ -118,11 +120,20 @@ def metadata_schema_list(context, data_dict):
     tk.check_access('metadata_schema_list', context, data_dict)
 
     session = context['session']
+    metadata_standard_id = data_dict.get('metadata_standard_id')
     all_fields = asbool(data_dict.get('all_fields'))
 
-    metadata_schemas = session.query(ckanext_model.MetadataSchema.id, ckanext_model.MetadataSchema.name) \
-        .filter_by(state='active') \
-        .all()
+    metadata_schemas_q = session.query(ckanext_model.MetadataSchema.id, ckanext_model.MetadataSchema.name) \
+        .filter_by(state='active')
+
+    if metadata_standard_id:
+        metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
+        if metadata_standard is None or metadata_standard.state != 'active':
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
+        metadata_standard_id = metadata_standard.id
+        metadata_schemas_q = metadata_schemas_q.filter_by(metadata_standard_id=metadata_standard_id)
+
+    metadata_schemas = metadata_schemas_q.all()
     result = []
     for (id_, name) in metadata_schemas:
         if all_fields:
