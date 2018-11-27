@@ -15,8 +15,7 @@ class MetadataStandardController(tk.BaseController):
         items_per_page = 21
 
         context = {'model': model, 'session': model.Session,
-                   'user': tk.c.user, 'for_view': True,
-                   'with_private': False}
+                   'user': tk.c.user, 'for_view': True}
 
         q = tk.c.q = tk.request.params.get('q', '')
         sort_by = tk.c.sort_by_selected = tk.request.params.get('sort')
@@ -96,15 +95,14 @@ class MetadataStandardController(tk.BaseController):
             return self._save_edit(id, context)
 
         try:
-            old_data = self._action('metadata_standard_show')(context, data_dict)
+            old_data = tk.get_action('metadata_standard_show')(context, data_dict)
             data = data or old_data
         except (tk.ObjectNotFound, tk.NotAuthorized):
             tk.abort(404, tk._('Metadata standard not found'))
 
-        tk.c.metadata_standard = context.get('metadata_standard')
-
+        tk.c.metadata_standard = old_data
         try:
-            self._check_access('metadata_standard_update', context)
+            tk.check_access('metadata_standard_update', context)
         except tk.NotAuthorized:
             tk.abort(403, tk._('User %r not authorized to edit %s') % (tk.c.user, id))
 
@@ -114,6 +112,75 @@ class MetadataStandardController(tk.BaseController):
 
         tk.c.form = tk.render('metadata_standard/edit_form.html', extra_vars=vars)
         return tk.render('metadata_standard/edit.html')
+
+    def read(self, id):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        page = tk.h.get_page_number(tk.request.params) or 1
+        items_per_page = 21
+
+        q = tk.c.q = tk.request.params.get('q', '')
+        sort_by = tk.c.sort_by_selected = tk.request.params.get('sort')
+        try:
+            tk.check_access('site_read', context)
+            tk.check_access('metadata_schema_list', context)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to see this page'))
+
+        if tk.c.userobj:
+            context['user_id'] = tk.c.userobj.id
+            context['user_is_admin'] = tk.c.userobj.sysadmin
+
+        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        try:
+            data_dict_global_results = {
+                'metadata_standard_id': id,
+                'all_fields': False,
+                'q': q,
+                'sort': sort_by,
+                'type': 'metadata_schema',
+            }
+            global_results = tk.get_action('metadata_schema_list')(context, data_dict_global_results)
+        except tk.ValidationError as e:
+            if e.error_dict and e.error_dict.get('message'):
+                msg = e.error_dict['message']
+            else:
+                msg = str(e)
+            tk.h.flash_error(msg)
+            tk.c.page = helpers.Page([], 0)
+            return tk.render('metadata_standard/read.html')
+
+        data_dict_page_results = {
+            'metadata_standard_id': id,
+            'all_fields': True,
+            'q': q,
+            'sort': sort_by,
+            'limit': items_per_page,
+            'offset': items_per_page * (page - 1),
+        }
+        page_results = tk.get_action('metadata_schema_list')(context, data_dict_page_results)
+
+        tk.c.page = helpers.Page(
+            collection=global_results,
+            page=page,
+            url=tk.h.pager_url,
+            items_per_page=items_per_page,
+        )
+
+        tk.c.page.items = page_results
+        return tk.render('metadata_standard/read.html')
+
+    def about(self, id):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        return tk.render('metadata_standard/about.html')
+
+    def activity(self, id):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        return tk.render('metadata_standard/activity_stream.html')
+
+    def attr_maps(self, id):
+        pass
 
     @staticmethod
     def _parent_standard_lookup_list(exclude=None):

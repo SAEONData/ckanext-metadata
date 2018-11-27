@@ -1,0 +1,41 @@
+{#
+Renders a media item for a metadata_schema. This should be used in a list.
+
+metadata_schema - A metadata_schema dict.
+
+Example:
+
+    <ul class="media-grid">
+      {% for metadata_schema in metadata_schemas %}
+        {% snippet "metadata_schema/snippets/metadata_schema_item.html", metadata_schema=metadata_schema %}
+      {% endfor %}
+    </ul>
+#}
+{% set url = h.url_for('metadata_schema_read', action='read', id=metadata_schema.name) %}
+{% block item %}
+<li class="media-item">
+  {% block item_inner %}
+    {% block image %}
+      <img src="{{ h.url_for_static('/images/metadata_schema.png') }}" alt="{{ metadata_schema.name }}" class="media-image">
+    {% endblock %}
+    {% block title %}
+      <h3 class="media-heading">{{ metadata_schema.display_name }}</h3>
+    {% endblock %}
+    {% block description %}
+      {% if h.get_translated(metadata_schema, 'description') %}
+        <p>{{ h.markdown_extract(h.get_translated(metadata_schema, 'description'), extract_length=80) }}</p>
+      {% endif %}
+    {% endblock %}
+    {% block schemas %}
+    {% endblock %}
+    {% block link %}
+    <a href="{{ url }}" title="{{ _('View {name}').format(name=metadata_schema.display_name) }}" class="media-view">
+      <span>{{ _('View {name}').format(name=metadata_schema.display_name) }}</span>
+    </a>
+    {% endblock %}
+  {% endblock %}
+</li>
+{% endblock %}
+{% if position is divisibleby 3 %}
+  <li class="clearfix js-hide"></li>
+{% endif %}

@@ -1,0 +1,19 @@
+{#
+Display a grid of metadata_schema items.
+
+metadata_schemas - A list of metadata_schemas.
+
+Example:
+
+    {% snippet "metadata_schema/snippets/metadata_schema_list.html" %}
+
+#}
+{% block metadata_schema_list %}
+  <ul class="media-grid" data-module="media-grid">
+    {% block metadata_schema_list_inner %}
+      {% for metadata_schema in metadata_schemas %}
+        {% snippet "metadata_schema/snippets/metadata_schema_item.html", metadata_schema=metadata_schema, position=loop.index %}
+      {% endfor %}
+    {% endblock %}
+  </ul>
+{% endblock %}

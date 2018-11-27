@@ -79,6 +79,11 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         controller = 'ckanext.metadata.controllers.metadata_standard:MetadataStandardController'
         map.connect('metadata_standard_index', '/metadata_standard', controller=controller, action='index')
         map.connect('metadata_standard_new', '/metadata_standard/new', controller=controller, action='new')
+        map.connect('metadata_standard_edit', '/metadata_standard/edit/{id}', controller=controller, action='edit', ckan_icon='pencil-square-o')
+        map.connect('metadata_standard_read', '/metadata_standard/{id}', controller=controller, action='read', ckan_icon='sitemap')
+        map.connect('metadata_standard_about', '/metadata_standard/about/{id}', controller=controller, action='about', ckan_icon='info-circle')
+        map.connect('metadata_standard_activity', '/metadata_standard/activity/{id}', controller=controller, action='activity', ckan_icon='clock-o')
+        map.connect('metadata_standard_attr_maps', '/metadata_standard/attr_maps/{id}', controller=controller, action='attr_maps', ckan_icon='random')
 
         controller = 'ckanext.metadata.controllers.workflow_state:WorkflowStateController'
         map.connect('workflow_state_index', '/workflow_state', controller=controller, action='index')
