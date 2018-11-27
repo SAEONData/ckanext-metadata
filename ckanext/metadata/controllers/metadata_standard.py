@@ -113,6 +113,28 @@ class MetadataStandardController(tk.BaseController):
         tk.c.form = tk.render('metadata_standard/edit_form.html', extra_vars=vars)
         return tk.render('metadata_standard/edit.html')
 
+    def delete(self, id):
+        if 'cancel' in tk.request.params:
+            tk.h.redirect_to('metadata_standard_edit', id=id)
+
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        try:
+            tk.check_access('metadata_standard_delete', context, {'id': id})
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to delete metadata standard'))
+
+        try:
+            if tk.request.method == 'POST':
+                tk.get_action('metadata_standard_delete')(context, {'id': id})
+                tk.h.flash_notice(tk._('Metadata Standard has been deleted.'))
+                tk.h.redirect_to('metadata_standard_index')
+            tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to delete metadata standard'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata_standard not found'))
+        return tk.render('metadata_standard/confirm_delete.html')
+
     def read(self, id):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
         page = tk.h.get_page_number(tk.request.params) or 1
