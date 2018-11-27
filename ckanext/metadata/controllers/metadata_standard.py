@@ -202,6 +202,25 @@ class MetadataStandardController(tk.BaseController):
         return tk.render('metadata_standard/activity_stream.html')
 
     def attr_maps(self, id):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        try:
+            data_dict = {'metadata_standard_id': id, 'all_fields': True}
+            tk.c.attr_maps = tk.get_action('metadata_json_attr_map_list')(context, data_dict)
+            tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata standard not found'))
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to see this page'))
+
+        return tk.render('metadata_standard/attr_maps.html')
+
+    def attr_map_new(self, id):
+        pass
+
+    def attr_map_edit(self, id, attr_map_id):
+        pass
+
+    def attr_map_delete(self, id, attr_map_id):
         pass
 
     @staticmethod

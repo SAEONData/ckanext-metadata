@@ -5,13 +5,3 @@
 {% block subtitle %}
   {{ _('Manage') }} - {{ c.metadata_standard.display_name }} - {{ _('Metadata Standards') }}
 {% endblock %}
-
-{% block breadcrumb_content %}
-  {% snippet "metadata_standard/snippets/breadcrumb_content_outer.html" %}
-  {% snippet "metadata_standard/snippets/breadcrumb_content_item.html" %}
-  {% snippet "metadata_standard/snippets/breadcrumb_content_manage.html" %}
-{% endblock %}
-
-{% block secondary_content %}
-  {% snippet "metadata_standard/snippets/info.html", metadata_standard=c.metadata_standard %}
-{% endblock %}

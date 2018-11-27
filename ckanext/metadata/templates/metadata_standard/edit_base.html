@@ -1,5 +1,11 @@
 {% extends "page.html" %}
 
+{% block breadcrumb_content %}
+  {% snippet "metadata_standard/snippets/breadcrumb_content_outer.html" %}
+  {% snippet "metadata_standard/snippets/breadcrumb_content_item.html" %}
+  {% snippet "metadata_standard/snippets/breadcrumb_content_manage.html" %}
+{% endblock %}
+
 {% block page_primary_action %}{% endblock %}
 
 {% block primary_content_inner %}
@@ -17,4 +23,8 @@
 {% block content_primary_nav %}
   {{ h.build_nav_icon('metadata_standard_edit', _('Edit'), id=c.metadata_standard.name) }}
   {{ h.build_nav_icon('metadata_standard_attr_maps', _('Attribute Mappings'), id=c.metadata_standard.name) }}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_standard/snippets/info.html", metadata_standard=c.metadata_standard %}
 {% endblock %}
