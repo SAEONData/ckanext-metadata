@@ -8,11 +8,16 @@
 {% endblock %}
 
 {% block content_action %}
-  {% snippet "metadata_standard/snippets/action_manage.html" %}
+  {% if h.check_access('metadata_standard_update', {'id': c.metadata_standard.id}) %}
+    {% link_for _('Manage'), controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController',
+      action='edit', id=c.metadata_standard.name, class_='btn', icon='wrench' %}
+  {% endif %}
 {% endblock %}
 
 {% block content_primary_nav %}
-  {% snippet "metadata_standard/snippets/nav_read.html" %}
+  {{ h.build_nav_icon('metadata_standard_read', _('Metadata Schemas'), id=c.metadata_standard.name) }}
+  {{ h.build_nav_icon('metadata_standard_activity', _('Activity Stream'), id=c.metadata_standard.name, offset=0) }}
+  {{ h.build_nav_icon('metadata_standard_about', _('About'), id=c.metadata_standard.name) }}
 {% endblock %}
 
 {% block secondary_content %}

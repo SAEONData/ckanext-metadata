@@ -1,4 +1,0 @@
-  {% if h.check_access('metadata_standard_update', {'id': c.metadata_standard.id}) %}
-    {% link_for _('Manage'), controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController',
-      action='edit', id=c.metadata_standard.name, class_='btn', icon='wrench' %}
-  {% endif %}

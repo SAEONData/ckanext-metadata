@@ -8,3 +8,13 @@
     {{ c.form | safe }}
   {% endblock %}
 {% endblock %}
+
+{% block content_action %}
+  {% link_for _('View'), controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController',
+    action='read', id=c.metadata_standard.name, class_='btn', icon='eye' %}
+{% endblock %}
+
+{% block content_primary_nav %}
+  {{ h.build_nav_icon('metadata_standard_edit', _('Edit'), id=c.metadata_standard.name) }}
+  {{ h.build_nav_icon('metadata_standard_attr_maps', _('Attribute Mappings'), id=c.metadata_standard.name) }}
+{% endblock %}
