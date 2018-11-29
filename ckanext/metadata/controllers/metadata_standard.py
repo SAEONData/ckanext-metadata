@@ -269,7 +269,28 @@ class MetadataStandardController(tk.BaseController):
         return tk.render('metadata_standard/attr_map_edit.html', extra_vars=vars)
 
     def attr_map_delete(self, id, attr_map_id):
-        pass
+        if 'cancel' in tk.request.params:
+            tk.h.redirect_to('metadata_standard_attr_maps', id=id)
+
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+
+        try:
+            tk.check_access('metadata_json_attr_map_delete', context)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to delete attribute mappings'))
+
+        if tk.request.method == 'POST':
+            try:
+                tk.get_action('metadata_json_attr_map_delete')(context, {'id': attr_map_id})
+                tk.h.flash_notice(tk._('Attribute mapping has been deleted.'))
+                tk.h.redirect_to('metadata_standard_attr_maps', id=id)
+            except tk.NotAuthorized:
+                tk.abort(403, tk._('Not authorized to update attribute mappings'))
+            except tk.ObjectNotFound:
+                tk.abort(404, tk._('Metadata standard not found'))
+            except dict_fns.DataError:
+                tk.abort(400, tk._(u'Integrity Error'))
+        return tk.render('metadata_standard/confirm_delete_attr_map.html')
 
     @staticmethod
     def _parent_standard_lookup_list(exclude=None):
