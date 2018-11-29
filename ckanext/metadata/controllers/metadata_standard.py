@@ -206,7 +206,9 @@ class MetadataStandardController(tk.BaseController):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user}
         try:
             data_dict = {'metadata_standard_id': id, 'all_fields': True}
-            tk.c.attr_maps = tk.get_action('metadata_json_attr_map_list')(context, data_dict)
+            attr_map_list = tk.get_action('metadata_json_attr_map_list')(context, data_dict)
+            attr_map_list.sort(key=lambda attr_map: attr_map['record_attr'])
+            tk.c.attr_maps = attr_map_list
             tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
         except tk.ObjectNotFound:
             tk.abort(404, tk._('Metadata standard not found'))
