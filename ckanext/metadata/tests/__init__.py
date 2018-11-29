@@ -161,7 +161,10 @@ def assert_error(error_dict, key, pattern):
         return False
 
     error_path = deque(key.split('/'))
-    assert has_error(error_dict, error_path)
+    try:
+        assert has_error(error_dict, error_path)
+    except KeyError:
+        assert False, "'{}' not found in error dict".format(key)
 
 
 class ActionTestBase(FunctionalTestBase):
