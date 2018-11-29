@@ -1,0 +1,28 @@
+{% extends "metadata_standard/edit_base.html" %}
+
+{% block page_primary_action %}
+  {% link_for _('Back to attribute mappings'), controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController',
+    action='attr_maps', id=c.metadata_standard.name, class_='btn pull-right', icon='arrow-left' %}
+{% endblock %}
+
+{% block page_heading %}
+  {{ _('Edit Attribute Mapping') if action == 'edit' else _('Create Attribute Mapping') }}
+{% endblock %}
+
+{% block secondary_content %}
+  {{ super() }}
+  <div class="module module-narrow module-shallow">
+    <h2 class="module-heading">
+      <i class="fa fa-lg fa-info-circle"></i>
+      {{ _('What are attribute mappings?') }}
+    </h2>
+    <div class="module-content">
+      {% trans %}
+        An attribute mapping is a one-to-one mapping from a metadata JSON element to
+        a metadata record attribute. It applies whenever a metadata record is created
+        or updated, causing the value of the specified JSON element to be copied into
+        the mapped attribute.
+      {% endtrans %}
+    </div>
+  </div>
+{% endblock %}

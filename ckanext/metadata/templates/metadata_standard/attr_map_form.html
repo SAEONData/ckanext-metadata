@@ -1,0 +1,45 @@
+{% import "macros/form.html" as form %}
+
+<form id="attr-map-form" class="form-horizontal" action="" method="post">
+  {{ form.errors(error_summary) }}
+
+  {% if action == "new" %}
+    {{ form.select('record_attr', label=_('Metadata Record Attribute'), id='field-record-attr',
+          options=record_attr_list, selected=data.record_attr, error=errors.record_attr,
+          classes=['control-medium'], is_required=true) }}
+  {% else %}
+    {{ form.input('record_attr', label=_('Metadata Record Attribute'), id='field-record-attr',
+          value=data.record_attr, error=errors.record_attr,
+          classes=['control-medium'], attrs={'readonly': true}) }}
+  {% endif %}
+
+  {{ form.input('json_path', label=_('Metadata JSON Path'), id='field-json-path',
+        placeholder=_('JSON pointer to a location in the metadata record dictionary'),
+        value=data.json_path, error=errors.json_path,
+        classes=['control-full'], is_required=true,
+        attrs={'style': 'font-family: monospace'}) }}
+
+  {{ form.checkbox('is_key', label=_('Key Attribute'), id='field-is-key',
+        value=1, checked=data.is_key, error=errors.is_key) }}
+
+  {{ form.required_message() }}
+
+  <div class="form-actions">
+    {% if action == "edit" %}
+      {% if h.check_access('metadata_json_attr_map_delete', {'id': data.id})  %}
+        <a class="btn btn-danger pull-left" data-module="confirm-action"
+           data-module-content="{{ _('Are you sure you want to delete this Attribute Mapping?') }}"
+           href="{% url_for controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController',
+                    action='attr_map_delete', id=data.metadata_standard_id, attr_map_id=data.id %}">
+          {% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
+      {% endif %}
+    {% endif %}
+    <button class="btn btn-primary" name="save" type="submit">
+      {%- if action == "edit" -%}
+        {{ _('Update Attribute Mapping') }}
+      {%- else -%}
+        {{ _('Create Attribute Mapping') }}
+      {%- endif -%}
+    </button>
+  </div>
+</form>

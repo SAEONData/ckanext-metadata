@@ -6,6 +6,7 @@ import ckan.lib.helpers as helpers
 import ckan.authz as authz
 from ckan.logic import clean_dict, tuplize_dict, parse_params
 import ckan.lib.navl.dictization_functions as dict_fns
+from ckanext.metadata.logic import schema
 
 
 class MetadataStandardController(tk.BaseController):
@@ -214,11 +215,56 @@ class MetadataStandardController(tk.BaseController):
 
         return tk.render('metadata_standard/attr_maps.html')
 
-    def attr_map_new(self, id):
-        pass
+    def attr_map_new(self, id, data=None, errors=None, error_summary=None):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user,
+                   'save': 'save' in tk.request.params}
 
-    def attr_map_edit(self, id, attr_map_id):
-        pass
+        if context['save'] and not data and tk.request.method == 'POST':
+            return self._save_attr_map_new(id, context)
+
+        try:
+            tk.check_access('metadata_json_attr_map_create', context)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to create attribute mappings'))
+
+        data = data or {}
+        errors = errors or {}
+        error_summary = error_summary or {}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
+                'record_attr_list': self._attr_map_record_attr_list()}
+
+        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        tk.c.is_sysadmin = authz.is_sysadmin(tk.c.user)
+        tk.c.form = tk.render('metadata_standard/attr_map_form.html', extra_vars=vars)
+        return tk.render('metadata_standard/attr_map_edit.html', extra_vars=vars)
+
+    def attr_map_edit(self, id, attr_map_id, data=None, errors=None, error_summary=None):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user,
+                   'save': 'save' in tk.request.params}
+
+        if context['save'] and not data and tk.request.method == 'POST':
+            return self._save_attr_map_edit(id, attr_map_id, context)
+
+        try:
+            tk.check_access('metadata_json_attr_map_update', context)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to update attribute mappings'))
+
+        try:
+            old_data = tk.get_action('metadata_json_attr_map_show')(context, {'id': attr_map_id})
+            data = data or old_data
+        except (tk.ObjectNotFound, tk.NotAuthorized):
+            tk.abort(404, tk._('Attribute map not found'))
+
+        errors = errors or {}
+        error_summary = error_summary or {}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
+                'record_attr_list': self._attr_map_record_attr_list()}
+
+        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        tk.c.is_sysadmin = authz.is_sysadmin(tk.c.user)
+        tk.c.form = tk.render('metadata_standard/attr_map_form.html', extra_vars=vars)
+        return tk.render('metadata_standard/attr_map_edit.html', extra_vars=vars)
 
     def attr_map_delete(self, id, attr_map_id):
         pass
@@ -235,6 +281,16 @@ class MetadataStandardController(tk.BaseController):
         return [{'value': '', 'text': '(None)'}] + \
                [{'value': metadata_standard['name'], 'text': metadata_standard['display_name']}
                 for metadata_standard in metadata_standards if metadata_standard['name'] != exclude]
+
+    @staticmethod
+    def _attr_map_record_attr_list():
+        """
+        Return a list of {'value': name, 'text': name} dicts for populating the
+        metadata record attribute select control.
+        """
+        attrs = schema.metadata_record_attr_mappable_schema().keys()
+        attrs.sort()
+        return [{'value': '', 'text': ''}] + [{'value': attr, 'text': attr} for attr in attrs]
 
     def _save_new(self, context):
         try:
@@ -267,3 +323,39 @@ class MetadataStandardController(tk.BaseController):
             errors = e.error_dict
             error_summary = e.error_summary
             return self.edit(id, data_dict, errors, error_summary)
+
+    def _save_attr_map_new(self, id, context):
+        try:
+            data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
+            data_dict['metadata_standard_id'] = id
+            data_dict.setdefault('is_key', False)
+            tk.get_action('metadata_json_attr_map_create')(context, data_dict)
+            tk.h.redirect_to('metadata_standard_attr_maps', id=id)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to create attribute mappings'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata standard not found'))
+        except dict_fns.DataError:
+            tk.abort(400, tk._(u'Integrity Error'))
+        except tk.ValidationError, e:
+            errors = e.error_dict
+            error_summary = e.error_summary
+            return self.attr_map_new(id, data_dict, errors, error_summary)
+
+    def _save_attr_map_edit(self, id, attr_map_id, context):
+        try:
+            data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
+            data_dict['id'] = attr_map_id
+            data_dict.setdefault('is_key', False)
+            tk.get_action('metadata_json_attr_map_update')(context, data_dict)
+            tk.h.redirect_to('metadata_standard_attr_maps', id=id)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to update attribute mappings'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata standard not found'))
+        except dict_fns.DataError:
+            tk.abort(400, tk._(u'Integrity Error'))
+        except tk.ValidationError, e:
+            errors = e.error_dict
+            error_summary = e.error_summary
+            return self.attr_map_edit(id, attr_map_id, data_dict, errors, error_summary)
