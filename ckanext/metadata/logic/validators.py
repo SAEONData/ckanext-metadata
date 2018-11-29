@@ -575,6 +575,12 @@ def metadata_template_json_path_validator(key, data, errors, context):
     """
     json_path = _convert_missing(data.get(key[:-1] + ('json_path',)), '')
     metadata_standard_id = _convert_missing(data.get(key[:-1] + ('metadata_standard_id',)))
+    if not metadata_standard_id:
+        id_ = data.get(key[:-1] + ('id',))
+        mapping_obj = ckanext_model.MetadataJSONAttrMap.get(id_)
+        if mapping_obj:
+            metadata_standard_id = mapping_obj.metadata_standard_id
+
     metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
     if metadata_standard:
         metadata_template_dict = json.loads(metadata_standard.metadata_template_json)
@@ -593,6 +599,10 @@ def metadata_json_attr_map_unique(key, data, errors, context):
     json_path = _convert_missing(data.get(key[:-1] + ('json_path',)))
     record_attr = _convert_missing(data.get(key[:-1] + ('record_attr',)))
     metadata_standard_id = _convert_missing(data.get(key[:-1] + ('metadata_standard_id',)))
+    if not metadata_standard_id:
+        mapping_obj = ckanext_model.MetadataJSONAttrMap.get(id_)
+        if mapping_obj:
+            metadata_standard_id = mapping_obj.metadata_standard_id
 
     mapping_obj = ckanext_model.MetadataJSONAttrMap.lookup_by_json_path(metadata_standard_id, json_path)
     if mapping_obj and mapping_obj.state != 'deleted' and mapping_obj.id != id_:
