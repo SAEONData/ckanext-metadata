@@ -1,0 +1,19 @@
+  <div class="module module-narrow module-shallow">
+    <h2 class="module-heading">
+      <i class="fa fa-lg fa-info-circle"></i>
+      {{ _('What are attribute mappings?') }}
+    </h2>
+    <div class="module-content">
+      {% trans %}
+        <p>An attribute mapping is a one-to-one mapping from a metadata JSON element to
+          a metadata record attribute. It applies whenever a metadata record is created
+          or updated, causing the value of the specified JSON element to be copied into
+          the mapped attribute.</p>
+        <p>If marked as a <strong>key</strong> <i class="fa fa-key fa-rotate-90"></i>
+          attribute, the value of the JSON element is used to determine whether to create
+          a new metadata record in the database or to update an existing one.</p>
+        <p><i>Note: if multiple key attributes are defined, an existing record must
+          be matched on <strong>all</strong> keys; a partial match is an error.</i></p>
+      {% endtrans %}
+    </div>
+  </div>

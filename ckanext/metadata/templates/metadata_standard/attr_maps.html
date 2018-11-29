@@ -37,3 +37,8 @@
     </tbody>
   </table>
 {% endblock %}
+
+{% block secondary_content %}
+  {{ super() }}
+  {% snippet "metadata_standard/snippets/attr_map_info.html" %}
+{% endblock %}
