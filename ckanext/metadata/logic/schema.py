@@ -324,6 +324,7 @@ def metadata_json_attr_map_create_schema():
 
 def metadata_json_attr_map_update_schema():
     schema = metadata_json_attr_map_create_schema()
+    schema['metadata_standard_id'] = [empty]  # cannot change the metadata standard to which an attribute map applies
     _make_update_schema(schema)
     return schema
 
