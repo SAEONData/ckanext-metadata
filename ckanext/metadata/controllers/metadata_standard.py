@@ -133,7 +133,7 @@ class MetadataStandardController(tk.BaseController):
         except tk.NotAuthorized:
             tk.abort(403, tk._('Unauthorized to delete metadata standard'))
         except tk.ObjectNotFound:
-            tk.abort(404, tk._('Metadata_standard not found'))
+            tk.abort(404, tk._('Metadata standard not found'))
         return tk.render('metadata_standard/confirm_delete.html')
 
     def read(self, id):
