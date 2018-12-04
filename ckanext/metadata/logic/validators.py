@@ -39,7 +39,7 @@ def _generate_name(*strings):
     strings = list(strings)
     while '' in strings:
         strings.remove('')
-    text = '_'.join(strings)
+    text = '-'.join(strings)
     return re.sub(r'[^a-z0-9_-]+', '-', text.lower())
 
 # endregion
