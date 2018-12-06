@@ -1,0 +1,29 @@
+{% extends "page.html" %}
+
+{% block breadcrumb_content %}
+  {% snippet "metadata_schema/snippets/breadcrumb_content_outer.html" %}
+  {% snippet "metadata_schema/snippets/breadcrumb_content_item.html" %}
+  {% snippet "metadata_schema/snippets/breadcrumb_content_manage.html" %}
+{% endblock %}
+
+{% block page_primary_action %}{% endblock %}
+
+{% block primary_content_inner %}
+  <h1 class="{% block page_heading_class %}page-heading{% endblock %}">{% block page_heading %}{{ _('Metadata Schema Form') }}{% endblock %}</h1>
+  {% block form %}
+    {{ c.form | safe }}
+  {% endblock %}
+{% endblock %}
+
+{% block content_action %}
+  {% link_for _('View'), controller='ckanext.metadata.controllers.metadata_schema:MetadataSchemaController',
+    action='read', id=c.metadata_schema.name, metadata_standard_id=c.metadata_standard.name, class_='btn', icon='eye' %}
+{% endblock %}
+
+{% block content_primary_nav %}
+  {{ h.build_nav_icon('metadata_schema_edit', _('Edit'), id=c.metadata_schema.name, metadata_standard_id=c.metadata_standard.name) }}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_schema/snippets/info.html", metadata_schema=c.metadata_schema %}
+{% endblock %}

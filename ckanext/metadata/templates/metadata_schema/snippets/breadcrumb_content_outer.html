@@ -1,0 +1,12 @@
+<li>
+  {% link_for _('Metadata Standards'), controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController',
+    action='index' %}
+</li>
+<li>
+  {% link_for c.metadata_standard.display_name |truncate(35), action='read', id=c.metadata_standard.name,
+    controller='ckanext.metadata.controllers.metadata_standard:MetadataStandardController' %}
+</li>
+<li>
+  {% link_for _('Metadata Schemas'), controller='ckanext.metadata.controllers.metadata_schema:MetadataSchemaController',
+    action='index', metadata_standard_id=c.metadata_standard.name %}
+</li>

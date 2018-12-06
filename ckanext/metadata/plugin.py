@@ -81,13 +81,22 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         map.connect('metadata_standard_new', '/metadata_standard/new', controller=controller, action='new')
         map.connect('metadata_standard_edit', '/metadata_standard/edit/{id}', controller=controller, action='edit', ckan_icon='pencil-square-o')
         map.connect('metadata_standard_delete', '/metadata_standard/delete/{id}', controller=controller, action='delete')
-        map.connect('metadata_standard_read', '/metadata_standard/{id}', controller=controller, action='read', ckan_icon='sitemap')
+        map.connect('metadata_standard_read', '/metadata_standard/{id}', controller=controller, action='read', ckan_icon='file-text-o')
         map.connect('metadata_standard_about', '/metadata_standard/about/{id}', controller=controller, action='about', ckan_icon='info-circle')
         map.connect('metadata_standard_activity', '/metadata_standard/activity/{id}', controller=controller, action='activity', ckan_icon='clock-o')
         map.connect('metadata_standard_attr_maps', '/metadata_standard/attr_maps/{id}', controller=controller, action='attr_maps', ckan_icon='random')
         map.connect('/metadata_standard/attr_map_new/{id}', controller=controller, action='attr_map_new')
         map.connect('/metadata_standard/attr_map_edit/{id}/{attr_map_id}', controller=controller, action='attr_map_edit')
         map.connect('/metadata_standard/attr_map_delete/{id}/{attr_map_id}', controller=controller, action='attr_map_delete')
+
+        controller = 'ckanext.metadata.controllers.metadata_schema:MetadataSchemaController'
+        map.connect('metadata_schema_index', '/metadata_standard/{metadata_standard_id}/metadata_schema', controller=controller, action='index')
+        map.connect('metadata_schema_new', '/metadata_standard/{metadata_standard_id}/metadata_schema/new', controller=controller, action='new')
+        map.connect('metadata_schema_edit', '/metadata_standard/{metadata_standard_id}/metadata_schema/edit/{id}', controller=controller, action='edit', ckan_icon='pencil-square-o')
+        map.connect('metadata_schema_delete', '/metadata_standard/{metadata_standard_id}/metadata_schema/delete/{id}', controller=controller, action='delete')
+        map.connect('metadata_schema_read', '/metadata_standard/{metadata_standard_id}/metadata_schema/{id}', controller=controller, action='read', ckan_icon='file-text-o')
+        map.connect('metadata_schema_about', '/metadata_standard/{metadata_standard_id}/metadata_schema/about/{id}', controller=controller, action='about', ckan_icon='info-circle')
+        map.connect('metadata_schema_activity', '/metadata_standard/{metadata_standard_id}/metadata_schema/activity/{id}', controller=controller, action='activity', ckan_icon='clock-o')
 
         controller = 'ckanext.metadata.controllers.workflow_state:WorkflowStateController'
         map.connect('workflow_state_index', '/workflow_state', controller=controller, action='index')

@@ -77,6 +77,8 @@ def metadata_record_activity_dictize(activity, context):
 def metadata_schema_dictize(metadata_schema, context):
 
     def group_display_name(group_id):
+        if not group_id:
+            return
         group = model.Group.get(group_id)
         group_dict = ckan_model_dictize.group_dictize(
             group, context, include_groups=False, include_tags=False, include_users=False, include_extras=False)
@@ -87,14 +89,11 @@ def metadata_schema_dictize(metadata_schema, context):
     metadata_standard = model_ext.MetadataStandard.get(metadata_schema.metadata_standard_id)
     metadata_standard_dict = metadata_standard_dictize(metadata_standard, context)
     metadata_schema_dict['display_name'] = metadata_standard_dict['display_name']
-    if metadata_schema.organization_id:
-        linked_display_name = group_display_name(metadata_schema.organization_id)
-    elif metadata_schema.infrastructure_id:
-        linked_display_name = group_display_name(metadata_schema.infrastructure_id)
-    else:
-        linked_display_name = None
+
+    linked_display_name = group_display_name(metadata_schema.organization_id or metadata_schema.infrastructure_id)
     if linked_display_name:
-        metadata_schema_dict['display_name'] += ' ({})'.format(linked_display_name)
+        metadata_schema_dict['display_name'] += ' - {}'.format(linked_display_name)
+
     return metadata_schema_dict
 
 

@@ -1,0 +1,59 @@
+{% import "macros/form.html" as form %}
+
+<form id="metadata-schema-form" class="form-horizontal" action="" method="post">
+  {{ form.errors(error_summary) }}
+
+  {{ form.hidden('metadata_standard_id', c.metadata_standard.name) }}
+
+  {{ form.select('organization_id', label=_('Organization'), id='field-organization',
+        options=organization_lookup_list, selected=data.organization_id, error=errors.organization_id,
+        attrs={'onchange': 'change_organization(this.value);'}, classes=['control-medium']) }}
+
+  {{ form.select('infrastructure_id', label=_('Infrastructure'), id='field-infrastructure',
+        options=infrastructure_lookup_list, selected=data.infrastructure_id, error=errors.infrastructure_id,
+        attrs={'onchange': 'change_infrastructure(this.value);'}, classes=['control-medium']) }}
+
+  {{ form.markdown('description', label=_('Description'), id='field-description',
+        placeholder=_('A little information about the metadata schema...'),
+        value=data.description, error=errors.description) }}
+
+  {{ form.textarea('schema_json', label=_('JSON Schema'), id='field-schema-json',
+        placeholder=_('The JSON dictionary defining the metadata schema.'),
+        value=data.schema_json, error=errors.schema_json,
+        attrs={'style': 'font-family: monospace'}, rows=12) }}
+
+  {{ form.required_message() }}
+
+  <div class="form-actions">
+    {% if action == "edit" %}
+      {% if h.check_access('metadata_schema_delete', {'id': data.id})  %}
+        <a class="btn btn-danger pull-left" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this Metadata Schema?') }}"
+           href="{% url_for controller='ckanext.metadata.controllers.metadata_schema:MetadataSchemaController', action='delete', id=data.id, metadata_standard_id=data.metadata_standard_id %}">
+          {% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
+      {% endif %}
+    {% endif %}
+    <button class="btn btn-primary" name="save" type="submit">
+      {%- if action == "edit" -%}
+        {{ _('Update Metadata Schema') }}
+      {%- else -%}
+        {{ _('Create Metadata Schema') }}
+      {%- endif -%}
+    </button>
+  </div>
+</form>
+
+<script type="text/javascript">
+
+  function change_organization(value) {
+    if (value !== "") {
+      document.getElementById("field-infrastructure").value = "";
+    }
+  }
+
+  function change_infrastructure(value) {
+    if (value !== "") {
+      document.getElementById("field-organization").value = "";
+    }
+  }
+
+</script>

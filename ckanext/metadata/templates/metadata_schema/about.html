@@ -1,0 +1,16 @@
+{% extends "metadata_schema/read_base.html" %}
+
+{% block subtitle %}{{ _('About') }} - {{ super() }}{% endblock %}
+
+{% block primary_content_inner %}
+  <h1>
+    {% block page_heading %}
+      {{ c.metadata_schema.display_name }}
+    {% endblock %}
+  </h1>
+  {% block metadata_schema_description %}
+    {% if h.get_translated(c.metadata_schema, 'description') %}
+      {{ h.render_markdown(h.get_translated(c.metadata_schema, 'description')) }}
+    {% endif %}
+  {% endblock %}
+{% endblock %}

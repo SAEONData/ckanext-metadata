@@ -1,0 +1,7 @@
+{% extends "metadata_schema/read_base.html" %}
+
+{% block primary_content_inner %}
+  <div style="font-family: monospace">
+    {{ c.metadata_schema.schema_json }}
+  </div>
+{% endblock %}

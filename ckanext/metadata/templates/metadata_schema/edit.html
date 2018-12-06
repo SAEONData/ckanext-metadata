@@ -1,0 +1,7 @@
+{% extends "metadata_schema/edit_base.html" %}
+
+{% block page_heading_class %}hide-heading{% endblock %}
+{% block page_heading %}{{ _('Edit Metadata Schema') }}{% endblock %}
+{% block subtitle %}
+  {{ _('Manage') }} - {{ c.metadata_schema.display_name }} - {{ _('Metadata Schemas') }}
+{% endblock %}

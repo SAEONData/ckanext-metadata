@@ -1,0 +1,19 @@
+{% extends "metadata_schema/edit_base.html" %}
+
+{% block page_heading %}{{ _('Create a Metadata Schema') }}{% endblock %}
+{% block page_header %}{% endblock %}
+{% block subtitle %}{{ _('Create a Metadata Schema') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  {% snippet "metadata_schema/snippets/breadcrumb_content_outer.html" %}
+  <li class="active">
+    {% block breadcrumb_link %}
+      {{ h.nav_link(_('Create a Metadata Schema'), action='new', metadata_standard_id=c.metadata_standard.name,
+        controller='ckanext.metadata.controllers.metadata_schema:MetadataSchemaController') }}
+    {% endblock %}
+  </li>
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_schema/snippets/helper.html" %}
+{% endblock %}

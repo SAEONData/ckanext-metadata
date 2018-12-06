@@ -11,12 +11,12 @@ Example:
       {% endfor %}
     </ul>
 #}
-{% set url = h.url_for('metadata_schema_read', action='read', id=metadata_schema.name) %}
+{% set url = h.url_for('metadata_schema_read', action='read', id=metadata_schema.name, metadata_standard_id=c.metadata_standard.name) %}
 {% block item %}
 <li class="media-item">
   {% block item_inner %}
     {% block image %}
-      <img src="{{ h.url_for_static('/images/metadata_schema.png') }}" alt="{{ metadata_schema.name }}" class="media-image">
+      <img src="{{ h.url_for_static('/images/metadata_schema.svg') }}" alt="{{ metadata_schema.name }}" class="media-image">
     {% endblock %}
     {% block title %}
       <h3 class="media-heading">{{ metadata_schema.display_name }}</h3>
