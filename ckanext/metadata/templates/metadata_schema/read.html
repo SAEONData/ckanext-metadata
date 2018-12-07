@@ -1,7 +1,7 @@
 {% extends "metadata_schema/read_base.html" %}
 
 {% block primary_content_inner %}
-  <div style="font-family: monospace">
-    {{ c.metadata_schema.schema_json }}
-  </div>
+  <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="24" readonly>
+    {{- c.metadata_schema.schema_json -}}
+  </textarea>
 {% endblock %}
