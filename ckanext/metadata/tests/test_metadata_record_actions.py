@@ -76,7 +76,7 @@ class TestMetadataRecordActions(ActionTestBase):
     @staticmethod
     def _make_input_dict_from_output_dict(output_dict):
         input_dict = output_dict.copy()
-        input_dict['metadata_json'] = json.dumps(input_dict['metadata_json'])
+        # input_dict['metadata_json'] = json.dumps(input_dict['metadata_json'])
         return input_dict
 
     def _assert_metadata_record_ok(self, obj, input_dict, **kwargs):

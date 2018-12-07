@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-import json
-
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
 
@@ -549,7 +547,7 @@ class TestMetadataSchemaActions(ActionTestBase):
                                        metadata_standard_id=metadata_schema['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id=metadata_record_1['infrastructures'][0]['id'],
-                                       schema_json=json.dumps(metadata_schema['schema_json']))
+                                       schema_json=metadata_schema['schema_json'])
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
@@ -570,7 +568,7 @@ class TestMetadataSchemaActions(ActionTestBase):
                                        metadata_standard_id=metadata_schema_1['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id='',
-                                       schema_json=json.dumps(metadata_schema_1['schema_json']))
+                                       schema_json=metadata_schema_1['schema_json'])
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
@@ -591,7 +589,7 @@ class TestMetadataSchemaActions(ActionTestBase):
                                        metadata_standard_id=metadata_schema['metadata_standard_id'],
                                        organization_id=metadata_record_1['owner_org'],
                                        infrastructure_id='',
-                                       schema_json=json.dumps(metadata_schema['schema_json']))
+                                       schema_json=metadata_schema['schema_json'])
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
@@ -612,7 +610,7 @@ class TestMetadataSchemaActions(ActionTestBase):
                                        metadata_standard_id=metadata_schema_1['metadata_standard_id'],
                                        organization_id='',
                                        infrastructure_id='',
-                                       schema_json=json.dumps(metadata_schema_1['schema_json']))
+                                       schema_json=metadata_schema_1['schema_json'])
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)

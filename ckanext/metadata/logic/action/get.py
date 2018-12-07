@@ -25,10 +25,14 @@ def metadata_standard_show(context, data_dict):
 
     :param id: the id or name of the metadata standard
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: dictionary
     """
     log.debug("Retrieving metadata standard: %r", data_dict)
+
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     metadata_standard_id = tk.get_or_bust(data_dict, 'id')
     metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
@@ -42,7 +46,7 @@ def metadata_standard_show(context, data_dict):
     context['metadata_standard'] = metadata_standard
     metadata_standard_dict = model_dictize.metadata_standard_dictize(metadata_standard, context)
 
-    result_dict, errors = tk.navl_validate(metadata_standard_dict, schema.metadata_standard_show_schema(), context)
+    result_dict, errors = tk.navl_validate(metadata_standard_dict, schema.metadata_standard_show_schema(deserialize_json), context)
     return result_dict
 
 
@@ -53,6 +57,8 @@ def metadata_standard_list(context, data_dict):
     
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: list of strings
     """
@@ -83,10 +89,14 @@ def metadata_schema_show(context, data_dict):
 
     :param id: the id or name of the metadata schema
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: dictionary
     """
     log.debug("Retrieving metadata schema: %r", data_dict)
+
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     metadata_schema_id = tk.get_or_bust(data_dict, 'id')
     metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
@@ -100,7 +110,7 @@ def metadata_schema_show(context, data_dict):
     context['metadata_schema'] = metadata_schema
     metadata_schema_dict = model_dictize.metadata_schema_dictize(metadata_schema, context)
 
-    result_dict, errors = tk.navl_validate(metadata_schema_dict, schema.metadata_schema_show_schema(), context)
+    result_dict, errors = tk.navl_validate(metadata_schema_dict, schema.metadata_schema_show_schema(deserialize_json), context)
     return result_dict
 
 
@@ -113,6 +123,8 @@ def metadata_schema_list(context, data_dict):
     :type metadata_standard_id: string
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: list of strings
     """
@@ -358,12 +370,15 @@ def metadata_record_show(context, data_dict):
 
     :param id: the id or name of the metadata record
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: dictionary
     """
     log.debug("Retrieving metadata record: %r", data_dict)
 
     model = context['model']
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
@@ -377,7 +392,7 @@ def metadata_record_show(context, data_dict):
     context['package'] = metadata_record
     metadata_record_dict = model_dictize.metadata_record_dictize(metadata_record, context)
 
-    result_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(), context)
+    result_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(deserialize_json), context)
     return result_dict
 
 
@@ -397,6 +412,8 @@ def metadata_record_list(context, data_dict):
     :type infrastructure_id: string
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: list of strings
     """
@@ -534,6 +551,8 @@ def metadata_record_validation_schema_list(context, data_dict):
     :type id: string
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: list of names (dictionaries if all_fields) of metadata schemas
     """
@@ -542,6 +561,7 @@ def metadata_record_validation_schema_list(context, data_dict):
     model = context['model']
     session = context['session']
     metadata_record = context.get('metadata_record')
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     if metadata_record:
         metadata_record_id = metadata_record.id
@@ -579,7 +599,7 @@ def metadata_record_validation_schema_list(context, data_dict):
     all_fields = asbool(data_dict.get('all_fields'))
     for (metadata_schema_name,) in metadata_schema_names:
         if all_fields:
-            result += [tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_name})]
+            result += [tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_name, 'deserialize_json': deserialize_json})]
         else:
             result += [metadata_schema_name]
 
@@ -772,6 +792,8 @@ def metadata_record_workflow_augmented_show(context, data_dict):
 
     :param id: the id or name of the metadata record
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: dictionary
     """
@@ -779,6 +801,7 @@ def metadata_record_workflow_augmented_show(context, data_dict):
 
     model = context['model']
     metadata_record = context.get('metadata_record')
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     if metadata_record:
         metadata_record_id = metadata_record.id
@@ -796,6 +819,7 @@ def metadata_record_workflow_augmented_show(context, data_dict):
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,
         'qualifier': 'workflow',
+        'kwargs': {'deserialize_json': deserialize_json}
     }
     return tk.get_action('jsonpatch_apply')(context, jsonpatch_params)
 
@@ -807,10 +831,14 @@ def workflow_state_show(context, data_dict):
 
     :param id: the id or name of the workflow state
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: dictionary
     """
     log.debug("Retrieving workflow state: %r", data_dict)
+
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     workflow_state_id = tk.get_or_bust(data_dict, 'id')
     workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
@@ -824,7 +852,7 @@ def workflow_state_show(context, data_dict):
     context['workflow_state'] = workflow_state
     workflow_state_dict = model_dictize.workflow_state_dictize(workflow_state, context)
 
-    result_dict, errors = tk.navl_validate(workflow_state_dict, schema.workflow_state_show_schema(), context)
+    result_dict, errors = tk.navl_validate(workflow_state_dict, schema.workflow_state_show_schema(deserialize_json), context)
     return result_dict
 
 
@@ -835,6 +863,8 @@ def workflow_state_list(context, data_dict):
 
     :param all_fields: return dictionaries instead of just names (optional, default: ``False``)
     :type all_fields: boolean
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: list of strings
     """

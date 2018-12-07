@@ -132,16 +132,22 @@ def json_pointer_validator(value):
     return value
 
 
-def deserialize_json(value):
+def deserialize_json(deserialize):
     """
     Converts a JSON-format string to an object - for use in "show" schemas
     enabling JSON fields to be nicely embedded in output dicts. If it cannot
     be deserialized, just return the value itself.
+    :param deserialize: True to do the conversion, False to do nothing
     """
-    try:
-        return json.loads(value)
-    except:
-        return value
+    def callable_(key, data, errors, context):
+        if deserialize:
+            value = data.get(key)
+            try:
+                data[key] = json.loads(value)
+            except:
+                pass
+
+    return callable_
 
 
 def url_validator(value):

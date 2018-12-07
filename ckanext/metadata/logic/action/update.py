@@ -51,6 +51,8 @@ def metadata_standard_update(context, data_dict):
 
     :param id: the id or name of the metadata standard to update
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the updated metadata standard (unless 'return_id_only' is set to True
               in the context, in which case just the metadata standard id will be returned)
@@ -63,6 +65,7 @@ def metadata_standard_update(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     metadata_standard_id = tk.get_or_bust(data_dict, 'id')
     metadata_standard = ckanext_model.MetadataStandard.get(metadata_standard_id)
@@ -99,7 +102,7 @@ def metadata_standard_update(context, data_dict):
         model.repo.commit()
 
     output = metadata_standard_id if return_id_only \
-        else tk.get_action('metadata_standard_show')(context, {'id': metadata_standard_id})
+        else tk.get_action('metadata_standard_show')(context, {'id': metadata_standard_id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -122,6 +125,8 @@ def metadata_schema_update(context, data_dict):
 
     :param id: the id or name of the metadata schema to update
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the updated metadata schema (unless 'return_id_only' is set to True
               in the context, in which case just the metadata schema id will be returned)
@@ -134,6 +139,7 @@ def metadata_schema_update(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     metadata_schema_id = tk.get_or_bust(data_dict, 'id')
     metadata_schema = ckanext_model.MetadataSchema.get(metadata_schema_id)
@@ -193,7 +199,7 @@ def metadata_schema_update(context, data_dict):
         model.repo.commit()
 
     output = metadata_schema_id if return_id_only \
-        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_id})
+        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -331,6 +337,8 @@ def metadata_record_update(context, data_dict):
 
     :param id: the id or name of the metadata record to update
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the updated metadata record (unless 'return_id_only' is set to True
               in the context, in which case just the record id will be returned)
@@ -343,6 +351,7 @@ def metadata_record_update(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
     redirect_from_create = context.get('redirect_from_create', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
@@ -435,7 +444,7 @@ def metadata_record_update(context, data_dict):
         tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
 
     output = metadata_record_id if return_id_only \
-        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
+        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -570,7 +579,7 @@ def metadata_record_validate(context, data_dict):
         validate_context['allow_side_effects'] = True
 
         metadata_dict = json.loads(metadata_record.extras['metadata_json'])
-        schema_dict = metadata_schema['schema_json']
+        schema_dict = json.loads(metadata_schema['schema_json'])
 
         json_validator = MetadataValidator(schema_dict, metadata_record_id, validate_context)
         validation_errors = json_validator.validate(metadata_dict)
@@ -717,6 +726,8 @@ def workflow_state_update(context, data_dict):
 
     :param id: the id or name of the workflow state to update
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the updated workflow state (unless 'return_id_only' is set to True
               in the context, in which case just the workflow state id will be returned)
@@ -729,6 +740,7 @@ def workflow_state_update(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     workflow_state_id = tk.get_or_bust(data_dict, 'id')
     workflow_state = ckanext_model.WorkflowState.get(workflow_state_id)
@@ -787,7 +799,7 @@ def workflow_state_update(context, data_dict):
         tk.get_action('metadata_record_index_update')(index_context, {'id': metadata_record.id})
 
     output = workflow_state_id if return_id_only \
-        else tk.get_action('workflow_state_show')(context, {'id': workflow_state_id})
+        else tk.get_action('workflow_state_show')(context, {'id': workflow_state_id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -859,7 +871,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     # get the metadata record dict, augmented with workflow annotations
     metadata_record_dict = tk.get_action('metadata_record_workflow_augmented_show')(
-        context, {'id': metadata_record_id})
+        context, {'id': metadata_record_id, 'deserialize_json': True})
     jsonpatch_ids = tk.get_action('metadata_record_workflow_annotation_list')(
         context, {'id': metadata_record_id})
 

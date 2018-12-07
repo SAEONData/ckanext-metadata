@@ -2,6 +2,7 @@
 
 import logging
 import json
+from paste.deploy.converters import asbool
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -37,6 +38,8 @@ def metadata_standard_create(context, data_dict):
     :param metadata_template_json: a complete example of a JSON metadata dictionary that conforms to this standard;
         may be used for initializing a search index
     :type metadata_template_json: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the newly created metadata standard (unless 'return_id_only' is set to True
               in the context, in which case just the metadata standard id will be returned)
@@ -50,6 +53,7 @@ def metadata_standard_create(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     data, errors = tk.navl_validate(data_dict, schema.metadata_standard_create_schema(), context)
     if errors:
@@ -69,7 +73,7 @@ def metadata_standard_create(context, data_dict):
         model.repo.commit()
 
     output = metadata_standard.id if return_id_only \
-        else tk.get_action('metadata_standard_show')(context, {'id': metadata_standard.id})
+        else tk.get_action('metadata_standard_show')(context, {'id': metadata_standard.id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -101,6 +105,8 @@ def metadata_schema_create(context, data_dict):
     :type organization_id: string
     :param infrastructure_id: the id or name of the associated infrastructure (nullable)
     :type infrastructure_id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the newly created metadata schema (unless 'return_id_only' is set to True
               in the context, in which case just the metadata schema id will be returned)
@@ -114,6 +120,7 @@ def metadata_schema_create(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     data, errors = tk.navl_validate(data_dict, schema.metadata_schema_create_schema(), context)
     if errors:
@@ -144,7 +151,7 @@ def metadata_schema_create(context, data_dict):
         model.repo.commit()
 
     output = metadata_schema.id if return_id_only \
-        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema.id})
+        else tk.get_action('metadata_schema_show')(context, {'id': metadata_schema.id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -284,6 +291,8 @@ def metadata_record_create(context, data_dict):
     :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content
     :type metadata_json: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     The following native package fields may also optionally be supplied:
         title, author, author_email, maintainer, maintainer_email, license_id, notes, url, version
@@ -303,6 +312,7 @@ def metadata_record_create(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     # this is (mostly) duplicating the schema validation that will be done in package_create below,
     # but we want to validate before doing the attribute mappings
@@ -348,7 +358,7 @@ def metadata_record_create(context, data_dict):
         model.repo.commit()
 
     output = metadata_record_id if return_id_only \
-        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id})
+        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -375,6 +385,8 @@ def workflow_state_create(context, data_dict):
     :param revert_state_id: the id or name of the state to which a metadata record is
         reverted in case it no longer fulfils the rules for this state (nullable)
     :type revert_state_id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the newly created workflow state (unless 'return_id_only' is set to True
               in the context, in which case just the workflow state id will be returned)
@@ -388,6 +400,7 @@ def workflow_state_create(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     data, errors = tk.navl_validate(data_dict, schema.workflow_state_create_schema(), context)
     if errors:
@@ -407,7 +420,7 @@ def workflow_state_create(context, data_dict):
         model.repo.commit()
 
     output = workflow_state.id if return_id_only \
-        else tk.get_action('workflow_state_show')(context, {'id': workflow_state.id})
+        else tk.get_action('workflow_state_show')(context, {'id': workflow_state.id, 'deserialize_json': deserialize_json})
     return output
 
 
