@@ -1,0 +1,25 @@
+{% extends "page.html" %}
+
+{% block subtitle %}{{ c.workflow_state.display_name }} - {{ _('Workflow States') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  {% snippet "workflow_state/snippets/breadcrumb_content_outer.html" %}
+  {% snippet "workflow_state/snippets/breadcrumb_content_item.html" %}
+{% endblock %}
+
+{% block content_action %}
+  {% if h.check_access('workflow_state_update', {'id': c.workflow_state.id}) %}
+    {% link_for _('Manage'), controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController',
+      action='edit', id=c.workflow_state.name, class_='btn', icon='wrench' %}
+  {% endif %}
+{% endblock %}
+
+{% block content_primary_nav %}
+  {{ h.build_nav_icon('workflow_state_read', _('Definition'), id=c.workflow_state.name) }}
+  {{ h.build_nav_icon('workflow_state_activity', _('Activity Stream'), id=c.workflow_state.name, offset=0) }}
+  {{ h.build_nav_icon('workflow_state_about', _('About'), id=c.workflow_state.name) }}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "workflow_state/snippets/info.html", workflow_state=c.workflow_state %}
+{% endblock %}

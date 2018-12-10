@@ -344,6 +344,7 @@ class TestWorkflowStateActions(ActionTestBase):
                          id=workflow_state1['id'])
         workflow_state2['revert_state_id'] = None
         del workflow_state2['revision_id']
+        del workflow_state2['display_name']
         assert_object_matches_dict(ckanext_model.WorkflowState.get(workflow_state2['id']), workflow_state2, json_values=('workflow_rules_json',))
 
     def test_delete_with_transition_references(self):

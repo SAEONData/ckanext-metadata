@@ -1,0 +1,19 @@
+{#
+Display a grid of workflow_state items.
+
+workflow_states - A list of workflow_states.
+
+Example:
+
+    {% snippet "workflow_state/snippets/workflow_state_list.html" %}
+
+#}
+{% block workflow_state_list %}
+  <ul class="media-grid" data-module="media-grid">
+    {% block workflow_state_list_inner %}
+      {% for workflow_state in workflow_states %}
+        {% snippet "workflow_state/snippets/workflow_state_item.html", workflow_state=workflow_state, position=loop.index %}
+      {% endfor %}
+    {% endblock %}
+  </ul>
+{% endblock %}

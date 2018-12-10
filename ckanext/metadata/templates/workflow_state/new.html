@@ -1,0 +1,19 @@
+{% extends "workflow_state/edit_base.html" %}
+
+{% block page_heading %}{{ _('Create a Workflow State') }}{% endblock %}
+{% block page_header %}{% endblock %}
+{% block subtitle %}{{ _('Create a Workflow State') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  {% snippet "workflow_state/snippets/breadcrumb_content_outer.html" %}
+  <li class="active">
+    {% block breadcrumb_link %}
+      {{ h.nav_link(_('Create a Workflow State'), action='new',
+        controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController') }}
+    {% endblock %}
+  </li>
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "workflow_state/snippets/helper.html" %}
+{% endblock %}

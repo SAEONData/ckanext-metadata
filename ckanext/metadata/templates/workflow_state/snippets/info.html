@@ -1,0 +1,36 @@
+{% block info %}
+<div class="module context-info">
+  <section class="module-content">
+    {% block inner %}
+      {% block image %}
+      <div class="image">
+        <a href="{{ workflow_state.url }}">
+          <img src="{{ h.url_for_static('/images/workflow_state.png') }}" width="190" height="118" alt="{{ workflow_state.name }}" />
+        </a>
+      </div>
+      {% endblock %}
+      {% block heading %}
+      <h1 class="heading">
+        {{ workflow_state.display_name }}
+        {% if workflow_state.state == 'deleted' %}
+          [{{ _('Deleted') }}]
+        {% endif %}
+      </h1>
+      {% endblock %}
+      {% block description %}
+        {% if h.get_translated(workflow_state, 'description') %}
+          <p>
+            {{ h.markdown_extract(h.get_translated(workflow_state, 'description'), 180) }}
+            {% link_for _('read more'), action='about', id=workflow_state.name,
+              controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController' %}
+          </p>
+        {% endif %}
+      {% endblock %}
+      <p>
+        Metadata records in this workflow state are
+        <b>{% if workflow_state.metadata_records_private %}not {% endif %}published</b>.
+      </p>
+    {% endblock %}
+  </section>
+</div>
+{% endblock %}

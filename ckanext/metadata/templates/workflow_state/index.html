@@ -1,10 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Workflow States</title>
-</head>
-<body>
-Set up workflow states here!
-</body>
-</html>
+{% extends "page.html" %}
+
+{% block subtitle %}{{ _('Workflow States') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  <li class="active">{% link_for _('Workflow States'), action='index',
+    controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController' %}</li>
+{% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% block page_primary_action %}
+  {% if h.check_access('workflow_state_create') %}
+    {% link_for _('Add Workflow State'), action='new', class_='btn btn-primary', icon='plus-square',
+      controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController' %}
+  {% endif %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <h1 class="hide-heading">{{ _('Workflow State') }}</h1>
+  {% block workflow_states_search_form %}
+    {% snippet 'snippets/search_form.html', form_id='workflow-state-search-form', type='workflow_state',
+      query=c.q, sorting_selected=c.sort_by_selected, count=c.page.item_count,
+      placeholder=_('Search workflow states...'), show_empty=request.params, no_bottom_border=true if c.page.items,
+      sorting = [(_('Name Ascending'), 'display_name asc'), (_('Name Descending'), 'display_name desc')] %}
+  {% endblock %}
+  {% block workflow_states_list %}
+    {% if c.page.items or request.params %}
+      {% if c.page.items %}
+        {% snippet "workflow_state/snippets/workflow_state_list.html", workflow_states=c.page.items %}
+      {% endif %}
+    {% else %}
+      <p class="empty">
+        {{ _('There are currently no workflow states for this site') }}.
+        {% if h.check_access('workflow_state_create') %}
+          {% link_for _('How about creating one?'), action='new',
+            controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController' %}</a>.
+        {% endif %}
+      </p>
+    {% endif %}
+  {% endblock %}
+  {% block page_pagination %}
+    {{ c.page.pager(q=c.q or '', sort=c.sort_by_selected or '') }}
+  {% endblock %}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "workflow_state/snippets/helper.html" %}
+{% endblock %}

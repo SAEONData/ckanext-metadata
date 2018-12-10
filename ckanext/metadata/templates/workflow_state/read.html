@@ -1,0 +1,11 @@
+{% extends "workflow_state/read_base.html" %}
+
+{% block page_primary_action %}
+  {# manage workflow transitions? #}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="24" readonly>
+    {{- c.workflow_state.workflow_rules_json -}}
+  </textarea>
+{% endblock %}

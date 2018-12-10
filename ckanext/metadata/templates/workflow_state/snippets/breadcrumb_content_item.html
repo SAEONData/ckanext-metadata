@@ -1,0 +1,4 @@
+<li>
+  {% link_for c.workflow_state.display_name |truncate(35), action='read', id=c.workflow_state.name,
+    controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController' %}
+</li>

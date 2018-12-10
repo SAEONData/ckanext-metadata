@@ -1,0 +1,39 @@
+{#
+Renders a media item for a workflow_state. This should be used in a list.
+
+workflow_state - A workflow_state dict.
+
+Example:
+
+    <ul class="media-grid">
+      {% for workflow_state in workflow_states %}
+        {% snippet "workflow_state/snippets/workflow_state_item.html", workflow_state=workflow_state %}
+      {% endfor %}
+    </ul>
+#}
+{% set url = h.url_for('workflow_state_read', action='read', id=workflow_state.name) %}
+{% block item %}
+<li class="media-item">
+  {% block item_inner %}
+    {% block image %}
+      <img src="{{ h.url_for_static('/images/workflow_state.png') }}" alt="{{ workflow_state.name }}" class="media-image">
+    {% endblock %}
+    {% block title %}
+      <h3 class="media-heading">{{ workflow_state.display_name }}</h3>
+    {% endblock %}
+    {% block description %}
+      {% if h.get_translated(workflow_state, 'description') %}
+        <p>{{ h.markdown_extract(h.get_translated(workflow_state, 'description'), extract_length=80) }}</p>
+      {% endif %}
+    {% endblock %}
+    {% block link %}
+    <a href="{{ url }}" title="{{ _('View {name}').format(name=workflow_state.display_name) }}" class="media-view">
+      <span>{{ _('View {name}').format(name=workflow_state.display_name) }}</span>
+    </a>
+    {% endblock %}
+  {% endblock %}
+</li>
+{% endblock %}
+{% if position is divisibleby 3 %}
+  <li class="clearfix js-hide"></li>
+{% endif %}

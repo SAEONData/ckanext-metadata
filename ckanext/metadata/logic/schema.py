@@ -414,6 +414,7 @@ def workflow_state_show_schema(deserialize_json=False):
     schema.update({
         'workflow_rules_json': [v.deserialize_json(deserialize_json)],
         'revert_state_id': [v.convert_id_to_name('workflow_state')],
+        'display_name': [],
     })
     return schema
 

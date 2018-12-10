@@ -4,7 +4,8 @@ Displays a test for results of a search.
 
 query        - The text that was searched for
 count        - The number of results for the search
-type         - Search result type (dataset, group, organization, infrastructure, metadata_collection, metadata_standard, metadata_schema)
+type         - Search result type (dataset, group, organization, infrastructure, metadata_collection,
+               metadata_standard, metadata_schema, workflow_state)
 
 Example:
 
@@ -52,6 +53,12 @@ Example:
   {% set text_query_none = _('No metadata schemas found for "{query}"') %}
   {% set text_no_query = ungettext('{number} metadata schema found', '{number} metadata schemas found', count) %}
   {% set text_no_query_none = _('No metadata schemas found') %}
+
+{% elif type == 'workflow_state' %}
+  {% set text_query = ungettext('{number} workflow state found for "{query}"', '{number} workflow states found for "{query}"', count) %}
+  {% set text_query_none = _('No workflow states found for "{query}"') %}
+  {% set text_no_query = ungettext('{number} workflow state found', '{number} workflow states found', count) %}
+  {% set text_no_query_none = _('No workflow states found') %}
 {%- endif -%}
 
 {% if query %}

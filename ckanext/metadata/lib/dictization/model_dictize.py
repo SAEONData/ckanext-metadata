@@ -106,7 +106,9 @@ def metadata_standard_dictize(metadata_standard, context):
 
 
 def workflow_state_dictize(workflow_state, context):
-    return _object_dictize('workflow_state', workflow_state, context)
+    workflow_state_dict = _object_dictize('workflow_state', workflow_state, context)
+    workflow_state_dict['display_name'] = workflow_state_dict['title'] or workflow_state_dict['name']
+    return workflow_state_dict
 
 
 def workflow_transition_dictize(workflow_transition, context):

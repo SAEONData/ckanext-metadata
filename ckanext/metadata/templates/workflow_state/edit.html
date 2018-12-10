@@ -1,0 +1,7 @@
+{% extends "workflow_state/edit_base.html" %}
+
+{% block page_heading_class %}hide-heading{% endblock %}
+{% block page_heading %}{{ _('Edit Workflow State') }}{% endblock %}
+{% block subtitle %}
+  {{ _('Manage') }} - {{ c.workflow_state.display_name }} - {{ _('Workflow States') }}
+{% endblock %}

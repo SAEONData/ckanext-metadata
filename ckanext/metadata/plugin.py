@@ -100,6 +100,12 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
 
         controller = 'ckanext.metadata.controllers.workflow_state:WorkflowStateController'
         map.connect('workflow_state_index', '/workflow_state', controller=controller, action='index')
+        map.connect('workflow_state_new', '/workflow_state/new', controller=controller, action='new')
+        map.connect('workflow_state_edit', '/workflow_state/edit/{id}', controller=controller, action='edit', ckan_icon='pencil-square-o')
+        map.connect('workflow_state_delete', '/workflow_state/delete/{id}', controller=controller, action='delete')
+        map.connect('workflow_state_read', '/workflow_state/{id}', controller=controller, action='read', ckan_icon='file-text-o')
+        map.connect('workflow_state_about', '/workflow_state/about/{id}', controller=controller, action='about', ckan_icon='info-circle')
+        map.connect('workflow_state_activity', '/workflow_state/activity/{id}', controller=controller, action='activity', ckan_icon='clock-o')
 
         return map
 
