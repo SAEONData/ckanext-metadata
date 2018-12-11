@@ -1,0 +1,22 @@
+{% extends "page.html" %}
+
+{% block breadcrumb_content %}
+  {% snippet "workflow_transition/snippets/breadcrumb_content_outer.html" %}
+  {% snippet "workflow_transition/snippets/breadcrumb_content_manage.html" %}
+{% endblock %}
+
+{% block page_primary_action %}
+  {% link_for _('Back to workflow transitions'), controller='ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController',
+    action='index', class_='btn pull-right', icon='arrow-left' %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <h1 class="page-heading">{{ _('Create Workflow Transition') }}</h1>
+  {% block form %}
+    {{ c.form | safe }}
+  {% endblock %}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "workflow_transition/snippets/info.html" %}
+{% endblock %}

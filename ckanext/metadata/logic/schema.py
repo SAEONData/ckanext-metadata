@@ -442,5 +442,7 @@ def workflow_transition_show_schema():
     schema.update({
         'from_state_id': [v.convert_id_to_name('workflow_state')],
         'to_state_id': [v.convert_id_to_name('workflow_state')],
+        'from_state_display_name': [],
+        'to_state_display_name': [],
     })
     return schema

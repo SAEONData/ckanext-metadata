@@ -1,0 +1,46 @@
+{% extends "page.html" %}
+
+{% block breadcrumb_content %}
+  {% snippet "workflow_transition/snippets/breadcrumb_content_outer.html" %}
+{% endblock %}
+
+{% block subtitle %}{{ _('Workflow Transitions') }}{% endblock %}
+
+{% block page_primary_action %}
+  {% link_for _('Create Workflow Transition'), controller='ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController',
+    action='new', class_='btn btn-primary', icon='plus-square' %}
+
+  {% link_for _('Back to workflow states'), action='index', class_='btn pull-right', icon='arrow-left',
+    controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController' %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <h3 class="page-heading">{{ _('{0} workflow transition(s)'.format(c.workflow_transitions|length)) }}</h3>
+  <table class="table table-header table-hover table-bordered" id="workflow-transition-table">
+    <thead>
+      <tr>
+        <th>{{ _('From State') }}</th>
+        <th>{{ _('To State') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for workflow_transition in c.workflow_transitions %}
+      <tr>
+        <td>{{ workflow_transition.from_state_display_name }}</td>
+        <td>{{ workflow_transition.to_state_display_name }}
+          <div class="btn-group pull-right">
+            <a class="btn btn-danger btn-small" href="{% url_for controller='ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController',
+                                                         action='delete', id=workflow_transition.id %}"
+               data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this workflow transition?') }}"
+               title="{{ _('Delete') }}">{% block delete_button_text %}<i class="fa fa-times"></i>{% endblock %}</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "workflow_transition/snippets/info.html" %}
+{% endblock %}

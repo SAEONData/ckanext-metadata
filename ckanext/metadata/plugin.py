@@ -107,6 +107,12 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         map.connect('workflow_state_about', '/workflow_state/about/{id}', controller=controller, action='about', ckan_icon='info-circle')
         map.connect('workflow_state_activity', '/workflow_state/activity/{id}', controller=controller, action='activity', ckan_icon='clock-o')
 
+        controller = 'ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController'
+        map.connect('workflow_transition_index', '/workflow_transition', controller=controller, action='index')
+        map.connect('workflow_transition_new', '/workflow_transition/new', controller=controller, action='new')
+        map.connect('workflow_transition_edit', '/workflow_transition/edit/{id}', controller=controller, action='edit')
+        map.connect('workflow_transition_delete', '/workflow_transition/delete/{id}', controller=controller, action='delete')
+
         return map
 
     def after_map(self, map):

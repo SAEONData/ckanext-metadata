@@ -1,0 +1,21 @@
+{% import "macros/form.html" as form %}
+
+<form id="workflow-transition-form" class="form-horizontal" action="" method="post">
+  {{ form.errors(error_summary) }}
+
+  {{ form.select('from_state_id', label=_('From State'), id='field-from-state-id',
+        options=workflow_state_lookup_list, selected=data.from_state_id, error=errors.from_state_id,
+        classes=['control-medium']) }}
+
+  {{ form.select('to_state_id', label=_('To State'), id='field-to-state-id',
+        options=workflow_state_lookup_list, selected=data.to_state_id, error=errors.to_state_id,
+        classes=['control-medium'], is_required=true) }}
+
+  {{ form.required_message() }}
+
+  <div class="form-actions">
+    <button class="btn btn-primary" name="save" type="submit">
+      {{ _('Create Workflow Transition') }}
+    </button>
+  </div>
+</form>

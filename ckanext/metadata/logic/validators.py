@@ -570,7 +570,7 @@ def workflow_transition_graph_validator(key, data, errors, context):
         raise tk.Invalid(_("Transition loop in workflow state graph"))
 
     if ckanext_model.WorkflowState.revert_path_exists(from_state_id, to_state_id):
-        raise tk.Invalid(_("Backward transition in workflow state graph"))
+        raise tk.Invalid(_("Backward transition in workflow state graph (check revert states)"))
 
 
 def metadata_template_json_path_validator(key, data, errors, context):

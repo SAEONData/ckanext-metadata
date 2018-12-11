@@ -1,0 +1,17 @@
+  <div class="module module-narrow module-shallow">
+    <h2 class="module-heading">
+      <i class="fa fa-lg fa-info-circle"></i>
+      {{ _('What are workflow transitions?') }}
+    </h2>
+    <div class="module-content">
+      {% trans %}
+        <p>
+          Workflow transitions define the permissible changes in workflow state that a metadata record may undergo.
+        </p>
+        <p>
+          A workflow transition with a null from-state represents an initial transition, which may be applied to a
+          metadata record that does not yet have any workflow state assigned to it.
+        </p>
+      {% endtrans %}
+    </div>
+  </div>

@@ -112,7 +112,18 @@ def workflow_state_dictize(workflow_state, context):
 
 
 def workflow_transition_dictize(workflow_transition, context):
-    return _object_dictize('workflow_transition', workflow_transition, context)
+
+    def workflow_state_display_name(workflow_state_id):
+        if not workflow_state_id:
+            return tk._('(None)')
+        workflow_state = model_ext.WorkflowState.get(workflow_state_id)
+        workflow_state_dict = workflow_state_dictize(workflow_state, context)
+        return workflow_state_dict['display_name']
+
+    workflow_transition_dict = _object_dictize('workflow_transition', workflow_transition, context)
+    workflow_transition_dict['from_state_display_name'] = workflow_state_display_name(workflow_transition.from_state_id)
+    workflow_transition_dict['to_state_display_name'] = workflow_state_display_name(workflow_transition.to_state_id)
+    return workflow_transition_dict
 
 
 def metadata_json_attr_map_dictize(metadata_json_attr_map, context):
