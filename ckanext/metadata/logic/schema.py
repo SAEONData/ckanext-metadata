@@ -147,14 +147,14 @@ def metadata_record_show_schema(deserialize_json=False):
     schema.update({
         'owner_org': [v.convert_id_to_name('organization')],
         'metadata_standard_id': [convert_from_extras, v.convert_id_to_name('metadata_standard')],
-        'metadata_json': [convert_from_extras, v.deserialize_json(deserialize_json)],
+        'metadata_json': [convert_from_extras, v.format_json(deserialize_json)],
         'metadata_collection_id': [convert_from_extras, v.convert_id_to_name('metadata_collection')],
         'infrastructures': {
             'id': [v.convert_id_to_name('infrastructure')],
             '__extras': [ignore],
         },
         'validated': [convert_from_extras, boolean_validator],
-        'errors': [convert_from_extras, v.deserialize_json(deserialize_json)],
+        'errors': [convert_from_extras, v.format_json(deserialize_json)],
         'workflow_state_id': [convert_from_extras, default(None), v.convert_id_to_name('workflow_state')],
         'private': [],
         'extras': _extras_schema(),
@@ -300,7 +300,7 @@ def metadata_standard_show_schema(deserialize_json=False):
     _make_show_schema(schema)
     schema.update({
         'parent_standard_id': [v.convert_id_to_name('metadata_standard')],
-        'metadata_template_json': [v.deserialize_json(deserialize_json)],
+        'metadata_template_json': [v.format_json(deserialize_json)],
         'display_name': [],
     })
     return schema
@@ -378,7 +378,7 @@ def metadata_schema_show_schema(deserialize_json=False):
     schema = metadata_schema_create_schema()
     _make_show_schema(schema)
     schema.update({
-        'schema_json': [v.deserialize_json(deserialize_json)],
+        'schema_json': [v.format_json(deserialize_json)],
         'metadata_standard_id': [v.convert_id_to_name('metadata_standard')],
         'organization_id': [v.convert_id_to_name('organization')],
         'infrastructure_id': [v.convert_id_to_name('infrastructure')],
@@ -413,7 +413,7 @@ def workflow_state_show_schema(deserialize_json=False):
     schema = workflow_state_create_schema()
     _make_show_schema(schema)
     schema.update({
-        'workflow_rules_json': [v.deserialize_json(deserialize_json)],
+        'workflow_rules_json': [v.format_json(deserialize_json)],
         'revert_state_id': [v.convert_id_to_name('workflow_state')],
         'display_name': [],
     })
