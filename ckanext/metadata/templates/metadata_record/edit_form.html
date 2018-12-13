@@ -1,0 +1,42 @@
+{% import "macros/form.html" as form %}
+
+<form id="metadata-record-form" class="form-horizontal" action="" method="post">
+  {{ form.errors(error_summary) }}
+
+  {{ form.hidden('owner_org', c.organization.name) }}
+  {{ form.hidden('metadata_collection_id', c.metadata_collection.name) }}
+
+  {{ form.select('metadata_standard_id', label=_('Metadata Standard'), id='field-metadata-standard',
+        options=metadata_standard_lookup_list, selected=data.metadata_standard_id, error=errors.metadata_standard_id,
+        classes=['control-medium'], is_required=true) }}
+
+  {{ form.textarea('metadata_json', label=_('Metadata JSON'), id='field-metadata-json',
+        placeholder=_('The JSON metadata dictionary.'),
+        value=data.metadata_json, error=errors.metadata_json, is_required=true,
+        attrs={'style': 'font-family: monospace'}, rows=12) }}
+
+  {% call form.multiselect('infrastructure_ids', label=_('Infrastructures'), id='field-infrastructures',
+        options=infrastructure_lookup_list, selected=selected_infrastructure_ids, error=errors.infrastructures,
+        classes=['control-medium']) %}
+    {{ form.info(_('Select the infrastructure(s) with which to associate the metadata record. Use Ctrl+Click to select / deselect individual items.')) }}
+  {% endcall %}
+
+  {{ form.required_message() }}
+
+  <div class="form-actions">
+    {% if action == "edit" %}
+      {% if h.check_access('metadata_record_delete', {'id': data.id})  %}
+        <a class="btn btn-danger pull-left" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this Metadata Record?') }}"
+           href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController', action='delete', id=data.id, organization_id=data.owner_org, metadata_collection_id=data.metadata_collection_id %}">
+          {% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
+      {% endif %}
+    {% endif %}
+    <button class="btn btn-primary" name="save" type="submit">
+      {%- if action == "edit" -%}
+        {{ _('Update Metadata Record') }}
+      {%- else -%}
+        {{ _('Create Metadata Record') }}
+      {%- endif -%}
+    </button>
+  </div>
+</form>

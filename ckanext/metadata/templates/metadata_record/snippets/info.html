@@ -1,0 +1,30 @@
+{% block info %}
+<div class="module context-info">
+  <section class="module-content">
+    {% block inner %}
+      {% block image %}
+      <div class="image">
+        <a href="{{ metadata_record.url }}">
+          <img src="{{ h.url_for_static('/images/metadata_record.png') }}" width="190" height="118" alt="{{ metadata_record.name }}" />
+        </a>
+      </div>
+      {% endblock %}
+      {% block heading %}
+      <h1 class="heading">
+        {{ metadata_record.display_name }}
+        {% if metadata_record.state == 'deleted' %}
+          [{{ _('Deleted') }}]
+        {% endif %}
+      </h1>
+      {% endblock %}
+      {% block description %}
+        {% if h.get_translated(metadata_record, 'description') %}
+          <p>
+            {{ h.markdown_extract(h.get_translated(metadata_record, 'description'), 180) }}
+          </p>
+        {% endif %}
+      {% endblock %}
+    {% endblock %}
+  </section>
+</div>
+{% endblock %}

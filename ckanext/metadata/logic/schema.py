@@ -158,6 +158,7 @@ def metadata_record_show_schema(deserialize_json=False):
         'workflow_state_id': [convert_from_extras, default(None), v.convert_id_to_name('workflow_state')],
         'private': [],
         'extras': _extras_schema(),
+        'display_name': [],
     })
     return schema
 

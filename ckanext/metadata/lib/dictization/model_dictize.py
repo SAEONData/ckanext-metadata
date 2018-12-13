@@ -29,10 +29,11 @@ def metadata_record_dictize(pkg, context):
         result = execute(q, package_rev, context).first()
     if not result:
         raise tk.ObjectNotFound
+
     result_dict = d.table_dictize(result, context)
-    # strip whitespace from title
     if result_dict.get('title'):
         result_dict['title'] = result_dict['title'].strip()
+    result_dict['display_name'] = result_dict['title'] or result_dict['name'] or result_dict['id']
 
     # extras
     if is_latest_revision:

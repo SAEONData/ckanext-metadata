@@ -1,0 +1,7 @@
+{% extends "metadata_record/read_base.html" %}
+
+{% block primary_content_inner %}
+  <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="24" readonly>
+    {{- c.metadata_record.metadata_json -}}
+  </textarea>
+{% endblock %}

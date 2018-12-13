@@ -1,0 +1,19 @@
+{#
+Display a grid of metadata_record items.
+
+metadata_records - A list of metadata_records.
+
+Example:
+
+    {% snippet "metadata_record/snippets/metadata_record_list.html" %}
+
+#}
+{% block metadata_record_list %}
+  <ul class="media-grid" data-module="media-grid">
+    {% block metadata_record_list_inner %}
+      {% for metadata_record in metadata_records %}
+        {% snippet "metadata_record/snippets/metadata_record_item.html", metadata_record=metadata_record, position=loop.index %}
+      {% endfor %}
+    {% endblock %}
+  </ul>
+{% endblock %}

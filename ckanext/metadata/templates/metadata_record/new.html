@@ -1,0 +1,19 @@
+{% extends "metadata_record/edit_base.html" %}
+
+{% block page_heading %}{{ _('Create a Metadata Record') }}{% endblock %}
+{% block page_header %}{% endblock %}
+{% block subtitle %}{{ _('Create a Metadata Record') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  {% snippet "metadata_record/snippets/breadcrumb_content_outer.html" %}
+  <li class="active">
+    {% block breadcrumb_link %}
+      {{ h.nav_link(_('Create a Metadata Record'), action='new', organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name,
+        controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController') }}
+    {% endblock %}
+  </li>
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_record/snippets/helper.html" %}
+{% endblock %}

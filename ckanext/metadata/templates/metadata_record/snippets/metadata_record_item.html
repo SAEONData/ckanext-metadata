@@ -1,0 +1,40 @@
+{#
+Renders a media item for a metadata_record. This should be used in a list.
+
+metadata_record - A metadata_record dict.
+
+Example:
+
+    <ul class="media-grid">
+      {% for metadata_record in metadata_records %}
+        {% snippet "metadata_record/snippets/metadata_record_item.html", metadata_record=metadata_record %}
+      {% endfor %}
+    </ul>
+#}
+{% set url = h.url_for('metadata_record_read', action='read', id=metadata_record.id,
+                       organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) %}
+{% block item %}
+<li class="media-item">
+  {% block item_inner %}
+    {% block image %}
+      <img src="{{ h.url_for_static('/images/metadata_record.png') }}" alt="{{ metadata_record.name }}" class="media-image">
+    {% endblock %}
+    {% block title %}
+      <h3 class="media-heading">{{ metadata_record.display_name }}</h3>
+    {% endblock %}
+    {% block description %}
+      {% if h.get_translated(metadata_record, 'description') %}
+        <p>{{ h.markdown_extract(h.get_translated(metadata_record, 'description'), extract_length=80) }}</p>
+      {% endif %}
+    {% endblock %}
+    {% block link %}
+    <a href="{{ url }}" title="{{ _('View {name}').format(name=metadata_record.display_name) }}" class="media-view">
+      <span>{{ _('View {name}').format(name=metadata_record.display_name) }}</span>
+    </a>
+    {% endblock %}
+  {% endblock %}
+</li>
+{% endblock %}
+{% if position is divisibleby 3 %}
+  <li class="clearfix js-hide"></li>
+{% endif %}

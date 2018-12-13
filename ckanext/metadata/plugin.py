@@ -76,6 +76,14 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         controller = 'ckanext.metadata.controllers.organization:OrganizationController'
         map.connect('organization_datasets', '/organization/datasets/{id}', controller=controller, action='datasets', ckan_icon='site-map')
 
+        controller = 'ckanext.metadata.controllers.metadata_record:MetadataRecordController'
+        map.connect('metadata_record_index', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record', controller=controller, action='index')
+        map.connect('metadata_record_new', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/new', controller=controller, action='new')
+        map.connect('metadata_record_edit', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/edit/{id}', controller=controller, action='edit', ckan_icon='pencil-square-o')
+        map.connect('metadata_record_delete', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/delete/{id}', controller=controller, action='delete')
+        map.connect('metadata_record_read', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/{id}', controller=controller, action='read', ckan_icon='file-text-o')
+        map.connect('metadata_record_activity', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/activity/{id}', controller=controller, action='activity', ckan_icon='clock-o')
+
         controller = 'ckanext.metadata.controllers.metadata_standard:MetadataStandardController'
         map.connect('metadata_standard_index', '/metadata_standard', controller=controller, action='index')
         map.connect('metadata_standard_new', '/metadata_standard/new', controller=controller, action='new')

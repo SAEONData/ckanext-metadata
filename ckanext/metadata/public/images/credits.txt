@@ -1,3 +1,4 @@
 metadata_schema: https://json-schema.org/assets/logo.svg
 metadata_standard: Icon made by Smashicons from www.flaticon.com (search term: standard)
+metadata_record: adapted from https://json-schema.org/assets/logo.svg
 workflow_state: Icon made by Freepik from www.flaticon.com (search term: to do list)

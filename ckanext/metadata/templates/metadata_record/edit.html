@@ -1,0 +1,7 @@
+{% extends "metadata_record/edit_base.html" %}
+
+{% block page_heading_class %}hide-heading{% endblock %}
+{% block page_heading %}{{ _('Edit Metadata Record') }}{% endblock %}
+{% block subtitle %}
+  {{ _('Manage') }} - {{ c.metadata_record.display_name }} - {{ _('Metadata Records') }}
+{% endblock %}

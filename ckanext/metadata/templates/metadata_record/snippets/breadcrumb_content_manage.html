@@ -1,0 +1,4 @@
+<li class="active">
+  {% link_for _('Manage'), controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
+    action='edit', id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}
+</li>

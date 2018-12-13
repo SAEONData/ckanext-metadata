@@ -1,0 +1,5 @@
+<li>
+  {% link_for c.metadata_record.display_name |truncate(35), action='read',
+    id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name,
+    controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController' %}
+</li>
