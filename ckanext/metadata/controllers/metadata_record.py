@@ -42,6 +42,13 @@ class MetadataRecordController(tk.BaseController):
             if tk.c.metadata_collection['organization_id'] not in (org['id'], org['name']):
                 tk.abort(400, tk._('Metadata collection does not belong to the specified organization'))
 
+    @staticmethod
+    def _set_additionalinfo_on_context(metadata_record):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': metadata_record['metadata_standard_id']})
+        if metadata_record['workflow_state_id']:
+            tk.c.workflow_state = tk.get_action('workflow_state_show')(context, {'id': metadata_record['workflow_state_id']})
+
     def index(self, organization_id=None, metadata_collection_id=None):
         self._set_containers_on_context(organization_id, metadata_collection_id)
 
@@ -155,6 +162,7 @@ class MetadataRecordController(tk.BaseController):
                 'infrastructure_lookup_list': self._infrastructure_lookup_list(),
                 'selected_infrastructure_ids': [i['id'] for i in data['infrastructures']]}
 
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
         tk.c.form = tk.render('metadata_record/edit_form.html', extra_vars=vars)
         return tk.render('metadata_record/edit.html')
 
@@ -184,13 +192,36 @@ class MetadataRecordController(tk.BaseController):
         self._set_containers_on_context(organization_id, metadata_collection_id)
         context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
         tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
         return tk.render('metadata_record/read.html')
 
     def activity(self, id, organization_id=None, metadata_collection_id=None):
         self._set_containers_on_context(organization_id, metadata_collection_id)
         context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
         tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
         return tk.render('metadata_record/activity_stream.html')
+
+    def status(self, id, organization_id=None, metadata_collection_id=None):
+        self._set_containers_on_context(organization_id, metadata_collection_id)
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        return tk.render('metadata_record/status.html')
+
+    def validate(self, id, organization_id=None, metadata_collection_id=None):
+        self._set_containers_on_context(organization_id, metadata_collection_id)
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        return tk.render('metadata_record/validate.html')
+
+    def workflow(self, id, organization_id=None, metadata_collection_id=None):
+        self._set_containers_on_context(organization_id, metadata_collection_id)
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        return tk.render('metadata_record/workflow.html')
 
     @staticmethod
     def _metadata_standard_lookup_list():

@@ -1,0 +1,29 @@
+{% extends "metadata_record/read_base.html" %}
+
+{% block subtitle %}{{ _('Status') }} - {{ super() }}{% endblock %}
+
+{% block primary_content_inner %}
+  <h2 class="hide-heading">{% block page_heading %}{{ _('Status') }}{% endblock %}</h2>
+  {% block validation %}
+    <p>
+      <label>{{ _('Validated') }}</label> {{ _('Yes') if c.metadata_record.validated else _('No') }}
+    </p>
+    {% if c.metadata_record.validated %}
+      <p>
+        <label>{{ _('Validation Errors') }}</label>
+        {% if c.metadata_record.errors == '{}' %}
+          {{ _('None') }}
+        {% else %}
+          <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="12" readonly>
+            {{- c.metadata_record.errors -}}
+          </textarea>
+        {% endif %}
+      </p>
+    {% endif %}
+  {% endblock %}
+  {% block workflow %}
+    <p>
+      <label>{{ _('Workflow State') }}</label> {{ c.workflow_state.display_name if c.workflow_state else _('None') }}
+    </p>
+  {% endblock %}
+{% endblock %}

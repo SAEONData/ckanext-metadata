@@ -24,6 +24,16 @@
           </p>
         {% endif %}
       {% endblock %}
+      {% block metadata_standard %}
+          <p>
+            {{ _('Metadata Standard') }}: {{ metadata_standard.display_name }}
+          </p>
+      {% endblock %}
+      {% block workflow_state %}
+          <p>
+            {{ _('Workflow State') }}: {{ workflow_state.display_name if workflow_state else _('None') }}
+          </p>
+      {% endblock %}
     {% endblock %}
   </section>
 </div>

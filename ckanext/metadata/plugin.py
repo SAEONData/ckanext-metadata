@@ -83,6 +83,9 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         map.connect('metadata_record_delete', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/delete/{id}', controller=controller, action='delete')
         map.connect('metadata_record_read', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/{id}', controller=controller, action='read', ckan_icon='file-text-o')
         map.connect('metadata_record_activity', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/activity/{id}', controller=controller, action='activity', ckan_icon='clock-o')
+        map.connect('metadata_record_status', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/status/{id}', controller=controller, action='status', ckan_icon='info-circle')
+        map.connect('metadata_record_validate', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/validate/{id}', controller=controller, action='validate', ckan_icon='check-square-o')
+        map.connect('metadata_record_workflow', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/workflow/{id}', controller=controller, action='workflow', ckan_icon='caret-square-o-right')
 
         controller = 'ckanext.metadata.controllers.metadata_standard:MetadataStandardController'
         map.connect('metadata_standard_index', '/metadata_standard', controller=controller, action='index')
