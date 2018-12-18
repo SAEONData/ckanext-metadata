@@ -167,26 +167,16 @@ class MetadataRecordController(tk.BaseController):
         return tk.render('metadata_record/edit.html')
 
     def delete(self, id, organization_id=None, metadata_collection_id=None):
-        if 'cancel' in tk.request.params:
-            tk.h.redirect_to('metadata_record_edit', id=id, organization_id=organization_id, metadata_collection_id=metadata_collection_id)
-
         context = {'model': model, 'session': model.Session, 'user': tk.c.user}
-        try:
-            tk.check_access('metadata_record_delete', context, {'id': id})
-        except tk.NotAuthorized:
-            tk.abort(403, tk._('Unauthorized to delete metadata record'))
-
         try:
             if tk.request.method == 'POST':
                 tk.get_action('metadata_record_delete')(context, {'id': id})
-                tk.h.flash_notice(tk._('Metadata Record has been deleted.'))
+                tk.h.flash_notice(tk._('Metadata record has been deleted.'))
                 tk.h.redirect_to('metadata_record_index', organization_id=organization_id, metadata_collection_id=metadata_collection_id)
-            tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
         except tk.NotAuthorized:
             tk.abort(403, tk._('Unauthorized to delete metadata record'))
         except tk.ObjectNotFound:
-            tk.abort(404, tk._('Metadata_record not found'))
-        return tk.render('metadata_record/confirm_delete.html')
+            tk.abort(404, tk._('Metadata record not found'))
 
     def read(self, id, organization_id=None, metadata_collection_id=None):
         self._set_containers_on_context(organization_id, metadata_collection_id)
