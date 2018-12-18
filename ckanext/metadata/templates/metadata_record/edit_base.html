@@ -22,7 +22,7 @@
 
 {% block content_primary_nav %}
   {{ h.build_nav_icon('metadata_record_edit', _('Edit'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
-  {{ h.build_nav_icon('metadata_record_validate', _('Validate'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
+  {{ h.build_nav_icon('metadata_record_validate', _('Validation'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
   {{ h.build_nav_icon('metadata_record_workflow', _('Workflow'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
 {% endblock %}
 

@@ -200,11 +200,33 @@ class MetadataRecordController(tk.BaseController):
         return tk.render('metadata_record/status.html')
 
     def validate(self, id, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
         context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        try:
+            if tk.request.method == 'POST':
+                tk.get_action('metadata_record_validate')(context, {'id': id})
+                tk.h.flash_notice(tk._('Metadata record has been validated.'))
+                tk.h.redirect_to('metadata_record_validate', id=id, organization_id=organization_id, metadata_collection_id=metadata_collection_id)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to validate metadata record'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata record not found'))
+
         tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_containers_on_context(organization_id, metadata_collection_id)
         self._set_additionalinfo_on_context(tk.c.metadata_record)
         return tk.render('metadata_record/validate.html')
+
+    def invalidate(self, id, organization_id=None, metadata_collection_id=None):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        try:
+            if tk.request.method == 'POST':
+                tk.get_action('metadata_record_invalidate')(context, {'id': id})
+                tk.h.flash_notice(tk._('Metadata record has been invalidated.'))
+                tk.h.redirect_to('metadata_record_validate', id=id, organization_id=organization_id, metadata_collection_id=metadata_collection_id)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to invalidate metadata record'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata record not found'))
 
     def workflow(self, id, organization_id=None, metadata_collection_id=None):
         self._set_containers_on_context(organization_id, metadata_collection_id)
