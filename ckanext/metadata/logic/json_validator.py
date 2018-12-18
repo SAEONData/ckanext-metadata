@@ -168,6 +168,9 @@ class JSONValidator(object):
                 else:
                     error.message = 'Object has too many properties'
 
+            elif error.schema_path[-1] == 'urlTest':
+                error.message = 'URL test failed'
+
             add_error(errors, error.path, error.message)
 
         for task in self.jsonschema_validator.tasks:

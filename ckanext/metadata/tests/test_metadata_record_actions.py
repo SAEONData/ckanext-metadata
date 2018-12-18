@@ -1060,6 +1060,8 @@ class TestMetadataRecordActions(ActionTestBase):
     def test_workflow_transition_published(self):
         metadata_json = json.loads(load_example('saeon_datacite_record.json'))
         metadata_json['identifier']['identifier'] = 'foo'
+        metadata_json['immutableResource']['resourceURL'] = 'http://inaccessible.url'
+        metadata_json['linkedResources'][0]['resourceURL'] = 'http://inaccessible.url'
         metadata_record = self._generate_metadata_record(
             metadata_json=json.dumps(metadata_json))
 
@@ -1098,6 +1100,8 @@ class TestMetadataRecordActions(ActionTestBase):
                                              *jsonpatch_ids, **{
                                                  'errors/__maxProperties': 'Object must be empty',
                                                  'quality_control/__minItems': 'Array has too few items',
+                                                 'metadata_json/immutableResource/resourceURL': 'URL test failed',
+                                                 'metadata_json/linkedResources/0/resourceURL': 'URL test failed',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
