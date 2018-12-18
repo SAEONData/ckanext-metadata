@@ -44,15 +44,24 @@
             "type": "object",
             "maxProperties": 0
         },
-        "immutableResource": {
+        "metadata_json": {
+            "$comment": "This element specifies additional validation to be performed on the metadata JSON at workflow transition time; validation rules defined in the applicable metadata schema(s) should not be repeated here.",
             "properties": {
-                "resourceURL": {"urlTest": true}
-            }
-        },
-        "linkedResources": {
-            "items": {
-                "properties": {
-                    "resourceURL": {"urlTest": true}
+                "immutableResource": {
+                    "properties": {
+                        "resourceURL": {
+                            "urlTest": true
+                        }
+                    }
+                },
+                "linkedResources": {
+                    "items": {
+                        "properties": {
+                            "resourceURL": {
+                                "urlTest": true
+                            }
+                        }
+                    }
                 }
             }
         }
