@@ -214,6 +214,39 @@ class MetadataRecordController(tk.BaseController):
         tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
         self._set_containers_on_context(organization_id, metadata_collection_id)
         self._set_additionalinfo_on_context(tk.c.metadata_record)
+
+        page = tk.h.get_page_number(tk.request.params) or 1
+        items_per_page = 21
+
+        q = tk.c.q = tk.request.params.get('q', '')
+        try:
+            tk.check_access('site_read', context)
+            tk.check_access('metadata_record_validation_schema_list', context)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to see this page'))
+
+        try:
+            data_dict_page_results = {
+                'id': id,
+                'all_fields': True,
+                'q': q,
+            }
+            page_results = tk.get_action('metadata_record_validation_schema_list')(context, data_dict_page_results)
+            tk.c.page = helpers.Page(
+                collection=page_results,
+                page=page,
+                url=tk.h.pager_url,
+                items_per_page=items_per_page,
+            )
+            tk.c.page.items = page_results
+        except tk.ValidationError as e:
+            if e.error_dict and e.error_dict.get('message'):
+                msg = e.error_dict['message']
+            else:
+                msg = str(e)
+            tk.h.flash_error(msg)
+            tk.c.page = helpers.Page([], 0)
+
         return tk.render('metadata_record/validate.html')
 
     def invalidate(self, id, organization_id=None, metadata_collection_id=None):
