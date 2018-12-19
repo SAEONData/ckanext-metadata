@@ -6,19 +6,19 @@
 
 {% block page_primary_action %}
 
-  {% if not c.metadata_record.validated and h.check_access('metadata_record_validate', {'id': c.metadata_record.id}) %}
-    <p>{{ _('This metadata record has not been validated. Click the button below to validate it against the listed schema(s).') }}</p>
-    <a class="btn btn-primary" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to validate this metadata record?') }}"
-       href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController', action='validate', id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}">
-      <i class="fa fa-check"></i> {{ _('Validate') }} {{ _('Metadata Record') }}</a>
-
-  {% elif c.metadata_record.validated and h.check_access('metadata_record_invalidate', {'id': c.metadata_record.id}) %}
-    <p>{{ _('This metadata record has already been validated. Click the button below to mark it as not validated.') }}</p>
-    <a class="btn btn-primary btn-danger" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to invalidate this metadata record?') }}"
-       href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController', action='invalidate', id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}">
-      <i class="fa fa-times"></i> {{ _('Invalidate') }} {{ _('Metadata Record') }}</a>
-
-  {% endif %}
+  <form method="POST" data-module="basic-form">
+    {% if not c.metadata_record.validated and h.check_access('metadata_record_validate', {'id': c.metadata_record.id}) %}
+      <p>{{ _('This metadata record has not been validated. Click the button below to validate it against the listed schema(s).') }}</p>
+      <button class="btn btn-primary" name="validate" type="submit">
+        <i class="fa fa-check"></i> {{ _('Validate') }} {{ _('Metadata Record') }}
+      </button>
+    {% elif c.metadata_record.validated and h.check_access('metadata_record_invalidate', {'id': c.metadata_record.id}) %}
+      <p>{{ _('This metadata record has already been validated. Click the button below to mark it as not validated.') }}</p>
+      <button class="btn btn-primary btn-danger" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to invalidate this metadata record?') }}">
+        <i class="fa fa-times"></i> {{ _('Invalidate') }} {{ _('Metadata Record') }}
+      </button>
+    {% endif %}
+  </form>
 {% endblock %}
 
 {% block primary_content_inner %}
