@@ -269,11 +269,55 @@ class MetadataRecordController(tk.BaseController):
             tk.abort(404, tk._('Metadata record not found'))
 
     def workflow(self, id, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
         context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+
+        if tk.request.method == 'POST':
+            if 'transition' in tk.request.params:
+                target_state_id = tk.request.params.get('target_state_id')
+                if target_state_id:
+                    self._transition(id, organization_id, metadata_collection_id, target_state_id, context)
+            else:
+                self._revert(id, organization_id, metadata_collection_id, context)
+
         tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_containers_on_context(organization_id, metadata_collection_id)
         self._set_additionalinfo_on_context(tk.c.metadata_record)
-        return tk.render('metadata_record/workflow.html')
+        return tk.render('metadata_record/workflow.html', extra_vars={
+            'workflow_state_lookup_list': self._workflow_state_lookup_list()})
+
+    @staticmethod
+    def _transition(id, organization_id, metadata_collection_id, workflow_state_id, context):
+        try:
+            tk.get_action('metadata_record_workflow_state_transition')(context, {'id': id, 'workflow_state_id': workflow_state_id})
+            tk.h.flash_notice(tk._('The metadata record has been transitioned to a new workflow state.'))
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to change the workflow state of the metadata record'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata record not found'))
+        except tk.ValidationError as e:
+            if e.error_dict and e.error_dict.get('message'):
+                msg = e.error_dict['message']
+            else:
+                msg = str(e)
+            tk.h.flash_error(msg)
+        tk.h.redirect_to('metadata_record_workflow', id=id, organization_id=organization_id, metadata_collection_id=metadata_collection_id)
+
+    @staticmethod
+    def _revert(id, organization_id, metadata_collection_id, context):
+        try:
+            tk.get_action('metadata_record_workflow_state_revert')(context, {'id': id})
+            tk.h.flash_notice(tk._('The workflow state of the metadata record has been reverted.'))
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to revert the workflow state of the metadata record'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata record not found'))
+        except tk.ValidationError as e:
+            if e.error_dict and e.error_dict.get('message'):
+                msg = e.error_dict['message']
+            else:
+                msg = str(e)
+            tk.h.flash_error(msg)
+        tk.h.redirect_to('metadata_record_workflow', id=id, organization_id=organization_id, metadata_collection_id=metadata_collection_id)
 
     @staticmethod
     def _metadata_standard_lookup_list():
@@ -297,6 +341,18 @@ class MetadataRecordController(tk.BaseController):
         infrastructures = tk.get_action('infrastructure_list')(context, {'all_fields': True})
         return [{'value': infrastructure['name'], 'text': infrastructure['display_name']}
                 for infrastructure in infrastructures]
+
+    @staticmethod
+    def _workflow_state_lookup_list():
+        """
+        Return a list of {'value': name, 'text': display_name} dicts for populating the
+        workflow state select control on the workflows tab.
+        """
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        workflow_states = tk.get_action('workflow_state_list')(context, {'all_fields': True})
+        return [{'value': '', 'text': tk._('(None)')}] + \
+               [{'value': workflow_state['name'], 'text': workflow_state['display_name']}
+                for workflow_state in workflow_states]
 
     def _save_new(self, context):
         try:

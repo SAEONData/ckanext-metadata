@@ -1,0 +1,31 @@
+{% extends "metadata_record/edit_base.html" %}
+
+{% block subtitle %}
+  {{ _('Workflow') }} - {{ c.metadata_record.display_name }} - {{ _('Metadata Records') }}
+{% endblock %}
+
+{% block page_primary_action %}
+
+  <form method="POST" data-module="basic-form">
+    {% if h.check_access('metadata_record_workflow_state_transition', {'id': c.metadata_record.id}) %}
+      <select name="target_state_id">
+        {% for workflow_state in workflow_state_lookup_list %}
+          <option value="{{ workflow_state.value }}"{% if workflow_state.value == c.workflow_state.name %} selected{% endif %}>{{ workflow_state.text }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-primary" name="transition" type="submit">
+        <i class="fa fa-caret-right"></i> {{ _('Transition') }}
+      </button>
+    {% endif %}
+    {% if c.workflow_state and h.check_access('metadata_record_workflow_state_revert', {'id': c.metadata_record.id}) %}
+      <p>{{ _('Click the button below to revert the metadata record to the previous workflow state.') }}</p>
+      <button class="btn btn-primary btn-danger" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to revert the workflow state of the metadata record?') }}">
+        <i class="fa fa-caret-left"></i> {{ _('Revert') }}
+      </button>
+    {% endif %}
+  </form>
+
+{% endblock %}
+
+{% block primary_content_inner %}
+{% endblock %}
