@@ -1,0 +1,4 @@
+  {% if h.check_access('infrastructure_update', {'id': c.group_dict.id}) %}
+    {% link_for _('Manage'), controller='ckanext.metadata.controllers.infrastructure:InfrastructureController',
+      action='edit', id=c.group_dict.name, class_='btn', icon='wrench' %}
+  {% endif %}

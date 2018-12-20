@@ -4,7 +4,7 @@
 {% block subtitle %}{{ _('Create an Infrastructure') }}{% endblock %}
 
 {% block breadcrumb_content %}
-  <li>{{ h.nav_link(_('Infrastructures'), controller='ckanext.metadata.controllers.infrastructure:InfrastructureController', action='index') }}</li>
+  {% snippet "infrastructure/snippets/breadcrumb_content_outer.html" %}
   <li class="active">
     {% block breadcrumb_link %}
       {{ h.nav_link(_('Create an Infrastructure'), action='new',
