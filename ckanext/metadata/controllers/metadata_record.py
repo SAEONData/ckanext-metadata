@@ -50,65 +50,7 @@ class MetadataRecordController(tk.BaseController):
             tk.c.workflow_state = tk.get_action('workflow_state_show')(context, {'id': metadata_record['workflow_state_id']})
 
     def index(self, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-
-        page = tk.h.get_page_number(tk.request.params) or 1
-        items_per_page = 21
-
-        context = {'model': model, 'session': model.Session,
-                   'user': tk.c.user, 'for_view': True}
-
-        q = tk.c.q = tk.request.params.get('q', '')
-        sort_by = tk.c.sort_by_selected = tk.request.params.get('sort')
-        try:
-            tk.check_access('site_read', context)
-            tk.check_access('metadata_record_list', context)
-        except tk.NotAuthorized:
-            tk.abort(403, tk._('Not authorized to see this page'))
-
-        if tk.c.userobj:
-            context['user_id'] = tk.c.userobj.id
-            context['user_is_admin'] = tk.c.userobj.sysadmin
-
-        try:
-            data_dict_global_results = {
-                'owner_org': organization_id,
-                'metadata_collection_id': metadata_collection_id,
-                'all_fields': False,
-                'q': q,
-                'sort': sort_by,
-                'type': 'metadata_record',
-            }
-            global_results = tk.get_action('metadata_record_list')(context, data_dict_global_results)
-        except tk.ValidationError as e:
-            if e.error_dict and e.error_dict.get('message'):
-                msg = e.error_dict['message']
-            else:
-                msg = str(e)
-            tk.h.flash_error(msg)
-            tk.c.page = helpers.Page([], 0)
-            return tk.render('metadata_record/index.html')
-
-        data_dict_page_results = {
-            'owner_org': organization_id,
-            'metadata_collection_id': metadata_collection_id,
-            'all_fields': True,
-            'q': q,
-            'sort': sort_by,
-            'limit': items_per_page,
-            'offset': items_per_page * (page - 1),
-        }
-        page_results = tk.get_action('metadata_record_list')(context, data_dict_page_results)
-
-        tk.c.page = helpers.Page(
-            collection=global_results,
-            page=page,
-            url=tk.h.pager_url,
-            items_per_page=items_per_page,
-        )
-
-        tk.c.page.items = page_results
-        return tk.render('metadata_record/index.html')
+        tk.h.redirect_to('metadata_collection_read', organization_id=organization_id, id=metadata_collection_id)
 
     def new(self, data=None, errors=None, error_summary=None, organization_id=None, metadata_collection_id=None):
         self._set_containers_on_context(organization_id, metadata_collection_id)

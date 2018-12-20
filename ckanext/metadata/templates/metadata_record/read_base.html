@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content_primary_nav %}
-  {{ h.build_nav_icon('metadata_record_read', _('Metadata Dictionary'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
+  {{ h.build_nav_icon('metadata_record_read', _('Metadata Record'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
   {{ h.build_nav_icon('metadata_record_status', _('Status Information'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
   {{ h.build_nav_icon('metadata_record_activity', _('Activity Stream'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name, offset=0) }}
 {% endblock %}

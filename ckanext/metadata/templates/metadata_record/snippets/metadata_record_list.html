@@ -2,6 +2,8 @@
 Display a grid of metadata_record items.
 
 metadata_records - A list of metadata_records.
+organization_id - owner org id or name
+metadata_collection_id - collection id or name
 
 Example:
 
@@ -12,7 +14,8 @@ Example:
   <ul class="media-grid" data-module="media-grid">
     {% block metadata_record_list_inner %}
       {% for metadata_record in metadata_records %}
-        {% snippet "metadata_record/snippets/metadata_record_item.html", metadata_record=metadata_record, position=loop.index %}
+        {% snippet "metadata_record/snippets/metadata_record_item.html", metadata_record=metadata_record, position=loop.index,
+          organization_id=organization_id, metadata_collection_id=metadata_collection_id %}
       {% endfor %}
     {% endblock %}
   </ul>

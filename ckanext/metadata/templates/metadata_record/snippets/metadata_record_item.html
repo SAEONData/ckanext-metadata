@@ -2,6 +2,8 @@
 Renders a media item for a metadata_record. This should be used in a list.
 
 metadata_record - A metadata_record dict.
+organization_id - owner org id or name
+metadata_collection_id - collection id or name
 
 Example:
 
@@ -12,13 +14,10 @@ Example:
     </ul>
 #}
 {% set url = h.url_for('metadata_record_read', action='read', id=metadata_record.id,
-                       organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) %}
+                       organization_id=organization_id, metadata_collection_id=metadata_collection_id) %}
 {% block item %}
 <li class="media-item">
   {% block item_inner %}
-    {% block image %}
-      <img src="{{ h.url_for_static('/images/metadata_record.png') }}" alt="{{ metadata_record.name }}" class="media-image">
-    {% endblock %}
     {% block title %}
       <h3 class="media-heading">{{ metadata_record.display_name }}</h3>
     {% endblock %}

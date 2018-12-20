@@ -6,15 +6,7 @@
   action='read', id=c.organization.name %}
 </li>
 <li>
-  {% link_for _('Metadata Collections'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
-    action='index', organization_id=c.organization.name %}
-</li>
-<li>
   {% link_for c.metadata_collection.display_name |truncate(35), action='read',
     id=c.metadata_collection.name, organization_id=c.organization.name,
     controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController' %}
-</li>
-<li>
-  {% link_for _('Metadata Records'), controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
-    action='index', organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}
 </li>
