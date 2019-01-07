@@ -2,7 +2,12 @@
 
 {% block breadcrumb_content %}
   {% snippet "workflow_transition/snippets/breadcrumb_content_outer.html" %}
-  {% snippet "workflow_transition/snippets/breadcrumb_content_manage.html" %}
+  <li class="active">
+    {% block breadcrumb_link %}
+      {{ h.nav_link(_('Create a Workflow Transition'), action='new',
+        controller='ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController') }}
+    {% endblock %}
+  </li>
 {% endblock %}
 
 {% block page_primary_action %}
