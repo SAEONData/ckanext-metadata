@@ -900,12 +900,12 @@ class TestMetadataRecordActions(ActionTestBase):
         result, _ = self.test_action('metadata_record_workflow_annotation_create', should_error=True,
                                      id=metadata_record['id'],
                                      path='/owner_org')
-        assert_error(result, 'path', 'An existing key name cannot be used')
+        assert_error(result, 'path', 'The specified key cannot be used')
 
         result, _ = self.test_action('metadata_record_workflow_annotation_create', should_error=True,
                                      id=metadata_record['id'],
                                      path='/metadata_json/description/-')
-        assert_error(result, 'path', 'An existing key name cannot be used')
+        assert_error(result, 'path', 'The specified key cannot be used')
 
     def test_workflow_transition_submitted(self):
         metadata_record = self._generate_metadata_record(

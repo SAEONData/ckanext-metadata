@@ -109,7 +109,7 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
     def test_create_invalid_record_attr(self):
         result, obj = self.test_action('metadata_json_attr_map_create', should_error=True,
                                        record_attr='owner_org')
-        assert_error(result, 'record_attr', 'The specified attribute cannot be used')
+        assert_error(result, 'record_attr', 'The specified key cannot be used')
 
     def test_create_invalid_missing_params(self):
         result, obj = self.test_action('metadata_json_attr_map_create', should_error=True)
@@ -180,7 +180,7 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
         result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
                                        id=metadata_json_attr_map['id'],
                                        record_attr='owner_org')
-        assert_error(result, 'record_attr', 'The specified attribute cannot be used')
+        assert_error(result, 'record_attr', 'The specified key cannot be used')
 
     def test_update_invalid_missing_params(self):
         metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()

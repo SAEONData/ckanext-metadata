@@ -170,11 +170,10 @@ def url_validator(value):
     return value
 
 
-def augmented_schema_validator(schema):
+def schema_pointer_validator(schema, in_schema):
     """
-    Checks that the first element of the supplied JSON pointer value is a valid key
-    for augmenting the given schema; i.e. it won't replace an already existing key
-    in the schema.
+    Checks that the first element of the supplied JSON pointer value is (not) a key
+    in the given schema.
     """
     def callable_(key, data, errors, context):
         value = data.get(key)
@@ -182,20 +181,22 @@ def augmented_schema_validator(schema):
         if len(parts) < 2 or not parts[1]:
             raise tk.Invalid(_("Invalid path"))
         element = parts[1]
-        if element in schema:
-            raise tk.Invalid(_("An existing key name cannot be used"))
+        if (in_schema and element not in schema) \
+                or (not in_schema and element in schema):
+            raise tk.Invalid(_("The specified key cannot be used"))
 
     return callable_
 
 
-def schema_attribute_validator(schema):
+def schema_key_validator(schema, in_schema):
     """
-    Checks that the supplied value is a key in the given schema.
+    Checks that the supplied value is (not) a key in the given schema.
     """
     def callable_(key, data, errors, context):
         value = data.get(key)
-        if value not in schema:
-            raise tk.Invalid(_("The specified attribute cannot be used"))
+        if (in_schema and value not in schema) \
+                or (not in_schema and value in schema):
+            raise tk.Invalid(_("The specified key cannot be used"))
 
     return callable_
 

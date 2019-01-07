@@ -182,7 +182,7 @@ def metadata_record_workflow_rules_check_schema():
 def metadata_record_workflow_annotation_create_schema():
     schema = {
         'id': [],
-        'path': [v.not_empty, unicode, v.json_pointer_validator, v.augmented_schema_validator(metadata_record_show_schema())],
+        'path': [v.not_empty, unicode, v.json_pointer_validator, v.schema_pointer_validator(metadata_record_show_schema(), False)],
         'value': [v.not_empty, unicode, v.json_object_validator],
     }
     return schema
@@ -310,7 +310,7 @@ def metadata_json_attr_map_create_schema():
     schema = {
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_json_attr_map')],
         'json_path': [v.not_empty, unicode, v.json_pointer_validator],
-        'record_attr': [v.not_empty, unicode, v.schema_attribute_validator(metadata_record_attr_mappable_schema())],
+        'record_attr': [v.not_empty, unicode, v.schema_key_validator(metadata_record_attr_mappable_schema(), True)],
         'is_key': [v.not_missing, boolean_validator],
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
 
