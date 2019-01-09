@@ -29,7 +29,7 @@
   {{ form.textarea('workflow_rules_json', label=_('Workflow Rules'), id='field-workflow-rules-json',
         placeholder=_('The JSON schema defining the rules for the workflow state.'),
         value=data.workflow_rules_json, error=errors.workflow_rules_json,
-        attrs={'style': 'font-family: monospace'}, rows=12) }}
+        is_required=true, attrs={'style': 'font-family: monospace'}, rows=12) }}
 
   {{ form.select('revert_state_id', label=_('Revert State'), id='field-revert-state',
         options=revert_state_lookup_list, selected=data.revert_state_id, error=errors.revert_state_id,
