@@ -216,7 +216,10 @@ def object_name_validator(model_name):
         session = context['session']
         obj = context.get(model_name)
 
-        query = session.query(model_class.name).filter_by(name=data[key])
+        query = session.query(model_class.name) \
+            .filter(model_class.name == data[key]) \
+            .filter(model_class.state != 'deleted')
+
         id_ = obj.id if obj else _convert_missing(data.get(key[:-1] + ('id',)))
         if id_:
             query = query.filter(model_class.id != id_)
