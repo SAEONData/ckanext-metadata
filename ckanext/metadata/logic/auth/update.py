@@ -81,5 +81,9 @@ def workflow_transition_update(context, data_dict):
     return {'success': True}
 
 
+def workflow_annotation_update(context, data_dict):
+    return {'success': True}
+
+
 def metadata_json_attr_map_update(context, data_dict):
     return {'success': True}

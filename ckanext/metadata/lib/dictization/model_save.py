@@ -191,6 +191,10 @@ def workflow_transition_dict_save(workflow_transition_dict, context):
     return _object_dict_save('workflow_transition', workflow_transition_dict, context)
 
 
+def workflow_annotation_dict_save(workflow_annotation_dict, context):
+    return _object_dict_save('workflow_annotation', workflow_annotation_dict, context)
+
+
 def metadata_json_attr_map_dict_save(metadata_json_attr_map_dict, context):
     return _object_dict_save('metadata_json_attr_map', metadata_json_attr_map_dict, context)
 

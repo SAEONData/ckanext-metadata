@@ -947,6 +947,70 @@ def workflow_transition_list(context, data_dict):
 
 
 @tk.side_effect_free
+def workflow_annotation_show(context, data_dict):
+    """
+    Return a workflow annotation definition.
+
+    :param id: the id of the workflow annotation
+    :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving workflow annotation: %r", data_dict)
+
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
+
+    workflow_annotation_id = tk.get_or_bust(data_dict, 'id')
+    workflow_annotation = ckanext_model.WorkflowAnnotation.get(workflow_annotation_id)
+    if workflow_annotation is not None:
+        workflow_annotation_id = workflow_annotation.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Annotation')))
+
+    tk.check_access('workflow_annotation_show', context, data_dict)
+
+    context['workflow_annotation'] = workflow_annotation
+    workflow_annotation_dict = model_dictize.workflow_annotation_dictize(workflow_annotation, context)
+
+    result_dict, errors = tk.navl_validate(workflow_annotation_dict, schema.workflow_annotation_show_schema(deserialize_json), context)
+    return result_dict
+
+
+@tk.side_effect_free
+def workflow_annotation_list(context, data_dict):
+    """
+    Return a list of ids of the site's workflow annotations.
+
+    :param all_fields: return dictionaries instead of just ids (optional, default: ``False``)
+    :type all_fields: boolean
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
+
+    :rtype: list of strings
+    """
+    log.debug("Retrieving workflow annotation list: %r", data_dict)
+    tk.check_access('workflow_annotation_list', context, data_dict)
+
+    session = context['session']
+    all_fields = asbool(data_dict.get('all_fields'))
+
+    workflow_annotations = session.query(ckanext_model.WorkflowAnnotation.id) \
+        .filter_by(state='active') \
+        .all()
+    result = []
+    for (id_,) in workflow_annotations:
+        if all_fields:
+            data_dict['id'] = id_
+            result += [tk.get_action('workflow_annotation_show')(context, data_dict)]
+        else:
+            result += [id_]
+
+    return result
+
+
+@tk.side_effect_free
 def metadata_json_attr_map_show(context, data_dict):
     """
     Return a metadata JSON attribute map definition.

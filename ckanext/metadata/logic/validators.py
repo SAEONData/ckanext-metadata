@@ -636,4 +636,18 @@ def metadata_json_attr_map_unique(key, data, errors, context):
         errors.setdefault(key[:-1] + ('record_attr',), [])
         errors[key[:-1] + ('record_attr',)].append(_("Unique constraint violation: %s") % '(metadata_standard_id, record_attr)')
 
+
+def workflow_annotation_attributes_validator(value):
+    """
+    Checks that the supplied dict maps valid attribute names to valid attribute types.
+    """
+    if value:
+        attributes = json.loads(value)
+        for attr_name, attr_type in attributes.iteritems():
+            if not re.match(r'^\w+$', attr_name):
+                raise tk.Invalid(_("Workflow annotation attribute name may consist only of alphanumeric characters"))
+            if attr_type not in ('string', 'number', 'boolean'):
+                raise tk.Invalid(_("Workflow annotation attribute type must be one of 'string', 'number', 'boolean'"))
+    return value
+
 # endregion

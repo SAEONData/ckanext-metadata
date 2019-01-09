@@ -63,6 +63,13 @@ model_info = {
         'table': model_ext.workflow_transition_table,
         'rev_table': model_ext.workflow_transition_revision_table,
     },
+    'workflow_annotation': {
+        'desc': u'Workflow Annotation',
+        'model': model_ext.WorkflowAnnotation,
+        'rev_model': model_ext.WorkflowAnnotationRevision,
+        'table': model_ext.workflow_annotation_table,
+        'rev_table': model_ext.workflow_annotation_revision_table,
+    },
     'metadata_json_attr_map': {
         'desc': u'Metadata JSON Attribute Map',
         'model': model_ext.MetadataJSONAttrMap,

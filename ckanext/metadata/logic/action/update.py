@@ -814,6 +814,76 @@ def workflow_transition_update(context, data_dict):
     raise tk.ValidationError(_("A workflow transition cannot be updated. Delete it and create a new one instead."))
 
 
+def workflow_annotation_update(context, data_dict):
+    """
+    Update a workflow annotation.
+
+    You must be authorized to edit the workflow annotation.
+
+    It is recommended to call
+    :py:func:`ckan.logic.action.get.workflow_annotation_show`, make the desired changes to
+    the result, and then call ``workflow_annotation_update()`` with it.
+
+    For further parameters see
+    :py:func:`~ckanext.metadata.logic.action.create.workflow_annotation_create`.
+
+    :param id: the id or name of the workflow annotation to update
+    :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
+
+    :returns: the updated workflow annotation (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow annotation id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Updating workflow annotation: %r", data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
+
+    workflow_annotation_id = tk.get_or_bust(data_dict, 'id')
+    workflow_annotation = ckanext_model.WorkflowAnnotation.get(workflow_annotation_id)
+    if workflow_annotation is not None:
+        workflow_annotation_id = workflow_annotation.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow Annotation')))
+
+    tk.check_access('workflow_annotation_update', context, data_dict)
+
+    data_dict.update({
+        'id': workflow_annotation_id,
+    })
+    context.update({
+        'workflow_annotation': workflow_annotation,
+        'allow_partial_update': True,
+    })
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_annotation_update_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_annotation = model_save.workflow_annotation_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Update workflow annotation %s') % workflow_annotation_id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_annotation_id if return_id_only \
+        else tk.get_action('workflow_annotation_show')(context, {'id': workflow_annotation_id, 'deserialize_json': deserialize_json})
+    return output
+
+
 def metadata_record_workflow_state_transition(context, data_dict):
     """
     Transition a metadata record to a different workflow state, and log the result

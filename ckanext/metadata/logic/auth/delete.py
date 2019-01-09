@@ -57,6 +57,10 @@ def workflow_transition_delete(context, data_dict):
     return {'success': True}
 
 
+def workflow_annotation_delete(context, data_dict):
+    return {'success': True}
+
+
 def organization_delete(context, data_dict):
     return {'success': True}
 

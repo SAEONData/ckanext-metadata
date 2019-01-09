@@ -127,6 +127,10 @@ def workflow_transition_dictize(workflow_transition, context):
     return workflow_transition_dict
 
 
+def workflow_annotation_dictize(workflow_annotation, context):
+    return _object_dictize('workflow_annotation', workflow_annotation, context)
+
+
 def metadata_json_attr_map_dictize(metadata_json_attr_map, context):
     return _object_dictize('metadata_json_attr_map', metadata_json_attr_map, context)
 

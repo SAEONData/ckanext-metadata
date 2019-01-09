@@ -15,8 +15,13 @@
       controller='ckanext.metadata.controllers.workflow_state:WorkflowStateController' %}
   {% endif %}
 
-  {% link_for _('Workflow Transitions'), action='index', class_='btn pull-right', icon='exchange',
-    controller='ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController' %}
+  <div class="btn-group pull-right">
+    {% link_for _('Workflow Transitions'), action='index', class_='btn', icon='exchange',
+      controller='ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController' %}
+
+    {% link_for _('Workflow Annotations'), action='index', class_='btn', icon='pencil',
+      controller='ckanext.metadata.controllers.workflow_annotation:WorkflowAnnotationController' %}
+  </div>
 {% endblock %}
 
 {% block primary_content_inner %}

@@ -1,0 +1,30 @@
+{% extends "page.html" %}
+
+{% block breadcrumb_content %}
+  {% snippet "workflow_annotation/snippets/breadcrumb_content_outer.html" %}
+  <li class="active">
+    {% if action == 'new' %}
+      {% link_for _('Create a Workflow Annotation'), controller='ckanext.metadata.controllers.workflow_annotation:WorkflowAnnotationController',
+        action='new' %}
+    {% else %}
+      {% link_for _('Manage'), controller='ckanext.metadata.controllers.workflow_annotation:WorkflowAnnotationController',
+        action='edit', id=c.workflow_annotation.key %}
+    {% endif %}
+  </li>
+{% endblock %}
+
+{% block page_primary_action %}
+  {% link_for _('Back to workflow annotations'), controller='ckanext.metadata.controllers.workflow_annotation:WorkflowAnnotationController',
+    action='index', class_='btn pull-right', icon='arrow-left' %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  <h1 class="page-heading">{{ _('Create Workflow Annotation') if action == 'new' else _('Edit Workflow Annotation') }}</h1>
+  {% block form %}
+    {{ c.form | safe }}
+  {% endblock %}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "workflow_annotation/snippets/info.html" %}
+{% endblock %}

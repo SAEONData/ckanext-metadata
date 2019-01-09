@@ -19,6 +19,8 @@ def init_tables():
         workflow_transition_revision_table,
         metadata_json_attr_map_table,
         metadata_json_attr_map_revision_table,
+        workflow_annotation_table,
+        workflow_annotation_revision_table,
     )
     for table in tables:
         if not table.exists():

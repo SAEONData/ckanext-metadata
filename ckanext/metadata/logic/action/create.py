@@ -376,8 +376,8 @@ def workflow_state_create(context, data_dict):
     :type title: string
     :param description: the description of the workflow state (optional)
     :type description: string
-    :param workflow_rules_json: JSON schema against which a metadata record must be validated
-        in order to be assigned this workflow state (nullable)
+    :param workflow_rules_json: JSON schema against which an augmented metadata record must
+        be validated in order to be assigned this workflow state
     :type workflow_rules_json: string
     :param metadata_records_private: determines the private/public status of metadata records
         that are in this workflow state
@@ -470,6 +470,56 @@ def workflow_transition_create(context, data_dict):
 
     output = workflow_transition.id if return_id_only \
         else tk.get_action('workflow_transition_show')(context, {'id': workflow_transition.id})
+    return output
+
+
+def workflow_annotation_create(context, data_dict):
+    """
+    Create a new workflow annotation definition, which simply makes it easier for annotations
+    to be added to metadata records via the UI.
+
+    You must be authorized to create workflow annotations.
+
+    :param name: the (augmented metadata record) dictionary key under which an annotation will be added
+    :type name: string
+    :param attributes: a dict of names and JSON types of the annotation attributes
+    :type attributes: dictionary
+    :param is_array: True if the annotation is a list of objects with the specified attributes;
+        False if the annotation is a single object
+    :type is_array: boolean
+
+    :returns: the newly created workflow annotation (unless 'return_id_only' is set to True
+              in the context, in which case just the workflow annotation id will be returned)
+    :rtype: dictionary
+    """
+    log.info("Creating workflow annotation: %r", data_dict)
+    tk.check_access('workflow_annotation_create', context, data_dict)
+
+    model = context['model']
+    user = context['user']
+    session = context['session']
+    defer_commit = context.get('defer_commit', False)
+    return_id_only = context.get('return_id_only', False)
+
+    data, errors = tk.navl_validate(data_dict, schema.workflow_annotation_create_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    workflow_annotation = model_save.workflow_annotation_dict_save(data, context)
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Create workflow annotation %s') % workflow_annotation.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    output = workflow_annotation.id if return_id_only \
+        else tk.get_action('workflow_annotation_show')(context, {'id': workflow_annotation.id})
     return output
 
 

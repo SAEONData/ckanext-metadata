@@ -1,0 +1,50 @@
+{% import "macros/form.html" as form %}
+
+<form id="workflow-annotation-form" class="form-horizontal" action="" method="post">
+  {{ form.errors(error_summary) }}
+
+  {% if action == "new" %}
+    {% call form.input('name', label=_('Annotation Key'), id='field-name', classes=['control-medium'],
+          value=data.name, error=errors.name,
+          is_required=true) %}
+      {{ form.info(_("The key into a metadata record dictionary under which an annotation's details will be added.")) }}
+    {% endcall %}
+  {% else %}
+    {{ form.input('name', label=_('Annotation Key'), id='field-name', classes=['control-medium'],
+          value=data.name, error=errors.name,
+          attrs={'readonly': true}) }}
+  {% endif %}
+
+  {% call form.textarea('attributes', label=_('Attributes'), id='field-attributes',
+        placeholder=_('JSON dictionary defining the permitted attributes of an annotation.'),
+        value=data.attributes, error=errors.attributes,
+        is_required=true, attrs={'style': 'font-family: monospace'}, rows=6) %}
+    {{ form.info(_('The dictionary keys are attribute names, while the corresponding values are attribute types, which may be one of "string", "number", or "boolean".')) }}
+  {% endcall %}
+
+  {% call form.checkbox('is_array', label=_('Allow Multiple?'), id='field-is-array',
+        value=1, checked=data.is_array, error=errors.is_array) %}
+    {{ form.info(_('Indicates whether multiple annotations of this kind may be added to an individual metadata record.')) }}
+  {% endcall %}
+
+  {{ form.required_message() }}
+
+  <div class="form-actions">
+    {% if action == "edit" %}
+      {% if h.check_access('workflow_annotation_delete', {'id': data.id})  %}
+        <a class="btn btn-danger pull-left" data-module="confirm-action"
+           data-module-content="{{ _('Are you sure you want to delete this Workflow Annotation definition?') }}"
+           href="{% url_for controller='ckanext.metadata.controllers.workflow_annotation:WorkflowAnnotationController', action='delete', id=data.id %}">
+          {{ _('Delete') }}
+        </a>
+      {% endif %}
+    {% endif %}
+    <button class="btn btn-primary" name="save" type="submit">
+      {%- if action == "edit" -%}
+        {{ _('Update Workflow Annotation') }}
+      {%- else -%}
+        {{ _('Create Workflow Annotation') }}
+      {%- endif -%}
+    </button>
+  </div>
+</form>

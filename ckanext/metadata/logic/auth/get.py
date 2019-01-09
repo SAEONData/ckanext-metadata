@@ -137,6 +137,14 @@ def workflow_transition_list(context, data_dict):
     return {'success': True}
 
 
+def workflow_annotation_show(context, data_dict):
+    return {'success': True}
+
+
+def workflow_annotation_list(context, data_dict):
+    return {'success': True}
+
+
 def metadata_json_attr_map_show(context, data_dict):
     return {'success': True}
 

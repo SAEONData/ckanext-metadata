@@ -121,8 +121,13 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         controller = 'ckanext.metadata.controllers.workflow_transition:WorkflowTransitionController'
         map.connect('workflow_transition_index', '/workflow_transition', controller=controller, action='index')
         map.connect('workflow_transition_new', '/workflow_transition/new', controller=controller, action='new')
-        map.connect('workflow_transition_edit', '/workflow_transition/edit/{id}', controller=controller, action='edit')
         map.connect('workflow_transition_delete', '/workflow_transition/delete/{id}', controller=controller, action='delete')
+
+        controller = 'ckanext.metadata.controllers.workflow_annotation:WorkflowAnnotationController'
+        map.connect('workflow_annotation_index', '/workflow_annotation', controller=controller, action='index')
+        map.connect('workflow_annotation_new', '/workflow_annotation/new', controller=controller, action='new')
+        map.connect('workflow_annotation_edit', '/workflow_annotation/edit/{id}', controller=controller, action='edit')
+        map.connect('workflow_annotation_delete', '/workflow_annotation/delete/{id}', controller=controller, action='delete')
 
         return map
 
