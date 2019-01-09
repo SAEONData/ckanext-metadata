@@ -42,6 +42,15 @@ def _generate_name(*strings):
     text = '-'.join(strings)
     return re.sub(r'[^a-z0-9_-]+', '-', text.lower())
 
+
+def _abort(error_dict, key, message):
+    """
+    Set an error message and stop further validator processing for the specified schema key.
+    """
+    error_dict.setdefault(key, [])
+    error_dict[key].append(message)
+    raise tk.StopOnError
+
 # endregion
 
 
@@ -54,9 +63,7 @@ def not_missing(key, data, errors, context):
     """
     value = data.get(key)
     if value is tk.missing:
-        errors.setdefault(key, [])
-        errors[key].append(_('Missing parameter'))
-        raise tk.StopOnError
+        _abort(errors, key, _('Missing parameter'))
 
 
 def not_empty(key, data, errors, context):
@@ -67,67 +74,69 @@ def not_empty(key, data, errors, context):
     not_missing(key, data, errors, context)
     value = data.get(key)
     if not value:
-        errors.setdefault(key, [])
-        errors[key].append(_('Missing value'))
-        raise tk.StopOnError
+        _abort(errors, key, _('Missing value'))
 
 
-def json_object_validator(value):
+def json_object_validator(key, data, errors, context):
     """
     Checks for well-formed JSON.
     """
+    value = data.get(key)
     if value:
         try:
             json.loads(value)
         except ValueError, e:
-            raise tk.Invalid(_("JSON decode error: %s") % e.message)
+            _abort(errors, key, _("JSON decode error: %s") % e.message)
 
     return value
 
 
-def json_dict_validator(value):
+def json_dict_validator(key, data, errors, context):
     """
     Checks for well-formed JSON, and that the supplied JSON represents a dictionary.
     """
+    value = data.get(key)
     if value:
         try:
             obj = json.loads(value)
         except ValueError, e:
-            raise tk.Invalid(_("JSON decode error: %s") % e.message)
+            _abort(errors, key, _("JSON decode error: %s") % e.message)
 
         if type(obj) is not dict:
-            raise tk.Invalid(_("Expecting a JSON dictionary"))
+            _abort(errors, key, _("Expecting a JSON dictionary"))
 
     return value
 
 
-def json_schema_validator(value):
+def json_schema_validator(key, data, errors, context):
     """
     Checks that the value represents a valid JSON schema.
     """
+    value = data.get(key)
     if value:
         try:
             schema = json.loads(value)
             JSONValidator.check_schema(schema)
         except ValueError, e:
-            raise tk.Invalid(_("JSON decode error: %s") % e.message)
+            _abort(errors, key, _("JSON decode error: %s") % e.message)
         except AttributeError, e:
-            raise tk.Invalid(_("Expecting a JSON dictionary"))
+            _abort(errors, key, _("Expecting a JSON dictionary"))
         except jsonschema.SchemaError, e:
-            raise tk.Invalid(_("Invalid JSON schema: %s") % e.message)
+            _abort(errors, key, _("Invalid JSON schema: %s") % e.message)
 
     return value
 
 
-def json_pointer_validator(value):
+def json_pointer_validator(key, data, errors, context):
     """
     Checks that the value is a valid JSON pointer.
     """
+    value = data.get(key)
     if value:
         try:
             jsonpointer.JsonPointer(value)
         except jsonpointer.JsonPointerException, e:
-            raise tk.Invalid(_("Invalid JSON pointer: %s") % e.message)
+            _abort(errors, key, _("Invalid JSON pointer: %s") % e.message)
 
     return value
 
