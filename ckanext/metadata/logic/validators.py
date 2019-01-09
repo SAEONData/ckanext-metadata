@@ -643,6 +643,8 @@ def workflow_annotation_attributes_validator(value):
     """
     if value:
         attributes = json.loads(value)
+        if not attributes:
+            raise tk.Invalid(_("A workflow annotation requires at least one attribute"))
         for attr_name, attr_type in attributes.iteritems():
             if not re.match(r'^\w+$', attr_name):
                 raise tk.Invalid(_("Workflow annotation attribute name may consist only of alphanumeric characters"))
