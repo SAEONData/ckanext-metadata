@@ -5,6 +5,7 @@ import ckan.model as model
 import ckan.authz as authz
 from ckan.logic import clean_dict, tuplize_dict, parse_params
 import ckan.lib.navl.dictization_functions as dict_fns
+from ckanext.metadata.common import WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES
 
 
 class WorkflowAnnotationController(tk.BaseController):
@@ -35,7 +36,8 @@ class WorkflowAnnotationController(tk.BaseController):
         data = data or {}
         errors = errors or {}
         error_summary = error_summary or {}
-        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new'}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
+                'attribute_types': WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES}
 
         tk.c.is_sysadmin = authz.is_sysadmin(tk.c.user)
         tk.c.form = tk.render('workflow_annotation/edit_form.html', extra_vars=vars)
@@ -63,7 +65,8 @@ class WorkflowAnnotationController(tk.BaseController):
 
         errors = errors or {}
         error_summary = error_summary or {}
-        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit'}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
+                'attribute_types': WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES}
 
         tk.c.form = tk.render('workflow_annotation/edit_form.html', extra_vars=vars)
         return tk.render('workflow_annotation/edit.html', extra_vars=vars)

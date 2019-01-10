@@ -61,11 +61,11 @@ class TestWorkflowAnnotationActions(ActionTestBase):
     def test_create_invalid_bad_attribute_types(self):
         result, obj = self.test_action('workflow_annotation_create', should_error=True,
                                        attributes='{"foo": {}}')
-        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of 'string', 'number', 'boolean'")
+        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of ")
 
         result, obj = self.test_action('workflow_annotation_create', should_error=True,
                                        attributes='{"foo": "bar"}')
-        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of 'string', 'number', 'boolean'")
+        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of ")
 
     def test_update_valid(self):
         workflow_annotation = ckanext_factories.WorkflowAnnotation()
@@ -146,13 +146,13 @@ class TestWorkflowAnnotationActions(ActionTestBase):
         result, obj = self.test_action('workflow_annotation_update', should_error=True,
                                        id=workflow_annotation['id'],
                                        attributes='{"foo": {}}')
-        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of 'string', 'number', 'boolean'")
+        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of ")
 
         workflow_annotation = ckanext_factories.WorkflowAnnotation()
         result, obj = self.test_action('workflow_annotation_update', should_error=True,
                                        id=workflow_annotation['id'],
                                        attributes='{"foo": "bar"}')
-        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of 'string', 'number', 'boolean'")
+        assert_error(result, 'attributes', "Workflow annotation attribute type must be one of ")
 
     def test_delete_valid(self):
         workflow_annotation = ckanext_factories.WorkflowAnnotation()

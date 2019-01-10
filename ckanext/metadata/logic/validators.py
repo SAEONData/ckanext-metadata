@@ -12,7 +12,7 @@ from ckan.common import _, config
 import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.json_validator import JSONValidator
-from ckanext.metadata.common import model_info
+from ckanext.metadata.common import model_info, RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE, WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES
 
 convert_to_extras = tk.get_validator('convert_to_extras')
 
@@ -648,8 +648,8 @@ def workflow_annotation_attributes_validator(value):
         for attr_name, attr_type in attributes.iteritems():
             if not re.match(r'^\w+$', attr_name):
                 raise tk.Invalid(_("Workflow annotation attribute name may consist only of alphanumeric characters"))
-            if attr_type not in ('string', 'number', 'boolean'):
-                raise tk.Invalid(_("Workflow annotation attribute type must be one of 'string', 'number', 'boolean'"))
+            if not isinstance(attr_type, basestring) or not RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE.match(attr_type):
+                raise tk.Invalid(_('Workflow annotation attribute type must be one of "%s", with enumerations as "enum(val1,val2,..)"') % '", "'.join(WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES))
     return value
 
 # endregion

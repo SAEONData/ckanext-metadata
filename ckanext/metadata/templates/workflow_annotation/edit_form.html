@@ -19,7 +19,7 @@
         placeholder=_('JSON dictionary defining the permitted attributes of an annotation.'),
         value=data.attributes, error=errors.attributes,
         is_required=true, attrs={'style': 'font-family: monospace'}, rows=6) %}
-    {{ form.info(_('The dictionary keys are attribute names, while the corresponding values are attribute types, which may be one of "string", "number", or "boolean".')) }}
+    {{ form.info(_('The dictionary keys are attribute names, while the corresponding values are attribute types, which may be one of "%s". Enumeration types should be specified as "enum(value1,value2,..)"') % '", "'.join(attribute_types)) }}
   {% endcall %}
 
   {% call form.checkbox('is_array', label=_('Allow Multiple?'), id='field-is-array',
