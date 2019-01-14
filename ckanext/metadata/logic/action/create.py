@@ -527,50 +527,47 @@ def metadata_record_workflow_annotation_create(context, data_dict):
     """
     Add a workflow annotation to a metadata record.
 
-    This is a convenience function which wraps jsonpatch_create, creating an 'add'
-    patch operation with qualifier 'workflow'.
+    You must be authorized to add annotations to the metadata record.
+
+    This is a wrapper for jsonpatch_create, creating an 'add' patch operation with qualifier 'workflow'.
 
     :param id: the id or name of the metadata record to annotate
     :type id: string
-    :param path: JSON pointer to a location in the augmented metadata record dict;
-        this cannot be based off an existing key in the metadata record schema
-    :type path: string
-    :param value: the JSON object to set at the specified path
+    :param key: the key in the augmented metadata record dict at which the annotation value will be set;
+        this cannot be an existing key in the metadata record show schema
+    :type key: string
+    :param value: the JSON object to set at the specified key
     :type value: string
 
-    :returns: the newly created JSONPatch object
+    :returns: the newly created workflow annotation (which is a facade to the underlying JSONPatch object)
     :rtype: dictionary
     """
     log.info("Adding a workflow annotation to a metadata record: %r", data_dict)
-
-    model = context['model']
-    session = context['session']
-
-    metadata_record_id = tk.get_or_bust(data_dict, 'id')
-    metadata_record = model.Package.get(metadata_record_id)
-    if metadata_record is not None and metadata_record.type == 'metadata_record':
-        metadata_record_id = metadata_record.id
-    else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
-
     tk.check_access('metadata_record_workflow_annotation_create', context, data_dict)
 
+    session = context['session']
     data, errors = tk.navl_validate(data_dict, schema.metadata_record_workflow_annotation_create_schema(), context)
     if errors:
         session.rollback()
         raise tk.ValidationError(errors)
 
+    annotation = tk.get_action('metadata_record_workflow_annotation_show')(context, data_dict)
+    if annotation:
+        raise tk.ValidationError(_('Duplicate: workflow annotation with the given key already exists on metadata record'))
+
+    jsonpatch_context = context.copy()
+    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema()
     jsonpatch_data = {
         'model_name': 'metadata_record',
-        'object_id': metadata_record_id,
+        'object_id': data_dict['id'],
         'qualifier': 'workflow',
         'operation': {
             'op': 'add',
-            'path': data_dict['path'],
+            'path': '/' + data_dict['key'],
             'value': json.loads(data_dict['value']),
         },
     }
-    return tk.get_action('jsonpatch_create')(context, jsonpatch_data)
+    return tk.get_action('jsonpatch_create')(jsonpatch_context, jsonpatch_data)
 
 
 def metadata_standard_index_create(context, data_dict):

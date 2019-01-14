@@ -743,19 +743,38 @@ def metadata_record_workflow_activity_show(context, data_dict):
 
 
 @tk.side_effect_free
-def metadata_record_workflow_annotation_list(context, data_dict):
+def metadata_record_workflow_annotation_show(context, data_dict):
     """
-    Return a list of ids of workflow annotations (JSON Patches) associated with
-    a metadata record.
-
-    This is a convenience function which wraps jsonpatch_list.
+    Return the details of a workflow annotation associated with a metadata record.
 
     :param id: the id or name of the metadata record
     :type id: string
-    :param all_fields: return JSONPatch dictionaries instead of just names (optional, default: ``False``)
-    :type all_fields: boolean
+    :param key: the annotation key
+    :type key: string
 
-    :rtype: list of strings
+    :rtype: dictionary, which is a facade to the underlying JSONPatch object
+    """
+    log.debug("Retrieving workflow annotation for metadata record: %r", data_dict)
+    tk.check_access('metadata_record_workflow_annotation_show', context, data_dict)
+
+    key = tk.get_or_bust(data_dict, 'key')
+    annotation_list = metadata_record_workflow_annotation_list(context, data_dict)
+
+    # ordinarily there should only be one annotation with the given key; we pick it with `next`;
+    # it's possible for multiple annotations with the same key to exist if applicable jsonpatches
+    # were created directly using the ckanext-jsonpatch API
+    return next((annotation for annotation in annotation_list if annotation['key'] == key), None)
+
+
+@tk.side_effect_free
+def metadata_record_workflow_annotation_list(context, data_dict):
+    """
+    Return a list of workflow annotations associated with a metadata record.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+
+    :rtype: list of dicts
     """
     log.debug("Retrieving workflow annotations for metadata record: %r", data_dict)
 
@@ -774,13 +793,15 @@ def metadata_record_workflow_annotation_list(context, data_dict):
 
     tk.check_access('metadata_record_workflow_annotation_list', context, data_dict)
 
-    jsonpatch_params = {
+    jsonpatch_context = context.copy()
+    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema()
+    jsonpatch_data = {
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,
         'qualifier': 'workflow',
-        'all_fields': asbool(data_dict.get('all_fields')),
+        'all_fields': True,
     }
-    return tk.get_action('jsonpatch_list')(context, jsonpatch_params)
+    return tk.get_action('jsonpatch_list')(jsonpatch_context, jsonpatch_data)
 
 
 @tk.side_effect_free

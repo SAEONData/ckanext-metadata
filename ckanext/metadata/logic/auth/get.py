@@ -113,6 +113,10 @@ def metadata_record_workflow_activity_show(context, data_dict):
     return {'success': True}
 
 
+def metadata_record_workflow_annotation_show(context, data_dict):
+    return {'success': True}
+
+
 def metadata_record_workflow_annotation_list(context, data_dict):
     return {'success': True}
 

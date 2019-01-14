@@ -209,6 +209,55 @@ def schema_key_validator(schema, in_schema):
 
     return callable_
 
+
+def copy(from_key, to_key):
+    """
+    Copies the value from one key to another in the data dict.
+    """
+    def callable_(key, data, errors, context):
+        data[to_key] = data.get(to_key[:-1] + (from_key,))
+
+    return callable_
+
+
+def copy_from(other_key):
+    """
+    Gets the value from another key in the data dict.
+    """
+    def callable_(key, data, errors, context):
+        data[key] = data.get(key[:-1] + (other_key,))
+
+    return callable_
+
+
+def extract_item(item_key):
+    """
+    Gets the value out of a dict.
+    """
+    def callable_(key, data, errors, context):
+        items = data.get(key)
+        if type(items) is dict:
+            data[key] = items.get(item_key)
+
+    return callable_
+
+
+def extract_re_group(pattern):
+    """
+    Extract the first captured group using the given pattern.
+    """
+    def callable_(key, data, errors, context):
+        value = data.get(key) or ''
+        match = re.match(pattern, value)
+        if not match:
+            return
+        try:
+            data[key] = match.group(1)
+        except IndexError:
+            return
+
+    return callable_
+
 # endregion
 
 

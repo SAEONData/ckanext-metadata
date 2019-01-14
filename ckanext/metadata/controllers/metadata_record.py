@@ -250,12 +250,12 @@ class MetadataRecordController(tk.BaseController):
         tk.c.form = tk.render('metadata_record/annotation_form.html', extra_vars=vars)
         return tk.render('metadata_record/annotation_edit.html', extra_vars=vars)
 
-    def annotation_edit(self, id, annotation_id, data=None, errors=None, error_summary=None, organization_id=None, metadata_collection_id=None):
+    def annotation_edit(self, id, key, data=None, errors=None, error_summary=None, organization_id=None, metadata_collection_id=None):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
                    'save': 'save' in tk.request.params, 'for_edit': True}
 
         if context['save'] and not data and tk.request.method == 'POST':
-            return self._save_annotation_edit(id, annotation_id, context)
+            return self._save_annotation_edit(id, key, context)
 
         try:
             tk.check_access('metadata_record_workflow_annotation_update', context)
@@ -263,7 +263,7 @@ class MetadataRecordController(tk.BaseController):
             tk.abort(403, tk._('Not authorized to update annotations on the metadata record'))
 
         try:
-            old_data = tk.get_action('metadata_record_workflow_annotation_show')(context, {'id': annotation_id})
+            old_data = tk.get_action('metadata_record_workflow_annotation_show')(context, {'id': id, 'key': key})
             data = data or old_data
         except (tk.ObjectNotFound, tk.NotAuthorized):
             tk.abort(404, tk._('Annotation not found'))
@@ -277,11 +277,11 @@ class MetadataRecordController(tk.BaseController):
         tk.c.form = tk.render('metadata_record/annotation_form.html', extra_vars=vars)
         return tk.render('metadata_record/annotation_edit.html', extra_vars=vars)
 
-    def annotation_delete(self, id, annotation_id, organization_id=None, metadata_collection_id=None):
+    def annotation_delete(self, id, key, organization_id=None, metadata_collection_id=None):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user}
         try:
             if tk.request.method == 'POST':
-                tk.get_action('metadata_record_workflow_annotation_delete')(context, {'id': annotation_id})
+                tk.get_action('metadata_record_workflow_annotation_delete')(context, {'id': id, 'key': key})
                 tk.h.flash_notice(tk._('Annotation has been deleted.'))
                 tk.h.redirect_to('metadata_record_workflow', id=id, organization_id=organization_id, metadata_collection_id=metadata_collection_id)
         except tk.NotAuthorized:
@@ -399,7 +399,7 @@ class MetadataRecordController(tk.BaseController):
     def _save_annotation_new(self, id, context):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
-            data_dict['metadata_record_id'] = id
+            data_dict['id'] = id
             tk.get_action('metadata_record_workflow_annotation_create')(context, data_dict)
             tk.h.redirect_to('metadata_record_workflow', id=id)
         except tk.NotAuthorized:
@@ -413,10 +413,10 @@ class MetadataRecordController(tk.BaseController):
             error_summary = e.error_summary
             return self.annotation_new(id, data_dict, errors, error_summary)
 
-    def _save_annotation_edit(self, id, annotation_id, context):
+    def _save_annotation_edit(self, id, key, context):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
-            data_dict['id'] = annotation_id
+            data_dict['id'] = id
             tk.get_action('metadata_record_workflow_annotation_update')(context, data_dict)
             tk.h.redirect_to('metadata_record_workflow', id=id)
         except tk.NotAuthorized:
@@ -428,7 +428,7 @@ class MetadataRecordController(tk.BaseController):
         except tk.ValidationError, e:
             errors = e.error_dict
             error_summary = e.error_summary
-            return self.annotation_edit(id, annotation_id, data_dict, errors, error_summary)
+            return self.annotation_edit(id, key, data_dict, errors, error_summary)
 
     @staticmethod
     def _parse_infrastructure_ids(infrastructure_ids):

@@ -181,9 +181,29 @@ def metadata_record_workflow_rules_check_schema():
 
 def metadata_record_workflow_annotation_create_schema():
     schema = {
-        'id': [],
-        'path': [v.not_empty, unicode, v.json_pointer_validator, v.schema_pointer_validator(metadata_record_show_schema(), False)],
+        'id': [v.not_empty, unicode, v.object_exists('metadata_record')],
+        'key': [v.not_empty, unicode, name_validator, v.schema_key_validator(metadata_record_show_schema(), False)],
         'value': [v.not_empty, unicode, v.json_object_validator],
+    }
+    _make_create_schema(schema)
+    return schema
+
+
+def metadata_record_workflow_annotation_update_schema():
+    schema = metadata_record_workflow_annotation_create_schema()
+    _make_update_schema(schema)
+    return schema
+
+
+def metadata_record_workflow_annotation_show_schema(deserialize_json=False):
+    """
+    Translates from the default JSONPatch output schema.
+    """
+    schema = {
+        '__before': [v.copy('id', 'jsonpatch_id'), ignore],
+        'id': [v.copy_from('object_id')],
+        'key': [v.copy_from('operation'), v.extract_item('path'), v.extract_re_group(r'/(\w+)')],
+        'value': [v.copy_from('operation'), v.extract_item('value'), v.format_json(deserialize_json)],
     }
     return schema
 

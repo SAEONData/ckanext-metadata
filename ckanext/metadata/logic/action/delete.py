@@ -384,6 +384,35 @@ def workflow_annotation_delete(context, data_dict):
         model.repo.commit()
 
 
+def metadata_record_workflow_annotation_delete(context, data_dict):
+    """
+    Delete a workflow annotation on a metadata record.
+
+    You must be authorized to delete annotations on the metadata record.
+
+    This is a wrapper for jsonpatch_delete.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+    :param key: the annotation key to delete
+    :type key: string
+    """
+    log.info("Deleting a workflow annotation on a metadata record: %r", data_dict)
+    tk.check_access('metadata_record_workflow_annotation_delete', context, data_dict)
+
+    key = tk.get_or_bust(data_dict, 'key')
+    annotation_list = tk.get_action('metadata_record_workflow_annotation_list')(context, data_dict)
+    annotation_list = [annotation for annotation in annotation_list if annotation['key'] == key]
+
+    if not annotation_list:
+        raise tk.ObjectNotFound(_('Workflow annotation with the given key not found on metadata record'))
+
+    # it's possible for multiple annotations with the same key to exist if applicable jsonpatches
+    # were created directly using the ckanext-jsonpatch API; we delete all of them
+    for annotation in annotation_list:
+        tk.get_action('jsonpatch_delete')(context, {'id': annotation['jsonpatch_id']})
+
+
 def organization_delete(context, data_dict):
     """
     Delete an organization.

@@ -61,6 +61,10 @@ def workflow_annotation_delete(context, data_dict):
     return {'success': True}
 
 
+def metadata_record_workflow_annotation_delete(context, data_dict):
+    return {'success': True}
+
+
 def organization_delete(context, data_dict):
     return {'success': True}
 

@@ -884,6 +884,56 @@ def workflow_annotation_update(context, data_dict):
     return output
 
 
+def metadata_record_workflow_annotation_update(context, data_dict):
+    """
+    Update a workflow annotation on a metadata record.
+
+    You must be authorized to update annotations on the metadata record.
+
+    This is a wrapper for jsonpatch_update.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+    :param key: the annotation key to update
+    :type key: string
+    :param value: the JSON object to set at the specified key
+    :type value: string
+
+    :returns: the updated workflow annotation (which is a facade to the underlying JSONPatch object)
+    :rtype: dictionary
+    """
+    log.info("Updating a workflow annotation on a metadata record: %r", data_dict)
+    tk.check_access('metadata_record_workflow_annotation_update', context, data_dict)
+
+    session = context['session']
+    data, errors = tk.navl_validate(data_dict, schema.metadata_record_workflow_annotation_update_schema(), context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    annotation_list = tk.get_action('metadata_record_workflow_annotation_list')(context, data_dict)
+    annotation_list = [annotation for annotation in annotation_list if annotation['key'] == data_dict['key']]
+
+    if not annotation_list:
+        raise tk.ObjectNotFound(_('Workflow annotation with the given key not found on metadata record'))
+    if len(annotation_list) > 1:
+        raise tk.ValidationError(_('Multiple annotations exist with the same key; delete the extras before updating one'))
+
+    annotation = annotation_list[0]
+    jsonpatch_context = context.copy()
+    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema()
+    jsonpatch_data = {
+        'id': annotation['jsonpatch_id'],
+        'qualifier': 'workflow',
+        'operation': {
+            'op': 'add',
+            'path': '/' + data_dict['key'],
+            'value': json.loads(data_dict['value']),
+        },
+    }
+    return tk.get_action('jsonpatch_update')(jsonpatch_context, jsonpatch_data)
+
+
 def metadata_record_workflow_state_transition(context, data_dict):
     """
     Transition a metadata record to a different workflow state, and log the result
