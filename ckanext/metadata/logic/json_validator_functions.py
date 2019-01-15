@@ -80,6 +80,20 @@ def unique_objects_validator(validator, key_properties, instance, schema):
             key_objects += [key_object]
 
 
+def unique_properties_validator(validator, unique_properties_params, instance, schema):
+    """
+    "uniqueProperties" keyword validator: for an object, checks that properties with names that
+    match a given regex pattern ("namePattern") have unique child instances.
+
+    The present implementation only supports comparing child instances that are objects, based
+    on the child properties listed in the "objectsKey" array. We could potentially extend it
+    in future to work with other types of child instance.
+    """
+    if validator.is_type(instance, 'object'):
+        # todo...
+        yield jsonschema.ValidationError(_("%r has non-unique properties") % (instance,))
+
+
 def task_validator(validator, task_dict, instance, schema):
     """
     "task" keyword validator: adds a task to the validator, which will call the specified action

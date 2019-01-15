@@ -1125,7 +1125,7 @@ class TestMetadataRecordActions(ActionTestBase):
                          workflow_state_id=workflow_state_published['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
                                              *jsonpatch_ids, **{
-                                                 'quality_control_2/__compareSiblingObject': 'Object is indistinct from quality_control_1',
+                                                 '__uniqueProperties': 'Object has non-unique properties',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 

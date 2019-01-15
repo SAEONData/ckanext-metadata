@@ -40,12 +40,7 @@
                 "userid": {"type": "string", "objectid": "user", "role": "curator"},
                 "date": {"type": "string", "format": "date"}
             },
-            "required": ["userid", "date"],
-            "compareSiblingObject": {
-                "objectName": "quality_control_1",
-                "keyProperties": ["userid"],
-                "equal": false
-            }
+            "required": ["userid", "date"]
         },
         "validated": {
             "type": "boolean",
@@ -85,5 +80,10 @@
         "validated",
         "quality_control_1",
         "quality_control_2"
-    ]
+    ],
+
+    "uniqueProperties": {
+        "namePattern": "quality_control_[0-9]+",
+        "objectsKey": ["userid"]
+    }
 }

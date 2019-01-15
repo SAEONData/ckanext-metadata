@@ -4,7 +4,7 @@ from ckanext.metadata.logic.json_validator import JSONValidator
 from ckanext.metadata.logic.json_validator_functions import (
     objectid_validator,
     role_validator,
-    unique_objects_validator,
+    unique_properties_validator,
     url_test_validator,
 )
 
@@ -19,7 +19,7 @@ class WorkflowValidator(JSONValidator):
         return {
             'objectid': objectid_validator,
             'role': role_validator,
-            'uniqueObjects': unique_objects_validator,
+            'uniqueProperties': unique_properties_validator,
             'urlTest': url_test_validator,
         }
 

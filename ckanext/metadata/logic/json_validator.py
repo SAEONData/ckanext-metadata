@@ -151,6 +151,10 @@ class JSONValidator(object):
                 error.path.append('__uniqueObjects')
                 error.message = 'Array has non-unique objects'
 
+            elif error.schema_path[-1] == 'uniqueProperties':
+                error.path.append('__uniqueProperties')
+                error.message = 'Object has non-unique properties'
+
             elif error.schema_path[-1] == 'contains':
                 error.path.append('__contains')
                 error.message = 'Array does not contain a required item'
