@@ -22,11 +22,6 @@
     {{ form.info(_('The dictionary keys are attribute names, while the corresponding values are attribute types, which may be one of "%s". Enumeration types should be specified as "enum(value1,value2,..)"') % '", "'.join(attribute_types)) }}
   {% endcall %}
 
-  {% call form.checkbox('is_array', label=_('Allow Multiple?'), id='field-is-array',
-        value=1, checked=data.is_array, error=errors.is_array) %}
-    {{ form.info(_('Indicates whether multiple annotations of this kind may be added to an individual metadata record.')) }}
-  {% endcall %}
-
   {{ form.required_message() }}
 
   <div class="form-actions">

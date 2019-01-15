@@ -191,7 +191,6 @@ class WorkflowAnnotation(factory.Factory):
 
     name = factory.Sequence(lambda n: 'test_workflow_annotation_{0:02d}'.format(n))
     attributes = '{"attr1": "string"}'
-    is_array = True
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):

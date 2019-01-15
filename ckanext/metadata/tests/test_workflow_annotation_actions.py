@@ -14,7 +14,6 @@ class TestWorkflowAnnotationActions(ActionTestBase):
         input_dict = {
             'name': 'test-workflow-annotation',
             'attributes': '{ "attr1": "string", "attr2": "number", "attr3": "boolean" }',
-            'is_array': False,
         }
         result, obj = self.test_action('workflow_annotation_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -29,7 +28,6 @@ class TestWorkflowAnnotationActions(ActionTestBase):
         result, obj = self.test_action('workflow_annotation_create', should_error=True)
         assert_error(result, 'name', 'Missing parameter')
         assert_error(result, 'attributes', 'Missing parameter')
-        assert_error(result, 'is_array', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
         result, obj = self.test_action('workflow_annotation_create', should_error=True,
@@ -73,7 +71,6 @@ class TestWorkflowAnnotationActions(ActionTestBase):
             'id': workflow_annotation['id'],
             'name': 'updated-test-workflow-annotation',
             'attributes': '{ "attr1": "string", "attr2": "number", "attr3": "boolean" }',
-            'is_array': False,
         }
         result, obj = self.test_action('workflow_annotation_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -83,7 +80,6 @@ class TestWorkflowAnnotationActions(ActionTestBase):
         input_dict = {
             'id': workflow_annotation['id'],
             'attributes': '{ "attr1": "string", "attr2": "number", "attr3": "boolean" }',
-            'is_array': False,
         }
         result, obj = self.test_action('workflow_annotation_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -104,7 +100,6 @@ class TestWorkflowAnnotationActions(ActionTestBase):
         result, obj = self.test_action('workflow_annotation_update', should_error=True,
                                        id=workflow_annotation['id'])
         assert_error(result, 'attributes', 'Missing parameter')
-        assert_error(result, 'is_array', 'Missing parameter')
 
     def test_update_invalid_missing_values(self):
         workflow_annotation = ckanext_factories.WorkflowAnnotation()

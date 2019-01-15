@@ -86,7 +86,6 @@ class WorkflowAnnotationController(tk.BaseController):
     def _save_new(self, context):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
-            data_dict.setdefault('is_array', False)
             context['message'] = data_dict.get('log_message', '')
             tk.get_action('workflow_annotation_create')(context, data_dict)
             tk.h.redirect_to('workflow_annotation_index')
@@ -103,7 +102,6 @@ class WorkflowAnnotationController(tk.BaseController):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             data_dict['id'] = id
-            data_dict.setdefault('is_array', False)
             context['message'] = data_dict.get('log_message', '')
             context['allow_partial_update'] = True
             tk.get_action('workflow_annotation_update')(context, data_dict)

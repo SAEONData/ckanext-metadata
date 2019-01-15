@@ -11,7 +11,6 @@ workflow_annotation_table = Table(
     Column('id', types.UnicodeText, primary_key=True, default=_types.make_uuid),
     Column('name', types.UnicodeText, nullable=False, unique=True),
     Column('attributes', types.UnicodeText, nullable=False),
-    Column('is_array', types.Boolean, nullable=False),
 )
 
 vdm.sqlalchemy.make_table_stateful(workflow_annotation_table)

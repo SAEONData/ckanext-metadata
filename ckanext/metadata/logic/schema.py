@@ -474,7 +474,6 @@ def workflow_annotation_create_schema():
         'id': [ignore],
         'name': [v.not_empty, unicode, name_validator, v.object_name_validator('workflow_annotation'), v.schema_key_validator(metadata_record_show_schema(), False)],
         'attributes': [v.not_empty, unicode, v.json_dict_validator, v.workflow_annotation_attributes_validator],
-        'is_array': [v.not_missing, boolean_validator],
     }
     _make_create_schema(schema)
     return schema

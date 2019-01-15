@@ -484,9 +484,6 @@ def workflow_annotation_create(context, data_dict):
     :type name: string
     :param attributes: a dict of names and JSON types of the annotation attributes
     :type attributes: dictionary
-    :param is_array: True if the annotation is a list of objects with the specified attributes;
-        False if the annotation is a single object
-    :type is_array: boolean
 
     :returns: the newly created workflow annotation (unless 'return_id_only' is set to True
               in the context, in which case just the workflow annotation id will be returned)

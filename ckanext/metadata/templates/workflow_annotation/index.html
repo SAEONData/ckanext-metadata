@@ -20,7 +20,6 @@
     <thead>
       <tr>
         <th colspan="2">{{ _('Key') }}</th>
-        <th>{{ _('Array') }}?</th>
         <th colspan="4">{{ _('Attributes') }}</th>
         <th></th>
       </tr>
@@ -29,7 +28,6 @@
       {% for workflow_annotation in c.workflow_annotations %}
       <tr>
         <td colspan="2" style="font-family: monospace">{{ workflow_annotation.name }}</td>
-        <td>{% if workflow_annotation.is_array %}<i class="fa fa-check"></i>{% endif %}</td>
         <td colspan="4" style="font-family: monospace">
           {% for attr_name, attr_type in workflow_annotation.attributes.iteritems() %}
             {{ attr_name }}: {{ attr_type }}
