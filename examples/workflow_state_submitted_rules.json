@@ -19,15 +19,18 @@
             },
             "required": ["accepted"]
         },
-        "capture_method": {
-            "type": "string",
-            "enum": ["harvester", "curator", "manual"]
+        "capture_info": {
+            "type": "object",
+            "properties": {
+                "capture_method": {"type": "string", "enum": ["harvester", "curator", "manual"]}
+            },
+            "required": ["capture_method"]
         }
     },
 
     "required": [
         "data_agreement",
         "terms_and_conditions",
-        "capture_method"
+        "capture_info"
     ]
 }
