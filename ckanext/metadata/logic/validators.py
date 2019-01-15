@@ -215,7 +215,7 @@ def copy(from_key, to_key):
     Copies the value from one key to another in the data dict.
     """
     def callable_(key, data, errors, context):
-        data[to_key] = data.get(to_key[:-1] + (from_key,))
+        data[key[:-1] + (to_key,)] = data.get(key[:-1] + (from_key,))
 
     return callable_
 
