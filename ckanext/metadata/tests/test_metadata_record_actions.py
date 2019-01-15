@@ -838,7 +838,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                                key='annotation1_key',
                                                value=annotation1_value)
 
-        _, jsonpatch1 = self.test_action('jsonpatch_show', id=annotation1_dict['id'])
+        _, jsonpatch1 = self.test_action('jsonpatch_show', id=annotation1_dict['jsonpatch_id'])
         jsonpatch1_dict = {
             'model_name': 'metadata_record',
             'object_id': metadata_record['id'],
@@ -856,7 +856,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                                key='annotation2_key',
                                                value=annotation2_value)
 
-        _, jsonpatch2 = self.test_action('jsonpatch_show', id=annotation2_dict['id'])
+        _, jsonpatch2 = self.test_action('jsonpatch_show', id=annotation2_dict['jsonpatch_id'])
         jsonpatch2_dict = {
             'model_name': 'metadata_record',
             'object_id': metadata_record['id'],
@@ -868,8 +868,8 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_object_matches_dict(jsonpatch2, jsonpatch2_dict)
         assert type(jsonpatch2.timestamp) is datetime
 
-        jsonpatch_list = call_action('metadata_record_workflow_annotation_list', id=metadata_record['id'])
-        assert jsonpatch_list == [jsonpatch1.id, jsonpatch2.id]
+        annotation_list = call_action('metadata_record_workflow_annotation_list', id=metadata_record['id'])
+        assert [annotation['jsonpatch_id'] for annotation in annotation_list] == [jsonpatch1.id, jsonpatch2.id]
 
         metadata_record_dict, obj = self.test_action('metadata_record_show', id=metadata_record['id'])
         metadata_record_augmented_dict, _ = self.test_action('metadata_record_workflow_augmented_show',
@@ -925,21 +925,21 @@ class TestMetadataRecordActions(ActionTestBase):
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
                                              data_agreement='is a required property',
                                              terms_and_conditions='is a required property',
-                                             capture_method='is a required property')
+                                             capture_info='is a required property')
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='data_agreement',
                                       value='{"accepted": false, "href": "http:example.net/"}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='terms_and_conditions',
                                       value='"foo"',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='capture_method',
+                                      key='capture_info',
                                       value='"bar"',
-                                      )['id']]
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_submitted['id'])
@@ -948,35 +948,40 @@ class TestMetadataRecordActions(ActionTestBase):
                                                  'data_agreement/accepted': 'True was expected',
                                                  'data_agreement/href': 'is not a .*url',
                                                  'terms_and_conditions': 'is not of type .*object',
-                                                 'capture_method': 'is not one of ',
+                                                 'capture_info': 'is not of type .*object',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='data_agreement',
                                       value='{"accepted": true}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='terms_and_conditions',
                                       value='{"accepted": true}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='capture_method',
-                                      value='"manual"',
-                                      )['id']]
+                                      key='capture_info',
+                                      value='{"capture_method": "xyz"}',
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_submitted['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
                                              *jsonpatch_ids, **{
                                                  'data_agreement/href': 'is a required property',
+                                                 'capture_info/capture_method': 'is not one of ',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='data_agreement',
                                       value='{"accepted": true, "href": "http://example.net/"}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
+        jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
+                                      key='capture_info',
+                                      value='{"capture_method": "harvester"}',
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_submitted['id'])
@@ -997,60 +1002,60 @@ class TestMetadataRecordActions(ActionTestBase):
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='data_agreement',
                                       value='{"accepted": true, "href": "http://example.net/"}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='terms_and_conditions',
                                       value='{"accepted": true}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='capture_method',
-                                      value='"manual"',
-                                      )['id']]
+                                      key='capture_info',
+                                      value='{"capture_method": "manual"}',
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='quality_control',
+                                      key='quality_control_1',
                                       value='"foo"',
-                                      )['id']]
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_captured['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                              *jsonpatch_ids,
                                              validated='True was expected',
-                                             quality_control='is not of type .*array')
+                                             quality_control_1='is not of type .*object')
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         self._validate_metadata_record(metadata_record)
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='quality_control',
-                                      value='[{"userid": "someone", "date": "Friday the 13th"}]',
-                                      )['id']]
+                                      key='quality_control_1',
+                                      value='{"userid": "someone", "date": "Friday the 13th"}',
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_captured['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                              *jsonpatch_ids, **{
-                                                 'quality_control/0/userid': 'Not found.? User',
-                                                 'quality_control/0/date': 'is not a .*date',
+                                                 'quality_control_1/userid': 'Not found.? User',
+                                                 'quality_control_1/date': 'is not a .*date',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='quality_control',
-                                      value=json.dumps([{"userid": self.normal_user['name'], "date": "2018-08-14"}]),
-                                      )['id']]
+                                      key='quality_control_1',
+                                      value=json.dumps({"userid": self.normal_user['name'], "date": "2018-08-14"}),
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_captured['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                              *jsonpatch_ids, **{
-                                                 'quality_control/0/userid': 'Must use object id not name',
+                                                 'quality_control_1/userid': 'Must use object id not name',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='quality_control',
-                                      value=json.dumps([{"userid": self.normal_user['id'], "date": "2018-08-14"}]),
-                                      )['id']]
+                                      key='quality_control_1',
+                                      value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-14"}),
+                                      )['jsonpatch_id']]
 
         # TODO: the following depends on implementation of role_validator() in json_validator_functions
         # self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
@@ -1082,26 +1087,26 @@ class TestMetadataRecordActions(ActionTestBase):
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='data_agreement',
                                       value='{"accepted": true, "href": "http://example.net/"}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='terms_and_conditions',
                                       value='{"accepted": true}',
-                                      )['id']]
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='capture_method',
-                                      value='"manual"',
-                                      )['id']]
+                                      key='capture_info',
+                                      value='{"capture_method": "manual"}',
+                                      )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='quality_control',
-                                      value=json.dumps([{"userid": self.normal_user['id'], "date": "2018-08-14"}]),
-                                      )['id']]
+                                      key='quality_control_1',
+                                      value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-14"}),
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_published['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
                                              *jsonpatch_ids, **{
                                                  'errors/__maxProperties': 'Object must be empty',
-                                                 'quality_control/__minItems': 'Array has too few items',
+                                                 'quality_control_2': 'is a required property',
                                                  'metadata_json/immutableResource/resourceURL': 'URL test failed',
                                                  'metadata_json/linkedResources/0/resourceURL': 'URL test failed',
                                              })
@@ -1112,23 +1117,22 @@ class TestMetadataRecordActions(ActionTestBase):
         call_action('metadata_record_validate', id=metadata_record['id'], context={'user': self.normal_user['name']})
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='quality_control/-',
+                                      key='quality_control_2',
                                       value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-15"}),
-                                      )['id']]
+                                      )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_published['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
                                              *jsonpatch_ids, **{
-                                                 'quality_control/__uniqueObjects': 'Array has non-unique objects',
+                                                 'quality_control_2/__compareSiblingObject': 'Object is indistinct from quality_control_1',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
-                                      key='quality_control',
-                                      value=json.dumps([{"userid": self.normal_user['id'], "date": "2018-08-14"},
-                                                        {"userid": ckan_factories.User()['id'], "date": "2018-08-14"}]),
-                                      )['id']]
+                                      key='quality_control_2',
+                                      value=json.dumps({"userid": ckan_factories.User()['id'], "date": "2018-08-14"}),
+                                      )['jsonpatch_id']]
 
         # TODO: the following depends on implementation of role_validator() in json_validator_functions
         # self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
