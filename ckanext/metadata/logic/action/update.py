@@ -992,8 +992,8 @@ def metadata_record_workflow_state_transition(context, data_dict):
     # get the metadata record dict, augmented with workflow annotations
     metadata_record_dict = tk.get_action('metadata_record_workflow_augmented_show')(
         context, {'id': metadata_record_id, 'deserialize_json': True})
-    jsonpatch_ids = tk.get_action('metadata_record_workflow_annotation_list')(
-        context, {'id': metadata_record_id})
+    jsonpatch_ids = [annotation['jsonpatch_id'] for annotation in
+                     tk.get_action('metadata_record_workflow_annotation_list')(context, {'id': metadata_record_id})]
 
     validate_context = context.copy()
     validate_context['allow_side_effects'] = True
