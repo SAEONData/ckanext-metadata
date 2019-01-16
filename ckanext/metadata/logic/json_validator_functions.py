@@ -2,6 +2,7 @@
 
 import jsonschema
 import jsonschema.validators
+import jsonschema._utils
 from datetime import datetime
 import re
 import urlparse
@@ -17,6 +18,19 @@ checks_format = jsonschema.FormatChecker.cls_checks
 
 DOI_RE = re.compile(r'^10\.\d+(\.\d+)*/.+$')
 TIME_RE = re.compile(r'^(?P<h>\d{2}):(?P<m>\d{2})(:(?P<s>\d{2})(\.\d+)?)?(Z|[+-](?P<tzh>\d{2}):(?P<tzm>\d{2}))$')
+
+
+def _unique_objects(array, key_properties):
+    """
+    Test whether objects in an array are unique with respect to the given set of properties.
+    """
+    key_objects = []
+    for obj in array:
+        key_object = {k: v for k, v in obj.iteritems() if k in key_properties}
+        if key_object in key_objects:
+            return False
+        key_objects += [key_object]
+    return True
 
 
 def vocabulary_validator(validator, vocabulary_name, instance, schema):
@@ -71,27 +85,38 @@ def unique_objects_validator(validator, key_properties, instance, schema):
     are unique with respect to the named properties.
     """
     if validator.is_type(instance, 'array') and validator.is_type(schema.get('items', {}), 'object'):
-        key_objects = []
-        for obj in instance:
-            key_object = {k: v for k, v in obj.items() if k in key_properties}
-            if key_object in key_objects:
-                yield jsonschema.ValidationError(_("%r has non-unique objects") % (instance,))
-                return
-            key_objects += [key_object]
+        if not _unique_objects(instance, key_properties):
+            yield jsonschema.ValidationError(_("%r has non-unique objects") % (instance,))
 
 
-def unique_properties_validator(validator, unique_properties_params, instance, schema):
+def unique_properties_validator(validator, params, instance, schema):
     """
-    "uniqueProperties" keyword validator: for an object, checks that properties with names that
-    match a given regex pattern ("namePattern") have unique child instances.
+    "uniqueProperties" keyword validator: for an object, checks that the child instances for
+    properties with names that match a given regex pattern ("namePattern") are unique.
 
-    The present implementation only supports comparing child instances that are objects, based
-    on the child properties listed in the "objectsKey" array. We could potentially extend it
-    in future to work with other types of child instance.
+    e.g.    "uniqueProperties": {
+                "namePattern": "element[0-9]+",
+                "childProperties": ["key1", "key2"]
+            }
+
+    For child instances that are not objects, uniqueness is determined as for "uniqueItems".
+    For child instances that are objects, uniqueness is determined as for "uniqueObjects",
+    with the child instance key properties specified in the "childProperties" array.
     """
-    if validator.is_type(instance, 'object'):
-        # todo...
-        yield jsonschema.ValidationError(_("%r has non-unique properties") % (instance,))
+    if validator.is_type(instance, 'object') and validator.is_type(params, 'object'):
+        name_pattern = params.get('namePattern', '')
+        child_properties = params.get('childProperties', [])
+        child_objects = []
+        child_non_objects = []
+        for name, child_instance in instance.iteritems():
+            if re.search(name_pattern, name):
+                if validator.is_type(child_instance, 'object'):
+                    child_objects += [child_instance]
+                else:
+                    child_non_objects += [child_instance]
+
+        if not _unique_objects(child_objects, child_properties) or not jsonschema._utils.uniq(child_non_objects):
+            yield jsonschema.ValidationError(_("%r has non-unique properties") % (instance,))
 
 
 def task_validator(validator, task_dict, instance, schema):

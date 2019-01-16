@@ -84,6 +84,6 @@
 
     "uniqueProperties": {
         "namePattern": "quality_control_[0-9]+",
-        "objectsKey": ["userid"]
+        "childProperties": ["userid"]
     }
 }
