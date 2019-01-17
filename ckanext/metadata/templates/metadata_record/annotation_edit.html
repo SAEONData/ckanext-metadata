@@ -1,0 +1,15 @@
+{% extends "metadata_record/edit_base.html" %}
+
+{% block page_primary_action %}
+  {% link_for _('Back to workflow'), controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
+    action='workflow', id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name,
+    class_='btn pull-right', icon='arrow-left' %}
+{% endblock %}
+
+{% block page_heading %}
+  {{ _('Edit Workflow Annotation') if action == 'edit' else _('Create Workflow Annotation') }}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet "metadata_record/snippets/annotation_info.html" %}
+{% endblock %}

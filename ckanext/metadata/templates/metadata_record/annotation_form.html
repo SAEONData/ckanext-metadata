@@ -1,0 +1,122 @@
+{% import "macros/form.html" as form %}
+
+<form id="annotation-form" class="form-horizontal" action="" method="post">
+  {{ form.errors(error_summary) }}
+
+  {{ form.checkbox('is_predefined', label=_('Use Predefined Annotation?'), id='field-is-predefined',
+        value=1, checked=data.is_predefined,
+        attrs={'onchange': 'change_is_predefined(this.checked);', 'readonly': action == "edit"}) }}
+
+  {% if action == "new" %}
+    {{ form.hidden('key', value=data.key) }}
+
+    <div style="display: none" id="div-predefined-key">
+      {{ form.select('predefined-key', label=_('Annotation Key'), id='field-predefined-key',
+            options=annotation_key_lookup_list, selected=data.key, error=errors.key,
+            classes=['control-medium'], is_required=true,
+            attrs={'onchange': 'change_predefined_key(this.value);'}) }}
+    </div>
+    <div style="display: none" id="div-custom-key">
+      {{ form.input('custom-key', label=_('Annotation Key'), id='field-custom-key',
+            value=data.key, error=errors.key,
+            classes=['control-medium'], is_required=true) }}
+    </div>
+
+  {% else %}
+    {{ form.input('key', label=_('Annotation Key'), id='field-key',
+          value=data.key, error=errors.key,
+          classes=['control-medium'], attrs={'readonly': true}) }}
+  {% endif %}
+
+  <div style="display: none" id="div-predefined-annotation">
+    {% for predefined in predefined_annotations %}
+
+      <div id="div-predefined-annotation-{{ predefined.name }}" class="predefined-annotation">
+        {% for attr_name, attr_type in predefined['attributes'].iteritems() %}
+          {% set attr_id = 'predefined-attribute-' ~ predefined['name'] ~ '-' ~ attr_name %}
+
+          {% if attr_type in ('string', 'number', 'date') %}
+            {{ form.input(attr_id, label=attr_name, id='field-' ~ attr_id,
+                          type='text' if attr_type == 'string' else attr_type,
+                          value=data[attr_id], error=errors[attr_id],
+                          classes=['control-medium'], is_required=true) }}
+
+          {% elif attr_type == 'boolean' %}
+            {{ form.checkbox(attr_id, label=attr_name, id='field-' ~ attr_id,
+                             value=1, checked=data[attr_id], error=errors[attr_id]) }}
+
+          {% elif attr_type.startswith('enum') %}
+            {% set options = attr_type[5:-1].split(',') %}
+            {{ form.radiogroup(attr_id, label=attr_name, id='field-' ~ attr_id,
+                               options=options, selected=data[attr_id], error=errors[attr_id]) }}
+
+          {% elif attr_type == 'userid' %}
+            {{ form.select(attr_id, label=attr_name, id='field-' ~ attr_id,
+                           options=user_lookup_list, selected=data.key, error=errors.key,
+                           classes=['control-medium'], is_required=true) }}
+          {% endif %}
+        {% endfor %}
+      </div>
+
+    {% endfor %}
+  </div>
+
+  <div style="display: none" id="div-custom-annotation">
+    {{ form.textarea('value', label=_('Annotation Value'), id='field-value',
+          placeholder=_('The JSON object defining the metadata record annotation.'),
+          value=data.value, error=errors.value,
+          is_required=true, attrs={'style': 'font-family: monospace'}, rows=6) }}
+  </div>
+
+  {{ form.required_message() }}
+
+  <div class="form-actions">
+    {% if action == "edit" %}
+      {% if h.check_access('metadata_record_workflow_annotation_delete', {'id': data.id, 'key': data.key})  %}
+        <a class="btn btn-danger pull-left" data-module="confirm-action"
+           data-module-content="{{ _('Are you sure you want to delete this annotation?') }}"
+           href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
+                    action='annotation_delete', id=data.id, key=data.key %}">
+          {% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
+      {% endif %}
+    {% endif %}
+    <button class="btn btn-primary" name="save" type="submit">
+      {%- if action == "edit" -%}
+        {{ _('Update Workflow Annotation') }}
+      {%- else -%}
+        {{ _('Create Workflow Annotation') }}
+      {%- endif -%}
+    </button>
+  </div>
+</form>
+
+<script type="text/javascript">
+
+  function change_is_predefined(checked) {
+    if (checked) {
+      document.getElementById("div-predefined-key").style.display = 'block';
+      document.getElementById("div-predefined-annotation").style.display = 'block';
+      document.getElementById("div-custom-key").style.display = 'none';
+      document.getElementById("div-custom-annotation").style.display = 'none';
+    } else {
+      document.getElementById("div-predefined-key").style.display = 'none';
+      document.getElementById("div-predefined-annotation").style.display = 'none';
+      document.getElementById("div-custom-key").style.display = 'block';
+      document.getElementById("div-custom-annotation").style.display = 'block';
+    }
+  }
+
+  function change_predefined_key(value) {
+    var predefined_annotations = document.getElementsByClassName("predefined-annotation");
+    for (var i = 0; i < predefined_annotations.length; i++) {
+      predefined_annotations[i].style.display = 'none';
+    }
+    if (value !== "") {
+      document.getElementById("div-predefined-annotation-" + value).style.display = 'block';
+    }
+  }
+
+  change_is_predefined(document.getElementById("field-is-predefined").checked);
+  change_predefined_key(document.getElementById("field-predefined-key").value);
+
+</script>

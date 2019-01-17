@@ -232,6 +232,10 @@ class MetadataRecordController(tk.BaseController):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
                    'save': 'save' in tk.request.params}
 
+        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_containers_on_context(organization_id, metadata_collection_id)
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
+
         if context['save'] and not data and tk.request.method == 'POST':
             return self._save_annotation_new(id, context)
 
@@ -243,16 +247,24 @@ class MetadataRecordController(tk.BaseController):
         data = data or {}
         errors = errors or {}
         error_summary = error_summary or {}
-        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new'}
+        predefined_annotations = self._predefined_annotation_list()
+        data.setdefault('is_predefined', True)
 
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        tk.c.is_sysadmin = authz.is_sysadmin(tk.c.user)
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
+                'predefined_annotations': predefined_annotations,
+                'annotation_key_lookup_list': self._annotation_key_lookup_list(predefined_annotations),
+                'user_lookup_list': self._user_lookup_list(predefined_annotations)}
+
         tk.c.form = tk.render('metadata_record/annotation_form.html', extra_vars=vars)
         return tk.render('metadata_record/annotation_edit.html', extra_vars=vars)
 
     def annotation_edit(self, id, key, data=None, errors=None, error_summary=None, organization_id=None, metadata_collection_id=None):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
                    'save': 'save' in tk.request.params, 'for_edit': True}
+
+        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_containers_on_context(organization_id, metadata_collection_id)
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
 
         if context['save'] and not data and tk.request.method == 'POST':
             return self._save_annotation_edit(id, key, context)
@@ -269,11 +281,14 @@ class MetadataRecordController(tk.BaseController):
             tk.abort(404, tk._('Annotation not found'))
 
         errors = errors or {}
-        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit'}
+        predefined_annotations = self._predefined_annotation_list()
+        data.setdefault('is_predefined', data['key'] in [a['name'] for a in predefined_annotations])
 
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
+                'predefined_annotations': predefined_annotations,
+                'annotation_key_lookup_list': self._annotation_key_lookup_list(predefined_annotations),
+                'user_lookup_list': self._user_lookup_list(predefined_annotations)}
+
         tk.c.form = tk.render('metadata_record/annotation_form.html', extra_vars=vars)
         return tk.render('metadata_record/annotation_edit.html', extra_vars=vars)
 
@@ -357,6 +372,36 @@ class MetadataRecordController(tk.BaseController):
         return [{'value': '', 'text': tk._('(None)')}] + \
                [{'value': workflow_state['name'], 'text': workflow_state['display_name']}
                 for workflow_state in workflow_states]
+
+    @staticmethod
+    def _predefined_annotation_list():
+        """
+        Return a list of predefined workflow annotations.
+        """
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        return tk.get_action('workflow_annotation_list')(context, {'all_fields': True, 'deserialize_json': True})
+
+    @staticmethod
+    def _annotation_key_lookup_list(predefined_annotations):
+        """
+        Return a list of {'value': name, 'text': display_name} dicts for populating the
+        annotation key select control.
+        """
+        return [{'value': '', 'text': tk._('(None)')}] + \
+               [{'value': annotation['name'], 'text': annotation['name']} for annotation in predefined_annotations]
+
+    @staticmethod
+    def _user_lookup_list(predefined_annotations):
+        """
+        Return a list of {'value': user_id, 'text': user_name} dicts for populating user
+        select controls, if there are any 'userid' type attributes in the predefined annotation definitions.
+        """
+        if any((True for annotation in predefined_annotations if 'userid' in annotation['attributes'].itervalues())):
+            context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+            users = tk.get_action('user_list')(context, {'all_fields': True})
+            return [{'value': '', 'text': tk._('(None)')}] + \
+                   [{'value': user['id'], 'text': user['display_name']}
+                    for user in users]
 
     def _save_new(self, context):
         try:
