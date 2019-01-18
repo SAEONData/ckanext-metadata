@@ -446,7 +446,9 @@ class MetadataRecordController(tk.BaseController):
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             data_dict['id'] = id
             tk.get_action('metadata_record_workflow_annotation_create')(context, data_dict)
-            tk.h.redirect_to('metadata_record_workflow', id=id)
+            tk.h.redirect_to('metadata_record_workflow', id=id,
+                             organization_id=tk.c.organization['name'],
+                             metadata_collection_id=tk.c.metadata_collection['name'])
         except tk.NotAuthorized:
             tk.abort(403, tk._('Not authorized to add annotations to the metadata record'))
         except tk.ObjectNotFound:
@@ -463,7 +465,9 @@ class MetadataRecordController(tk.BaseController):
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             data_dict['id'] = id
             tk.get_action('metadata_record_workflow_annotation_update')(context, data_dict)
-            tk.h.redirect_to('metadata_record_workflow', id=id)
+            tk.h.redirect_to('metadata_record_workflow', id=id,
+                             organization_id=tk.c.organization['name'],
+                             metadata_collection_id=tk.c.metadata_collection['name'])
         except tk.NotAuthorized:
             tk.abort(403, tk._('Not authorized to update annotations on the metadata record'))
         except tk.ObjectNotFound:

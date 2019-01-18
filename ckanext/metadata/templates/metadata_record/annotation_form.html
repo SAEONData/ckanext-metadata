@@ -8,18 +8,19 @@
         attrs={'onchange': 'change_is_predefined(this.checked);', 'readonly': action == "edit"}) }}
 
   {% if action == "new" %}
-    {{ form.hidden('key', value=data.key) }}
+    <input type="hidden" name="key" id="field-key">
 
     <div style="display: none" id="div-predefined-key">
-      {{ form.select('predefined-key', label=_('Annotation Key'), id='field-predefined-key',
+      {{ form.select(label=_('Annotation Key'), id='field-predefined-key',
             options=annotation_key_lookup_list, selected=data.key, error=errors.key,
             classes=['control-medium'], is_required=true,
-            attrs={'onchange': 'change_predefined_key(this.value);'}) }}
+            attrs={'onchange': 'set_key(this.value); change_predefined_key(this.value);'}) }}
     </div>
     <div style="display: none" id="div-custom-key">
-      {{ form.input('custom-key', label=_('Annotation Key'), id='field-custom-key',
+      {{ form.input(label=_('Annotation Key'), id='field-custom-key',
             value=data.key, error=errors.key,
-            classes=['control-medium'], is_required=true) }}
+            classes=['control-medium'], is_required=true,
+            attrs={'onchange': 'set_key(this.value);'}) }}
     </div>
 
   {% else %}
@@ -28,32 +29,39 @@
           classes=['control-medium'], attrs={'readonly': true}) }}
   {% endif %}
 
-  <div style="display: none" id="div-predefined-annotation">
+  <div style="display: none" id="div-predefined-attributes">
     {% for predefined in predefined_annotations %}
+      {% set attr_class = 'predefined-attributes-' ~ predefined.name %}
 
-      <div id="div-predefined-annotation-{{ predefined.name }}" class="predefined-annotation">
-        {% for attr_name, attr_type in predefined['attributes'].iteritems() %}
-          {% set attr_id = 'predefined-attribute-' ~ predefined['name'] ~ '-' ~ attr_name %}
+      <div id="div-predefined-attributes-{{ predefined.name }}" class="predefined-attributes">
+        {% for attr_name, attr_type in predefined.attributes.iteritems() %}
+          {% set attr_value = data.value[attr_name] if predefined.name == data.key else '' %}
+          {% set attr_id = 'field-attr-' ~ predefined.name ~ '-' ~ attr_name %}
 
           {% if attr_type in ('string', 'number', 'date') %}
-            {{ form.input(attr_id, label=attr_name, id='field-' ~ attr_id,
-                          type='text' if attr_type == 'string' else attr_type,
-                          value=data[attr_id], error=errors[attr_id],
-                          classes=['control-medium'], is_required=true) }}
+            {{ form.input(label=attr_name, id=attr_id, classes=['control-medium'],
+                          type='text' if attr_type == 'string' else attr_type, value=attr_value,
+                          attrs={'class': attr_class, 'data-attr-name': attr_name,
+                                 'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
 
           {% elif attr_type == 'boolean' %}
-            {{ form.checkbox(attr_id, label=attr_name, id='field-' ~ attr_id,
-                             value=1, checked=data[attr_id], error=errors[attr_id]) }}
+            {{ form.checkbox(label=attr_name, id=attr_id,
+                             value=1, checked=attr_value,
+                             attrs={'class': attr_class, 'data-attr-name': attr_name,
+                                    'onchange': 'change_attribute(this.dataset.attrName, this.checked);'}) }}
 
           {% elif attr_type.startswith('enum') %}
             {% set options = attr_type[5:-1].split(',') %}
-            {{ form.radiogroup(attr_id, label=attr_name, id='field-' ~ attr_id,
-                               options=options, selected=data[attr_id], error=errors[attr_id]) }}
+            {{ form.radiogroup(label=attr_name, id=attr_id,
+                               options=options, selected=attr_value,
+                               attrs={'class': attr_class, 'data-attr-name': attr_name,
+                                      'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
 
           {% elif attr_type == 'userid' %}
-            {{ form.select(attr_id, label=attr_name, id='field-' ~ attr_id,
-                           options=user_lookup_list, selected=data.key, error=errors.key,
-                           classes=['control-medium'], is_required=true) }}
+            {{ form.select(label=attr_name, id=attr_id, classes=['control-medium'],
+                           options=user_lookup_list, selected=attr_value,
+                           attrs={'class': attr_class, 'data-attr-name': attr_name,
+                                  'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
           {% endif %}
         {% endfor %}
       </div>
@@ -61,12 +69,10 @@
     {% endfor %}
   </div>
 
-  <div style="display: none" id="div-custom-annotation">
-    {{ form.textarea('value', label=_('Annotation Value'), id='field-value',
-          placeholder=_('The JSON object defining the metadata record annotation.'),
-          value=data.value, error=errors.value,
-          is_required=true, attrs={'style': 'font-family: monospace'}, rows=6) }}
-  </div>
+  {{ form.textarea('value', label=_('Annotation Value'), id='field-value',
+        placeholder=_('The JSON object defining the metadata record annotation.'),
+        value=data.value, error=errors.value,
+        is_required=true, rows=6, attrs={'style': 'font-family: monospace'}) }}
 
   {{ form.required_message() }}
 
@@ -95,25 +101,45 @@
   function change_is_predefined(checked) {
     if (checked) {
       document.getElementById("div-predefined-key").style.display = 'block';
-      document.getElementById("div-predefined-annotation").style.display = 'block';
+      document.getElementById("div-predefined-attributes").style.display = 'block';
       document.getElementById("div-custom-key").style.display = 'none';
-      document.getElementById("div-custom-annotation").style.display = 'none';
     } else {
       document.getElementById("div-predefined-key").style.display = 'none';
-      document.getElementById("div-predefined-annotation").style.display = 'none';
+      document.getElementById("div-predefined-attributes").style.display = 'none';
       document.getElementById("div-custom-key").style.display = 'block';
-      document.getElementById("div-custom-annotation").style.display = 'block';
     }
   }
 
-  function change_predefined_key(value) {
-    var predefined_annotations = document.getElementsByClassName("predefined-annotation");
-    for (var i = 0; i < predefined_annotations.length; i++) {
-      predefined_annotations[i].style.display = 'none';
+  function change_predefined_key(key) {
+    var predefined_attributes_blocks = document.getElementsByClassName("predefined-attributes");
+    for (var i = 0; i < predefined_attributes_blocks.length; i++) {
+      predefined_attributes_blocks[i].style.display = 'none';
     }
-    if (value !== "") {
-      document.getElementById("div-predefined-annotation-" + value).style.display = 'block';
+    if (key !== "") {
+      document.getElementById("div-predefined-attributes-" + key).style.display = 'block';
     }
+    document.getElementById("field-value").value = "{}";
+    if (key !== "") {
+      var controls = document.getElementsByClassName("predefined-attributes-" + key);
+      for (var i = 0; i < controls.length; i++) {
+        var control = controls[i];
+        if (control.type == 'checkbox') {
+          change_attribute(control.dataset.attrName, control.checked);
+        } else {
+          change_attribute(control.dataset.attrName, control.value);
+        }
+      }
+    }
+  }
+
+  function set_key(value) {
+    document.getElementById("field-key").value = value;
+  }
+
+  function change_attribute(name, value) {
+    var attributes = JSON.parse(document.getElementById("field-value").value);
+    attributes[name] = value;
+    document.getElementById("field-value").value = JSON.stringify(attributes, null, 4);
   }
 
   change_is_predefined(document.getElementById("field-is-predefined").checked);
