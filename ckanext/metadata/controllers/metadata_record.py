@@ -223,6 +223,7 @@ class MetadataRecordController(tk.BaseController):
                 self._revert(id, organization_id, metadata_collection_id, context)
 
         tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        tk.c.annotations = tk.get_action('metadata_record_workflow_annotation_list')(context, {'id': id})
         self._set_containers_on_context(organization_id, metadata_collection_id)
         self._set_additionalinfo_on_context(tk.c.metadata_record)
         return tk.render('metadata_record/workflow.html', extra_vars={

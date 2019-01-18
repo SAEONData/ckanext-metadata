@@ -898,6 +898,8 @@ def metadata_record_workflow_annotation_update(context, data_dict):
     :type key: string
     :param value: the JSON object to set at the specified key
     :type value: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :returns: the updated workflow annotation (which is a facade to the underlying JSONPatch object)
     :rtype: dictionary
@@ -919,9 +921,10 @@ def metadata_record_workflow_annotation_update(context, data_dict):
     if len(annotation_list) > 1:
         raise tk.ValidationError(_('Multiple annotations exist with the same key; delete the extras before updating one'))
 
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
     annotation = annotation_list[0]
     jsonpatch_context = context.copy()
-    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema()
+    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema(deserialize_json)
     jsonpatch_data = {
         'id': annotation['jsonpatch_id'],
         'qualifier': 'workflow',

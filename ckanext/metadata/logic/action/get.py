@@ -751,6 +751,8 @@ def metadata_record_workflow_annotation_show(context, data_dict):
     :type id: string
     :param key: the annotation key
     :type key: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: dictionary, which is a facade to the underlying JSONPatch object
     """
@@ -773,6 +775,8 @@ def metadata_record_workflow_annotation_list(context, data_dict):
 
     :param id: the id or name of the metadata record
     :type id: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
 
     :rtype: list of dicts
     """
@@ -793,8 +797,9 @@ def metadata_record_workflow_annotation_list(context, data_dict):
 
     tk.check_access('metadata_record_workflow_annotation_list', context, data_dict)
 
+    deserialize_json = asbool(data_dict.get('deserialize_json'))
     jsonpatch_context = context.copy()
-    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema()
+    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema(deserialize_json)
     jsonpatch_data = {
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,

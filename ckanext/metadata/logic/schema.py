@@ -204,6 +204,8 @@ def metadata_record_workflow_annotation_show_schema(deserialize_json=False):
         'id': [v.copy_from('object_id')],
         'key': [v.copy_from('operation'), v.extract_item('path'), v.extract_re_group(r'/(\w+)')],
         'value': [v.copy_from('operation'), v.extract_item('value'), v.format_json(deserialize_json)],
+        'object_id': [],
+        'operation': [],
     }
     return schema
 

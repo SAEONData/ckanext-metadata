@@ -148,16 +148,16 @@ def format_json(deserialize):
     For use in "show" schemas.
     """
     def callable_(key, data, errors, context):
-        json_str = data.get(key)
+        value = data.get(key)
         try:
-            json_dict = json.loads(json_str)
+            json_obj = json.loads(value) if isinstance(value, basestring) else value
         except:
-            return
+            json_obj = value
 
-        if deserialize:
-            data[key] = json_dict
-        else:
-            data[key] = json.dumps(json_dict, indent=4)
+        try:
+            data[key] = json_obj if deserialize else json.dumps(json_obj, indent=4)
+        except:
+            pass
 
     return callable_
 
