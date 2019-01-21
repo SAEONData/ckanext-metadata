@@ -42,7 +42,8 @@
             {{ form.input(label=attr_name, id=attr_id, classes=['control-medium'],
                           type='text' if attr_type == 'string' else attr_type, value=attr_value,
                           attrs={'class': attr_class, 'data-attr-name': attr_name,
-                                 'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
+                                 'onchange': 'change_attribute(this.dataset.attrName, this.value);',
+                                 'step': 'any' if attr_type == 'number' else ''}) }}
 
           {% elif attr_type == 'boolean' %}
             {{ form.checkbox(label=attr_name, id=attr_id,
@@ -51,11 +52,14 @@
                                     'onchange': 'change_attribute(this.dataset.attrName, this.checked);'}) }}
 
           {% elif attr_type.startswith('enum') %}
-            {% set options = attr_type[5:-1].split(',') %}
-            {{ form.radiogroup(label=attr_name, id=attr_id,
-                               options=options, selected=attr_value,
-                               attrs={'class': attr_class, 'data-attr-name': attr_name,
-                                      'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
+            {% set options = [{'value': '', 'text': _('(None)')}] %}
+            {% for option in attr_type[5:-1].split(',') %}
+              {{ options.append({'value': option, 'text': option}) }}
+            {% endfor %}
+            {{ form.select(label=attr_name, id=attr_id, classes=['control-medium'],
+                           options=options, selected=attr_value,
+                           attrs={'class': attr_class, 'data-attr-name': attr_name,
+                                  'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
 
           {% elif attr_type == 'userid' %}
             {{ form.select(label=attr_name, id=attr_id, classes=['control-medium'],
@@ -103,10 +107,12 @@
       document.getElementById("div-predefined-key").style.display = 'block';
       document.getElementById("div-predefined-attributes").style.display = 'block';
       document.getElementById("div-custom-key").style.display = 'none';
+      document.getElementById("field-value").readOnly = true;
     } else {
       document.getElementById("div-predefined-key").style.display = 'none';
       document.getElementById("div-predefined-attributes").style.display = 'none';
       document.getElementById("div-custom-key").style.display = 'block';
+      document.getElementById("field-value").readOnly = false;
     }
   }
 

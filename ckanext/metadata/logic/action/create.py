@@ -552,7 +552,7 @@ def metadata_record_workflow_annotation_create(context, data_dict):
 
     annotation = tk.get_action('metadata_record_workflow_annotation_show')(context, data_dict)
     if annotation:
-        raise tk.ValidationError(_('Duplicate: workflow annotation with the given key already exists on metadata record'))
+        raise tk.ValidationError({'key': [_('Duplicate: workflow annotation with the given key already exists on metadata record')]})
 
     deserialize_json = asbool(data_dict.get('deserialize_json'))
     jsonpatch_context = context.copy()
