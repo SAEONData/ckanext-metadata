@@ -51,10 +51,12 @@
         <td>
           <div class="btn-group pull-right">
             <a class="btn btn-small" href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
-                                              action='annotation_edit', id=annotation.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}"
+                                              action='annotation_edit', id=annotation.id, key=annotation.key,
+                                              organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}"
                title="{{ _('Edit') }}"><i class="fa fa-wrench"></i></a>
             <a class="btn btn-danger btn-small" href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
-                                                         action='annotation_delete', id=annotation.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}"
+                                                         action='annotation_delete', id=annotation.id, key=annotation.key,
+                                                         organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name %}"
                data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this annotation?') }}"
                title="{{ _('Delete') }}"><i class="fa fa-times"></i></a>
           </div>
