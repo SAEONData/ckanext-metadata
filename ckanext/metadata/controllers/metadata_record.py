@@ -276,7 +276,11 @@ class MetadataRecordController(tk.BaseController):
             tk.abort(403, tk._('Not authorized to update annotations on the metadata record'))
 
         try:
-            old_data = tk.get_action('metadata_record_workflow_annotation_show')(context, {'id': id, 'key': key})
+            old_data = tk.get_action('metadata_record_workflow_annotation_show')(context, {
+                'id': id,
+                'key': key,
+                'deserialize_json': True,
+            })
             data = data or old_data
         except (tk.ObjectNotFound, tk.NotAuthorized):
             tk.abort(404, tk._('Annotation not found'))

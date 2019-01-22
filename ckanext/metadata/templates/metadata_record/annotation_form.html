@@ -3,11 +3,11 @@
 <form id="annotation-form" class="form-horizontal" action="" method="post">
   {{ form.errors(error_summary) }}
 
-  {{ form.checkbox('is_predefined', label=_('Use Predefined Annotation?'), id='field-is-predefined',
-        value=1, checked=data.is_predefined,
-        attrs={'onchange': 'change_is_predefined(this.checked);', 'readonly': action == "edit"}) }}
-
   {% if action == "new" %}
+    {{ form.checkbox('is_predefined', label=_('Use Predefined Annotation?'), id='field-is-predefined',
+          value=1, checked=data.is_predefined,
+          attrs={'onchange': 'change_is_predefined(this.checked);'}) }}
+
     <input type="hidden" name="key" id="field-key">
 
     <div style="display: none" id="div-predefined-key">
@@ -38,12 +38,17 @@
           {% set attr_value = data.value[attr_name] if predefined.name == data.key else '' %}
           {% set attr_id = 'field-attr-' ~ predefined.name ~ '-' ~ attr_name %}
 
-          {% if attr_type in ('string', 'number', 'date') %}
+          {% if attr_type in ('string', 'date') %}
             {{ form.input(label=attr_name, id=attr_id, classes=['control-medium'],
                           type='text' if attr_type == 'string' else attr_type, value=attr_value,
                           attrs={'class': attr_class, 'data-attr-name': attr_name,
-                                 'onchange': 'change_attribute(this.dataset.attrName, this.value);',
-                                 'step': 'any' if attr_type == 'number' else ''}) }}
+                                 'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
+
+          {% elif attr_type == 'number' %}
+            {{ form.input(label=attr_name, id=attr_id, classes=['control-medium'],
+                          type='number', value=attr_value,
+                          attrs={'class': attr_class, 'data-attr-name': attr_name, 'step': 'any',
+                                 'onchange': 'change_attribute(this.dataset.attrName, this.value, true);'}) }}
 
           {% elif attr_type == 'boolean' %}
             {{ form.checkbox(label=attr_name, id=attr_id,
@@ -104,14 +109,21 @@
 
   function change_is_predefined(checked) {
     if (checked) {
-      document.getElementById("div-predefined-key").style.display = 'block';
+      {% if action == "new" %}
+        document.getElementById("div-predefined-key").style.display = 'block';
+        document.getElementById("div-custom-key").style.display = 'none';
+      {% endif %}
+
       document.getElementById("div-predefined-attributes").style.display = 'block';
-      document.getElementById("div-custom-key").style.display = 'none';
       document.getElementById("field-value").readOnly = true;
+
     } else {
-      document.getElementById("div-predefined-key").style.display = 'none';
+      {% if action == "new" %}
+        document.getElementById("div-predefined-key").style.display = 'none';
+        document.getElementById("div-custom-key").style.display = 'block';
+      {% endif %}
+
       document.getElementById("div-predefined-attributes").style.display = 'none';
-      document.getElementById("div-custom-key").style.display = 'block';
       document.getElementById("field-value").readOnly = false;
     }
   }
@@ -121,18 +133,18 @@
     for (var i = 0; i < predefined_attributes_blocks.length; i++) {
       predefined_attributes_blocks[i].style.display = 'none';
     }
+
     if (key !== "") {
       document.getElementById("div-predefined-attributes-" + key).style.display = 'block';
-    }
-    document.getElementById("field-value").value = "{}";
-    if (key !== "") {
+      document.getElementById("field-value").value = "{}";
+
       var controls = document.getElementsByClassName("predefined-attributes-" + key);
       for (var i = 0; i < controls.length; i++) {
         var control = controls[i];
         if (control.type == 'checkbox') {
           change_attribute(control.dataset.attrName, control.checked);
         } else {
-          change_attribute(control.dataset.attrName, control.value);
+          change_attribute(control.dataset.attrName, control.value, control.type == 'number');
         }
       }
     }
@@ -142,13 +154,19 @@
     document.getElementById("field-key").value = value;
   }
 
-  function change_attribute(name, value) {
+  function change_attribute(name, value, is_numeric=false) {
     var attributes = JSON.parse(document.getElementById("field-value").value);
+    if (is_numeric) {
+      value = Number(value);
+    }
     attributes[name] = value;
     document.getElementById("field-value").value = JSON.stringify(attributes, null, 4);
   }
 
-  change_is_predefined(document.getElementById("field-is-predefined").checked);
-  change_predefined_key(document.getElementById("field-predefined-key").value);
+  change_is_predefined({% if data.is_predefined %} true {% else %} false {% endif %});
+
+  {% if data.is_predefined %}
+    change_predefined_key("{{ data.key }}");
+  {% endif %}
 
 </script>
