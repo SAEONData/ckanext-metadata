@@ -1,11 +1,14 @@
 # encoding: utf-8
 
+import json
+
 import ckan.plugins.toolkit as tk
 import ckan.model as model
 import ckan.lib.helpers as helpers
 import ckan.authz as authz
 from ckan.logic import clean_dict, tuplize_dict, parse_params
 import ckan.lib.navl.dictization_functions as dict_fns
+import ckan.plugins as p
 from ckanext.metadata.logic import schema
 
 
@@ -109,10 +112,11 @@ class MetadataStandardController(tk.BaseController):
 
         errors = errors or {}
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
-                'parent_standard_lookup_list': self._parent_standard_lookup_list(exclude=id)}
+                'parent_standard_lookup_list': self._parent_standard_lookup_list(exclude=id),
+                'is_elasticsearch_enabled': self._is_elasticsearch_enabled()}
 
         tk.c.form = tk.render('metadata_standard/edit_form.html', extra_vars=vars)
-        return tk.render('metadata_standard/edit.html')
+        return tk.render('metadata_standard/edit.html', extra_vars=vars)
 
     def delete(self, id):
         if 'cancel' in tk.request.params:
@@ -215,7 +219,9 @@ class MetadataStandardController(tk.BaseController):
         except tk.NotAuthorized:
             tk.abort(403, tk._('Not authorized to see this page'))
 
-        return tk.render('metadata_standard/attr_maps.html')
+        return tk.render('metadata_standard/attr_maps.html', extra_vars={
+            'is_elasticsearch_enabled': self._is_elasticsearch_enabled()
+        })
 
     def attr_map_new(self, id, data=None, errors=None, error_summary=None):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
@@ -261,7 +267,8 @@ class MetadataStandardController(tk.BaseController):
         errors = errors or {}
         error_summary = error_summary or {}
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
-                'record_attr_list': self._attr_map_record_attr_list()}
+                'record_attr_list': self._attr_map_record_attr_list(),
+                'is_elasticsearch_enabled': self._is_elasticsearch_enabled()}
 
         tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
         tk.c.is_sysadmin = authz.is_sysadmin(tk.c.user)
@@ -291,6 +298,58 @@ class MetadataStandardController(tk.BaseController):
             except dict_fns.DataError:
                 tk.abort(400, tk._(u'Integrity Error'))
         return tk.render('metadata_standard/confirm_delete_attr_map.html')
+
+    def elastic(self, id):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+
+        if tk.request.method == 'POST':
+            if 'create_index' in tk.request.params:
+                self._elastic_create_index(id, context)
+            else:
+                self._elastic_delete_index(id, context)
+
+        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
+        return tk.render('metadata_standard/elastic.html', extra_vars={
+            'is_elasticsearch_enabled': self._is_elasticsearch_enabled(),
+            'elasticsearch_info': self._elasticsearch_info(id),
+        })
+
+    @staticmethod
+    def _elastic_create_index(id, context):
+        try:
+            tk.get_action('metadata_standard_index_create')(context, {'id': id})
+            tk.h.flash_notice(tk._('The Elasticsearch index has been initialized.'))
+            tk.h.redirect_to('metadata_standard_elastic', id=id)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to initialize an Elasticsearch index'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata standard not found'))
+
+    @staticmethod
+    def _elastic_delete_index(id, context):
+        try:
+            tk.get_action('metadata_standard_index_delete')(context, {'id': id})
+            tk.h.flash_notice(tk._('The Elasticsearch index has been deleted.'))
+            tk.h.redirect_to('metadata_standard_elastic', id=id)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to delete an Elasticsearch index'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata standard not found'))
+
+    @staticmethod
+    def _is_elasticsearch_enabled():
+        return p.plugin_loaded('metadata_elasticsearch')
+
+    @staticmethod
+    def _elasticsearch_info(id):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        index_exists = tk.get_action('metadata_standard_index_exists')(context, {'id': id})
+        index_mapping = json.dumps(tk.get_action('metadata_standard_index_mapping')(context, {'id': id})
+                                   if index_exists else {}, indent=2)
+        return {
+            'index_exists': index_exists,
+            'index_mapping': index_mapping,
+        }
 
     @staticmethod
     def _parent_standard_lookup_list(exclude=None):

@@ -1,0 +1,32 @@
+{% extends "metadata_standard/edit_base.html" %}
+
+{% block subtitle %}
+  {{ _('Elasticsearch Index') }} - {{ c.metadata_standard.display_name }} - {{ _('Metadata Standards') }}
+{% endblock %}
+{% block page_heading_class %}hide-heading{% endblock %}
+
+{% block page_primary_action %}
+  <form method="POST" data-module="basic-form">
+    {% if not elasticsearch_info.index_exists and h.check_access('metadata_standard_index_create', {'id': c.metadata_standard.id}) %}
+      <p>{{ _('Click the button below to initialize an Elasticsearch index using the metadata template defined for this metadata standard.') }}</p>
+      <button class="btn btn-primary" name="create_index" type="submit">
+        <i class="fa fa-search-plus"></i> {{ _('Create Index') }}
+      </button>
+    {% elif elasticsearch_info.index_exists and h.check_access('metadata_standard_index_delete', {'id': c.metadata_standard.id}) %}
+      <p>{{ _('An Elasticsearch index already exists for this metadata standard. Click the button below to delete the index.') }}</p>
+      <button class="btn btn-primary btn-danger" data-module="confirm-action"
+              data-module-content="{{ _('Are you sure you want to delete the Elasticsearch index? Warning: Metadata records associated with this metadata standard will no longer be discoverable via Elasticsearch.') }}">
+        <i class="fa fa-times"></i> {{ _('Delete Index') }}
+      </button>
+    {% endif %}
+  </form>
+{% endblock %}
+
+{% block primary_content_inner %}
+  {% if elasticsearch_info.index_exists %}
+    <h3>{{ _('Index Document Structure') }}</h3>
+    <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="24" readonly>
+      {{- elasticsearch_info.index_mapping -}}
+    </textarea>
+  {% endif %}
+{% endblock %}

@@ -23,6 +23,9 @@
 {% block content_primary_nav %}
   {{ h.build_nav_icon('metadata_standard_edit', _('Edit'), id=c.metadata_standard.name) }}
   {{ h.build_nav_icon('metadata_standard_attr_maps', _('Attribute Mappings'), id=c.metadata_standard.name) }}
+  {% if is_elasticsearch_enabled %}
+    {{ h.build_nav_icon('metadata_standard_elastic', _('Elasticsearch Index'), id=c.metadata_standard.name) }}
+  {% endif %}
 {% endblock %}
 
 {% block secondary_content %}

@@ -102,6 +102,7 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         map.connect('/metadata_standard/attr_map_new/{id}', controller=controller, action='attr_map_new')
         map.connect('/metadata_standard/attr_map_edit/{id}/{attr_map_id}', controller=controller, action='attr_map_edit')
         map.connect('/metadata_standard/attr_map_delete/{id}/{attr_map_id}', controller=controller, action='attr_map_delete')
+        map.connect('metadata_standard_elastic', '/metadata_standard/elastic/{id}', controller=controller, action='elastic', ckan_icon='search')
 
         controller = 'ckanext.metadata.controllers.metadata_schema:MetadataSchemaController'
         map.connect('metadata_schema_index', '/metadata_standard/{metadata_standard_id}/metadata_schema', controller=controller, action='index')
