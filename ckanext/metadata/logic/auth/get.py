@@ -163,3 +163,11 @@ def metadata_json_attr_map_apply(context, data_dict):
 
 def metadata_record_attr_match(context, data_dict):
     return {'success': True}
+
+
+def metadata_standard_index_exists(context, data_dict):
+    return {'success': True}
+
+
+def metadata_standard_index_mapping(context, data_dict):
+    return {'success': True}

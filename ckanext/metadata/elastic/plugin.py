@@ -15,6 +15,8 @@ class ElasticSearchPlugin(p.SingletonPlugin):
         return {
             'metadata_standard_index_create': action.metadata_standard_index_create,
             'metadata_standard_index_delete': action.metadata_standard_index_delete,
+            'metadata_standard_index_exists': action.metadata_standard_index_exists,
+            'metadata_standard_index_mapping': action.metadata_standard_index_mapping,
             'metadata_record_index_update': action.metadata_record_index_update,
             'organization_update': action.organization_update,
             'infrastructure_update': action.infrastructure_update,

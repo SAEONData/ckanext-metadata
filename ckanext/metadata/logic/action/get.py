@@ -1164,3 +1164,27 @@ def metadata_json_attr_map_apply(context, data_dict):
             result['key_dict'][attr] = value
 
     return result
+
+
+@tk.side_effect_free
+def metadata_standard_index_exists(context, data_dict):
+    """
+    Placeholder function for checking whether a metadata search index exists.
+    May be implemented as required by another plugin.
+
+    :param id: the id or name of the metadata standard
+    :type id: string
+    """
+    tk.check_access('metadata_standard_index_exists', context, data_dict)
+
+
+@tk.side_effect_free
+def metadata_standard_index_mapping(context, data_dict):
+    """
+    Placeholder function for retrieving the document structure of a metadata search index.
+    May be implemented as required by another plugin.
+
+    :param id: the id or name of the metadata standard
+    :type id: string
+    """
+    tk.check_access('metadata_standard_index_mapping', context, data_dict)
