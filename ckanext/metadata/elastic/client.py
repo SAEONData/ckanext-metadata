@@ -17,10 +17,6 @@ def _search_agent_url():
     return config.get('ckan.metadata.elastic.search_agent_url')
 
 
-def _call_agent_async(url, **kwargs):
-    _call_agent.delay(url, **kwargs)
-
-
 @app.task
 def _call_agent(url, *outputs, **kwargs):
     """
@@ -52,31 +48,26 @@ def _call_agent(url, *outputs, **kwargs):
     return result
 
 
-# synchronous
 def create_index(index_name, metadata_template_json):
     url = _search_agent_url() + '/create_index'
     return _call_agent(url, index=index_name, metadata_json=metadata_template_json)
 
 
-# synchronous
 def delete_index(index_name):
     url = _search_agent_url() + '/delete_index'
     return _call_agent(url, index=index_name)
 
 
-# synchronous
 def get_indexes():
     url = _search_agent_url() + '/get_indexes'
     return _call_agent(url, 'indexes')
 
 
-# synchronous
 def get_index_mapping(index_name):
     url = _search_agent_url() + '/index_mapping'
     return _call_agent(url, 'mapping', index=index_name)
 
 
-# synchronous
 def get_record(index_name, record_id):
     url = _search_agent_url() + '/search'
     result = _call_agent(url, 'result_length', 'results', index=index_name, record_id=record_id)
@@ -91,14 +82,14 @@ def get_record(index_name, record_id):
     return result
 
 
-# asynchronous
-def put_record(index_name, record_id, metadata_json, organization, collection, infrastructures):
+def put_record(index_name, record_id, metadata_json, organization, collection, infrastructures, async):
     url = _search_agent_url() + '/add'
-    _call_agent_async(url, index=index_name, record_id=record_id, metadata_json=metadata_json,
-                      organization=organization, collection=collection, infrastructures=infrastructures)
+    func = _call_agent.delay if async else _call_agent
+    func(url, index=index_name, record_id=record_id, metadata_json=metadata_json,
+         organization=organization, collection=collection, infrastructures=infrastructures)
 
 
-# asynchronous
-def delete_record(index_name, record_id):
+def delete_record(index_name, record_id, async):
     url = _search_agent_url() + '/delete'
-    _call_agent_async(url, index=index_name, record_id=record_id, force=True)
+    func = _call_agent.delay if async else _call_agent
+    func(url, index=index_name, record_id=record_id, force=True)

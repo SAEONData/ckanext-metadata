@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import logging
+from paste.deploy.converters import asbool
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -60,15 +61,16 @@ def metadata_record_index_update(original_action, context, data_dict):
     """
     Add/update/delete a metadata record in a search index.
 
-    Note: this is done asynchronously.
-
     :param id: the id or name of the metadata record
     :type id: string
+    :param async: update the index asynchronously (optional, default: ``True``)
+    :type async: boolean
     """
     original_action(context, data_dict)
 
     model = context['model']
     session = context['session']
+    async = asbool(data_dict.get('async', True))
 
     metadata_record = context.get('metadata_record')
     if not metadata_record:
@@ -84,7 +86,7 @@ def metadata_record_index_update(original_action, context, data_dict):
 
     if metadata_record.private:
         log.debug("Removing metadata record from search index: %s", record_id)
-        client.delete_record(index_name, record_id)
+        client.delete_record(index_name, record_id, async)
     else:
         log.debug("Adding metadata record to search index: %s", record_id)
 
@@ -105,7 +107,7 @@ def metadata_record_index_update(original_action, context, data_dict):
         infrastructure_titles = [title for (title,) in infrastructure_titles]
 
         client.put_record(index_name, record_id, metadata_record.extras['metadata_json'],
-                          organization_title, collection_title, infrastructure_titles)
+                          organization_title, collection_title, infrastructure_titles, async)
 
 
 @tk.chained_action

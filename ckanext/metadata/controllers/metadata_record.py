@@ -511,7 +511,7 @@ class MetadataRecordController(tk.BaseController):
     @staticmethod
     def _elastic_update_index(id, organization_id, metadata_collection_id, context):
         try:
-            tk.get_action('metadata_record_index_update')(context, {'id': id})
+            tk.get_action('metadata_record_index_update')(context, {'id': id, 'async': False})
             tk.h.flash_notice(tk._('The metadata search index has been updated.'))
         except tk.NotAuthorized:
             tk.abort(403, tk._('Unauthorized to update the search index'))
