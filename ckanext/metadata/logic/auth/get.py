@@ -165,9 +165,5 @@ def metadata_record_attr_match(context, data_dict):
     return {'success': True}
 
 
-def metadata_standard_index_exists(context, data_dict):
-    return {'success': True}
-
-
-def metadata_standard_index_mapping(context, data_dict):
+def metadata_standard_index_show(context, data_dict):
     return {'success': True}

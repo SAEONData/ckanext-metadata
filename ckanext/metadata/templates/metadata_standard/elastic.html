@@ -6,14 +6,14 @@
 {% block page_heading_class %}hide-heading{% endblock %}
 
 {% block page_primary_action %}
-  {% if 'error' not in elasticsearch_info %}
+  {% if 'error' not in elastic_index_info %}
     <form method="POST" data-module="basic-form">
-      {% if not elasticsearch_info.index_exists and h.check_access('metadata_standard_index_create', {'id': c.metadata_standard.id}) %}
+      {% if not elastic_index_info.exists and h.check_access('metadata_standard_index_create', {'id': c.metadata_standard.id}) %}
         <p>{{ _('Click the button below to initialize an Elasticsearch index using the metadata template defined for this metadata standard.') }}</p>
         <button class="btn btn-primary" name="create_index" type="submit">
           <i class="fa fa-search-plus"></i> {{ _('Create Index') }}
         </button>
-      {% elif elasticsearch_info.index_exists and h.check_access('metadata_standard_index_delete', {'id': c.metadata_standard.id}) %}
+      {% elif elastic_index_info.exists and h.check_access('metadata_standard_index_delete', {'id': c.metadata_standard.id}) %}
         <p>{{ _('An Elasticsearch index already exists for this metadata standard. Click the button below to delete the index.') }}</p>
         <button class="btn btn-primary btn-danger" data-module="confirm-action"
                 data-module-content="{{ _('Are you sure you want to delete the Elasticsearch index? Warning: Metadata records associated with this metadata standard will no longer be discoverable via Elasticsearch.') }}">
@@ -25,14 +25,14 @@
 {% endblock %}
 
 {% block primary_content_inner %}
-  {% if 'error' in elasticsearch_info %}
+  {% if 'error' in elastic_index_info %}
     <h3>{{ _('Error') }}</h3>
-    <p>{{ elasticsearch_info.error }}</p>
+    <p>{{ elastic_index_info.error }}</p>
   {% else %}
-    {% if elasticsearch_info.index_exists %}
+    {% if elastic_index_info.exists %}
       <h3>{{ _('Index Document Structure') }}</h3>
       <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="24" readonly>
-        {{- elasticsearch_info.index_mapping -}}
+        {{- elastic_index_info.mapping -}}
       </textarea>
     {% endif %}
   {% endif %}

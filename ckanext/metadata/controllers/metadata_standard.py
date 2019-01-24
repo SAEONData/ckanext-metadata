@@ -311,7 +311,7 @@ class MetadataStandardController(tk.BaseController):
         tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': id})
         return tk.render('metadata_standard/elastic.html', extra_vars={
             'is_elasticsearch_enabled': self._is_elasticsearch_enabled(),
-            'elasticsearch_info': self._elasticsearch_info(id),
+            'elastic_index_info': self._elastic_index_info(id),
         })
 
     @staticmethod
@@ -353,15 +353,13 @@ class MetadataStandardController(tk.BaseController):
         return p.plugin_loaded('metadata_elasticsearch')
 
     @staticmethod
-    def _elasticsearch_info(id):
+    def _elastic_index_info(id):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user}
         try:
-            index_exists = tk.get_action('metadata_standard_index_exists')(context, {'id': id})
-            index_mapping = json.dumps(tk.get_action('metadata_standard_index_mapping')(context, {'id': id})
-                                       if index_exists else {}, indent=2)
+            index_mapping = tk.get_action('metadata_standard_index_show')(context, {'id': id})
             return {
-                'index_exists': index_exists,
-                'index_mapping': index_mapping,
+                'exists': index_mapping is not None,
+                'mapping': json.dumps(index_mapping, indent=2) if index_mapping else '',
             }
         except tk.ValidationError, e:
             if e.error_dict and e.error_dict.get('message'):

@@ -109,37 +109,14 @@ def metadata_record_index_update(original_action, context, data_dict):
 
 
 @tk.chained_action
-def metadata_standard_index_exists(original_action, context, data_dict):
-    """
-    Check whether a metadata search index exists.
-
-    :param id: the id or name of the metadata standard
-    :type id: string
-
-    :returns: boolean
-    """
-    original_action(context, data_dict)
-
-    id_ = tk.get_or_bust(data_dict, 'id')
-    metadata_standard = ckanext_model.MetadataStandard.get(id_)
-    if metadata_standard is None:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
-
-    result = client.get_indexes()
-    if not result['success']:
-        raise tk.ValidationError(result['msg'])
-    return metadata_standard.name in result['indexes']
-
-
-@tk.chained_action
-def metadata_standard_index_mapping(original_action, context, data_dict):
+def metadata_standard_index_show(original_action, context, data_dict):
     """
     Get the document structure of a metadata search index.
 
     :param id: the id or name of the metadata standard
     :type id: string
 
-    :returns: dictionary
+    :returns: dictionary, or None if the index does not exist
     """
     original_action(context, data_dict)
 
@@ -148,10 +125,15 @@ def metadata_standard_index_mapping(original_action, context, data_dict):
     if metadata_standard is None:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
 
-    result = client.get_index_mapping(metadata_standard.name)
-    if not result['success']:
-        raise tk.ValidationError(result['msg'])
-    return result['mapping']
+    indexes = client.get_indexes()
+    if not indexes['success']:
+        raise tk.ValidationError(indexes['msg'])
+
+    if metadata_standard.name in indexes['indexes']:
+        result = client.get_index_mapping(metadata_standard.name)
+        if not result['success']:
+            raise tk.ValidationError(result['msg'])
+        return result['mapping']
 
 
 @tk.chained_action
