@@ -17,11 +17,11 @@ def _search_agent_url():
     return config.get('ckan.metadata.elastic.search_agent_url')
 
 
-@app.task
 def _call_agent_async(url, **kwargs):
     _call_agent.delay(url, **kwargs)
 
 
+@app.task
 def _call_agent(url, *outputs, **kwargs):
     """
     Post a request to the Elastic search agent.
@@ -77,7 +77,7 @@ def get_index_mapping(index_name):
 
 
 # asynchronous
-def push_record(index_name, record_id, metadata_json, organization, collection, infrastructures):
+def put_record(index_name, record_id, metadata_json, organization, collection, infrastructures):
     url = _search_agent_url() + '/add'
     _call_agent_async(url, index=index_name, record_id=record_id, metadata_json=metadata_json,
                       organization=organization, collection=collection, infrastructures=infrastructures)
@@ -86,4 +86,4 @@ def push_record(index_name, record_id, metadata_json, organization, collection, 
 # asynchronous
 def delete_record(index_name, record_id):
     url = _search_agent_url() + '/delete'
-    _call_agent_async(url, index=index_name, record_id=record_id)
+    _call_agent_async(url, index=index_name, record_id=record_id, force=True)

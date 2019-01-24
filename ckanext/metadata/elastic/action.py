@@ -60,6 +60,8 @@ def metadata_record_index_update(original_action, context, data_dict):
     """
     Add/update/delete a metadata record in a search index.
 
+    Note: this is done asynchronously.
+
     :param id: the id or name of the metadata record
     :type id: string
     """
@@ -102,8 +104,8 @@ def metadata_record_index_update(original_action, context, data_dict):
             .all()
         infrastructure_titles = [title for (title,) in infrastructure_titles]
 
-        client.push_record(index_name, record_id, metadata_record.extras['metadata_json'],
-                           organization_title, collection_title, infrastructure_titles)
+        client.put_record(index_name, record_id, metadata_record.extras['metadata_json'],
+                          organization_title, collection_title, infrastructure_titles)
 
 
 @tk.chained_action
