@@ -33,7 +33,7 @@ def _call_agent(url, *outputs, **kwargs):
 
     :return: dict{'success', 'msg', 'output1', ...}
     """
-    log.debug("POST to elastic search agent %s %r", url, kwargs)
+    log.debug("POST to Elasticsearch agent %s %r", url, kwargs)
     try:
         response = requests.post(url, data=kwargs)
         response.raise_for_status()
@@ -43,12 +43,12 @@ def _call_agent(url, *outputs, **kwargs):
         if result['success'] and not (set(outputs) <= set(result)):
             raise ValueError("Incomplete response")
     except Exception, e:
-        msg = "Call to elastic search agent failed: " + str(e)
-        log.error(msg)
+        msg = "Request to Elasticsearch agent failed"
+        log.error(msg + ": " + str(e))
         result = {'success': False, 'msg': msg}
 
     if not result['success']:
-        result.setdefault('msg', 'Operation failed: reason unknown')
+        result.setdefault('msg', "Operation failed: reason unknown")
     return result
 
 
