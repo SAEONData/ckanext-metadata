@@ -1176,3 +1176,15 @@ def metadata_standard_index_show(context, data_dict):
     :type id: string
     """
     tk.check_access('metadata_standard_index_show', context, data_dict)
+
+
+@tk.side_effect_free
+def metadata_record_index_show(context, data_dict):
+    """
+    Placeholder function for retrieving the indexed version of a metadata record.
+    May be implemented as required by another plugin.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+    """
+    tk.check_access('metadata_record_index_show', context, data_dict)

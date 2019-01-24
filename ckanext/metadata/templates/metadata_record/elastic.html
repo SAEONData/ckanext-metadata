@@ -1,0 +1,53 @@
+{% extends "metadata_record/edit_base.html" %}
+
+{% block subtitle %}
+  {{ _('Elasticsearch Index') }} - {{ c.metadata_record.display_name }} - {{ _('Metadata Records') }}
+{% endblock %}
+{% block page_heading_class %}hide-heading{% endblock %}
+
+{% block page_primary_action %}
+ {% if 'error' not in elastic_record_info %}
+
+    {% set showbutton = (not c.metadata_record.private or elastic_record_info.exists) and
+                        h.check_access('metadata_record_index_update', {'id': c.metadata_record.id}) %}
+
+    {% if c.metadata_record.private %}
+      {% if not elastic_record_info.exists %}
+        <p>{{ _('The metadata record is marked as private and is not present in the Elasticsearch index.') }}</p>
+      {% else %}
+        <p>{{ _('The metadata record is marked as private but is still present in the Elasticsearch index.') }}
+           {% if showbutton %}{{ _('Click the button below to remove the record from the Elasticsearch index.') }}{% endif %}</p>
+      {% endif %}
+    {% else %}
+      {% if elastic_record_info.exists %}
+        <p>{{ _('The metadata record is marked as published and is present in the Elasticsearch index.') }}
+           {% if showbutton %}{{ _('Click the button below to force an update of the record in the Elasticsearch index.') }}{% endif %}</p>
+      {% else %}
+        <p>{{ _('The metadata record is marked as published but is not yet present in the Elasticsearch index.') }}
+           {% if showbutton %}{{ _('Click the button below to add the record to the Elasticsearch index.') }}{% endif %}</p>
+      {% endif %}
+    {% endif %}
+
+    {% if showbutton %}
+      <form method="POST" data-module="basic-form">
+        <button class="btn btn-primary" type="submit">
+          <i class="fa fa-search-plus"></i> {{ _('Update Index') }}
+        </button>
+      </form>
+    {% endif %}
+
+  {% endif %}
+{% endblock %}
+
+{% block primary_content_inner %}
+  {% if 'error' in elastic_record_info %}
+    <h3>{{ _('Error') }}</h3>
+    <p>{{ elastic_record_info.error }}</p>
+
+  {% elif elastic_record_info.exists %}
+    <h3>{{ _('Indexed version of metadata record') }}</h3>
+    <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="24" readonly>
+      {{- elastic_record_info.record -}}
+    </textarea>
+  {% endif %}
+{% endblock %}

@@ -17,6 +17,7 @@ class ElasticSearchPlugin(p.SingletonPlugin):
             'metadata_standard_index_delete': action.metadata_standard_index_delete,
             'metadata_standard_index_show': action.metadata_standard_index_show,
             'metadata_record_index_update': action.metadata_record_index_update,
+            'metadata_record_index_show': action.metadata_record_index_show,
             'organization_update': action.organization_update,
             'infrastructure_update': action.infrastructure_update,
             'metadata_collection_update': action.metadata_collection_update,

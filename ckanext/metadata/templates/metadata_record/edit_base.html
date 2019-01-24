@@ -24,6 +24,9 @@
   {{ h.build_nav_icon('metadata_record_edit', _('Edit'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
   {{ h.build_nav_icon('metadata_record_validation', _('Validation'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
   {{ h.build_nav_icon('metadata_record_workflow', _('Workflow'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
+  {% if c.is_elasticsearch_enabled %}
+    {{ h.build_nav_icon('metadata_record_elastic', _('Elasticsearch Index'), id=c.metadata_record.id, organization_id=c.organization.name, metadata_collection_id=c.metadata_collection.name) }}
+  {% endif %}
 {% endblock %}
 
 {% block secondary_content %}

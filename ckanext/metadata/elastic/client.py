@@ -76,6 +76,21 @@ def get_index_mapping(index_name):
     return _call_agent(url, 'mapping', index=index_name)
 
 
+# synchronous
+def get_record(index_name, record_id):
+    url = _search_agent_url() + '/search'
+    result = _call_agent(url, 'result_length', 'results', index=index_name, record_id=record_id)
+    count = result.pop('result_length', 0)
+    records = result.pop('results', [])
+    if result['success']:
+        if count == 1:
+            result['record'] = records[0]
+        elif count > 1:
+            result['success'] = False
+            result['msg'] = "Multiple records found with the specified id"
+    return result
+
+
 # asynchronous
 def put_record(index_name, record_id, metadata_json, organization, collection, infrastructures):
     url = _search_agent_url() + '/add'

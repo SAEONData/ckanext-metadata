@@ -137,6 +137,37 @@ def metadata_standard_index_show(original_action, context, data_dict):
 
 
 @tk.chained_action
+def metadata_record_index_show(original_action, context, data_dict):
+    """
+    Get the indexed version of a metadata record.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+
+    :returns: dictionary, or None if the record does not exist in the search index
+    """
+    original_action(context, data_dict)
+
+    model = context['model']
+    session = context['session']
+
+    id_ = tk.get_or_bust(data_dict, 'id')
+    metadata_record = model.Package.get(id_)
+    if metadata_record is None or metadata_record.type != 'metadata_record':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    index_name = session.query(ckanext_model.MetadataStandard.name) \
+        .filter_by(id=metadata_record.extras['metadata_standard_id']) \
+        .scalar()
+    record_id = metadata_record.id
+
+    result = client.get_record(index_name, record_id)
+    if not result['success']:
+        raise tk.ValidationError(result['msg'])
+    return result.get('record')
+
+
+@tk.chained_action
 def infrastructure_update(original_action, context, data_dict):
     """
     Hook into this action so that we can update the search index if an infrastructure title changes.

@@ -89,6 +89,7 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         map.connect('/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/annotation_new/{id}', controller=controller, action='annotation_new')
         map.connect('/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/annotation_edit/{id}/{key}', controller=controller, action='annotation_edit')
         map.connect('/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/annotation_delete/{id}/{key}', controller=controller, action='annotation_delete')
+        map.connect('metadata_record_elastic', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/elastic/{id}', controller=controller, action='elastic', ckan_icon='search')
 
         controller = 'ckanext.metadata.controllers.metadata_standard:MetadataStandardController'
         map.connect('metadata_standard_index', '/metadata_standard', controller=controller, action='index')

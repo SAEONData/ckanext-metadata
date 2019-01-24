@@ -1,5 +1,8 @@
 # encoding: utf-8
 
+import json
+
+import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 import ckan.model as model
 import ckan.lib.helpers as helpers
@@ -48,6 +51,7 @@ class MetadataRecordController(tk.BaseController):
         tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': metadata_record['metadata_standard_id']})
         if metadata_record['workflow_state_id']:
             tk.c.workflow_state = tk.get_action('workflow_state_show')(context, {'id': metadata_record['workflow_state_id']})
+        tk.c.is_elasticsearch_enabled = p.plugin_loaded('metadata_elasticsearch')
 
     def index(self, organization_id=None, metadata_collection_id=None):
         tk.h.redirect_to('metadata_collection_read', organization_id=organization_id, id=metadata_collection_id)
@@ -309,6 +313,18 @@ class MetadataRecordController(tk.BaseController):
         except tk.ObjectNotFound:
             tk.abort(404, tk._('Annotation not found'))
 
+    def elastic(self, id, organization_id=None, metadata_collection_id=None):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+
+        if tk.request.method == 'POST':
+            self._elastic_update_index(id, organization_id, metadata_collection_id, context)
+
+        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_containers_on_context(organization_id, metadata_collection_id)
+        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        return tk.render('metadata_record/elastic.html', extra_vars={
+            'elastic_record_info': self._elastic_record_info(id)})
+
     @staticmethod
     def _transition(id, organization_id, metadata_collection_id, workflow_state_id, context):
         try:
@@ -491,3 +507,36 @@ class MetadataRecordController(tk.BaseController):
         if isinstance(infrastructure_ids, basestring):
             return [{'id': infrastructure_ids}]
         return [{'id': infrastructure_id} for infrastructure_id in infrastructure_ids]
+
+    @staticmethod
+    def _elastic_update_index(id, organization_id, metadata_collection_id, context):
+        try:
+            tk.get_action('metadata_record_index_update')(context, {'id': id})
+            tk.h.flash_notice(tk._('The metadata search index has been updated.'))
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to update the search index'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata record not found'))
+        except tk.ValidationError as e:
+            if e.error_dict and e.error_dict.get('message'):
+                msg = e.error_dict['message']
+            else:
+                msg = str(e)
+            tk.h.flash_error(msg)
+        tk.h.redirect_to('metadata_record_elastic', id=id, organization_id=organization_id, metadata_collection_id=metadata_collection_id)
+
+    @staticmethod
+    def _elastic_record_info(id):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        try:
+            record_dict = tk.get_action('metadata_record_index_show')(context, {'id': id})
+            return {
+                'exists': record_dict is not None,
+                'record': json.dumps(record_dict, indent=2) if record_dict else '',
+            }
+        except tk.ValidationError, e:
+            if e.error_dict and e.error_dict.get('message'):
+                msg = e.error_dict['message']
+            else:
+                msg = str(e)
+            return {'error': msg}
