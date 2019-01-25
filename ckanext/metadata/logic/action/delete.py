@@ -244,6 +244,9 @@ def metadata_record_delete(context, data_dict):
 
     tk.get_action('package_delete')(context, data_dict)
 
+    # make sure it's not left in the search index
+    tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+
 
 def workflow_state_delete(context, data_dict):
     """
