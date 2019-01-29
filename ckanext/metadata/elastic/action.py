@@ -61,6 +61,10 @@ def metadata_record_index_update(original_action, context, data_dict):
     """
     Add/update/delete a metadata record in a search index.
 
+    Looks at the current state of the metadata record; if published (= not private)
+    AND active (= not deleted), then add the record to the index (update if already
+    present); otherwise, remove the record if present in the index.
+
     :param id: the id or name of the metadata record
     :type id: string
     :param async: update the index asynchronously (optional, default: ``True``)
@@ -84,10 +88,7 @@ def metadata_record_index_update(original_action, context, data_dict):
         .scalar()
     record_id = metadata_record.id
 
-    if metadata_record.private:
-        log.debug("Removing metadata record from search index: %s", record_id)
-        client.delete_record(index_name, record_id, async)
-    else:
+    if not metadata_record.private and metadata_record.state == 'active':
         log.debug("Adding metadata record to search index: %s", record_id)
 
         organization_title = session.query(model.Group.title) \
@@ -106,8 +107,14 @@ def metadata_record_index_update(original_action, context, data_dict):
             .all()
         infrastructure_titles = [title for (title,) in infrastructure_titles]
 
-        client.put_record(index_name, record_id, metadata_record.extras['metadata_json'],
-                          organization_title, collection_title, infrastructure_titles, async)
+        result = client.put_record(index_name, record_id, metadata_record.extras['metadata_json'],
+                                   organization_title, collection_title, infrastructure_titles, async)
+    else:
+        log.debug("Removing metadata record from search index: %s", record_id)
+        result = client.delete_record(index_name, record_id, async)
+
+    if not async and not result['success']:
+        raise tk.ValidationError(result['msg'])
 
 
 @tk.chained_action

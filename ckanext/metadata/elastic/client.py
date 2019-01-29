@@ -85,11 +85,15 @@ def get_record(index_name, record_id):
 def put_record(index_name, record_id, metadata_json, organization, collection, infrastructures, async):
     url = _search_agent_url() + '/add'
     func = _call_agent.delay if async else _call_agent
-    func(url, index=index_name, record_id=record_id, metadata_json=metadata_json,
-         organization=organization, collection=collection, infrastructures=infrastructures)
+    result = func(url, index=index_name, record_id=record_id, metadata_json=metadata_json,
+                  organization=organization, collection=collection, infrastructures=infrastructures)
+    if not async:
+        return result
 
 
 def delete_record(index_name, record_id, async):
     url = _search_agent_url() + '/delete'
     func = _call_agent.delay if async else _call_agent
-    func(url, index=index_name, record_id=record_id, force=True)
+    result = func(url, index=index_name, record_id=record_id, force=True)
+    if not async:
+        return result
