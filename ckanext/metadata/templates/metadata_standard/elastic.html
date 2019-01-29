@@ -9,7 +9,7 @@
   {% if 'error' not in elastic_index_info %}
     <form method="POST" data-module="basic-form">
       {% if not elastic_index_info.exists and h.check_access('metadata_standard_index_create', {'id': c.metadata_standard.id}) %}
-        <p>{{ _('Click the button below to initialize an Elasticsearch index using the metadata template defined for this metadata standard.') }}</p>
+        <p>{{ _("Click the button below to initialize an Elasticsearch index using the metadata template defined for this metadata standard. All 'published' metadata records associated with this metadata standard will be queued for insertion into the index.") }}</p>
         <button class="btn btn-primary" name="create_index" type="submit">
           <i class="fa fa-search-plus"></i> {{ _('Create Index') }}
         </button>

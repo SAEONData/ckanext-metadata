@@ -317,8 +317,9 @@ class MetadataStandardController(tk.BaseController):
     @staticmethod
     def _elastic_create_index(id, context):
         try:
-            tk.get_action('metadata_standard_index_create')(context, {'id': id})
-            tk.h.flash_notice(tk._('The Elasticsearch index has been initialized.'))
+            result = tk.get_action('metadata_standard_index_create')(context, {'id': id})
+            tk.h.flash_notice(tk._('The Elasticsearch index has been initialized and %d records have been queued for insertion.')
+                              % result['records_queued'])
         except tk.NotAuthorized:
             tk.abort(403, tk._('Unauthorized to initialize an Elasticsearch index'))
         except tk.ObjectNotFound:
