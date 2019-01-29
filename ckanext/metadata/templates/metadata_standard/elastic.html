@@ -16,7 +16,7 @@
       {% elif elastic_index_info.exists and h.check_access('metadata_standard_index_delete', {'id': c.metadata_standard.id}) %}
         <p>{{ _('An Elasticsearch index already exists for this metadata standard. Click the button below to delete the index.') }}</p>
         <button class="btn btn-primary btn-danger" data-module="confirm-action"
-                data-module-content="{{ _('Are you sure you want to delete the Elasticsearch index? Warning: Metadata records associated with this metadata standard will no longer be discoverable via Elasticsearch.') }}">
+                data-module-content="{{ _('Are you sure you want to delete the Elasticsearch index? Warning: published metadata records associated with this metadata standard will no longer be discoverable via Elasticsearch.') }}">
           <i class="fa fa-times"></i> {{ _('Delete Index') }}
         </button>
       {% endif %}

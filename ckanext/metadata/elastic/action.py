@@ -17,8 +17,13 @@ def metadata_standard_index_create(original_action, context, data_dict):
     """
     Initialize a metadata search index.
 
+    Creates the index and then pushes all published metadata records associated with
+    the metadata standard to the index asynchronously.
+
     :param id: the id or name of the metadata standard
     :type id: string
+
+    :returns: dict{'records_queued': count of records queued for insertion into the index}
     """
     original_action(context, data_dict)
 
@@ -27,11 +32,31 @@ def metadata_standard_index_create(original_action, context, data_dict):
     if metadata_standard is None:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Standard')))
 
-    log.info("Initializing search index from metadata standard %s", metadata_standard.name)
+    log.info("Initializing search index for metadata standard %s", metadata_standard.name)
 
     result = client.create_index(metadata_standard.name, metadata_standard.metadata_template_json)
     if not result['success']:
         raise tk.ValidationError(result['msg'])
+
+    model = context['model']
+    session = context['session']
+
+    metadata_records = session.query(model.Package).join(model.PackageExtra) \
+        .filter(model.PackageExtra.key == 'metadata_standard_id') \
+        .filter(model.PackageExtra.value == metadata_standard.id) \
+        .filter(model.Package.type == 'metadata_record') \
+        .filter(model.Package.state == 'active') \
+        .filter(model.Package.private == False) \
+        .all()
+
+    log.info("Queueing %d records for insertion into index '%s'" % (len(metadata_records), metadata_standard.name))
+
+    for metadata_record in metadata_records:
+        index_context = context.copy()
+        index_context['metadata_record'] = metadata_record
+        tk.get_action('metadata_record_index_update')(index_context, {'id': metadata_record.id, 'async': True})
+
+    return {'records_queued': len(metadata_records)}
 
 
 @tk.chained_action
