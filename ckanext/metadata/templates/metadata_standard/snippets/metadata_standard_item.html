@@ -16,7 +16,7 @@ Example:
 <li class="media-item">
   {% block item_inner %}
     {% block image %}
-      <img src="{{ h.url_for_static('/images/metadata_standard.png') }}" alt="{{ metadata_standard.name }}" class="media-image">
+      <img src="{{ h.url_for_static('/images/metadata_standard.png') }}" alt="{{ metadata_standard.name }}" class="media-image img-responsive">
     {% endblock %}
     {% block title %}
       <h3 class="media-heading">{{ metadata_standard.display_name }}</h3>
