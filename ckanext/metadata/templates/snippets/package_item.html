@@ -1,0 +1,9 @@
+{% ckan_extends %}
+
+{% block heading_title %}
+  {% if package.type == 'metadata_record' %}
+    {{ h.link_to(h.truncate(title, truncate_title), h.url_for(controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController', action='read', id=package.id)) }}
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}

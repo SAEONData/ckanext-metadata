@@ -6,7 +6,6 @@ import ckan.plugins as p
 import ckan.plugins.toolkit as tk
 import ckan.model as model
 import ckan.lib.helpers as helpers
-import ckan.authz as authz
 from ckan.logic import clean_dict, tuplize_dict, parse_params
 import ckan.lib.navl.dictization_functions as dict_fns
 
@@ -18,46 +17,54 @@ class MetadataRecordController(tk.BaseController):
     # URL safe; e.g. if name gets the DOI it will contain a '/'.
 
     @staticmethod
-    def _set_containers_on_context(organization_id, metadata_collection_id):
+    def _set_template_vars(record_id, organization_id, collection_id):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user}
 
-        if organization_id and not tk.c.organization:
-            data_dict = {'id': organization_id}
-            try:
-                tk.c.organization = tk.get_action('organization_show')(context, data_dict)
-            except tk.ObjectNotFound:
-                tk.abort(404, tk._('Organization not found'))
-            except tk.NotAuthorized:
-                tk.abort(403, tk._('Not authorized to see this page'))
+        try:
+            if not tk.c.metadata_record:
+                if record_id:
+                    try:
+                        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': record_id})
+                    except tk.ObjectNotFound:
+                        tk.abort(404, tk._('Metadata record not found'))
 
-        if metadata_collection_id and not tk.c.metadata_collection:
-            data_dict = {'id': metadata_collection_id}
-            try:
-                tk.c.metadata_collection = tk.get_action('metadata_collection_show')(context, data_dict)
-            except tk.ObjectNotFound:
-                tk.abort(404, tk._('Metadata collection not found'))
-            except tk.NotAuthorized:
-                tk.abort(403, tk._('Not authorized to see this page'))
+            if not tk.c.organization:
+                if not organization_id:
+                    organization_id = tk.c.metadata_record['owner_org'] if tk.c.metadata_record else None
+                try:
+                    tk.c.organization = tk.get_action('organization_show')(context, {'id': organization_id})
+                except tk.ObjectNotFound:
+                    tk.abort(404, tk._('Organization not found'))
 
-            if not organization_id:
-                tk.abort(400, tk._('Organization not specified'))
-            org = tk.c.organization
-            if tk.c.metadata_collection['organization_id'] not in (org['id'], org['name']):
-                tk.abort(400, tk._('Metadata collection does not belong to the specified organization'))
+            if not tk.c.metadata_collection:
+                if not collection_id:
+                    collection_id = tk.c.metadata_record['metadata_collection_id'] if tk.c.metadata_record else None
+                try:
+                    tk.c.metadata_collection = tk.get_action('metadata_collection_show')(context, {'id': collection_id})
+                except tk.ObjectNotFound:
+                    tk.abort(404, tk._('Metadata collection not found'))
 
-    @staticmethod
-    def _set_additionalinfo_on_context(metadata_record):
-        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
-        tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': metadata_record['metadata_standard_id']})
-        if metadata_record['workflow_state_id']:
-            tk.c.workflow_state = tk.get_action('workflow_state_show')(context, {'id': metadata_record['workflow_state_id']})
-        tk.c.is_elasticsearch_enabled = p.plugin_loaded('metadata_elasticsearch')
+                org = tk.c.organization
+                if tk.c.metadata_collection['organization_id'] not in (org['id'], org['name']):
+                    tk.abort(400, tk._('Metadata collection does not belong to the specified organization'))
+
+            if record_id and not tk.c.metadata_standard:
+                tk.c.metadata_standard = tk.get_action('metadata_standard_show')(context, {'id': tk.c.metadata_record['metadata_standard_id']})
+
+            if record_id and not tk.c.workflow_state:
+                if tk.c.metadata_record['workflow_state_id']:
+                    tk.c.workflow_state = tk.get_action('workflow_state_show')(context, {'id': tk.c.metadata_record['workflow_state_id']})
+
+            tk.c.is_elasticsearch_enabled = p.plugin_loaded('metadata_elasticsearch')
+
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Not authorized to see this page'))
 
     def index(self, organization_id=None, metadata_collection_id=None):
         tk.h.redirect_to('metadata_collection_read', organization_id=organization_id, id=metadata_collection_id)
 
     def new(self, data=None, errors=None, error_summary=None, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
+        self._set_template_vars(None, organization_id, metadata_collection_id)
 
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
                    'save': 'save' in tk.request.params}
@@ -77,39 +84,31 @@ class MetadataRecordController(tk.BaseController):
                 'metadata_standard_lookup_list': self._metadata_standard_lookup_list(),
                 'infrastructure_lookup_list': self._infrastructure_lookup_list()}
 
-        tk.c.is_sysadmin = authz.is_sysadmin(tk.c.user)
         tk.c.form = tk.render('metadata_record/edit_form.html', extra_vars=vars)
         return tk.render('metadata_record/new.html')
 
     def edit(self, id, data=None, errors=None, error_summary=None, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
 
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
                    'save': 'save' in tk.request.params, 'for_edit': True}
-        data_dict = {'id': id}
 
         if context['save'] and not data and tk.request.method == 'POST':
             return self._save_edit(id, context)
 
         try:
-            old_data = tk.get_action('metadata_record_show')(context, data_dict)
-            data = data or old_data
-        except (tk.ObjectNotFound, tk.NotAuthorized):
-            tk.abort(404, tk._('Metadata record not found'))
-
-        tk.c.metadata_record = old_data
-        try:
             tk.check_access('metadata_record_update', context)
         except tk.NotAuthorized:
             tk.abort(403, tk._('User %r not authorized to edit %s') % (tk.c.user, id))
 
+        data = data or tk.c.metadata_record
         errors = errors or {}
+        error_summary = error_summary or {}
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
                 'metadata_standard_lookup_list': self._metadata_standard_lookup_list(),
                 'infrastructure_lookup_list': self._infrastructure_lookup_list(),
                 'selected_infrastructure_ids': [i['id'] for i in data['infrastructures']]}
 
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
         tk.c.form = tk.render('metadata_record/edit_form.html', extra_vars=vars)
         return tk.render('metadata_record/edit.html')
 
@@ -126,28 +125,19 @@ class MetadataRecordController(tk.BaseController):
             tk.abort(404, tk._('Metadata record not found'))
 
     def read(self, id, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
         return tk.render('metadata_record/read.html')
 
     def activity(self, id, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
         return tk.render('metadata_record/activity_stream.html')
 
     def status(self, id, organization_id=None, metadata_collection_id=None):
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
         return tk.render('metadata_record/status.html')
 
     def validation(self, id, organization_id=None, metadata_collection_id=None):
-        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
 
         if tk.request.method == 'POST':
             if 'validate' in tk.request.params:
@@ -155,9 +145,7 @@ class MetadataRecordController(tk.BaseController):
             else:
                 self._invalidate(id, organization_id, metadata_collection_id, context)
 
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
 
         page = tk.h.get_page_number(tk.request.params) or 1
         items_per_page = 21
@@ -216,7 +204,7 @@ class MetadataRecordController(tk.BaseController):
             tk.abort(404, tk._('Metadata record not found'))
 
     def workflow(self, id, organization_id=None, metadata_collection_id=None):
-        context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'for_view': True}
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
 
         if tk.request.method == 'POST':
             if 'transition' in tk.request.params:
@@ -226,10 +214,9 @@ class MetadataRecordController(tk.BaseController):
             else:
                 self._revert(id, organization_id, metadata_collection_id, context)
 
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
+        self._set_template_vars(id, organization_id, metadata_collection_id)
         tk.c.annotations = tk.get_action('metadata_record_workflow_annotation_list')(context, {'id': id})
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+
         return tk.render('metadata_record/workflow.html', extra_vars={
             'workflow_state_lookup_list': self._workflow_state_lookup_list()})
 
@@ -237,9 +224,7 @@ class MetadataRecordController(tk.BaseController):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
                    'save': 'save' in tk.request.params}
 
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
 
         if context['save'] and not data and tk.request.method == 'POST':
             return self._save_annotation_new(id, context)
@@ -265,11 +250,9 @@ class MetadataRecordController(tk.BaseController):
 
     def annotation_edit(self, id, key, data=None, errors=None, error_summary=None, organization_id=None, metadata_collection_id=None):
         context = {'model': model, 'session': model.Session, 'user': tk.c.user,
-                   'save': 'save' in tk.request.params, 'for_edit': True}
+                   'save': 'save' in tk.request.params}
 
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
 
         if context['save'] and not data and tk.request.method == 'POST':
             return self._save_annotation_edit(id, key, context)
@@ -319,9 +302,7 @@ class MetadataRecordController(tk.BaseController):
         if tk.request.method == 'POST':
             self._elastic_update_index(id, organization_id, metadata_collection_id, context)
 
-        tk.c.metadata_record = tk.get_action('metadata_record_show')(context, {'id': id})
-        self._set_containers_on_context(organization_id, metadata_collection_id)
-        self._set_additionalinfo_on_context(tk.c.metadata_record)
+        self._set_template_vars(id, organization_id, metadata_collection_id)
         return tk.render('metadata_record/elastic.html', extra_vars={
             'elastic_record_info': self._elastic_record_info(id)})
 

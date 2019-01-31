@@ -46,7 +46,7 @@ class OrganizationController(CKANOrganizationController):
                 msg = str(e)
             tk.h.flash_error(msg)
             tk.c.page = helpers.Page([], 0)
-            return tk.render('organization/metadata_collections.html')
+            return tk.render('organization/metadata_collections.html', extra_vars={'group_type': 'organization'})
 
         data_dict_page_results = {
             'owner_org': id,
@@ -66,7 +66,7 @@ class OrganizationController(CKANOrganizationController):
         )
 
         tk.c.page.items = page_results
-        return tk.render('organization/metadata_collections.html')
+        return tk.render('organization/metadata_collections.html', extra_vars={'group_type': 'organization'})
 
     def datasets(self, id):
         return super(OrganizationController, self).read(id)
