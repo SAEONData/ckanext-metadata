@@ -7,7 +7,7 @@ A metadata management framework for [CKAN](https://ckan.org).
 
 ## Requirements
 
-This extension has been developed and tested with CKAN version 2.7.4.
+This extension has been developed and tested with CKAN version 2.8.2.
 
 Extension [ckanext-jsonpatch](https://github.com/SAEONData/ckanext-jsonpatch) is required
 for metadata workflows.
