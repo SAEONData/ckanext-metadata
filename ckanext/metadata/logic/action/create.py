@@ -191,7 +191,7 @@ def infrastructure_create(context, data_dict):
     })
     context.update({
         'schema': schema.infrastructure_create_schema(),
-        'invoked_api': 'infrastructure_create',
+        'invoked_action': 'infrastructure_create',
         'defer_commit': True,
         'return_id_only': True,
     })
@@ -247,7 +247,7 @@ def metadata_collection_create(context, data_dict):
     })
     context.update({
         'schema': schema.metadata_collection_create_schema(),
-        'invoked_api': 'metadata_collection_create',
+        'invoked_action': 'metadata_collection_create',
         'defer_commit': True,
         'return_id_only': True,
     })
@@ -346,7 +346,7 @@ def metadata_record_create(context, data_dict):
     })
     context.update({
         'schema': schema.metadata_record_create_schema(),
-        'invoked_api': 'metadata_record_create',
+        'invoked_action': 'metadata_record_create',
         'defer_commit': True,
         'return_id_only': True,
     })

@@ -1,52 +1,41 @@
 # encoding: utf-8
 
 import logging
-import ckan.plugins.toolkit as tk
-from ckanext.metadata.logic.auth import _action_auth
+from ckanext.metadata.logic.auth import _authorize_core_action
 
 log = logging.getLogger(__name__)
 
 
-# # TODO: chained_auth_function is only in the latest dev CKAN
-#
-# @tk.chained_auth_function
-# def package_show(next_auth, context, data_dict):
-#     """
-#     Override CKAN's package_show to prevent extension-specific package types from being retrieved
-#     directly via this API.
-#     """
-#     result = _action_auth(context, data_dict, ('metadata_record',), '_show')
-#     return result if result else next_auth(context, data_dict)
-#
-#
-# @tk.chained_auth_function
-# def package_list(next_auth, context, data_dict):
-#     """
-#     Override CKAN's package_list to prevent extension-specific package types from being retrieved
-#     directly via this API.
-#     """
-#     result = _action_auth(context, data_dict, ('metadata_record',), '_list')
-#     return result if result else next_auth(context, data_dict)
-#
-#
-# @tk.chained_auth_function
-# def group_show(next_auth, context, data_dict):
-#     """
-#     Override CKAN's group_show to prevent extension-specific group types from being retrieved
-#     directly via this API.
-#     """
-#     result = _action_auth(context, data_dict, ('infrastructure', 'metadata_collection',), '_show')
-#     return result if result else next_auth(context, data_dict)
-#
-#
-# @tk.chained_auth_function
-# def group_list(next_auth, context, data_dict):
-#     """
-#     Override CKAN's group_list to prevent extension-specific group types from being retrieved
-#     directly via this API.
-#     """
-#     result = _action_auth(context, data_dict, ('infrastructure', 'metadata_collection',), '_list')
-#     return result if result else next_auth(context, data_dict)
+def package_show(context, data_dict):
+    """
+    Override CKAN's package_show to prevent extension-specific package types from being
+    retrieved directly via this action.
+    """
+    return _authorize_core_action('package_show', context, data_dict, 'metadata_record')
+
+
+def package_list(context, data_dict):
+    """
+    Override CKAN's package_list to prevent extension-specific package types from being
+    retrieved directly via this action.
+    """
+    return _authorize_core_action('package_list', context, data_dict, 'metadata_record')
+
+
+def group_show(context, data_dict):
+    """
+    Override CKAN's group_show to prevent extension-specific group types from being
+    retrieved directly via this action.
+    """
+    return _authorize_core_action('group_show', context, data_dict, 'infrastructure', 'metadata_collection')
+
+
+def group_list(context, data_dict):
+    """
+    Override CKAN's group_list to prevent extension-specific group types from being
+    retrieved directly via this action.
+    """
+    return _authorize_core_action('group_list', context, data_dict, 'infrastructure', 'metadata_collection')
 
 
 def metadata_standard_show(context, data_dict):

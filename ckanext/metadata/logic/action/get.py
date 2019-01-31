@@ -238,7 +238,7 @@ def infrastructure_show(context, data_dict):
     })
     context.update({
         'schema': schema.infrastructure_show_schema(),
-        'invoked_api': 'infrastructure_show',
+        'invoked_action': 'infrastructure_show',
     })
 
     return tk.get_action('group_show')(context, data_dict)
@@ -310,7 +310,7 @@ def metadata_collection_show(context, data_dict):
     })
     context.update({
         'schema': schema.metadata_collection_show_schema(),
-        'invoked_api': 'metadata_collection_show',
+        'invoked_action': 'metadata_collection_show',
     })
 
     return tk.get_action('group_show')(context, data_dict)

@@ -174,7 +174,7 @@ def infrastructure_delete(context, data_dict):
         tk.get_action('metadata_schema_delete')(cascade_context, {'id': metadata_schema_id})
 
     data_dict['type'] = 'infrastructure'
-    context['invoked_api'] = 'infrastructure_delete'
+    context['invoked_action'] = 'infrastructure_delete'
 
     tk.get_action('group_delete')(context, data_dict)
 
@@ -212,7 +212,7 @@ def metadata_collection_delete(context, data_dict):
         raise tk.ValidationError(_('Metadata collection has dependent metadata records'))
 
     data_dict['type'] = 'metadata_collection'
-    context['invoked_api'] = 'metadata_collection_delete'
+    context['invoked_action'] = 'metadata_collection_delete'
 
     tk.get_action('group_delete')(context, data_dict)
 
@@ -240,7 +240,7 @@ def metadata_record_delete(context, data_dict):
     tk.check_access('metadata_record_delete', context, data_dict)
 
     data_dict['type'] = 'metadata_record'
-    context['invoked_api'] = 'metadata_record_delete'
+    context['invoked_action'] = 'metadata_record_delete'
 
     tk.get_action('package_delete')(context, data_dict)
 

@@ -247,7 +247,7 @@ def infrastructure_update(context, data_dict):
     })
     context.update({
         'schema': schema.infrastructure_update_schema(),
-        'invoked_api': 'infrastructure_update',
+        'invoked_action': 'infrastructure_update',
         'defer_commit': True,
         'allow_partial_update': True,
     })
@@ -306,7 +306,7 @@ def metadata_collection_update(context, data_dict):
     })
     context.update({
         'schema': schema.metadata_collection_update_schema(),
-        'invoked_api': 'metadata_collection_update',
+        'invoked_action': 'metadata_collection_update',
         'defer_commit': True,
         'allow_partial_update': True,
     })
@@ -398,7 +398,7 @@ def metadata_record_update(context, data_dict):
     context.update({
         'metadata_record': metadata_record,
         'schema': schema.metadata_record_update_schema(),
-        'invoked_api': 'metadata_record_update',
+        'invoked_action': 'metadata_record_update',
         'defer_commit': True,
         'return_id_only': True,
         'allow_partial_update': True,
