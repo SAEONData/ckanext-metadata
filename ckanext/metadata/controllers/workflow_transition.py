@@ -84,8 +84,10 @@ class WorkflowTransitionController(tk.BaseController):
             context['message'] = data_dict.get('log_message', '')
             tk.get_action('workflow_transition_create')(context, data_dict)
             tk.h.redirect_to('workflow_transition_index')
-        except (tk.ObjectNotFound, tk.NotAuthorized):
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Workflow transition not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:

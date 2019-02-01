@@ -414,8 +414,10 @@ class MetadataRecordController(tk.BaseController):
             tk.h.redirect_to('metadata_record_read', id=metadata_record['id'],
                              organization_id=tk.c.organization['name'],
                              metadata_collection_id=tk.c.metadata_collection['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized):
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Metadata record not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:
@@ -434,8 +436,10 @@ class MetadataRecordController(tk.BaseController):
             tk.h.redirect_to('metadata_record_read', id=metadata_record['id'],
                              organization_id=tk.c.organization['name'],
                              metadata_collection_id=tk.c.metadata_collection['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized), e:
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Metadata record not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:

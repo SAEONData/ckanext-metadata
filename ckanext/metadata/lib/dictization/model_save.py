@@ -38,7 +38,7 @@ def metadata_record_collection_membership_save(metadata_collection_id, context):
             member_obj.state = 'deleted'
             session.add(member_obj)
         else:
-            raise tk.NotAuthorized
+            raise tk.NotAuthorized(_('Not authorized to access metadata collection'))
 
     # Add the record to the new metadata collection group
     member_obj = collection_members.get(new_collection)
@@ -57,7 +57,7 @@ def metadata_record_collection_membership_save(metadata_collection_id, context):
                                       state='active')
         session.add(member_obj)
     else:
-        raise tk.NotAuthorized
+        raise tk.NotAuthorized(_('Not authorized to access metadata collection'))
 
 
 def metadata_collection_organization_membership_save(organization_id, context):
@@ -91,7 +91,7 @@ def metadata_collection_organization_membership_save(organization_id, context):
             member_obj.state = 'deleted'
             session.add(member_obj)
         else:
-            raise tk.NotAuthorized
+            raise tk.NotAuthorized(_('Not authorized to access organization'))
 
     # Add the collection to the new organization
     member_obj = organization_members.get(new_organization)
@@ -110,7 +110,7 @@ def metadata_collection_organization_membership_save(organization_id, context):
                                       state='active')
         session.add(member_obj)
     else:
-        raise tk.NotAuthorized
+        raise tk.NotAuthorized(_('Not authorized to access organization'))
 
 
 def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
@@ -152,7 +152,7 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
             member_obj.state = 'deleted'
             session.add(member_obj)
         else:
-            raise tk.NotAuthorized
+            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
 
     # Add any new infrastructure groups
     for infrastructure in infrastructures:
@@ -172,7 +172,7 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
                                           state='active')
             session.add(member_obj)
         else:
-            raise tk.NotAuthorized
+            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
 
 
 def metadata_schema_dict_save(metadata_schema_dict, context):

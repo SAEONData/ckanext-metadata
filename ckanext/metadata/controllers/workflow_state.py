@@ -172,8 +172,10 @@ class WorkflowStateController(tk.BaseController):
             context['message'] = data_dict.get('log_message', '')
             workflow_state = tk.get_action('workflow_state_create')(context, data_dict)
             tk.h.redirect_to('workflow_state_read', id=workflow_state['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized):
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Workflow state not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:
@@ -191,8 +193,10 @@ class WorkflowStateController(tk.BaseController):
             context['allow_partial_update'] = True
             workflow_state = tk.get_action('workflow_state_update')(context, data_dict)
             tk.h.redirect_to('workflow_state_read', id=workflow_state['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized), e:
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Workflow state not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:

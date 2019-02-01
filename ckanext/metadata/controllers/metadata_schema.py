@@ -204,8 +204,10 @@ class MetadataSchemaController(tk.BaseController):
             context['message'] = data_dict.get('log_message', '')
             metadata_schema = tk.get_action('metadata_schema_create')(context, data_dict)
             tk.h.redirect_to('metadata_schema_read', id=metadata_schema['name'], metadata_standard_id=tk.c.metadata_standard['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized):
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Metadata schema not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:
@@ -221,8 +223,10 @@ class MetadataSchemaController(tk.BaseController):
             context['allow_partial_update'] = True
             metadata_schema = tk.get_action('metadata_schema_update')(context, data_dict)
             tk.h.redirect_to('metadata_schema_read', id=metadata_schema['name'], metadata_standard_id=tk.c.metadata_standard['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized), e:
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Metadata schema not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:

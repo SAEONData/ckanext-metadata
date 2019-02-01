@@ -398,8 +398,10 @@ class MetadataStandardController(tk.BaseController):
             context['message'] = data_dict.get('log_message', '')
             metadata_standard = tk.get_action('metadata_standard_create')(context, data_dict)
             tk.h.redirect_to('metadata_standard_read', id=metadata_standard['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized):
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Metadata standard not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:
@@ -415,8 +417,10 @@ class MetadataStandardController(tk.BaseController):
             context['allow_partial_update'] = True
             metadata_standard = tk.get_action('metadata_standard_update')(context, data_dict)
             tk.h.redirect_to('metadata_standard_read', id=metadata_standard['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized), e:
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Metadata standard not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:

@@ -177,8 +177,10 @@ class MetadataCollectionController(GroupController):
             data_dict['users'] = [{'name': tk.c.user, 'capacity': 'admin'}]
             group = tk.get_action('metadata_collection_create')(context, data_dict)
             tk.h.redirect_to('metadata_collection_read', id=group['name'], organization_id=tk.c.org_dict['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized), e:
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Group not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:
@@ -199,8 +201,10 @@ class MetadataCollectionController(GroupController):
             if id != group['name']:
                 self._force_reindex(group)
             tk.h.redirect_to('metadata_collection_read', id=group['name'], organization_id=tk.c.org_dict['name'])
-        except (tk.ObjectNotFound, tk.NotAuthorized), e:
+        except tk.ObjectNotFound:
             tk.abort(404, tk._('Group not found'))
+        except tk.NotAuthorized, e:
+            tk.abort(403, e.message)
         except dict_fns.DataError:
             tk.abort(400, tk._(u'Integrity Error'))
         except tk.ValidationError, e:
