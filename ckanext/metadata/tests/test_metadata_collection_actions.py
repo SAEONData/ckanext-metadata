@@ -2,6 +2,7 @@
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
+import ckan.plugins.toolkit as tk
 
 from ckanext.metadata.tests import (
     ActionTestBase,
@@ -165,3 +166,26 @@ class TestMetadataCollectionActions(ActionTestBase):
         call_action('metadata_record_delete', id=metadata_record['id'])
         self.test_action('metadata_collection_delete',
                          id=metadata_collection['id'])
+
+    def test_member_create_invalid(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        metadata_collection = ckanext_factories.MetadataCollection()
+        result, obj = self.test_action('member_create', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=metadata_collection['id'],
+                                       object=metadata_record['id'],
+                                       object_type='package',
+                                       capacity='public')
+        assert_error(result, None, "This action may not be used to alter a metadata record's membership of metadata collections or infrastructures.")
+
+    def test_member_delete_invalid(self):
+        metadata_collection = ckanext_factories.MetadataCollection()
+        metadata_record = ckanext_factories.MetadataRecord(
+            owner_org=metadata_collection['organization_id'],
+            metadata_collection_id=metadata_collection['id'])
+        result, obj = self.test_action('member_delete', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=metadata_collection['id'],
+                                       object=metadata_record['id'],
+                                       object_type='package')
+        assert_error(result, None, "This action may not be used to alter a metadata record's membership of metadata collections or infrastructures.")

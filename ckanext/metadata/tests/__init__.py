@@ -161,7 +161,7 @@ def assert_error(error_dict, key, pattern):
             return re.search(pattern, node) is not None
         return False
 
-    error_path = deque(key.split('/'))
+    error_path = deque(key.split('/')) if key else None
     try:
         assert has_error(error_dict, error_path)
     except KeyError:

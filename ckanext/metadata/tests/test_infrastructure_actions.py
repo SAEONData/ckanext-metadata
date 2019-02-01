@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 from ckan.tests.helpers import call_action
+import ckan.plugins.toolkit as tk
 
 from ckanext.metadata import model as ckanext_model
 from ckanext.metadata.tests import (
@@ -117,3 +118,24 @@ class TestInfrastructureActions(ActionTestBase):
         self.test_action('infrastructure_delete',
                          id=infrastructure['id'])
         assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'deleted'
+
+    def test_member_create_invalid(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        infrastructure = ckanext_factories.Infrastructure()
+        result, obj = self.test_action('member_create', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=infrastructure['id'],
+                                       object=metadata_record['id'],
+                                       object_type='package',
+                                       capacity='public')
+        assert_error(result, None, "This action may not be used to alter a metadata record's membership of metadata collections or infrastructures.")
+
+    def test_member_delete_invalid(self):
+        infrastructure = ckanext_factories.Infrastructure()
+        metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
+        result, obj = self.test_action('member_delete', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=infrastructure['id'],
+                                       object=metadata_record['id'],
+                                       object_type='package')
+        assert_error(result, None, "This action may not be used to alter a metadata record's membership of metadata collections or infrastructures.")
