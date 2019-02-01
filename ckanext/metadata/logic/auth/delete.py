@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 import logging
-from ckanext.metadata.logic.auth import _authorize_core_action
+from ckanext.metadata.logic.auth import _authorize_package_action, _authorize_group_action, _authorize_member_action
 
 log = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ def package_delete(context, data_dict):
     Override CKAN's package_delete to prevent extension-specific package types from being
     deleted directly via this action.
     """
-    return _authorize_core_action('package_delete', context, data_dict, 'metadata_record')
+    return _authorize_package_action('delete', context, data_dict)
 
 
 def group_delete(context, data_dict):
@@ -19,7 +19,15 @@ def group_delete(context, data_dict):
     Override CKAN's group_delete to prevent extension-specific group types from being
     deleted directly via this action.
     """
-    return _authorize_core_action('group_delete', context, data_dict, 'infrastructure', 'metadata_collection')
+    return _authorize_group_action('delete', context, data_dict)
+
+
+def member_delete(context, data_dict):
+    """
+    Override CKAN's member_delete to prevent it being used to remove a metadata record from
+    an extension group type.
+    """
+    return _authorize_member_action('delete', context, data_dict)
 
 
 def metadata_standard_delete(context, data_dict):

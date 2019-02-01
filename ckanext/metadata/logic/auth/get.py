@@ -1,41 +1,8 @@
 # encoding: utf-8
 
 import logging
-from ckanext.metadata.logic.auth import _authorize_core_action
 
 log = logging.getLogger(__name__)
-
-
-def package_show(context, data_dict):
-    """
-    Override CKAN's package_show to prevent extension-specific package types from being
-    retrieved directly via this action.
-    """
-    return _authorize_core_action('package_show', context, data_dict, 'metadata_record')
-
-
-def package_list(context, data_dict):
-    """
-    Override CKAN's package_list to prevent extension-specific package types from being
-    retrieved directly via this action.
-    """
-    return _authorize_core_action('package_list', context, data_dict, 'metadata_record')
-
-
-def group_show(context, data_dict):
-    """
-    Override CKAN's group_show to prevent extension-specific group types from being
-    retrieved directly via this action.
-    """
-    return _authorize_core_action('group_show', context, data_dict, 'infrastructure', 'metadata_collection')
-
-
-def group_list(context, data_dict):
-    """
-    Override CKAN's group_list to prevent extension-specific group types from being
-    retrieved directly via this action.
-    """
-    return _authorize_core_action('group_list', context, data_dict, 'infrastructure', 'metadata_collection')
 
 
 def metadata_standard_show(context, data_dict):

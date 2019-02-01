@@ -1,7 +1,8 @@
 # encoding: utf-8
 
 import logging
-from ckanext.metadata.logic.auth import _authorize_core_action
+
+from ckanext.metadata.logic.auth import _authorize_package_action, _authorize_group_action, _authorize_member_action
 
 log = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ def package_create(context, data_dict):
     Override CKAN's package_create to prevent extension-specific package types from being
     created directly via this action.
     """
-    return _authorize_core_action('package_create', context, data_dict, 'metadata_record')
+    return _authorize_package_action('create', context, data_dict)
 
 
 def group_create(context, data_dict):
@@ -19,7 +20,15 @@ def group_create(context, data_dict):
     Override CKAN's group_create to prevent extension-specific group types from being
     created directly via this action.
     """
-    return _authorize_core_action('group_create', context, data_dict, 'infrastructure', 'metadata_collection')
+    return _authorize_group_action('create', context, data_dict)
+
+
+def member_create(context, data_dict):
+    """
+    Override CKAN's member_create to prevent it being used to assign a metadata record to
+    an extension group type.
+    """
+    return _authorize_member_action('create', context, data_dict)
 
 
 def metadata_standard_create(context, data_dict):

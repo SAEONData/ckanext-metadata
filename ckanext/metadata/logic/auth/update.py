@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 import logging
-from ckanext.metadata.logic.auth import _authorize_core_action
+from ckanext.metadata.logic.auth import _authorize_package_action, _authorize_group_action
 
 log = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ def package_update(context, data_dict):
     Override CKAN's package_update to prevent extension-specific package types from being
     updated directly via this action.
     """
-    return _authorize_core_action('package_update', context, data_dict, 'metadata_record')
+    return _authorize_package_action('update', context, data_dict)
 
 
 def group_update(context, data_dict):
@@ -19,7 +19,7 @@ def group_update(context, data_dict):
     Override CKAN's group_update to prevent extension-specific group types from being
     updated directly via this action.
     """
-    return _authorize_core_action('group_update', context, data_dict, 'infrastructure', 'metadata_collection')
+    return _authorize_group_action('update', context, data_dict)
 
 
 def metadata_standard_update(context, data_dict):
