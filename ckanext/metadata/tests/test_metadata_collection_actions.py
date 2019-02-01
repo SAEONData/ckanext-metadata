@@ -189,3 +189,23 @@ class TestMetadataCollectionActions(ActionTestBase):
                                        object=metadata_record['id'],
                                        object_type='package')
         assert_error(result, None, "This action may not be used to alter a metadata record's membership of metadata collections or infrastructures.")
+
+    def test_group_create_invalid(self):
+        result, obj = self.test_action('group_create', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       type='metadata_collection')
+        assert_error(result, None, "This action may not be used for metadata_collection type objects.")
+
+    def test_group_update_invalid(self):
+        metadata_collection = ckanext_factories.MetadataCollection()
+        result, obj = self.test_action('group_update', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=metadata_collection['id'])
+        assert_error(result, None, "This action may not be used for metadata_collection type objects.")
+
+    def test_group_delete_invalid(self):
+        metadata_collection = ckanext_factories.MetadataCollection()
+        result, obj = self.test_action('group_delete', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=metadata_collection['id'])
+        assert_error(result, None, "This action may not be used for metadata_collection type objects.")

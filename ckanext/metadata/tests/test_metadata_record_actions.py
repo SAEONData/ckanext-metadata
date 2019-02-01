@@ -5,6 +5,7 @@ from datetime import datetime
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
+import ckan.plugins.toolkit as tk
 
 from ckanext.metadata.tests import (
     ActionTestBase,
@@ -1156,3 +1157,23 @@ class TestMetadataRecordActions(ActionTestBase):
         self.test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
         assert_package_has_attribute(metadata_record['id'], 'private', True)
+
+    def test_package_create_invalid(self):
+        result, obj = self.test_action('package_create', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       type='metadata_record')
+        assert_error(result, None, "This action may not be used for metadata records.")
+
+    def test_package_update_invalid(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        result, obj = self.test_action('package_update', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=metadata_record['id'])
+        assert_error(result, None, "This action may not be used for metadata records.")
+
+    def test_package_delete_invalid(self):
+        metadata_record = ckanext_factories.MetadataRecord()
+        result, obj = self.test_action('package_delete', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=metadata_record['id'])
+        assert_error(result, None, "This action may not be used for metadata records.")

@@ -139,3 +139,23 @@ class TestInfrastructureActions(ActionTestBase):
                                        object=metadata_record['id'],
                                        object_type='package')
         assert_error(result, None, "This action may not be used to alter a metadata record's membership of metadata collections or infrastructures.")
+
+    def test_group_create_invalid(self):
+        result, obj = self.test_action('group_create', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       type='infrastructure')
+        assert_error(result, None, "This action may not be used for infrastructure type objects.")
+
+    def test_group_update_invalid(self):
+        infrastructure = ckanext_factories.Infrastructure()
+        result, obj = self.test_action('group_update', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=infrastructure['id'])
+        assert_error(result, None, "This action may not be used for infrastructure type objects.")
+
+    def test_group_delete_invalid(self):
+        infrastructure = ckanext_factories.Infrastructure()
+        result, obj = self.test_action('group_delete', should_error=True, check_auth=True,
+                                       exception_class=tk.NotAuthorized,
+                                       id=infrastructure['id'])
+        assert_error(result, None, "This action may not be used for infrastructure type objects.")
