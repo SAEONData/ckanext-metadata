@@ -1,16 +1,15 @@
 {% ckan_extends %}
 
-{#
-  TODO: Navigation tab availability should depend on the user's privileges,
-  as well as on whether the relevant plugins have been enabled.
-#}
+{% set nav_tabs = [('organizations_index', _('Organizations'), 'organization_list')] %}
+{% if 'metadata_infrastructure_ui' in g.plugins %}
+  {% set nav_tabs = nav_tabs + [('infrastructure_index', _('Infrastructures'), 'infrastructure_list')] %}
+{% endif %}
+{% set nav_tabs = nav_tabs + [
+    ('metadata_standard_index', _('Standards'), 'metadata_standard_list'),
+    ('workflow_state_index', _('Workflows'), 'workflow_state_list'),
+    ('home.about', _('About')) ]
+%}
 
 {% block header_site_navigation_tabs %}
-  {{ h.build_nav_main(
-    ('organizations_index', _('Organizations')),
-    ('infrastructure_index', _('Infrastructures')),
-    ('metadata_standard_index', _('Standards')),
-    ('workflow_state_index', _('Workflows')),
-    ('about', _('About'))
-  ) }}
+  {{ h.build_nav_main(*nav_tabs) }}
 {% endblock %}
