@@ -1,6 +1,9 @@
 {% ckan_extends %}
 
 {% set nav_tabs = [('organizations_index', _('Organizations'), 'organization_list')] %}
+{% if 'roles' in g.plugins %}
+  {% set nav_tabs = nav_tabs + [('role_index', _('Roles'), 'role_list')] %}
+{% endif %}
 {% if 'metadata_infrastructure_ui' in g.plugins %}
   {% set nav_tabs = nav_tabs + [('infrastructure_index', _('Infrastructures'), 'infrastructure_list')] %}
 {% endif %}
