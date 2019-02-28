@@ -526,7 +526,7 @@ def metadata_record_workflow_annotation_create(context, data_dict):
 
     You must be authorized to add annotations to the metadata record.
 
-    This is a wrapper for jsonpatch_create, creating an 'add' patch operation with qualifier 'workflow'.
+    This is a wrapper for jsonpatch_create, creating an 'add' patch operation with scope 'workflow'.
 
     :param id: the id or name of the metadata record to annotate
     :type id: string
@@ -560,7 +560,7 @@ def metadata_record_workflow_annotation_create(context, data_dict):
     jsonpatch_data = {
         'model_name': 'metadata_record',
         'object_id': data_dict['id'],
-        'qualifier': 'workflow',
+        'scope': 'workflow',
         'operation': {
             'op': 'add',
             'path': '/' + data_dict['key'],

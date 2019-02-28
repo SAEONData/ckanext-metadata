@@ -843,7 +843,7 @@ class TestMetadataRecordActions(ActionTestBase):
         jsonpatch1_dict = {
             'model_name': 'metadata_record',
             'object_id': metadata_record['id'],
-            'qualifier': 'workflow',
+            'scope': 'workflow',
             'operation': {'op': 'add', 'path': '/annotation1_key', 'value': json.loads(annotation1_value)},
             'ordinal': 0,
             'data': None,
@@ -861,7 +861,7 @@ class TestMetadataRecordActions(ActionTestBase):
         jsonpatch2_dict = {
             'model_name': 'metadata_record',
             'object_id': metadata_record['id'],
-            'qualifier': 'workflow',
+            'scope': 'workflow',
             'operation': {'op': 'add', 'path': '/annotation2_key', 'value': json.loads(annotation2_value)},
             'ordinal': 0,
             'data': None,

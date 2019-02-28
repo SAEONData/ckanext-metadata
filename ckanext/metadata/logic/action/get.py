@@ -803,7 +803,7 @@ def metadata_record_workflow_annotation_list(context, data_dict):
     jsonpatch_data = {
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,
-        'qualifier': 'workflow',
+        'scope': 'workflow',
         'all_fields': True,
     }
     return tk.get_action('jsonpatch_list')(jsonpatch_context, jsonpatch_data)
@@ -844,7 +844,7 @@ def metadata_record_workflow_augmented_show(context, data_dict):
     jsonpatch_params = {
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,
-        'qualifier': 'workflow',
+        'scope': 'workflow',
         'kwargs': {'deserialize_json': deserialize_json}
     }
     return tk.get_action('jsonpatch_apply')(context, jsonpatch_params)

@@ -927,7 +927,7 @@ def metadata_record_workflow_annotation_update(context, data_dict):
     jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema(deserialize_json)
     jsonpatch_data = {
         'id': annotation['jsonpatch_id'],
-        'qualifier': 'workflow',
+        'scope': 'workflow',
         'operation': {
             'op': 'add',
             'path': '/' + data_dict['key'],
