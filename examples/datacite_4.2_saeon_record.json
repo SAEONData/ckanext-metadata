@@ -65,7 +65,7 @@
         {
             "date": "2017-09-13",
             "dateType": "Updated",
-            "dateInformation": "Updated with 4.1 properties"
+            "dateInformation": "Updated with 4.2 properties"
         },
         {
             "date": "2018-09-21",
@@ -79,7 +79,7 @@
     },
     "alternateIdentifiers": [
         {
-            "alternateIdentifier": "https://schema.datacite.org/meta/kernel-4.1/example/datacite-example-full-v4.1.xml",
+            "alternateIdentifier": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.2.xml",
             "alternateIdentifierType": "URL"
         }
     ],
@@ -108,7 +108,7 @@
             "format": "application/xml"
         }
     ],
-    "version": "4.1",
+    "version": "4.2",
     "rightsList": [
         {
             "rights": "CC0 1.0 Universal",
@@ -120,7 +120,7 @@
     ],
     "descriptions": [
         {
-            "description": "XML example of all DataCite Metadata Schema v4.1 properties.",
+            "description": "XML example of all DataCite Metadata Schema v4.2 properties.",
             "descriptionType": "Abstract"
         }
     ],
@@ -175,17 +175,17 @@
         }
     ],
     "immutableResource": {
-        "resourceURL": "https://schema.datacite.org/meta/kernel-4.1/example/datacite-example-full-v4.1.xml",
+        "resourceURL": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.2.xml",
         "resourceChecksum": "1f4d92f643bf831131f7bd26bdb6d3e3",
         "checksumAlgorithm": "md5",
         "resourceName": "Full DataCite XML Example",
-        "resourceDescription": "A complete example of a DataCite 4.1-compliant XML metadata record"
+        "resourceDescription": "A complete example of a DataCite 4.2-compliant XML metadata record"
     },
     "linkedResources": [
         {
             "linkedResourceType": "Information",
-            "resourceURL": "https://schema.datacite.org/meta/kernel-4.1/doc/DataCite-MetadataKernel_v4.1.pdf",
-            "resourceName": "DataCite 4.1 Specification",
+            "resourceURL": "https://schema.datacite.org/meta/kernel-4.2/doc/DataCite-MetadataKernel_v4.2.pdf",
+            "resourceName": "DataCite 4.2 Specification",
             "resourceDescription": "DataCite metadata schema documentation for the publication and citation of research data"
         }
     ],
