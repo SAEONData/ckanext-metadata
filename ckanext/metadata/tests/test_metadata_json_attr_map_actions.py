@@ -16,7 +16,7 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
 
     def test_create_valid(self):
         metadata_standard = ckanext_factories.MetadataStandard(
-            metadata_template_json=load_example('saeon_datacite_record.json'))
+            metadata_template_json=load_example('datacite_4.2_saeon_record.json'))
         input_dict = {
             'json_path': '/identifier/identifier',
             'record_attr': 'name',
@@ -28,7 +28,7 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
 
     def test_create_valid_metadata_standard_byname(self):
         metadata_standard = ckanext_factories.MetadataStandard(
-            metadata_template_json=load_example('saeon_datacite_record.json'))
+            metadata_template_json=load_example('datacite_4.2_saeon_record.json'))
         input_dict = {
             'json_path': '/identifier/identifier',
             'record_attr': 'name',
@@ -41,7 +41,7 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
 
     def test_create_valid_sysadmin_setid(self):
         metadata_standard = ckanext_factories.MetadataStandard(
-            metadata_template_json=load_example('saeon_datacite_record.json'))
+            metadata_template_json=load_example('datacite_4.2_saeon_record.json'))
         input_dict = {
             'id': make_uuid(),
             'json_path': '/identifier/identifier',
@@ -100,7 +100,7 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
 
     def test_create_invalid_json_path(self):
         metadata_standard = ckanext_factories.MetadataStandard(
-            metadata_template_json=load_example('saeon_datacite_record.json'))
+            metadata_template_json=load_example('datacite_4.2_saeon_record.json'))
         result, obj = self.test_action('metadata_json_attr_map_create', should_error=True,
                                        metadata_standard_id=metadata_standard['id'],
                                        json_path='/identifier/foo')
@@ -168,7 +168,7 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
     def test_update_invalid_json_path(self):
         metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
         metadata_standard = ckanext_factories.MetadataStandard(
-            metadata_template_json=load_example('saeon_datacite_record.json'))
+            metadata_template_json=load_example('datacite_4.2_saeon_record.json'))
         result, obj = self.test_action('metadata_json_attr_map_update', should_error=True,
                                        id=metadata_json_attr_map['id'],
                                        metadata_standard_id=metadata_standard['id'],
