@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.8'
+version = '0.9'
 
 setup(
     name='ckanext-metadata',
@@ -13,11 +13,11 @@ setup(
     author_email='mark@saeon.ac.za',
     license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
     ],
-    keywords='CKAN Metadata',
+    keywords='CKAN Metadata Workflow',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     namespace_packages=['ckanext'],
     install_requires=[
