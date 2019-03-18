@@ -11,8 +11,11 @@ class MetadataFrameworkCommand(tk.CkanCommand):
     Metadata framework management commands.
 
     Usage:
-        paster metadata initdb
-            - Initialize the database tables for the metadata plugin
+        paster metadata_framework initdb
+            - Initialize the database tables for the metadata framework
+        paster metadata_framework initperms
+            - Initialize the permissions for the metadata framework action API
+              (requires the roles plugin provided by the ckanext-accesscontrol extension)
     """
     summary = __doc__.split('\n')[0]
     usage = __doc__
@@ -30,8 +33,15 @@ class MetadataFrameworkCommand(tk.CkanCommand):
 
         if cmd == 'initdb':
             self._initdb()
+        elif cmd == 'initperms':
+            self._initperms()
 
     def _initdb(self):
         from ckanext.metadata.model import setup
         setup.init_tables()
         self.log.info("Metadata tables have been initialized")
+
+    def _initperms(self):
+        from ckanext.metadata.logic import setup_permissions
+        setup_permissions.init_permissions()
+        self.log.info("Permissions have been initialized")
