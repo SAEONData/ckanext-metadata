@@ -284,7 +284,7 @@ def metadata_record_create(context, data_dict):
     :type owner_org: string
     :param metadata_collection_id: the id or name of the metadata collection to which this record will be added
     :type metadata_collection_id: string
-    :param infrastructures: the infrastructures associated with the record (nullable - may be an empty list);
+    :param infrastructures: the infrastructures associated with the record (optional);
         list of dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
     :type infrastructures: list of dictionaries
     :param metadata_standard_id: the id or name of the metadata standard that describes the record's structure

@@ -316,7 +316,6 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self.test_action('metadata_record_create', should_error=True)
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
-        assert_error(result, 'infrastructures', 'Missing parameter')
         assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
 
@@ -724,7 +723,6 @@ class TestMetadataRecordActions(ActionTestBase):
                                        id=metadata_record['id'])
         assert_error(result, 'owner_org', 'Missing parameter')
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
-        assert_error(result, 'infrastructures', 'Missing parameter')
         assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
 

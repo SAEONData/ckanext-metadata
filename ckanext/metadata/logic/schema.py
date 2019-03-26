@@ -77,10 +77,6 @@ def _extras_schema():
 
 def metadata_record_create_schema():
     schema = {
-        # pre-validation
-        '__before': [v.metadata_record_infrastructures_not_missing,
-                     ignore],
-
         # native package fields with special usage
         'id': [empty_if_not_sysadmin, ignore_missing, unicode, package_id_does_not_exist],
         'owner_org': [v.not_empty, v.object_exists('organization'), owner_org_validator, unicode],
