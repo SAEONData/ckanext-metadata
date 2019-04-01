@@ -46,3 +46,14 @@ list of plugins in your CKAN configuration file (e.g. `/etc/ckan/default/product
     ckan.plugins = ... metadata_framework jsonpatch metadata_infrastructure_ui metadata_elasticsearch
 
 Restart your CKAN instance.
+
+## Configuration
+
+The following configuration options are used by plugins as indicated:
+
+| Plugin | Option | Default | Description |
+| ------ | ------ | ------- | ----------- |
+| metadata_framework | ckan.metadata.convert_nested_ids_to_names | True | If True, object IDs are converted to object names in API output dictionaries. Note: this option must be set to True for metadata framework UI forms to work correctly.
+| metadata_elasticsearch | ckan.metadata.elastic.search_agent_url | | The URL of the Elastic Search Agent.
+
+Restart your CKAN instance after any configuration changes.
