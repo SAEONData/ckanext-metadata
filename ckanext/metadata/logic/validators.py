@@ -335,9 +335,9 @@ def convert_id_to_name(model_name):
     Converts an object's id to its name.
 
     Behaviour depends on the value of the config option 'ckan.metadata.convert_nested_ids_to_names'.
-    If True, the object id is converted to name; if False (the default) the id is left unaltered.
+    If True (the default), the object id is converted to name; if False the id is left unaltered.
     """
-    convert_nested_ids_to_names = tk.asbool(config.get('ckan.metadata.convert_nested_ids_to_names', False))
+    convert_nested_ids_to_names = tk.asbool(config.get('ckan.metadata.convert_nested_ids_to_names', True))
     model_class = model_info[model_name]['model']
 
     def callable_(key, data, errors, context):
