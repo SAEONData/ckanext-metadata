@@ -119,7 +119,13 @@ _permissions_map = {
 
 
 def init_permissions():
-    context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+    context = {
+        'model': model,
+        'session': model.Session,
+        'user': tk.c.user,
+        'defer_commit': True,
+    }
+
     for content_type, operations_map in _permissions_map.iteritems():
         for operation, actions in operations_map.iteritems():
             data_dict = {
@@ -128,3 +134,14 @@ def init_permissions():
                 'actions': actions,
             }
             tk.get_action('permission_define')(context, data_dict)
+
+    model.repo.commit()
+
+
+def reset_permissions():
+    context = {
+        'model': model,
+        'session': model.Session,
+        'user': tk.c.user,
+    }
+    tk.get_action('permission_delete_all')(context, {})
