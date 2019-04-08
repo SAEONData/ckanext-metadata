@@ -137,10 +137,13 @@ def metadata_schema_create(context, data_dict):
     else:
         rev.message = _(u'REST API: Create metadata schema %s') % metadata_schema.id
 
-    dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema.id})
+    dependent_record_list_context = context.copy()
+    dependent_record_list_context['ignore_auth'] = True
+    dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(dependent_record_list_context, {'id': metadata_schema.id})
     invalidate_context = context.copy()
     invalidate_context.update({
         'defer_commit': True,
+        'ignore_auth': True,
         'trigger_action': 'metadata_schema_create',
         'trigger_object_id': metadata_schema.id,
     })
@@ -194,6 +197,7 @@ def infrastructure_create(context, data_dict):
         'invoked_action': 'infrastructure_create',
         'defer_commit': True,
         'return_id_only': True,
+        'ignore_auth': True,
     })
 
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
@@ -250,6 +254,7 @@ def metadata_collection_create(context, data_dict):
         'invoked_action': 'metadata_collection_create',
         'defer_commit': True,
         'return_id_only': True,
+        'ignore_auth': True,
     })
 
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
@@ -313,6 +318,8 @@ def metadata_record_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
     deserialize_json = asbool(data_dict.get('deserialize_json'))
+
+    context['ignore_auth'] = True
 
     # this is (mostly) duplicating the schema validation that will be done in package_create below,
     # but we want to validate before doing the attribute mappings
@@ -556,7 +563,10 @@ def metadata_record_workflow_annotation_create(context, data_dict):
 
     deserialize_json = asbool(data_dict.get('deserialize_json'))
     jsonpatch_context = context.copy()
-    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema(deserialize_json)
+    jsonpatch_context.update({
+        'schema': schema.metadata_record_workflow_annotation_show_schema(deserialize_json),
+        'ignore_auth': True,
+    })
     jsonpatch_data = {
         'model_name': 'metadata_record',
         'object_id': data_dict['id'],

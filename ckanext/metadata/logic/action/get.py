@@ -239,6 +239,7 @@ def infrastructure_show(context, data_dict):
     context.update({
         'schema': schema.infrastructure_show_schema(),
         'invoked_action': 'infrastructure_show',
+        'ignore_auth': True,
     })
 
     return tk.get_action('group_show')(context, data_dict)
@@ -311,6 +312,7 @@ def metadata_collection_show(context, data_dict):
     context.update({
         'schema': schema.metadata_collection_show_schema(),
         'invoked_action': 'metadata_collection_show',
+        'ignore_auth': True,
     })
 
     return tk.get_action('group_show')(context, data_dict)
@@ -599,7 +601,9 @@ def metadata_record_validation_schema_list(context, data_dict):
     all_fields = asbool(data_dict.get('all_fields'))
     for (metadata_schema_name,) in metadata_schema_names:
         if all_fields:
-            result += [tk.get_action('metadata_schema_show')(context, {'id': metadata_schema_name, 'deserialize_json': deserialize_json})]
+            metadata_schema_show_context = context.copy()
+            metadata_schema_show_context['ignore_auth'] = True
+            result += [tk.get_action('metadata_schema_show')(metadata_schema_show_context, {'id': metadata_schema_name, 'deserialize_json': deserialize_json})]
         else:
             result += [metadata_schema_name]
 
@@ -799,7 +803,10 @@ def metadata_record_workflow_annotation_list(context, data_dict):
 
     deserialize_json = asbool(data_dict.get('deserialize_json'))
     jsonpatch_context = context.copy()
-    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema(deserialize_json)
+    jsonpatch_context.update({
+        'schema': schema.metadata_record_workflow_annotation_show_schema(deserialize_json),
+        'ignore_auth': True,
+    })
     jsonpatch_data = {
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,
@@ -841,13 +848,17 @@ def metadata_record_workflow_augmented_show(context, data_dict):
 
     tk.check_access('metadata_record_workflow_augmented_show', context, data_dict)
 
+    jsonpatch_context = context.copy()
+    jsonpatch_context.update({
+        'ignore_auth': True,
+    })
     jsonpatch_params = {
         'model_name': 'metadata_record',
         'object_id': metadata_record_id,
         'scope': 'workflow',
         'kwargs': {'deserialize_json': deserialize_json}
     }
-    return tk.get_action('jsonpatch_apply')(context, jsonpatch_params)
+    return tk.get_action('jsonpatch_apply')(jsonpatch_context, jsonpatch_params)
 
 
 @tk.side_effect_free

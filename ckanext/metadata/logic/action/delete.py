@@ -50,6 +50,7 @@ def metadata_standard_delete(context, data_dict):
         'user': user,
         'session': session,
         'defer_commit': True,
+        'ignore_auth': True,
     }
 
     # clear the parent_standard_id on any child metadata standards - implying that
@@ -110,12 +111,15 @@ def metadata_schema_delete(context, data_dict):
     rev.author = user
     rev.message = _(u'REST API: Delete metadata schema %s') % metadata_schema_id
 
-    dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema_id})
+    dependent_record_list_context = context.copy()
+    dependent_record_list_context['ignore_auth'] = True
+    dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(dependent_record_list_context, {'id': metadata_schema_id})
     invalidate_context = context.copy()
     invalidate_context.update({
         'defer_commit': True,
         'trigger_action': 'metadata_schema_delete',
         'trigger_object_id': metadata_schema_id,
+        'ignore_auth': True,
     })
     for metadata_record_id in dependent_record_list:
         tk.get_action('metadata_record_invalidate')(invalidate_context, {'id': metadata_record_id})
@@ -165,6 +169,7 @@ def infrastructure_delete(context, data_dict):
         'user': user,
         'session': session,
         'defer_commit': True,
+        'ignore_auth': True,
     }
     metadata_schema_ids = session.query(ckanext_model.MetadataSchema.id) \
         .filter(ckanext_model.MetadataSchema.infrastructure_id == infrastructure_id) \
@@ -174,7 +179,10 @@ def infrastructure_delete(context, data_dict):
         tk.get_action('metadata_schema_delete')(cascade_context, {'id': metadata_schema_id})
 
     data_dict['type'] = 'infrastructure'
-    context['invoked_action'] = 'infrastructure_delete'
+    context.update({
+        'invoked_action': 'infrastructure_delete',
+        'ignore_auth': True,
+    })
 
     tk.get_action('group_delete')(context, data_dict)
 
@@ -212,7 +220,10 @@ def metadata_collection_delete(context, data_dict):
         raise tk.ValidationError(_('Metadata collection has dependent metadata records'))
 
     data_dict['type'] = 'metadata_collection'
-    context['invoked_action'] = 'metadata_collection_delete'
+    context.update({
+        'invoked_action': 'metadata_collection_delete',
+        'ignore_auth': True,
+    })
 
     tk.get_action('group_delete')(context, data_dict)
 
@@ -240,7 +251,10 @@ def metadata_record_delete(context, data_dict):
     tk.check_access('metadata_record_delete', context, data_dict)
 
     data_dict['type'] = 'metadata_record'
-    context['invoked_action'] = 'metadata_record_delete'
+    context.update({
+        'invoked_action': 'metadata_record_delete',
+        'ignore_auth': True,
+    })
 
     tk.get_action('package_delete')(context, data_dict)
 
@@ -287,6 +301,7 @@ def workflow_state_delete(context, data_dict):
         'user': user,
         'session': session,
         'defer_commit': True,
+        'ignore_auth': True,
     }
 
     # clear the revert_state_id on any referencing workflow states - this implies that
@@ -404,6 +419,8 @@ def metadata_record_workflow_annotation_delete(context, data_dict):
     tk.check_access('metadata_record_workflow_annotation_delete', context, data_dict)
 
     key = tk.get_or_bust(data_dict, 'key')
+    context['ignore_auth'] = True
+
     annotation_list = tk.get_action('metadata_record_workflow_annotation_list')(context, data_dict)
     annotation_list = [annotation for annotation in annotation_list if annotation['key'] == key]
 
@@ -453,6 +470,7 @@ def organization_delete(context, data_dict):
         'user': user,
         'session': session,
         'defer_commit': True,
+        'ignore_auth': True,
     }
 
     # cascade delete to dependent metadata collections

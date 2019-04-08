@@ -150,10 +150,13 @@ def metadata_schema_update(context, data_dict):
 
     tk.check_access('metadata_schema_update', context, data_dict)
 
+    dependent_record_list_context = context.copy()
+    dependent_record_list_context['ignore_auth'] = True
+
     old_schema_json = metadata_schema.schema_json
     if old_schema_json:
         old_schema_json = json.loads(old_schema_json)
-    old_dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema_id})
+    old_dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(dependent_record_list_context, {'id': metadata_schema_id})
 
     data_dict.update({
         'id': metadata_schema_id,
@@ -172,7 +175,7 @@ def metadata_schema_update(context, data_dict):
     new_schema_json = metadata_schema.schema_json
     if new_schema_json:
         new_schema_json = json.loads(new_schema_json)
-    new_dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(context, {'id': metadata_schema_id})
+    new_dependent_record_list = tk.get_action('metadata_schema_dependent_record_list')(dependent_record_list_context, {'id': metadata_schema_id})
 
     if old_schema_json != new_schema_json:
         affected_record_ids = set(old_dependent_record_list) | set(new_dependent_record_list)
@@ -189,6 +192,7 @@ def metadata_schema_update(context, data_dict):
     invalidate_context = context.copy()
     invalidate_context.update({
         'defer_commit': True,
+        'ignore_auth': True,
         'trigger_action': 'metadata_schema_update',
         'trigger_object_id': metadata_schema_id,
     })
@@ -250,6 +254,7 @@ def infrastructure_update(context, data_dict):
         'invoked_action': 'infrastructure_update',
         'defer_commit': True,
         'allow_partial_update': True,
+        'ignore_auth': True,
     })
 
     infrastructure_dict = tk.get_action('group_update')(context, data_dict)
@@ -309,6 +314,7 @@ def metadata_collection_update(context, data_dict):
         'invoked_action': 'metadata_collection_update',
         'defer_commit': True,
         'allow_partial_update': True,
+        'ignore_auth': True,
     })
 
     tk.get_action('group_update')(context, data_dict)
@@ -345,6 +351,7 @@ def metadata_record_update(context, data_dict):
     :rtype: dictionary
     """
     log.info("Updating metadata record: %r", data_dict)
+    tk.check_access('metadata_record_update', context, data_dict)
 
     model = context['model']
     session = context['session']
@@ -353,14 +360,14 @@ def metadata_record_update(context, data_dict):
     redirect_from_create = context.get('redirect_from_create', False)
     deserialize_json = asbool(data_dict.get('deserialize_json'))
 
+    context['ignore_auth'] = True
+
     metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
     if metadata_record is not None and metadata_record.type == 'metadata_record':
         metadata_record_id = metadata_record.id
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
-
-    tk.check_access('metadata_record_update', context, data_dict)
 
     if redirect_from_create:
         # we've already done the attribute mapping and record matching in metadata_record_create
@@ -496,6 +503,7 @@ def metadata_record_invalidate(context, data_dict):
     activity_context = context.copy()
     activity_context.update({
         'defer_commit': True,
+        'ignore_auth': True,
         'schema': {
             'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
             'object_id': [],
@@ -545,6 +553,7 @@ def metadata_record_validate(context, data_dict):
     :rtype: dictionary
     """
     log.info("Validating metadata record: %r", data_dict)
+    tk.check_access('metadata_record_validate', context, data_dict)
 
     model = context['model']
     user = context['user']
@@ -557,9 +566,8 @@ def metadata_record_validate(context, data_dict):
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
-    tk.check_access('metadata_record_validate', context, data_dict)
-
     context['metadata_record'] = metadata_record
+    context['ignore_auth'] = True
 
     # already validated
     if asbool(metadata_record.extras['validated']):
@@ -596,6 +604,7 @@ def metadata_record_validate(context, data_dict):
     activity_context = context.copy()
     activity_context.update({
         'defer_commit': True,
+        'ignore_auth': True,
         'schema': {
             'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
             'object_id': [],
@@ -674,6 +683,7 @@ def metadata_record_workflow_state_override(context, data_dict):
     activity_context = context.copy()
     activity_context.update({
         'defer_commit': True,
+        'ignore_auth': True,
         'schema': {
             'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
             'object_id': [],
@@ -706,6 +716,7 @@ def metadata_record_workflow_state_override(context, data_dict):
 
     if update_search_index:
         context['metadata_record'] = metadata_record
+        context['ignore_auth'] = True
         tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
 
     return activity_dict
@@ -796,6 +807,7 @@ def workflow_state_update(context, data_dict):
     for metadata_record in metadata_records:
         index_context = context.copy()
         index_context['metadata_record'] = metadata_record
+        index_context['ignore_auth'] = True
         tk.get_action('metadata_record_index_update')(index_context, {'id': metadata_record.id})
 
     output = workflow_state_id if return_id_only \
@@ -924,7 +936,10 @@ def metadata_record_workflow_annotation_update(context, data_dict):
     deserialize_json = asbool(data_dict.get('deserialize_json'))
     annotation = annotation_list[0]
     jsonpatch_context = context.copy()
-    jsonpatch_context['schema'] = schema.metadata_record_workflow_annotation_show_schema(deserialize_json)
+    jsonpatch_context.update({
+        'schema': schema.metadata_record_workflow_annotation_show_schema(deserialize_json),
+        'ignore_auth': True,
+    })
     jsonpatch_data = {
         'id': annotation['jsonpatch_id'],
         'scope': 'workflow',
@@ -954,6 +969,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
     :rtype: dictionary
     """
     log.info("Transitioning workflow state of metadata record: %r", data_dict)
+    tk.check_access('metadata_record_workflow_state_transition', context, data_dict)
 
     model = context['model']
     session = context['session']
@@ -974,11 +990,10 @@ def metadata_record_workflow_state_transition(context, data_dict):
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
 
-    tk.check_access('metadata_record_workflow_state_transition', context, data_dict)
-
     context.update({
         'metadata_record': metadata_record,
         'workflow_state': target_workflow_state,
+        'ignore_auth': True,
     })
 
     current_workflow_state_id = session.query(model.PackageExtra.value) \
@@ -1016,6 +1031,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
     activity_context = context.copy()
     activity_context.update({
         'defer_commit': True,
+        'ignore_auth': True,
         'schema': {
             'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
             'object_id': [],
@@ -1050,6 +1066,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     if update_search_index:
         context['metadata_record'] = metadata_record
+        context['ignore_auth'] = True
         tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
 
     return activity_dict
@@ -1070,6 +1087,7 @@ def metadata_record_workflow_state_revert(context, data_dict):
     :rtype: dictionary
     """
     log.info("Reverting workflow state of metadata record: %r", data_dict)
+    tk.check_access('metadata_record_workflow_state_revert', context, data_dict)
 
     model = context['model']
     session = context['session']
@@ -1082,8 +1100,6 @@ def metadata_record_workflow_state_revert(context, data_dict):
         metadata_record_id = metadata_record.id
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
-
-    tk.check_access('metadata_record_workflow_state_revert', context, data_dict)
 
     current_workflow_state_id = session.query(model.PackageExtra.value) \
         .filter_by(package_id=metadata_record_id, key='workflow_state_id').scalar()
@@ -1107,6 +1123,7 @@ def metadata_record_workflow_state_revert(context, data_dict):
     activity_context = context.copy()
     activity_context.update({
         'defer_commit': True,
+        'ignore_auth': True,
         'schema': {
             'user_id': [unicode, tk.get_validator('convert_user_name_or_id_to_id')],
             'object_id': [],
@@ -1139,6 +1156,7 @@ def metadata_record_workflow_state_revert(context, data_dict):
 
     if update_search_index:
         context['metadata_record'] = metadata_record
+        context['ignore_auth'] = True
         tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
 
     return activity_dict
