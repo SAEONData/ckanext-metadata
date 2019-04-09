@@ -179,12 +179,13 @@ def infrastructure_delete(context, data_dict):
         tk.get_action('metadata_schema_delete')(cascade_context, {'id': metadata_schema_id})
 
     data_dict['type'] = 'infrastructure'
-    context.update({
+    group_context = context.copy()
+    group_context.update({
         'invoked_action': 'infrastructure_delete',
         'ignore_auth': True,
     })
 
-    tk.get_action('group_delete')(context, data_dict)
+    tk.get_action('group_delete')(group_context, data_dict)
 
 
 def metadata_collection_delete(context, data_dict):
@@ -220,12 +221,13 @@ def metadata_collection_delete(context, data_dict):
         raise tk.ValidationError(_('Metadata collection has dependent metadata records'))
 
     data_dict['type'] = 'metadata_collection'
-    context.update({
+    group_context = context.copy()
+    group_context.update({
         'invoked_action': 'metadata_collection_delete',
         'ignore_auth': True,
     })
 
-    tk.get_action('group_delete')(context, data_dict)
+    tk.get_action('group_delete')(group_context, data_dict)
 
 
 def metadata_record_delete(context, data_dict):
@@ -251,15 +253,16 @@ def metadata_record_delete(context, data_dict):
     tk.check_access('metadata_record_delete', context, data_dict)
 
     data_dict['type'] = 'metadata_record'
-    context.update({
+    internal_context = context.copy()
+    internal_context.update({
         'invoked_action': 'metadata_record_delete',
         'ignore_auth': True,
     })
 
-    tk.get_action('package_delete')(context, data_dict)
+    tk.get_action('package_delete')(internal_context, data_dict)
 
     # make sure it's not left in the search index
-    tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+    tk.get_action('metadata_record_index_update')(internal_context, {'id': metadata_record_id})
 
 
 def workflow_state_delete(context, data_dict):
@@ -419,9 +422,10 @@ def metadata_record_workflow_annotation_delete(context, data_dict):
     tk.check_access('metadata_record_workflow_annotation_delete', context, data_dict)
 
     key = tk.get_or_bust(data_dict, 'key')
-    context['ignore_auth'] = True
+    internal_context = context.copy()
+    internal_context['ignore_auth'] = True
 
-    annotation_list = tk.get_action('metadata_record_workflow_annotation_list')(context, data_dict)
+    annotation_list = tk.get_action('metadata_record_workflow_annotation_list')(internal_context, data_dict)
     annotation_list = [annotation for annotation in annotation_list if annotation['key'] == key]
 
     if not annotation_list:
@@ -430,7 +434,7 @@ def metadata_record_workflow_annotation_delete(context, data_dict):
     # it's possible for multiple annotations with the same key to exist if applicable jsonpatches
     # were created directly using the ckanext-jsonpatch API; we delete all of them
     for annotation in annotation_list:
-        tk.get_action('jsonpatch_delete')(context, {'id': annotation['jsonpatch_id']})
+        tk.get_action('jsonpatch_delete')(internal_context, {'id': annotation['jsonpatch_id']})
 
 
 def organization_delete(context, data_dict):

@@ -249,7 +249,8 @@ def infrastructure_update(context, data_dict):
         'type': 'infrastructure',
         'is_organization': False,
     })
-    context.update({
+    internal_context = context.copy()
+    internal_context.update({
         'schema': schema.infrastructure_update_schema(),
         'invoked_action': 'infrastructure_update',
         'defer_commit': True,
@@ -257,13 +258,13 @@ def infrastructure_update(context, data_dict):
         'ignore_auth': True,
     })
 
-    infrastructure_dict = tk.get_action('group_update')(context, data_dict)
+    infrastructure_dict = tk.get_action('group_update')(internal_context, data_dict)
 
     if not defer_commit:
         model.repo.commit()
 
     output = infrastructure_id if return_id_only \
-        else tk.get_action('infrastructure_show')(context, {'id': infrastructure_id})
+        else tk.get_action('infrastructure_show')(internal_context, {'id': infrastructure_id})
     return output
 
 
@@ -309,7 +310,8 @@ def metadata_collection_update(context, data_dict):
         'type': 'metadata_collection',
         'is_organization': False,
     })
-    context.update({
+    internal_context = context.copy()
+    internal_context.update({
         'schema': schema.metadata_collection_update_schema(),
         'invoked_action': 'metadata_collection_update',
         'defer_commit': True,
@@ -317,14 +319,14 @@ def metadata_collection_update(context, data_dict):
         'ignore_auth': True,
     })
 
-    tk.get_action('group_update')(context, data_dict)
-    model_save.metadata_collection_organization_membership_save(metadata_collection.extras['organization_id'], context)
+    tk.get_action('group_update')(internal_context, data_dict)
+    model_save.metadata_collection_organization_membership_save(metadata_collection.extras['organization_id'], internal_context)
 
     if not defer_commit:
         model.repo.commit()
 
     output = metadata_collection_id if return_id_only \
-        else tk.get_action('metadata_collection_show')(context, {'id': metadata_collection_id})
+        else tk.get_action('metadata_collection_show')(internal_context, {'id': metadata_collection_id})
     return output
 
 
@@ -360,7 +362,8 @@ def metadata_record_update(context, data_dict):
     redirect_from_create = context.get('redirect_from_create', False)
     deserialize_json = asbool(data_dict.get('deserialize_json'))
 
-    context['ignore_auth'] = True
+    internal_context = context.copy()
+    internal_context['ignore_auth'] = True
 
     metadata_record_id = tk.get_or_bust(data_dict, 'id')
     metadata_record = model.Package.get(metadata_record_id)
@@ -375,13 +378,13 @@ def metadata_record_update(context, data_dict):
     else:
         # this is (mostly) duplicating the schema validation that will be done in package_update below,
         # but we want to validate before doing the attribute mappings
-        data, errors = tk.navl_validate(data_dict, schema.metadata_record_update_schema(), context)
+        data, errors = tk.navl_validate(data_dict, schema.metadata_record_update_schema(), internal_context)
         if errors:
             session.rollback()
             raise tk.ValidationError(errors)
 
         # map values from the metadata JSON into the data_dict
-        attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
+        attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
             'metadata_standard_id': data_dict.get('metadata_standard_id'),
             'metadata_json': data_dict.get('metadata_json'),
         })
@@ -390,7 +393,7 @@ def metadata_record_update(context, data_dict):
         # check that an existing record matched on key attributes mapped from the JSON is the
         # same record that we are updating; note that we should not find a match if we are actually
         # updating key attributes
-        matching_record_id = tk.get_action('metadata_record_attr_match')(context, attr_map['key_dict'])
+        matching_record_id = tk.get_action('metadata_record_attr_match')(internal_context, attr_map['key_dict'])
         if matching_record_id and matching_record_id != metadata_record_id:
             raise tk.ValidationError(_("Cannot update record; another record exists with the given key attribute values"))
 
@@ -402,7 +405,7 @@ def metadata_record_update(context, data_dict):
         'workflow_state_id': metadata_record.extras['workflow_state_id'],
         'private': metadata_record.private,
     })
-    context.update({
+    internal_context.update({
         'metadata_record': metadata_record,
         'schema': schema.metadata_record_update_schema(),
         'invoked_action': 'metadata_record_update',
@@ -417,11 +420,11 @@ def metadata_record_update(context, data_dict):
         old_metadata_json = metadata_record.extras['metadata_json']
         if old_metadata_json:
             old_metadata_json = json.loads(old_metadata_json)
-        old_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
+        old_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(internal_context, {'id': metadata_record_id}))
 
-    tk.get_action('package_update')(context, data_dict)
-    model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], context)
-    model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
+    tk.get_action('package_update')(internal_context, data_dict)
+    model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], internal_context)
+    model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
     # check if we need to invalidate the record
     if asbool(metadata_record.extras['validated']):
@@ -431,7 +434,7 @@ def metadata_record_update(context, data_dict):
         new_metadata_json = metadata_record.extras['metadata_json']
         if new_metadata_json:
             new_metadata_json = json.loads(new_metadata_json)
-        new_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(context, {'id': metadata_record_id}))
+        new_validation_schemas = set(tk.get_action('metadata_record_validation_schema_list')(internal_context, {'id': metadata_record_id}))
 
         # if either the metadata record content or the set of validation schemas for the record has changed,
         # then the record must be invalidated
@@ -439,6 +442,7 @@ def metadata_record_update(context, data_dict):
             invalidate_context = context.copy()
             invalidate_context.update({
                 'defer_commit': True,
+                'ignore_auth': True,
                 'trigger_action': 'metadata_record_update',
                 'trigger_object_id': metadata_record_id,
             })
@@ -448,10 +452,10 @@ def metadata_record_update(context, data_dict):
         model.repo.commit()
 
     if not metadata_record.private:
-        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+        tk.get_action('metadata_record_index_update')(internal_context, {'id': metadata_record_id})
 
     output = metadata_record_id if return_id_only \
-        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id, 'deserialize_json': deserialize_json})
+        else tk.get_action('metadata_record_show')(internal_context, {'id': metadata_record_id, 'deserialize_json': deserialize_json})
     return output
 
 
@@ -566,14 +570,17 @@ def metadata_record_validate(context, data_dict):
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
-    context['metadata_record'] = metadata_record
-    context['ignore_auth'] = True
+    internal_context = context.copy()
+    internal_context.update({
+        'metadata_record': metadata_record,
+        'ignore_auth': True,
+    })
 
     # already validated
     if asbool(metadata_record.extras['validated']):
         return
 
-    validation_schemas = tk.get_action('metadata_record_validation_schema_list')(context, {
+    validation_schemas = tk.get_action('metadata_record_validation_schema_list')(internal_context, {
         'id': metadata_record_id,
         'all_fields': True,
     })
@@ -584,7 +591,10 @@ def metadata_record_validate(context, data_dict):
     accumulated_errors = {}
     for metadata_schema in validation_schemas:
         validate_context = context.copy()
-        validate_context['allow_side_effects'] = True
+        validate_context.update({
+            'allow_side_effects': True,
+            'ignore_auth': True,
+        })
 
         metadata_dict = json.loads(metadata_record.extras['metadata_json'])
         schema_dict = json.loads(metadata_schema['schema_json'])
@@ -625,8 +635,8 @@ def metadata_record_validate(context, data_dict):
 
     rev = model.repo.new_revision()
     rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
+    if 'message' in internal_context:
+        rev.message = internal_context['message']
     else:
         rev.message = _(u'REST API: Validate metadata record %s') % metadata_record_id
 
@@ -715,9 +725,10 @@ def metadata_record_workflow_state_override(context, data_dict):
         model.repo.commit()
 
     if update_search_index:
-        context['metadata_record'] = metadata_record
-        context['ignore_auth'] = True
-        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+        index_context = context.copy()
+        index_context['metadata_record'] = metadata_record
+        index_context['ignore_auth'] = True
+        tk.get_action('metadata_record_index_update')(index_context, {'id': metadata_record_id})
 
     return activity_dict
 
@@ -990,7 +1001,8 @@ def metadata_record_workflow_state_transition(context, data_dict):
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
 
-    context.update({
+    internal_context = context.copy()
+    internal_context.update({
         'metadata_record': metadata_record,
         'workflow_state': target_workflow_state,
         'ignore_auth': True,
@@ -1009,11 +1021,12 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     # get the metadata record dict, augmented with workflow annotations
     metadata_record_dict = tk.get_action('metadata_record_workflow_augmented_show')(
-        context, {'id': metadata_record_id, 'deserialize_json': True})
+        internal_context, {'id': metadata_record_id, 'deserialize_json': True})
     jsonpatch_ids = [annotation['jsonpatch_id'] for annotation in
-                     tk.get_action('metadata_record_workflow_annotation_list')(context, {'id': metadata_record_id})]
+                     tk.get_action('metadata_record_workflow_annotation_list')(internal_context, {'id': metadata_record_id})]
 
     validate_context = context.copy()
+    validate_context['ignore_auth'] = True
     validate_context['allow_side_effects'] = True
 
     # test whether the augmented metadata record passes the rules for the target state
@@ -1054,8 +1067,8 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     rev = model.repo.new_revision()
     rev.author = user
-    if 'message' in context:
-        rev.message = context['message']
+    if 'message' in internal_context:
+        rev.message = internal_context['message']
     else:
         rev.message = _(u'REST API: Transition workflow state of metadata record %s') % metadata_record_id
 
@@ -1065,9 +1078,10 @@ def metadata_record_workflow_state_transition(context, data_dict):
         model.repo.commit()
 
     if update_search_index:
-        context['metadata_record'] = metadata_record
-        context['ignore_auth'] = True
-        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+        index_context = context.copy()
+        index_context['metadata_record'] = metadata_record
+        index_context['ignore_auth'] = True
+        tk.get_action('metadata_record_index_update')(index_context, {'id': metadata_record_id})
 
     return activity_dict
 
@@ -1155,9 +1169,10 @@ def metadata_record_workflow_state_revert(context, data_dict):
         model.repo.commit()
 
     if update_search_index:
-        context['metadata_record'] = metadata_record
-        context['ignore_auth'] = True
-        tk.get_action('metadata_record_index_update')(context, {'id': metadata_record_id})
+        index_context = context.copy()
+        index_context['metadata_record'] = metadata_record
+        index_context['ignore_auth'] = True
+        tk.get_action('metadata_record_index_update')(index_context, {'id': metadata_record_id})
 
     return activity_dict
 

@@ -192,7 +192,8 @@ def infrastructure_create(context, data_dict):
         'type': 'infrastructure',
         'is_organization': False,
     })
-    context.update({
+    internal_context = context.copy()
+    internal_context.update({
         'schema': schema.infrastructure_create_schema(),
         'invoked_action': 'infrastructure_create',
         'defer_commit': True,
@@ -203,13 +204,13 @@ def infrastructure_create(context, data_dict):
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
     # - addition of the creating user as a member is done (committed) without consideration for defer_commit
     # - but it does not make much difference to us here
-    infrastructure_id = tk.get_action('group_create')(context, data_dict)
+    infrastructure_id = tk.get_action('group_create')(internal_context, data_dict)
 
     if not defer_commit:
         model.repo.commit()
 
     output = infrastructure_id if return_id_only \
-        else tk.get_action('infrastructure_show')(context, {'id': infrastructure_id})
+        else tk.get_action('infrastructure_show')(internal_context, {'id': infrastructure_id})
     return output
 
 
@@ -249,7 +250,8 @@ def metadata_collection_create(context, data_dict):
         'type': 'metadata_collection',
         'is_organization': False,
     })
-    context.update({
+    internal_context = context.copy()
+    internal_context.update({
         'schema': schema.metadata_collection_create_schema(),
         'invoked_action': 'metadata_collection_create',
         'defer_commit': True,
@@ -260,14 +262,14 @@ def metadata_collection_create(context, data_dict):
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
     # - addition of the creating user as a member is done (committed) without consideration for defer_commit
     # - this will be a (minor) problem if saving of organization membership fails for whatever reason
-    metadata_collection_id = tk.get_action('group_create')(context, data_dict)
-    model_save.metadata_collection_organization_membership_save(data_dict['organization_id'], context)
+    metadata_collection_id = tk.get_action('group_create')(internal_context, data_dict)
+    model_save.metadata_collection_organization_membership_save(data_dict['organization_id'], internal_context)
 
     if not defer_commit:
         model.repo.commit()
 
     output = metadata_collection_id if return_id_only \
-        else tk.get_action('metadata_collection_show')(context, {'id': metadata_collection_id})
+        else tk.get_action('metadata_collection_show')(internal_context, {'id': metadata_collection_id})
     return output
 
 
@@ -319,29 +321,30 @@ def metadata_record_create(context, data_dict):
     return_id_only = context.get('return_id_only', False)
     deserialize_json = asbool(data_dict.get('deserialize_json'))
 
-    context['ignore_auth'] = True
+    internal_context = context.copy()
+    internal_context['ignore_auth'] = True
 
     # this is (mostly) duplicating the schema validation that will be done in package_create below,
     # but we want to validate before doing the attribute mappings
-    data, errors = tk.navl_validate(data_dict, schema.metadata_record_create_schema(), context)
+    data, errors = tk.navl_validate(data_dict, schema.metadata_record_create_schema(), internal_context)
     if errors:
         session.rollback()
         raise tk.ValidationError(errors)
 
     # map values from the metadata JSON into the data_dict
-    attr_map = tk.get_action('metadata_json_attr_map_apply')(context, {
+    attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
         'metadata_standard_id': data_dict.get('metadata_standard_id'),
         'metadata_json': data_dict.get('metadata_json'),
     })
     data_dict.update(attr_map['data_dict'])
 
     # check if we match an existing record on key attributes mapped from the JSON; if so, switch to an update
-    matching_record_id = tk.get_action('metadata_record_attr_match')(context, attr_map['key_dict'])
+    matching_record_id = tk.get_action('metadata_record_attr_match')(internal_context, attr_map['key_dict'])
     if matching_record_id:
         log.info('Existing record found; switching to metadata_record_update')
         data_dict['id'] = matching_record_id
-        context['redirect_from_create'] = True
-        return tk.get_action('metadata_record_update')(context, data_dict)
+        internal_context['redirect_from_create'] = True
+        return tk.get_action('metadata_record_update')(internal_context, data_dict)
 
     # it's new metadata; create the package object
     data_dict.update({
@@ -351,21 +354,21 @@ def metadata_record_create(context, data_dict):
         'workflow_state_id': '',
         'private': True,
     })
-    context.update({
+    internal_context.update({
         'schema': schema.metadata_record_create_schema(),
         'invoked_action': 'metadata_record_create',
         'defer_commit': True,
         'return_id_only': True,
     })
-    metadata_record_id = tk.get_action('package_create')(context, data_dict)
-    model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], context)
-    model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), context)
+    metadata_record_id = tk.get_action('package_create')(internal_context, data_dict)
+    model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], internal_context)
+    model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
     if not defer_commit:
         model.repo.commit()
 
     output = metadata_record_id if return_id_only \
-        else tk.get_action('metadata_record_show')(context, {'id': metadata_record_id, 'deserialize_json': deserialize_json})
+        else tk.get_action('metadata_record_show')(internal_context, {'id': metadata_record_id, 'deserialize_json': deserialize_json})
     return output
 
 

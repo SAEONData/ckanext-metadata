@@ -236,13 +236,14 @@ def infrastructure_show(context, data_dict):
         'include_groups': False,
         'include_followers': True,
     })
-    context.update({
+    group_context = context.copy()
+    group_context.update({
         'schema': schema.infrastructure_show_schema(),
         'invoked_action': 'infrastructure_show',
         'ignore_auth': True,
     })
 
-    return tk.get_action('group_show')(context, data_dict)
+    return tk.get_action('group_show')(group_context, data_dict)
 
 
 @tk.side_effect_free
@@ -309,13 +310,14 @@ def metadata_collection_show(context, data_dict):
         'include_groups': False,
         'include_followers': True,
     })
-    context.update({
+    group_context = context.copy()
+    group_context.update({
         'schema': schema.metadata_collection_show_schema(),
         'invoked_action': 'metadata_collection_show',
         'ignore_auth': True,
     })
 
-    return tk.get_action('group_show')(context, data_dict)
+    return tk.get_action('group_show')(group_context, data_dict)
 
 
 @tk.side_effect_free
