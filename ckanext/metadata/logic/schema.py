@@ -9,13 +9,11 @@ empty = tk.get_validator('empty')
 ignore = tk.get_validator('ignore')
 ignore_missing = tk.get_validator('ignore_missing')
 default = tk.get_validator('default')
-package_id_does_not_exist = tk.get_validator('package_id_does_not_exist')
 name_validator = tk.get_validator('name_validator')
 package_name_validator = tk.get_validator('package_name_validator')
 package_version_validator = tk.get_validator('package_version_validator')
 email_validator = tk.get_validator('email_validator')
 group_name_validator = tk.get_validator('group_name_validator')
-empty_if_not_sysadmin = tk.get_validator('empty_if_not_sysadmin')
 ignore_not_sysadmin = tk.get_validator('ignore_not_sysadmin')
 ignore_not_package_admin = tk.get_validator('ignore_not_package_admin')
 ignore_not_group_admin = tk.get_validator('ignore_not_group_admin')
@@ -78,7 +76,7 @@ def _extras_schema():
 def metadata_record_create_schema():
     schema = {
         # native package fields with special usage
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, package_id_does_not_exist],
+        'id': [ignore],
         'owner_org': [v.not_empty, v.object_exists('organization'), owner_org_validator, unicode],
         'state': [ignore_not_package_admin, ignore_missing],
         'type': [],
@@ -209,7 +207,7 @@ def metadata_record_workflow_annotation_show_schema(deserialize_json=False):
 def metadata_collection_create_schema():
     schema = {
         # from the default group schema
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.group_does_not_exist],
+        'id': [ignore],
         'name': [v.not_empty, unicode, name_validator, group_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
@@ -252,7 +250,7 @@ def metadata_collection_show_schema():
 def infrastructure_create_schema():
     schema = {
         # from the default group schema
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.group_does_not_exist],
+        'id': [ignore],
         'name': [v.not_empty, unicode, name_validator, group_name_validator],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
@@ -288,7 +286,7 @@ def infrastructure_show_schema():
 
 def metadata_standard_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_standard')],
+        'id': [ignore],
         'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_standard')],
         'description': [ignore_missing, unicode],
         'standard_name': [v.not_empty, unicode],
@@ -326,7 +324,7 @@ def metadata_standard_show_schema(deserialize_json=False):
 
 def metadata_json_attr_map_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_json_attr_map')],
+        'id': [ignore],
         'json_path': [v.not_empty, unicode, v.json_pointer_validator],
         'record_attr': [v.not_empty, unicode, v.schema_key_validator(metadata_record_attr_mappable_schema(), True)],
         'is_key': [v.not_missing, boolean_validator],
@@ -367,7 +365,7 @@ def metadata_json_attr_map_apply_schema():
 
 def metadata_schema_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('metadata_schema')],
+        'id': [ignore],
         'name': [ignore_missing, unicode, name_validator, v.object_name_validator('metadata_schema')],
         'description': [ignore_missing, unicode],
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard')],
@@ -407,7 +405,7 @@ def metadata_schema_show_schema(deserialize_json=False):
 
 def workflow_state_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('workflow_state')],
+        'id': [ignore],
         'name': [v.not_empty, unicode, name_validator, v.object_name_validator('workflow_state')],
         'title': [ignore_missing, unicode],
         'description': [ignore_missing, unicode],
@@ -440,7 +438,7 @@ def workflow_state_show_schema(deserialize_json=False):
 
 def workflow_transition_create_schema():
     schema = {
-        'id': [empty_if_not_sysadmin, ignore_missing, unicode, v.object_does_not_exist('workflow_transition')],
+        'id': [ignore],
         'from_state_id': [v.not_missing, unicode, v.object_exists('workflow_state')],
         'to_state_id': [v.not_empty, unicode, v.object_exists('workflow_state')],
         'state': [ignore_not_sysadmin, ignore_missing],

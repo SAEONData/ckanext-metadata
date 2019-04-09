@@ -46,16 +46,6 @@ class TestWorkflowTransitionActions(ActionTestBase):
         }
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_sysadmin_setid(self):
-        workflow_state = ckanext_factories.WorkflowState()
-        input_dict = {
-            'id': make_uuid(),
-            'from_state_id': '',
-            'to_state_id': workflow_state['id'],
-        }
-        result, obj = self.test_action('workflow_transition_create', sysadmin=True, check_auth=True, **input_dict)
-        assert_object_matches_dict(obj, input_dict)
-
     def test_create_invalid_missing_params(self):
         result, obj = self.test_action('workflow_transition_create', should_error=True)
         assert_error(result, 'from_state_id', 'Missing parameter')
@@ -65,17 +55,6 @@ class TestWorkflowTransitionActions(ActionTestBase):
         result, obj = self.test_action('workflow_transition_create', should_error=True,
                                        to_state_id='')
         assert_error(result, 'to_state_id', 'Missing value')
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('workflow_transition_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        workflow_transition = ckanext_factories.WorkflowTransition()
-        result, obj = self.test_action('workflow_transition_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=workflow_transition['id'])
-        assert_error(result, 'id', 'Already exists: Workflow Transition')
 
     def test_create_invalid_self_transition(self):
         workflow_state = ckanext_factories.WorkflowState()

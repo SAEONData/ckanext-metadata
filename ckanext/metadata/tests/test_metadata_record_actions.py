@@ -142,12 +142,6 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_group_has_member(infrastructure1['id'], obj.id, 'package')
         assert_group_has_member(infrastructure2['id'], obj.id, 'package')
 
-    def test_create_valid_sysadmin_setid(self):
-        input_dict = self._make_input_dict()
-        input_dict['id'] = make_uuid()
-        result, obj = self.test_action('metadata_record_create', sysadmin=True, check_auth=True, **input_dict)
-        self._assert_metadata_record_ok(obj, input_dict)
-
     def test_create_valid_map_attributes(self):
         """
         Test copying of metadata element values into package attributes via metadata JSON
@@ -300,17 +294,6 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict['metadata_json'] = metadata_json
         result, obj = self.test_action('metadata_record_create', should_error=True, **input_dict)
         assert_error(result, 'message', 'Cannot unambiguously match an existing record for the given key attribute values')
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('metadata_record_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        metadata_record = ckanext_factories.MetadataRecord()
-        result, obj = self.test_action('metadata_record_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=metadata_record['id'])
-        assert_error(result, 'id', 'Dataset id already exists')
 
     def test_create_invalid_missing_params(self):
         result, obj = self.test_action('metadata_record_create', should_error=True)

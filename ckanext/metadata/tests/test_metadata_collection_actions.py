@@ -46,37 +46,11 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_group_has_extra(obj.id, 'organization_id', organization['id'])
         assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
 
-    def test_create_valid_sysadmin_setid(self):
-        organization = ckan_factories.Organization(user=self.normal_user)
-        input_dict = {
-            'id': make_uuid(),
-            'name': 'test-metadata-collection',
-            'organization_id': organization['id'],
-        }
-        result, obj = self.test_action('metadata_collection_create', sysadmin=True, check_auth=True, **input_dict)
-        assert obj.type == 'metadata_collection'
-        assert obj.is_organization == False
-        assert_group_has_extra(obj.id, 'organization_id', input_dict['organization_id'])
-        del input_dict['organization_id']
-        assert_object_matches_dict(obj, input_dict)
-        assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
-
     def test_create_invalid_duplicate_name(self):
         metadata_collection = ckanext_factories.MetadataCollection()
         result, obj = self.test_action('metadata_collection_create', should_error=True,
                                        name=metadata_collection['name'])
         assert_error(result, 'name', 'Group name already exists in database')
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('metadata_collection_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        metadata_collection = ckanext_factories.MetadataCollection()
-        result, obj = self.test_action('metadata_collection_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=metadata_collection['id'])
-        assert_error(result, 'id', 'Already exists: Group')
 
     def test_create_invalid_bad_organization(self):
         result, obj = self.test_action('metadata_collection_create', should_error=True,

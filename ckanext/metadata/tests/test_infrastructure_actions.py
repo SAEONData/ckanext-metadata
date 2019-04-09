@@ -26,32 +26,11 @@ class TestInfrastructureActions(ActionTestBase):
         assert obj.is_organization == False
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_sysadmin_setid(self):
-        input_dict = {
-            'id': make_uuid(),
-            'name': 'test-infrastructure',
-        }
-        result, obj = self.test_action('infrastructure_create', sysadmin=True, check_auth=True, **input_dict)
-        assert obj.type == 'infrastructure'
-        assert obj.is_organization == False
-        assert_object_matches_dict(obj, input_dict)
-
     def test_create_invalid_duplicate_name(self):
         infrastructure = ckanext_factories.Infrastructure()
         result, obj = self.test_action('infrastructure_create', should_error=True,
                                        name=infrastructure['name'])
         assert_error(result, 'name', 'Group name already exists in database')
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('infrastructure_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        infrastructure = ckanext_factories.Infrastructure()
-        result, obj = self.test_action('infrastructure_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=infrastructure['id'])
-        assert_error(result, 'id', 'Already exists: Group')
 
     def test_update_valid(self):
         infrastructure = ckanext_factories.Infrastructure()

@@ -135,18 +135,6 @@ class TestMetadataSchemaActions(ActionTestBase):
         assert obj.infrastructure_id == infrastructure['id']
         assert obj.name == generate_name(metadata_standard['name'], '', infrastructure['name'])
 
-    def test_create_valid_sysadmin_setid(self):
-        metadata_standard = ckanext_factories.MetadataStandard()
-        input_dict = {
-            'id': make_uuid(),
-            'metadata_standard_id': metadata_standard['id'],
-            'organization_id': '',
-            'infrastructure_id': '',
-            'schema_json': '{}',
-        }
-        result, obj = self.test_action('metadata_schema_create', sysadmin=True, check_auth=True, **input_dict)
-        assert_object_matches_dict(obj, input_dict)
-
     def test_create_valid_same_standard_different_organization(self):
         organization1 = ckan_factories.Organization()
         organization2 = ckan_factories.Organization()
@@ -330,17 +318,6 @@ class TestMetadataSchemaActions(ActionTestBase):
                                        infrastructure_id=infrastructure['id'])
         assert_error(result, '__after',
                      'A metadata schema may be associated with either an organization or an infrastructure but not both.')
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('metadata_schema_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
-        result, obj = self.test_action('metadata_schema_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=metadata_schema['id'])
-        assert_error(result, 'id', 'Already exists: Metadata Schema')
 
     def test_create_invalid_not_json(self):
         result, obj = self.test_action('metadata_schema_create', should_error=True,

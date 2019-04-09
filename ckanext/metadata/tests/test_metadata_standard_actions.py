@@ -61,17 +61,6 @@ class TestMetadataStandardActions(ActionTestBase):
         input_dict['parent_standard_id'] = metadata_standard['id']
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_sysadmin_setid(self):
-        input_dict = {
-            'id': make_uuid(),
-            'standard_name': 'DataCite',
-            'standard_version': '1.0',
-            'parent_standard_id': '',
-            'metadata_template_json': '{}',
-        }
-        result, obj = self.test_action('metadata_standard_create', sysadmin=True, check_auth=True, **input_dict)
-        assert_object_matches_dict(obj, input_dict)
-
     def test_create_valid_same_name_new_version(self):
         metadata_standard = ckanext_factories.MetadataStandard()
         input_dict = {
@@ -121,27 +110,6 @@ class TestMetadataStandardActions(ActionTestBase):
         }
         result, obj = self.test_action('metadata_standard_create', should_error=True, **input_dict)
         assert_error(result, '__after', 'Unique constraint violation')
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('metadata_standard_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        metadata_standard = ckanext_factories.MetadataStandard()
-        result, obj = self.test_action('metadata_standard_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=metadata_standard['id'])
-        assert_error(result, 'id', 'Already exists: Metadata Standard')
-
-    def test_create_invalid_sysadmin_self_parent(self):
-        new_id = make_uuid()
-        input_dict = {
-            'id': new_id,
-            'parent_standard_id': new_id,
-        }
-        result, obj = self.test_action('metadata_standard_create', should_error=True,
-                                       sysadmin=True, check_auth=True, **input_dict)
-        assert_error(result, 'parent_standard_id', 'Not found: Metadata Standard')
 
     def test_create_invalid_bad_parent(self):
         result, obj = self.test_action('metadata_standard_create', should_error=True,

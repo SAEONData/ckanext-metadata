@@ -39,30 +39,6 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
         input_dict['metadata_standard_id'] = metadata_standard['id']
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_sysadmin_setid(self):
-        metadata_standard = ckanext_factories.MetadataStandard(
-            metadata_template_json=load_example('datacite_4.2_saeon_record.json'))
-        input_dict = {
-            'id': make_uuid(),
-            'json_path': '/identifier/identifier',
-            'record_attr': 'name',
-            'is_key': True,
-            'metadata_standard_id': metadata_standard['id'],
-        }
-        result, obj = self.test_action('metadata_json_attr_map_create', sysadmin=True, check_auth=True, **input_dict)
-        assert_object_matches_dict(obj, input_dict)
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
-        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=metadata_json_attr_map['id'])
-        assert_error(result, 'id', 'Already exists: Metadata JSON Attribute Map')
-
     def test_create_invalid_bad_metadata_standard(self):
         result, obj = self.test_action('metadata_json_attr_map_create', should_error=True,
                                        metadata_standard_id='foo')

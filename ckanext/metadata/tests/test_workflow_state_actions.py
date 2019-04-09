@@ -51,17 +51,6 @@ class TestWorkflowStateActions(ActionTestBase):
         input_dict['revert_state_id'] = workflow_state['id']
         assert_object_matches_dict(obj, input_dict)
 
-    def test_create_valid_sysadmin_setid(self):
-        input_dict = {
-            'id': make_uuid(),
-            'name': 'test-workflow-state',
-            'revert_state_id': '',
-            'metadata_records_private': True,
-            'workflow_rules_json': '{ "testkey": "testvalue" }',
-        }
-        result, obj = self.test_action('workflow_state_create', sysadmin=True, check_auth=True, **input_dict)
-        assert_object_matches_dict(obj, input_dict)
-
     def test_create_invalid_duplicate_name(self):
         workflow_state = ckanext_factories.WorkflowState()
         result, obj = self.test_action('workflow_state_create', should_error=True,
@@ -81,27 +70,6 @@ class TestWorkflowStateActions(ActionTestBase):
                                        workflow_rules_json='')
         assert_error(result, 'name', 'Missing value')
         assert_error(result, 'workflow_rules_json', 'Missing value')
-
-    def test_create_invalid_nonsysadmin_setid(self):
-        result, obj = self.test_action('workflow_state_create', should_error=True, check_auth=True,
-                                       id=make_uuid())
-        assert_error(result, 'id', 'The input field id was not expected.')
-
-    def test_create_invalid_sysadmin_duplicate_id(self):
-        workflow_state = ckanext_factories.WorkflowState()
-        result, obj = self.test_action('workflow_state_create', should_error=True, sysadmin=True, check_auth=True,
-                                       id=workflow_state['id'])
-        assert_error(result, 'id', 'Already exists: Workflow State')
-
-    def test_create_invalid_sysadmin_self_revert(self):
-        new_id = make_uuid()
-        input_dict = {
-            'id': new_id,
-            'revert_state_id': new_id,
-        }
-        result, obj = self.test_action('workflow_state_create', should_error=True,
-                                       sysadmin=True, check_auth=True, **input_dict)
-        assert_error(result, 'revert_state_id', 'Not found: Workflow State')
 
     def test_create_invalid_bad_revert(self):
         result, obj = self.test_action('workflow_state_create', should_error=True,
