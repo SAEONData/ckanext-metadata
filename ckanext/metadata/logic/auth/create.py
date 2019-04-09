@@ -73,3 +73,7 @@ def metadata_standard_index_create(context, data_dict):
 
 def metadata_json_attr_map_create(context, data_dict):
     return {'success': True}
+
+
+def infrastructure_member_create(context, data_dict):
+    return {'success': True}

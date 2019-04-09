@@ -76,3 +76,7 @@ def metadata_standard_index_delete(context, data_dict):
 
 def metadata_json_attr_map_delete(context, data_dict):
     return {'success': True}
+
+
+def infrastructure_member_delete(context, data_dict):
+    return {'success': True}

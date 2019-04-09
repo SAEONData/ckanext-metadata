@@ -652,3 +652,42 @@ def metadata_json_attr_map_create(context, data_dict):
     output = metadata_json_attr_map.id if return_id_only \
         else tk.get_action('metadata_json_attr_map_show')(context, {'id': metadata_json_attr_map.id})
     return output
+
+
+def infrastructure_member_create(context, data_dict):
+    """
+    Make a user a member of an infrastructure.
+
+    You must be authorized to edit the infrastructure.
+
+    :param id: the id or name of the infrastructure
+    :type id: string
+    :param username: name or id of the user
+    :type username: string
+    :param role: role of the user in the infrastructure. One of ``member``, ``editor``, ``admin``
+    :type role: string
+
+    :returns: the newly created (or updated) membership
+    :rtype: dictionary
+    """
+    log.info("Adding a user as a member of an infrastructure: %r", data_dict)
+    tk.check_access('infrastructure_member_create', context, data_dict)
+
+    model = context['model']
+
+    infrastructure_id, username, role = tk.get_or_bust(data_dict, ['id', 'username', 'role'])
+    infrastructure = model.Group.get(infrastructure_id)
+    if infrastructure is not None and infrastructure.type == 'infrastructure':
+        infrastructure_id = infrastructure.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+
+    member_dict = {
+        'id': infrastructure_id,
+        'object': username,
+        'object_type': 'user',
+        'capacity': role,
+    }
+    member_context = context.copy()
+    member_context['ignore_auth'] = True
+    return tk.get_action('member_create')(member_context, member_dict)

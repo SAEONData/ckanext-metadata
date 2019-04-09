@@ -564,3 +564,38 @@ def metadata_json_attr_map_delete(context, data_dict):
     metadata_json_attr_map.delete()
     if not defer_commit:
         model.repo.commit()
+
+
+def infrastructure_member_delete(context, data_dict):
+    """
+    Remove a user from an infrastructure.
+
+    You must be authorized to edit the infrastructure.
+
+    :param id: the id or name of the infrastructure
+    :type id: string
+    :param username: name or id of the user
+    :type username: string
+    """
+    log.info("Deleting a user's membership of an infrastructure: %r", data_dict)
+    tk.check_access('infrastructure_member_delete', context, data_dict)
+
+    model = context['model']
+
+    infrastructure_id = tk.get_or_bust(data_dict, 'id')
+    username = data_dict.get('username') or data_dict.get('user_id')
+
+    infrastructure = model.Group.get(infrastructure_id)
+    if infrastructure is not None and infrastructure.type == 'infrastructure':
+        infrastructure_id = infrastructure.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+
+    member_dict = {
+        'id': infrastructure_id,
+        'object': username,
+        'object_type': 'user',
+    }
+    member_context = context.copy()
+    member_context['ignore_auth'] = True
+    return tk.get_action('member_delete')(member_context, member_dict)
