@@ -243,7 +243,9 @@ def infrastructure_show(context, data_dict):
         'ignore_auth': True,
     })
 
-    return tk.get_action('group_show')(group_context, data_dict)
+    infrastructure_dict = tk.get_action('group_show')(group_context, data_dict)
+    context['group'] = group_context['group']  # because the group controller depends on internal behaviour *smh*
+    return infrastructure_dict
 
 
 @tk.side_effect_free
@@ -317,7 +319,9 @@ def metadata_collection_show(context, data_dict):
         'ignore_auth': True,
     })
 
-    return tk.get_action('group_show')(group_context, data_dict)
+    metadata_collection_dict = tk.get_action('group_show')(group_context, data_dict)
+    context['group'] = group_context['group']  # because the group controller depends on internal behaviour *smh*
+    return metadata_collection_dict
 
 
 @tk.side_effect_free
