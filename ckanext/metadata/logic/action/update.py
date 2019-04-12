@@ -552,8 +552,7 @@ def metadata_record_validate(context, data_dict):
     :param id: the id or name of the metadata record to validate
     :type id: string
 
-    :returns: the validation activity record, unless the metadata record is already validated,
-        in which case nothing is changed and None is returned
+    :returns: the validation activity record
     :rtype: dictionary
     """
     log.info("Validating metadata record: %r", data_dict)
@@ -576,9 +575,11 @@ def metadata_record_validate(context, data_dict):
         'ignore_auth': True,
     })
 
-    # already validated
+    # already validated - return the last validation result
     if asbool(metadata_record.extras['validated']):
-        return
+        return tk.get_action('metadata_record_validation_activity_show')(internal_context, {
+            'id': metadata_record_id,
+        })
 
     validation_schemas = tk.get_action('metadata_record_validation_schema_list')(internal_context, {
         'id': metadata_record_id,
