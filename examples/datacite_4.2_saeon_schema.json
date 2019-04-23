@@ -533,7 +533,6 @@
     ],
 
     "dependencies": {
-        "identifier": ["immutableResource"],
-        "immutableResource": ["identifier"]
+        "identifier": ["immutableResource"]
     }
 }
