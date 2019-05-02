@@ -22,8 +22,6 @@ def metadata_standard_create(context, data_dict):
 
     You must be authorized to create metadata standards.
 
-    :param id: the id of the metadata standard (optional - only sysadmins can set this)
-    :type id: string
     :param name: the name of the new metadata standard (optional - auto-generated if not supplied);
         must conform to standard naming rules
     :type name: string
@@ -90,8 +88,6 @@ def metadata_schema_create(context, data_dict):
 
     Any metadata records that are now dependent on this schema are invalidated.
 
-    :param id: the id of the metadata schema (optional - only sysadmins can set this)
-    :type id: string
     :param name: the name of the new metadata schema (optional - auto-generated if not supplied);
         must conform to standard naming rules
     :type name: string
@@ -164,8 +160,6 @@ def infrastructure_create(context, data_dict):
     
     You must be authorized to create infrastructures.
 
-    :param id: the id of the infrastructure (optional - only sysadmins can set this)
-    :type id: string
     :param name: the name of the infrastructure; must conform to group naming rules
     :type name: string
     :param title: the title of the infrastructure (optional)
@@ -220,8 +214,6 @@ def metadata_collection_create(context, data_dict):
 
     You must be authorized to create metadata collections.
 
-    :param id: the id of the metadata collection (optional - only sysadmins can set this)
-    :type id: string
     :param name: the name of the metadata collection; must conform to group naming rules
     :type name: string
     :param title: the title of the metadata collection (optional)
@@ -282,8 +274,6 @@ def metadata_record_create(context, data_dict):
     Note that if the incoming record matches an existing one on key attributes mapped from
     the metadata JSON, then we switch to doing an update instead.
 
-    :param id: the id of the metadata record (optional - only sysadmins can set this)
-    :type id: string
     :param name: the name of the metadata record (optional - set to id if not supplied);
         must conform to standard naming rules
     :type name: string
@@ -378,8 +368,6 @@ def workflow_state_create(context, data_dict):
 
     You must be authorized to create workflow states.
 
-    :param id: the id of the workflow state (optional - only sysadmins can set this)
-    :type id: string
     :param name: the name of the new workflow state; must conform to standard naming rules
     :type name: string
     :param title: the title of the workflow state (optional)
@@ -440,8 +428,6 @@ def workflow_transition_create(context, data_dict):
 
     You must be authorized to create workflow transitions.
 
-    :param id: the id of the workflow transition (optional - only sysadmins can set this)
-    :type id: string
     :param from_state_id: the id or name of the source workflow state (nullable - null implies
         that the target state is an initial workflow state)
     :type from_state_id: string
@@ -609,8 +595,6 @@ def metadata_json_attr_map_create(context, data_dict):
     2. When a metadata record is created or updated, metadata JSON values are copied into
        metadata record attributes for each such defined mapping.
 
-    :param id: the id of the object (optional - only sysadmins can set this)
-    :type id: string
     :param json_path: JSON pointer to a location in a metadata record dictionary
     :type json_path: string
     :param record_attr: the name of an attribute in the metadata record schema
