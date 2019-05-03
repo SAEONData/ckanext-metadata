@@ -379,6 +379,23 @@ def owner_org_owns_metadata_collection(key, data, errors, context):
         raise tk.Invalid(_("owner_org must be the same organization that owns the metadata collection"))
 
 
+def metadata_collection_org_unchanged(key, data, errors, context):
+    """
+    Ensures that a metadata collection cannot be moved to a different organization.
+    """
+    model = context['model']
+    session = context['session']
+
+    id_ = data.get(key[:-1] + ('id',))
+    new_organization_id = data.get(key[:-1] + ('organization_id',))
+    new_organization_id = model.Group.get(new_organization_id).id
+    old_organization_id = session.query(model.GroupExtra.value) \
+        .filter_by(group_id=id_, key='organization_id').scalar()
+
+    if new_organization_id != old_organization_id:
+        raise tk.Invalid(_("Organization cannot be changed"))
+
+
 def metadata_record_id_name_generator(key, data, errors, context):
     """
     Generates id and name for a new metadata record where these values have not been supplied.

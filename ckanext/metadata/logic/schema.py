@@ -229,7 +229,7 @@ def metadata_collection_create_schema():
 
 def metadata_collection_update_schema():
     schema = metadata_collection_create_schema()
-    schema['organization_id'] = [empty]  # cannot change the organization to which a collection belongs
+    schema['organization_id'] = [v.not_empty, unicode, v.metadata_collection_org_unchanged]
     _make_update_schema(schema)
     return schema
 

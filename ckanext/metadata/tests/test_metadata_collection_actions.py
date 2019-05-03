@@ -71,10 +71,12 @@ class TestMetadataCollectionActions(ActionTestBase):
             'name': 'updated-test-metadata-collection',
             'title': 'Updated Test Metadata Collection',
             'description': 'Updated test metadata collection',
+            'organization_id': metadata_collection['organization_id'],
         }
         result, obj = self.test_action('metadata_collection_update', **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
+        del input_dict['organization_id']
         assert_object_matches_dict(obj, input_dict)
         assert_group_has_extra(obj.id, 'organization_id', metadata_collection['organization_id'])
 
@@ -83,6 +85,7 @@ class TestMetadataCollectionActions(ActionTestBase):
         input_dict = {
             'id': metadata_collection['id'],
             'title': 'Updated Test Metadata Collection',
+            'organization_id': metadata_collection['organization_id'],
         }
         result, obj = self.test_action('metadata_collection_update', **input_dict)
         assert obj.type == 'metadata_collection'
@@ -120,7 +123,7 @@ class TestMetadataCollectionActions(ActionTestBase):
             'organization_id': organization['id'],
         }
         result, obj = self.test_action('metadata_collection_update', should_error=True, **input_dict)
-        assert_error(result, 'organization_id', 'The input field organization_id was not expected.')
+        assert_error(result, 'organization_id', 'Organization cannot be changed')
 
     def test_delete_valid(self):
         metadata_collection = ckanext_factories.MetadataCollection()
