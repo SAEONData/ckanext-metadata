@@ -9,6 +9,7 @@ from ckanext.metadata.tests import (
     ActionTestBase,
     assert_error,
     factories as ckanext_factories,
+    assert_object_matches_dict,
 )
 
 
@@ -19,6 +20,24 @@ class TestOrganizationActions(ActionTestBase):
 
     def _generate_metadata_collection(self, **kwargs):
         return ckanext_factories.MetadataCollection(user=self.normal_user, **kwargs)
+
+    def test_create_valid(self):
+        input_dict = {
+            'name': 'test-organization',
+            'title': 'Test Organization',
+            'description': 'This is a test organization',
+        }
+        result, obj = self.test_action('organization_create', **input_dict)
+        assert obj.type == 'organization'
+        assert obj.is_organization == True
+        assert_object_matches_dict(obj, input_dict)
+
+        default_collection = ckan_model.Session.query(ckan_model.Group) \
+            .join(ckan_model.GroupExtra) \
+            .filter_by(key='organization_id', value=obj.id) \
+            .first()
+        assert default_collection
+        assert default_collection.name == input_dict['name'] + '-metadata'
 
     def test_delete_valid(self):
         organization = self._generate_organization()

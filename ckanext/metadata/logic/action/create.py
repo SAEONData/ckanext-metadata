@@ -8,6 +8,8 @@ import ckan.plugins.toolkit as tk
 from ckan.common import _
 from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_save
+from ckan.logic.action.create import organization_create as ckan_org_create
+from ckanext.metadata.common import DEFAULT_METADATA_COLLECTION_SUFFIX, DEFAULT_METADATA_COLLECTION_TITLE
 
 log = logging.getLogger(__name__)
 
@@ -205,6 +207,44 @@ def infrastructure_create(context, data_dict):
 
     output = infrastructure_id if return_id_only \
         else tk.get_action('infrastructure_show')(internal_context, {'id': infrastructure_id})
+    return output
+
+
+def organization_create(context, data_dict):
+    """
+    Create an organization. Wraps CKAN's organization_create, so that we can
+    create a default metadata collection.
+
+    You must be authorized to create organizations.
+
+    For available parameters see
+    :py:func:`~ckan.logic.action.create.organization_create`.
+
+    :returns: the newly created organization (unless 'return_id_only' is set
+              to True in the context, in which case just the organization id
+              will be returned)
+    :rtype: dictionary
+    """
+    log.info("Creating organization: %r", data_dict)
+    tk.check_access('organization_create', context, data_dict)
+
+    return_id_only = context.get('return_id_only', False)
+    internal_context = context.copy()
+    internal_context['defer_commit'] = False
+
+    organization_dict = ckan_org_create(internal_context, data_dict)
+
+    internal_context = context.copy()
+    internal_context['defer_commit'] = False
+
+    metadata_collection_create(internal_context, {
+        'name': organization_dict['name'] + DEFAULT_METADATA_COLLECTION_SUFFIX,
+        'title': DEFAULT_METADATA_COLLECTION_TITLE,
+        'organization_id': organization_dict['id'],
+    })
+
+    output = organization_dict['id'] if return_id_only \
+        else tk.get_action('organization_show')(internal_context, {'id': organization_dict['id']})
     return output
 
 
