@@ -327,7 +327,7 @@ class TestMetadataSchemaActions(ActionTestBase):
     def test_create_invalid_not_json_dict(self):
         result, obj = self.test_action('metadata_schema_create', should_error=True,
                                        schema_json='[1,2,3]')
-        assert_error(result, 'schema_json', 'Expecting a JSON dictionary')
+        assert_error(result, 'schema_json', 'Invalid JSON schema')
 
     def test_create_invalid_not_json_schema(self):
         result, obj = self.test_action('metadata_schema_create', should_error=True,
@@ -682,7 +682,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         result, obj = self.test_action('metadata_schema_update', should_error=True,
                                        id=metadata_schema['id'],
                                        schema_json='[1,2,3]')
-        assert_error(result, 'schema_json', 'Expecting a JSON dictionary')
+        assert_error(result, 'schema_json', 'Invalid JSON schema')
 
     def test_update_invalid_not_json_schema(self):
         metadata_schema = ckanext_factories.MetadataSchema()

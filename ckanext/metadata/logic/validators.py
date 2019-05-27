@@ -119,8 +119,6 @@ def json_schema_validator(key, data, errors, context):
             JSONValidator.check_schema(schema)
         except ValueError, e:
             _abort(errors, key, _("JSON decode error: %s") % e.message)
-        except AttributeError, e:
-            _abort(errors, key, _("Expecting a JSON dictionary"))
         except jsonschema.SchemaError, e:
             _abort(errors, key, _("Invalid JSON schema: %s") % e.message)
 
