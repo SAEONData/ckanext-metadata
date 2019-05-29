@@ -84,3 +84,7 @@ def workflow_annotation_update(context, data_dict):
 
 def metadata_json_attr_map_update(context, data_dict):
     return {'success': True}
+
+
+def metadata_collection_validate(context, data_dict):
+    return {'success': True}

@@ -170,7 +170,8 @@ def assert_error(error_dict, key, pattern):
 
 class ActionTestBase(FunctionalTestBase):
 
-    _load_plugins = 'metadata_framework', 'jsonpatch'
+    # moved to test.ini, so that plugins are also loaded by any spawned background workers
+    # _load_plugins = 'metadata_framework', 'jsonpatch'
 
     @classmethod
     def setup_class(cls):

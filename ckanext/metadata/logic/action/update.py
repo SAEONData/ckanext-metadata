@@ -2,7 +2,8 @@
 
 import logging
 import json
-from paste.deploy.converters import asbool
+from paste.deploy.converters import asbool, falsy
+from sqlalchemy.orm import aliased
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -12,6 +13,7 @@ from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.metadata_validator import MetadataValidator
 from ckanext.metadata.logic.workflow_validator import WorkflowValidator
+from ckanext.metadata.lib.bulk_process import bulk_action
 
 log = logging.getLogger(__name__)
 
@@ -1256,3 +1258,45 @@ def metadata_json_attr_map_update(context, data_dict):
     output = metadata_json_attr_map_id if return_id_only \
         else tk.get_action('metadata_json_attr_map_show')(context, {'id': metadata_json_attr_map_id})
     return output
+
+
+def metadata_collection_validate(context, data_dict):
+    """
+    Bulk validate all the non-validated metadata records in a collection.
+
+    :param id: the id or name of the metadata collection
+    :type id: string
+    :param async: validate the records asynchronously (optional, default: ``False``)
+    :type async: boolean
+    """
+    log.info("Validating metadata collection: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+
+    async = data_dict.get('async', False)
+    metadata_collection_id = tk.get_or_bust(data_dict, 'id')
+
+    metadata_collection = model.Group.get(metadata_collection_id)
+    if metadata_collection is not None and metadata_collection.type == 'metadata_collection':
+        metadata_collection_id = metadata_collection.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
+
+    tk.check_access('metadata_collection_validate', context, data_dict)
+
+    collection_extra = aliased(model.PackageExtra)
+    validated_extra = aliased(model.PackageExtra)
+
+    record_ids = session.query(model.Package.id) \
+        .join(collection_extra) \
+        .join(validated_extra) \
+        .filter(model.Package.type == 'metadata_record') \
+        .filter(model.Package.state == 'active') \
+        .filter(collection_extra.key == 'metadata_collection_id') \
+        .filter(collection_extra.value == metadata_collection_id) \
+        .filter(validated_extra.key == 'validated') \
+        .filter(validated_extra.value.in_(falsy)) \
+        .all()
+    data_dicts = [{'id': record_id} for (record_id,) in record_ids]
+    bulk_action('metadata_record_validate', context, data_dicts, async)
