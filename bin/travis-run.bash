@@ -3,7 +3,7 @@ set -e
 
 nosetests --ckan \
           --nologcapture \
-          --with-pylons=test.ini \
+          --with-pylons=subdir/test.ini \
           --with-coverage \
           --cover-package=ckanext.metadata \
           --cover-inclusive \
