@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 from subprocess import Popen
-import pkg_resources
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
@@ -15,6 +14,7 @@ from ckanext.metadata.tests import (
     assert_error,
     factories as ckanext_factories,
     assert_package_has_extra,
+    config_filename,
 )
 
 
@@ -226,8 +226,7 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
 
         # run a worker process in 'burst' mode - i.e. terminate as soon as all queued tasks have been processed
-        test_ini = pkg_resources.resource_filename(__name__, '../../../test.ini')
-        p = Popen(['paster', '--plugin=ckan', 'jobs', 'worker', '--burst', '--config=' + test_ini])
+        p = Popen(['paster', '--plugin=ckan', 'jobs', 'worker', '--burst', '--config=' + config_filename()])
         p.wait()
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)

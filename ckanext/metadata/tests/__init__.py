@@ -8,6 +8,7 @@ import pkg_resources
 from collections import deque
 import traceback
 from nose.tools import nottest
+import os.path
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action, reset_db
@@ -35,6 +36,17 @@ _model_map = {
 
 def load_example(filename):
     return pkg_resources.resource_string(__name__, '../../../examples/' + filename)
+
+
+def config_filename():
+    """
+    Get the test config filename (test.ini)
+    """
+    test_ini = pkg_resources.resource_filename(__name__, '../../../test.ini')
+    if not os.path.isfile(test_ini):
+        # Travis CI
+        test_ini = pkg_resources.resource_filename(__name__, '../../../subdir/test.ini')
+    return test_ini
 
 
 def make_uuid():
