@@ -891,20 +891,20 @@ class TestMetadataRecordActions(ActionTestBase):
                                      key='metadata_json/description')
         assert_error(result, 'key', 'Must be purely lowercase alphanumeric')
 
-    def test_workflow_transition_submitted(self):
+    def test_workflow_transition_captured(self):
         metadata_record = self._generate_metadata_record(
             metadata_json=load_example('datacite_4.2_saeon_record.json'))
-        workflow_state_submitted = ckanext_factories.WorkflowState(
-            workflow_rules_json=load_example('workflow_state_submitted_rules.json'))
+        workflow_state_captured = ckanext_factories.WorkflowState(
+            workflow_rules_json=load_example('workflow_state_captured_rules.json'))
         ckanext_factories.WorkflowTransition(
             from_state_id='',
-            to_state_id=workflow_state_submitted['id'])
+            to_state_id=workflow_state_captured['id'])
 
         jsonpatch_ids = []
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                         workflow_state_id=workflow_state_submitted['id'])
-        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                              data_agreement='is a required property',
                                              terms_and_conditions='is a required property',
                                              capture_info='is a required property')
@@ -924,8 +924,8 @@ class TestMetadataRecordActions(ActionTestBase):
                                       )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                         workflow_state_id=workflow_state_submitted['id'])
-        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                              *jsonpatch_ids, **{
                                                  'data_agreement/accepted': 'True was expected',
                                                  'data_agreement/href': 'is not a .*url',
@@ -945,8 +945,8 @@ class TestMetadataRecordActions(ActionTestBase):
                     value='{"capture_method": "xyz"}')
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                         workflow_state_id=workflow_state_submitted['id'])
-        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                              *jsonpatch_ids, **{
                                                  'data_agreement/href': 'is a required property',
                                                  'capture_info/capture_method': 'is not one of ',
@@ -961,19 +961,19 @@ class TestMetadataRecordActions(ActionTestBase):
                     value='{"capture_method": "harvester"}')
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                         workflow_state_id=workflow_state_submitted['id'])
-        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_submitted['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
                                              *jsonpatch_ids)
-        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_submitted['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_captured['id'])
 
-    def test_workflow_transition_captured(self):
+    def test_workflow_transition_accepted(self):
         metadata_record = self._generate_metadata_record(
             metadata_json=load_example('datacite_4.2_saeon_record.json'))
-        workflow_state_captured = ckanext_factories.WorkflowState(
-            workflow_rules_json=load_example('workflow_state_captured_rules.json'))
+        workflow_state_accepted = ckanext_factories.WorkflowState(
+            workflow_rules_json=load_example('workflow_state_accepted_rules.json'))
         ckanext_factories.WorkflowTransition(
             from_state_id='',
-            to_state_id=workflow_state_captured['id'])
+            to_state_id=workflow_state_accepted['id'])
 
         jsonpatch_ids = []
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
@@ -994,8 +994,8 @@ class TestMetadataRecordActions(ActionTestBase):
                                       )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                         workflow_state_id=workflow_state_captured['id'])
-        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                         workflow_state_id=workflow_state_accepted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
                                              *jsonpatch_ids,
                                              validated='True was expected',
                                              quality_control_1='is not of type .*object')
@@ -1007,8 +1007,8 @@ class TestMetadataRecordActions(ActionTestBase):
                     value='{"userid": "someone", "date": "Friday the 13th"}')
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                         workflow_state_id=workflow_state_captured['id'])
-        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                         workflow_state_id=workflow_state_accepted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
                                              *jsonpatch_ids, **{
                                                  'quality_control_1/userid': 'Not found.? User',
                                                  'quality_control_1/date': 'is not a .*date',
@@ -1020,8 +1020,8 @@ class TestMetadataRecordActions(ActionTestBase):
                     value=json.dumps({"userid": self.normal_user['name'], "date": "2018-08-14"}))
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-                         workflow_state_id=workflow_state_captured['id'])
-        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+                         workflow_state_id=workflow_state_accepted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
                                              *jsonpatch_ids, **{
                                                  'quality_control_1/userid': 'Must use object id not name',
                                              })
@@ -1033,10 +1033,10 @@ class TestMetadataRecordActions(ActionTestBase):
 
         # TODO: the following depends on implementation of role_validator() in json_validator_functions
         # self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-        #                  workflow_state_id=workflow_state_captured['id'])
-        # self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_captured['id'],
+        #                  workflow_state_id=workflow_state_accepted['id'])
+        # self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
         #                                      *jsonpatch_ids)
-        # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_captured['id'])
+        # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_accepted['id'])
 
     def test_workflow_transition_published(self):
         metadata_json = json.loads(load_example('datacite_4.2_saeon_record.json'))
