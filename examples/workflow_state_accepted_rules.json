@@ -25,12 +25,26 @@
                 "capture_method": {"type": "string", "enum": ["harvester", "curator", "manual"]}
             },
             "required": ["capture_method"]
+        },
+        "quality_control_1": {
+            "type": "object",
+            "properties": {
+                "userid": {"type": "string", "objectid": "user", "role": "curator"},
+                "date": {"type": "string", "format": "date"}
+            },
+            "required": ["userid", "date"]
+        },
+        "validated": {
+            "type": "boolean",
+            "const": true
         }
     },
 
     "required": [
         "data_agreement",
         "terms_and_conditions",
-        "capture_info"
+        "capture_info",
+        "validated",
+        "quality_control_1"
     ]
 }
