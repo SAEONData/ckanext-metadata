@@ -188,78 +188,89 @@ class TestMetadataCollectionActions(ActionTestBase):
                                        id=metadata_collection['id'])
         assert_error(result, None, "This action may not be used for metadata_collection type objects.")
 
-    def test_bulk_validate(self):
+    def _bulk_action_setup(self):
         metadata_schema = ckanext_factories.MetadataSchema()
-        metadata_collection = ckanext_factories.MetadataCollection()
-        metadata_record_1 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'],
-            metadata_standard_id=metadata_schema['metadata_standard_id'])
-        metadata_record_2 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'],
-            metadata_standard_id=metadata_schema['metadata_standard_id'])
+        self.workflow_transition_1 = ckanext_factories.WorkflowTransition(from_state_id='')
+        self.workflow_transition_2 = ckanext_factories.WorkflowTransition(from_state_id=self.workflow_transition_1['to_state_id'])
+        self.metadata_collection = ckanext_factories.MetadataCollection()
+        self.metadata_records = [
+            ckanext_factories.MetadataRecord(
+                owner_org=self.metadata_collection['organization_id'],
+                metadata_collection_id=self.metadata_collection['id'],
+                metadata_standard_id=metadata_schema['metadata_standard_id'])
+            for _ in range(3)
+        ]
 
-        self.test_action('metadata_collection_validate',
-                         id=metadata_collection['id'])
-        assert_package_has_extra(metadata_record_1['id'], 'validated', True)
-        assert_package_has_extra(metadata_record_2['id'], 'validated', True)
+        # modify the middle record; this should not affect processing of the surrounding records
+        self.test_action('metadata_record_validate', id=self.metadata_records[1]['id'])
+        self.test_action('metadata_record_workflow_state_override', id=self.metadata_records[1]['id'],
+                         workflow_state_id=self.workflow_transition_1['to_state_id'])
+        assert_package_has_extra(self.metadata_records[1]['id'], 'validated', True)
+        assert_package_has_extra(self.metadata_records[1]['id'], 'workflow_state_id', self.workflow_transition_1['to_state_id'])
+
+    def test_bulk_validate(self):
+        self._bulk_action_setup()
+
+        self.test_action('metadata_collection_validate', id=self.metadata_collection['id'])
+        assert_package_has_extra(self.metadata_records[0]['id'], 'validated', True)
+        assert_package_has_extra(self.metadata_records[1]['id'], 'validated', True)
+        assert_package_has_extra(self.metadata_records[2]['id'], 'validated', True)
 
     def test_bulk_validate_async(self):
-        metadata_schema = ckanext_factories.MetadataSchema()
-        metadata_collection = ckanext_factories.MetadataCollection()
-        metadata_record_1 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'],
-            metadata_standard_id=metadata_schema['metadata_standard_id'])
-        metadata_record_2 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'],
-            metadata_standard_id=metadata_schema['metadata_standard_id'])
+        self._bulk_action_setup()
 
-        self.test_action('metadata_collection_validate',
-                         id=metadata_collection['id'],
-                         async=True)
-        assert_package_has_extra(metadata_record_1['id'], 'validated', False)
-        assert_package_has_extra(metadata_record_2['id'], 'validated', False)
+        self.test_action('metadata_collection_validate', id=self.metadata_collection['id'], async=True)
+        assert_package_has_extra(self.metadata_records[0]['id'], 'validated', False)
+        assert_package_has_extra(self.metadata_records[1]['id'], 'validated', True)
+        assert_package_has_extra(self.metadata_records[2]['id'], 'validated', False)
 
         process_queued_tasks()
-        assert_package_has_extra(metadata_record_1['id'], 'validated', True)
-        assert_package_has_extra(metadata_record_2['id'], 'validated', True)
+        assert_package_has_extra(self.metadata_records[0]['id'], 'validated', True)
+        assert_package_has_extra(self.metadata_records[1]['id'], 'validated', True)
+        assert_package_has_extra(self.metadata_records[2]['id'], 'validated', True)
 
     def test_bulk_transition(self):
-        metadata_collection = ckanext_factories.MetadataCollection()
-        metadata_record_1 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'])
-        metadata_record_2 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'])
-        workflow_transition = ckanext_factories.WorkflowTransition(from_state_id='')
+        self._bulk_action_setup()
 
         self.test_action('metadata_collection_workflow_state_transition',
-                         id=metadata_collection['id'],
-                         workflow_state_id=workflow_transition['to_state_id'])
-        assert_package_has_extra(metadata_record_1['id'], 'workflow_state_id', workflow_transition['to_state_id'])
-        assert_package_has_extra(metadata_record_2['id'], 'workflow_state_id', workflow_transition['to_state_id'])
+                         id=self.metadata_collection['id'],
+                         workflow_state_id=self.workflow_transition_2['to_state_id'])
+        assert_package_has_extra(self.metadata_records[0]['id'], 'workflow_state_id', '')
+        assert_package_has_extra(self.metadata_records[1]['id'], 'workflow_state_id', self.workflow_transition_2['to_state_id'])
+        assert_package_has_extra(self.metadata_records[2]['id'], 'workflow_state_id', '')
+
+        self.test_action('metadata_collection_workflow_state_transition',
+                         id=self.metadata_collection['id'],
+                         workflow_state_id=self.workflow_transition_1['to_state_id'])
+        assert_package_has_extra(self.metadata_records[0]['id'], 'workflow_state_id', self.workflow_transition_1['to_state_id'])
+        assert_package_has_extra(self.metadata_records[1]['id'], 'workflow_state_id', self.workflow_transition_2['to_state_id'])
+        assert_package_has_extra(self.metadata_records[2]['id'], 'workflow_state_id', self.workflow_transition_1['to_state_id'])
 
     def test_bulk_transition_async(self):
-        metadata_collection = ckanext_factories.MetadataCollection()
-        metadata_record_1 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'])
-        metadata_record_2 = ckanext_factories.MetadataRecord(
-            owner_org=metadata_collection['organization_id'],
-            metadata_collection_id=metadata_collection['id'])
-        workflow_transition = ckanext_factories.WorkflowTransition(from_state_id='')
+        self._bulk_action_setup()
 
         self.test_action('metadata_collection_workflow_state_transition',
-                         id=metadata_collection['id'],
-                         workflow_state_id=workflow_transition['to_state_id'],
+                         id=self.metadata_collection['id'],
+                         workflow_state_id=self.workflow_transition_2['to_state_id'],
                          async=True)
-        assert_package_has_extra(metadata_record_1['id'], 'workflow_state_id', '')
-        assert_package_has_extra(metadata_record_2['id'], 'workflow_state_id', '')
+        assert_package_has_extra(self.metadata_records[0]['id'], 'workflow_state_id', '')
+        assert_package_has_extra(self.metadata_records[1]['id'], 'workflow_state_id', self.workflow_transition_1['to_state_id'])
+        assert_package_has_extra(self.metadata_records[2]['id'], 'workflow_state_id', '')
 
         process_queued_tasks()
-        assert_package_has_extra(metadata_record_1['id'], 'workflow_state_id', workflow_transition['to_state_id'])
-        assert_package_has_extra(metadata_record_2['id'], 'workflow_state_id', workflow_transition['to_state_id'])
+        assert_package_has_extra(self.metadata_records[0]['id'], 'workflow_state_id', '')
+        assert_package_has_extra(self.metadata_records[1]['id'], 'workflow_state_id', self.workflow_transition_2['to_state_id'])
+        assert_package_has_extra(self.metadata_records[2]['id'], 'workflow_state_id', '')
+
+        self.test_action('metadata_collection_workflow_state_transition',
+                         id=self.metadata_collection['id'],
+                         workflow_state_id=self.workflow_transition_1['to_state_id'],
+                         async=True)
+        assert_package_has_extra(self.metadata_records[0]['id'], 'workflow_state_id', '')
+        assert_package_has_extra(self.metadata_records[1]['id'], 'workflow_state_id', self.workflow_transition_2['to_state_id'])
+        assert_package_has_extra(self.metadata_records[2]['id'], 'workflow_state_id', '')
+
+        process_queued_tasks()
+        assert_package_has_extra(self.metadata_records[0]['id'], 'workflow_state_id', self.workflow_transition_1['to_state_id'])
+        assert_package_has_extra(self.metadata_records[1]['id'], 'workflow_state_id', self.workflow_transition_2['to_state_id'])
+        assert_package_has_extra(self.metadata_records[2]['id'], 'workflow_state_id', self.workflow_transition_1['to_state_id'])
