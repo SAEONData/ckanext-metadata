@@ -1268,6 +1268,9 @@ def metadata_collection_validate(context, data_dict):
     :type id: string
     :param async: validate the records asynchronously (optional, default: ``False``)
     :type async: boolean
+
+    :returns: { total_count, error_count }
+    :rtype: dict
     """
     log.info("Validating metadata collection: %r", data_dict)
     tk.check_access('metadata_collection_validate', context, data_dict)
@@ -1297,7 +1300,7 @@ def metadata_collection_validate(context, data_dict):
         .filter(validated_extra.value.in_(falsy)) \
         .all()
     data_dicts = [{'id': record_id} for (record_id,) in record_ids]
-    bulk_action('metadata_record_validate', context, data_dicts, async)
+    return bulk_action('metadata_record_validate', context, data_dicts, async)
 
 
 def metadata_collection_workflow_state_transition(context, data_dict):
@@ -1310,6 +1313,9 @@ def metadata_collection_workflow_state_transition(context, data_dict):
     :type workflow_state_id: string
     :param async: transition the records asynchronously (optional, default: ``False``)
     :type async: boolean
+
+    :returns: { total_count, error_count }
+    :rtype: dict
     """
     log.info("Transitioning workflow state of metadata records in collection: %r", data_dict)
     tk.check_access('metadata_collection_workflow_state_transition', context, data_dict)
@@ -1347,4 +1353,4 @@ def metadata_collection_workflow_state_transition(context, data_dict):
         .all()
     data_dicts = [{'id': record_id, 'workflow_state_id': target_workflow_state_id}
                   for (record_id,) in record_ids]
-    bulk_action('metadata_record_workflow_state_transition', context, data_dicts, async)
+    return bulk_action('metadata_record_workflow_state_transition', context, data_dicts, async)

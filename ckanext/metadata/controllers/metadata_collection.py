@@ -146,6 +146,73 @@ class MetadataCollectionController(GroupController):
         tk.c.page.items = page_results
         return tk.render('metadata_collection/read.html')
 
+    def bulk_action(self, id, organization_id=None):
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+
+        if tk.request.method == 'POST':
+            if 'bulk_validate' in tk.request.params:
+                async = 'bulk_validate_async' in tk.request.params
+                self._bulk_validate(id, organization_id, async, context)
+            elif 'bulk_transition' in tk.request.params:
+                target_state_id = tk.request.params.get('target_state_id')
+                if target_state_id:
+                    async = 'bulk_transition_async' in tk.request.params
+                    self._bulk_transition(id, organization_id, target_state_id, async, context)
+                else:
+                    tk.h.flash_notice(tk._('Please select a target workflow state'))
+
+        tk.c.group_dict = self._action('metadata_collection_show')(context, {'id': id})
+        self._set_organization_context(organization_id)
+
+        return tk.render('metadata_collection/bulk_action.html', extra_vars={
+            'workflow_state_lookup_list': self._workflow_state_lookup_list()})
+
+    @staticmethod
+    def _bulk_validate(id, organization_id, async, context):
+        try:
+            result = tk.get_action('metadata_collection_validate')(context, {'id': id, 'async': async})
+            total = result['total_count']
+            if async:
+                tk.h.flash_notice(tk._('%d metadata records have been queued for validation.' % total))
+            else:
+                tk.h.flash_success(tk._('%d metadata records have been validated.' % total))
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to validate metadata records'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata collection not found'))
+
+        tk.h.redirect_to('metadata_collection_bulk_action', id=id, organization_id=organization_id)
+
+    @staticmethod
+    def _bulk_transition(id, organization_id, workflow_state_id, async, context):
+        try:
+            result = tk.get_action('metadata_collection_workflow_state_transition')(context, {'id': id, 'workflow_state_id': workflow_state_id, 'async': async})
+            total = result['total_count']
+            errors = result['error_count']
+            success = total - errors
+            if async:
+                tk.h.flash_notice(tk._('%d metadata records have been queued for workflow state transition.' % total))
+            else:
+                tk.h.flash_success(tk._('%d metadata records have been processed; %d successes, %d failures.') % (total, success, errors))
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to change the workflow state of metadata records'))
+        except tk.ObjectNotFound:
+            tk.abort(404, tk._('Metadata collection not found'))
+
+        tk.h.redirect_to('metadata_collection_bulk_action', id=id, organization_id=organization_id)
+
+    @staticmethod
+    def _workflow_state_lookup_list():
+        """
+        Return a list of {'value': name, 'text': display_name} dicts for populating the
+        workflow state select control on the bulk action tab.
+        """
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        workflow_states = tk.get_action('workflow_state_list')(context, {'all_fields': True})
+        return [{'value': '', 'text': tk._('(None)')}] + \
+               [{'value': workflow_state['name'], 'text': workflow_state['display_name']}
+                for workflow_state in workflow_states]
+
     def activity(self, id, offset=0, organization_id=None):
         self._set_organization_context(organization_id)
         return super(MetadataCollectionController, self).activity(id, offset)

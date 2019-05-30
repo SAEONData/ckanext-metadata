@@ -76,6 +76,10 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         controller = 'ckanext.metadata.controllers.organization:OrganizationController'
         map.connect('organization_datasets', '/organization/datasets/{id}', controller=controller, action='datasets', ckan_icon='site-map')
 
+        controller = 'ckanext.metadata.controllers.metadata_collection:MetadataCollectionController'
+        # '/organization/{organization_id}' gets inserted in after_map
+        map.connect('metadata_collection_bulk_action', '/metadata_collection/{id}/bulk_action', controller=controller, action='bulk_action')
+
         controller = 'ckanext.metadata.controllers.metadata_record:MetadataRecordController'
         map.connect('metadata_record_index', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record', controller=controller, action='index')
         map.connect('metadata_record_new', '/organization/{organization_id}/metadata_collection/{metadata_collection_id}/metadata_record/new', controller=controller, action='new')
@@ -156,6 +160,7 @@ class MetadataFrameworkPlugin(p.SingletonPlugin, tk.DefaultGroupForm):
         # icons are not correctly set for automatically generated plugin routes, so we do it here
         tk.config['routes.named_routes']['metadata_collection_read']['icon'] = 'sitemap'
         tk.config['routes.named_routes']['metadata_collection_index']['icon'] = 'folder-open'
+        tk.config['routes.named_routes']['metadata_collection_bulk_action']['icon'] = 'sitemap'
         tk.config['routes.named_routes']['organization_datasets']['icon'] = 'sitemap'
 
         # re-route organization_read to our controller
