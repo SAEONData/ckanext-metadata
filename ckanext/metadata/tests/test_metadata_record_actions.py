@@ -9,7 +9,6 @@ import ckan.plugins.toolkit as tk
 
 from ckanext.metadata.tests import (
     ActionTestBase,
-    make_uuid,
     assert_package_has_extra,
     assert_group_has_member,
     assert_error,
@@ -1134,10 +1133,9 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
         assert_package_has_attribute(metadata_record['id'], 'private', True)
 
-        # reverting a record already in the null workflow state should not error or change anything
-        self.test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
-        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
-        assert_package_has_attribute(metadata_record['id'], 'private', True)
+        # already in null state - cannot revert
+        result, obj = self.test_action('metadata_record_workflow_state_revert', should_error=True, id=metadata_record['id'])
+        assert_error(result, 'message', 'The metadata record is not assigned a workflow state')
 
     def test_package_create_invalid(self):
         result, obj = self.test_action('package_create', should_error=True, check_auth=True,
