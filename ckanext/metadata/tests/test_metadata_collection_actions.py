@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-from subprocess import Popen
-
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
 import ckan.plugins.toolkit as tk
@@ -14,7 +12,7 @@ from ckanext.metadata.tests import (
     assert_error,
     factories as ckanext_factories,
     assert_package_has_extra,
-    config_filename,
+    process_queued_tasks,
 )
 
 
@@ -225,9 +223,43 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_package_has_extra(metadata_record_1['id'], 'validated', False)
         assert_package_has_extra(metadata_record_2['id'], 'validated', False)
 
-        # run a worker process in 'burst' mode - i.e. terminate as soon as all queued tasks have been processed
-        p = Popen(['paster', '--plugin=ckan', 'jobs', 'worker', '--burst', '--config=' + config_filename()])
-        p.wait()
-
+        process_queued_tasks()
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
         assert_package_has_extra(metadata_record_2['id'], 'validated', True)
+
+    def test_bulk_transition(self):
+        metadata_collection = ckanext_factories.MetadataCollection()
+        metadata_record_1 = ckanext_factories.MetadataRecord(
+            owner_org=metadata_collection['organization_id'],
+            metadata_collection_id=metadata_collection['id'])
+        metadata_record_2 = ckanext_factories.MetadataRecord(
+            owner_org=metadata_collection['organization_id'],
+            metadata_collection_id=metadata_collection['id'])
+        workflow_transition = ckanext_factories.WorkflowTransition(from_state_id='')
+
+        self.test_action('metadata_collection_workflow_state_transition',
+                         id=metadata_collection['id'],
+                         workflow_state_id=workflow_transition['to_state_id'])
+        assert_package_has_extra(metadata_record_1['id'], 'workflow_state_id', workflow_transition['to_state_id'])
+        assert_package_has_extra(metadata_record_2['id'], 'workflow_state_id', workflow_transition['to_state_id'])
+
+    def test_bulk_transition_async(self):
+        metadata_collection = ckanext_factories.MetadataCollection()
+        metadata_record_1 = ckanext_factories.MetadataRecord(
+            owner_org=metadata_collection['organization_id'],
+            metadata_collection_id=metadata_collection['id'])
+        metadata_record_2 = ckanext_factories.MetadataRecord(
+            owner_org=metadata_collection['organization_id'],
+            metadata_collection_id=metadata_collection['id'])
+        workflow_transition = ckanext_factories.WorkflowTransition(from_state_id='')
+
+        self.test_action('metadata_collection_workflow_state_transition',
+                         id=metadata_collection['id'],
+                         workflow_state_id=workflow_transition['to_state_id'],
+                         async=True)
+        assert_package_has_extra(metadata_record_1['id'], 'workflow_state_id', '')
+        assert_package_has_extra(metadata_record_2['id'], 'workflow_state_id', '')
+
+        process_queued_tasks()
+        assert_package_has_extra(metadata_record_1['id'], 'workflow_state_id', workflow_transition['to_state_id'])
+        assert_package_has_extra(metadata_record_2['id'], 'workflow_state_id', workflow_transition['to_state_id'])

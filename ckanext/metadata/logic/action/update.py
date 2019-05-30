@@ -1270,20 +1270,18 @@ def metadata_collection_validate(context, data_dict):
     :type async: boolean
     """
     log.info("Validating metadata collection: %r", data_dict)
+    tk.check_access('metadata_collection_validate', context, data_dict)
 
     model = context['model']
     session = context['session']
-
     async = data_dict.get('async', False)
-    metadata_collection_id = tk.get_or_bust(data_dict, 'id')
 
+    metadata_collection_id = tk.get_or_bust(data_dict, 'id')
     metadata_collection = model.Group.get(metadata_collection_id)
     if metadata_collection is not None and metadata_collection.type == 'metadata_collection':
         metadata_collection_id = metadata_collection.id
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
-
-    tk.check_access('metadata_collection_validate', context, data_dict)
 
     collection_extra = aliased(model.PackageExtra)
     validated_extra = aliased(model.PackageExtra)
@@ -1300,3 +1298,53 @@ def metadata_collection_validate(context, data_dict):
         .all()
     data_dicts = [{'id': record_id} for (record_id,) in record_ids]
     bulk_action('metadata_record_validate', context, data_dicts, async)
+
+
+def metadata_collection_workflow_state_transition(context, data_dict):
+    """
+    Bulk transition all metadata records in a collection to the specified workflow state.
+
+    :param id: the id or name of the metadata collection
+    :type id: string
+    :param workflow_state_id: the id or name of the target workflow state
+    :type workflow_state_id: string
+    :param async: transition the records asynchronously (optional, default: ``False``)
+    :type async: boolean
+    """
+    log.info("Transitioning workflow state of metadata records in collection: %r", data_dict)
+    tk.check_access('metadata_collection_workflow_state_transition', context, data_dict)
+
+    model = context['model']
+    session = context['session']
+    async = data_dict.get('async', False)
+
+    metadata_collection_id = tk.get_or_bust(data_dict, 'id')
+    metadata_collection = model.Group.get(metadata_collection_id)
+    if metadata_collection is not None and metadata_collection.type == 'metadata_collection':
+        metadata_collection_id = metadata_collection.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
+
+    target_workflow_state_id = tk.get_or_bust(data_dict, 'workflow_state_id')
+    target_workflow_state = ckanext_model.WorkflowState.get(target_workflow_state_id)
+    if target_workflow_state is not None:
+        target_workflow_state_id = target_workflow_state.id
+    else:
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Workflow State')))
+
+    collection_extra = aliased(model.PackageExtra)
+    workflow_state_extra = aliased(model.PackageExtra)
+
+    record_ids = session.query(model.Package.id) \
+        .join(collection_extra) \
+        .join(workflow_state_extra) \
+        .filter(model.Package.type == 'metadata_record') \
+        .filter(model.Package.state == 'active') \
+        .filter(collection_extra.key == 'metadata_collection_id') \
+        .filter(collection_extra.value == metadata_collection_id) \
+        .filter(workflow_state_extra.key == 'workflow_state_id') \
+        .filter(workflow_state_extra.value != target_workflow_state_id) \
+        .all()
+    data_dicts = [{'id': record_id, 'workflow_state_id': target_workflow_state_id}
+                  for (record_id,) in record_ids]
+    bulk_action('metadata_record_workflow_state_transition', context, data_dicts, async)

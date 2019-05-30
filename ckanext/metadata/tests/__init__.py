@@ -9,6 +9,7 @@ from collections import deque
 import traceback
 from nose.tools import nottest
 import os.path
+from subprocess import Popen
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import FunctionalTestBase, call_action, reset_db
@@ -47,6 +48,14 @@ def config_filename():
         # Travis CI
         test_ini = pkg_resources.resource_filename(__name__, '../../../subdir/test.ini')
     return test_ini
+
+
+def process_queued_tasks():
+    """
+    Run a worker process in 'burst' mode - i.e. terminate as soon as all queued tasks have been processed.
+    """
+    p = Popen(['paster', '--plugin=ckan', 'jobs', 'worker', '--burst', '--config=' + config_filename()])
+    p.wait()
 
 
 def make_uuid():
