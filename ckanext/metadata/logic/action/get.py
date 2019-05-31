@@ -422,6 +422,10 @@ def metadata_record_list(context, data_dict):
     :type all_fields: boolean
     :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
     :type deserialize_json: boolean
+    :param limit: number of records to return (optional, default: ``None``)
+    :type limit: int
+    :param offset: when ``limit`` is given, the number of rows to skip (optional, default: ``0``)
+    :type offset: int
 
     :rtype: list of strings
     """
@@ -441,9 +445,12 @@ def metadata_record_list(context, data_dict):
     metadata_collection_id = data_dict.get('metadata_collection_id')
     infrastructure_id = data_dict.get('infrastructure_id')
     all_fields = asbool(data_dict.get('all_fields'))
+    limit = data_dict.get('limit')
+    offset = data_dict.get('offset')
 
     metadata_records_q = session.query(model.Package.id, model.Package.name) \
-        .filter_by(type='metadata_record', state='active')
+        .filter_by(type='metadata_record', state='active') \
+        .order_by(model.Package.title, model.Package.name)
 
     if ids:
         metadata_records_q = metadata_records_q.filter(or_(
@@ -487,6 +494,11 @@ def metadata_record_list(context, data_dict):
             .filter(model.Member.group_id == infrastructure_id) \
             .filter(model.Member.table_name == 'package') \
             .filter(model.Member.state == 'active')
+
+    if limit:
+        metadata_records_q = metadata_records_q.limit(limit)
+        if offset:
+            metadata_records_q = metadata_records_q.offset(offset)
 
     metadata_records = metadata_records_q.all()
     result = []
