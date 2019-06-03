@@ -66,4 +66,11 @@
     </tbody>
   </table>
 
+
+  <hr>
+  <h2 class="page-heading">{{ _('Workflow Log') }}</h2>
+  <p>{{ _('Last workflow result:') }}</p>
+  <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="12" readonly>
+    {{- last_workflow_result -}}
+  </textarea>
 {% endblock %}
