@@ -23,7 +23,7 @@
 
 {% block primary_content_inner %}
   <hr>
-  <h1 class="page-heading">{{ _('Validation Schema List') }}</h1>
+  <h2 class="page-heading">{{ _('Validation Schema List') }}</h2>
   <p>{{ _('The following metadata schema(s) will be used to validate this metadata record:') }}</p>
   {% block schema_list %}
     {% if c.page.items %}
@@ -33,4 +33,11 @@
   {% block page_pagination %}
     {{ c.page.pager(q=c.q) }}
   {% endblock %}
+
+  <hr>
+  <h2 class="page-heading">{{ _('Validation Log') }}</h2>
+  <p>{{ _('Last validation result:') }}</p>
+  <textarea class="uneditable-textarea" style="font-family: monospace" cols="80" rows="12" readonly>
+    {{- last_validation_result -}}
+  </textarea>
 {% endblock %}

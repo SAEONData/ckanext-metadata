@@ -179,7 +179,10 @@ class MetadataRecordController(tk.BaseController):
             tk.h.flash_error(msg)
             tk.c.page = helpers.Page([], 0)
 
-        return tk.render('metadata_record/validation.html')
+        last_validation_result = tk.get_action('metadata_record_validation_activity_show')(context, {'id': id})
+        last_validation_result = json.dumps(last_validation_result, indent=4)
+
+        return tk.render('metadata_record/validation.html', extra_vars={'last_validation_result': last_validation_result})
 
     @staticmethod
     def _validate(id, organization_id, metadata_collection_id, context):
