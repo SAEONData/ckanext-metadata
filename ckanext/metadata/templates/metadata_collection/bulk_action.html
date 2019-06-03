@@ -10,7 +10,7 @@
       <button class="btn btn-primary" name="bulk_validate" type="submit">
         <i class="fa fa-check"></i> {{ _('Validate Metadata Records') }}
       </button>
-      <input type="checkbox" name="bulk_validate_async" value="1" checked /> Run in background
+      <input type="checkbox" name="bulk_validate_async" value="1" /> Run in background
     {% endif %}
     <hr>
     {% if h.check_access('metadata_collection_workflow_state_transition', {'id': c.group_dict.id}) %}
@@ -23,7 +23,7 @@
       <button class="btn btn-primary" name="bulk_transition" type="submit">
         <i class="fa fa-caret-right"></i> {{ _('Transition Metadata Records') }}
       </button>
-      <input type="checkbox" name="bulk_transition_async" value="1" checked /> Run in background
+      <input type="checkbox" name="bulk_transition_async" value="1" /> Run in background
       <br/><br/><p><i>{{ _('* if the transition is permitted for the record') }}</i></p>
     {% endif %}
   </form>
