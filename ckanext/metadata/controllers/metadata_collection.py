@@ -84,7 +84,7 @@ class MetadataCollectionController(GroupController):
         self._set_organization_context(organization_id)
         return super(MetadataCollectionController, self).edit(id, data, errors, error_summary)
 
-    def read(self, id, limit=20, organization_id=None):
+    def read(self, id, limit=50, organization_id=None):
         context = {'model': model, 'session': model.Session,
                    'user': tk.c.user, 'for_view': True}
 
@@ -92,10 +92,8 @@ class MetadataCollectionController(GroupController):
         tk.c.group_dict = tk.get_action('metadata_collection_show')(context, {'id': id})
 
         page = tk.h.get_page_number(tk.request.params) or 1
-        items_per_page = 21
-
         q = tk.c.q = tk.request.params.get('q', '')
-        sort_by = tk.c.sort_by_selected = tk.request.params.get('sort')
+
         try:
             tk.check_access('site_read', context)
             tk.check_access('metadata_record_list', context)
@@ -112,7 +110,6 @@ class MetadataCollectionController(GroupController):
                 'metadata_collection_id': id,
                 'all_fields': False,
                 'q': q,
-                'sort': sort_by,
                 'type': 'metadata_record',
             }
             global_results = tk.get_action('metadata_record_list')(context, data_dict_global_results)
@@ -130,17 +127,19 @@ class MetadataCollectionController(GroupController):
             'metadata_collection_id': id,
             'all_fields': True,
             'q': q,
-            'sort': sort_by,
-            'limit': items_per_page,
-            'offset': items_per_page * (page - 1),
+            'limit': limit,
+            'offset': limit * (page - 1),
         }
         page_results = tk.get_action('metadata_record_list')(context, data_dict_page_results)
+        workflow_states = {ws['name']: ws['title'] for ws in tk.get_action('workflow_state_list')(context, {'all_fields': True})}
+        for record in page_results:
+            record['workflow_state'] = workflow_states.get(record['workflow_state_id'], '')
 
         tk.c.page = helpers.Page(
             collection=global_results,
             page=page,
             url=tk.h.pager_url,
-            items_per_page=items_per_page,
+            items_per_page=limit,
         )
 
         tk.c.page.items = page_results
