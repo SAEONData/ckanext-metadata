@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.11'
+version = '0.11.1'
 
 setup(
     name='ckanext-metadata',
