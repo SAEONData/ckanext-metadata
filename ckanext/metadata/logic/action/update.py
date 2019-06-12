@@ -1016,7 +1016,7 @@ def metadata_record_workflow_state_transition(context, data_dict):
 
     # already on target state
     if current_workflow_state_id == target_workflow_state_id:
-        raise tk.ValidationError(_("The metadata record is already assigned the specified workflow state"))
+        return
 
     workflow_transition = ckanext_model.WorkflowTransition.lookup(current_workflow_state_id, target_workflow_state_id)
     if not workflow_transition or workflow_transition.state != 'active':
@@ -1123,7 +1123,7 @@ def metadata_record_workflow_state_revert(context, data_dict):
 
     # already on null state
     if not current_workflow_state_id:
-        raise tk.ValidationError(_("The metadata record is not assigned a workflow state"))
+        return
 
     target_workflow_state = ckanext_model.WorkflowState.get_revert_state(current_workflow_state_id)
     if target_workflow_state:

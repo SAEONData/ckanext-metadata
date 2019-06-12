@@ -965,6 +965,11 @@ class TestMetadataRecordActions(ActionTestBase):
                                              *jsonpatch_ids)
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_captured['id'])
 
+        # already in captured state - no change
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_captured['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_captured['id'])
+
     def test_workflow_transition_accepted(self):
         metadata_record = self._generate_metadata_record(
             metadata_json=load_example('datacite_4.2_saeon_record.json'))
@@ -1133,9 +1138,10 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
         assert_package_has_attribute(metadata_record['id'], 'private', True)
 
-        # already in null state - cannot revert
-        result, obj = self.test_action('metadata_record_workflow_state_revert', should_error=True, id=metadata_record['id'])
-        assert_error(result, 'message', 'The metadata record is not assigned a workflow state')
+        # already in null state - no change
+        self.test_action('metadata_record_workflow_state_revert', id=metadata_record['id'])
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
+        assert_package_has_attribute(metadata_record['id'], 'private', True)
 
     def test_package_create_invalid(self):
         result, obj = self.test_action('package_create', should_error=True, check_auth=True,
