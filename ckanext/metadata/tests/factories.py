@@ -39,7 +39,7 @@ class MetadataRecord(factory.Factory):
     FACTORY_FOR = ckan_model.Package
 
     title = 'Test Metadata Record'
-    metadata_json = '{ "testkey": "testvalue" }'
+    metadata_json = factory.Sequence(lambda n: '{{ "testkey": "testvalue{0:02d}" }}'.format(n))
     infrastructures = []
 
     @classmethod

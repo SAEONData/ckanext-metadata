@@ -355,6 +355,16 @@ class TestMetadataRecordActions(ActionTestBase):
                                        metadata_collection_id=self._generate_metadata_collection()['id'])
         assert_error(result, '__after', 'owner_org must be the same organization that owns the metadata collection')
 
+    def test_create_match_existing_no_change(self):
+        metadata_record = self._generate_metadata_record()
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_record['metadata_json']
+
+        # should return the existing record
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict)
+        assert obj.id == metadata_record['id']
+
     def test_update_valid(self):
         infrastructure1 = self._generate_infrastructure()
         infrastructure2 = self._generate_infrastructure()
@@ -682,19 +692,19 @@ class TestMetadataRecordActions(ActionTestBase):
         identifier2 = 'A.different.identifier'
         url2 = 'http://a.different.url'
 
-        metadata_record = self._generate_metadata_record(metadata_json=metadata_json)
-        assert metadata_record['name'] == identifier1
-        assert metadata_record['url'] == url1
+        metadata_record_1 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record_1['name'] == identifier1
+        assert metadata_record_1['url'] == url1
 
         metadata_dict['identifier']['identifier'] = identifier2
         metadata_dict['immutableResource']['resourceURL'] = url2
         metadata_json = json.dumps(metadata_dict)
 
-        metadata_record1 = self._generate_metadata_record(metadata_json=metadata_json)
-        assert metadata_record1['name'] == identifier2
-        assert metadata_record1['url'] == url2
+        metadata_record_2 = self._generate_metadata_record(metadata_json=metadata_json)
+        assert metadata_record_2['name'] == identifier2
+        assert metadata_record_2['url'] == url2
 
-        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+        input_dict = self._make_input_dict_from_output_dict(metadata_record_1)
         input_dict['metadata_json'] = metadata_json
         result, obj = self.test_action('metadata_record_update', should_error=True, **input_dict)
         assert_error(result, 'message', 'Cannot update record; another record exists with the given key attribute values')

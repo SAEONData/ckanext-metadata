@@ -121,6 +121,10 @@ def metadata_record_attr_match(context, data_dict):
     return {'success': True}
 
 
+def metadata_record_exact_match(context, data_dict):
+    return {'success': True}
+
+
 def metadata_standard_index_show(context, data_dict):
     return {'success': True}
 

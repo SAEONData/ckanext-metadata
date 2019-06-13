@@ -558,6 +558,44 @@ def metadata_record_attr_match(context, data_dict):
 
 
 @tk.side_effect_free
+def metadata_record_exact_match(context, data_dict):
+    """
+    Return the id of a metadata record that exactly matches on the supplied organization,
+    metadata collection, metadata standard and metadata JSON, or None if not found.
+
+    :rtype: string
+    """
+    data_dict = {key: data_dict[key] for key in (
+        'owner_org',
+        'metadata_collection_id',
+        'metadata_standard_id',
+        'metadata_json',
+    )}
+    log.debug("Retrieving metadata record that matches exactly on input values: %r", data_dict)
+    tk.check_access('metadata_record_exact_match', context, data_dict)
+
+    list_dict = {key: data_dict[key] for key in (
+        'owner_org',
+        'metadata_collection_id',
+    )}
+    list_dict.update({
+        'all_fields': True,
+        'deserialize_json': True,
+    })
+    internal_context = context.copy()
+    internal_context['ignore_auth'] = True
+
+    metadata_records = metadata_record_list(internal_context, list_dict)
+    metadata_records = [metadata_record for metadata_record in metadata_records
+                        if metadata_record['metadata_standard_id'] == data_dict['metadata_standard_id']
+                        and metadata_record['metadata_json'] == json.loads(data_dict['metadata_json'])]
+    if metadata_records:
+        return metadata_records[0]['id']
+
+    return None
+
+
+@tk.side_effect_free
 def metadata_record_validation_schema_list(context, data_dict):
     """
     Return a list of metadata schemas to be used for validating a metadata record.
