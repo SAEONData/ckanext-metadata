@@ -1014,9 +1014,11 @@ def metadata_record_workflow_state_transition(context, data_dict):
     current_workflow_state_id = session.query(model.PackageExtra.value) \
         .filter_by(package_id=metadata_record_id, key='workflow_state_id').scalar()
 
-    # already on target state
+    # already on target state - return the last workflow result
     if current_workflow_state_id == target_workflow_state_id:
-        return
+        return tk.get_action('metadata_record_workflow_activity_show')(internal_context, {
+            'id': metadata_record_id,
+        })
 
     workflow_transition = ckanext_model.WorkflowTransition.lookup(current_workflow_state_id, target_workflow_state_id)
     if not workflow_transition or workflow_transition.state != 'active':
