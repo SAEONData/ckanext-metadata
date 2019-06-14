@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "type": "object",
+
+    "required": [
+        "validated"
+    ],
+
+    "properties": {
+        "validated": {
+            "type": "boolean",
+            "const": true
+        },
+        "errors": {
+            "type": "object",
+            "additionalProperties": false,
+            "$comment": "Errors are permitted only for properties listed explicitly here.",
+            "properties": {
+                "identifier": true,
+                "immutableResource": true,
+                "dates": true,
+                "rightsList": true,
+                "contributors": true,
+                "subjects": true,
+                "formats": true
+            }
+        }
+    }
+}
