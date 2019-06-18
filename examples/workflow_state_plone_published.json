@@ -19,6 +19,7 @@
             "properties": {
                 "identifier": true,
                 "immutableResource": true,
+                "linkedResources": true,
                 "dates": true,
                 "rightsList": true,
                 "contributors": true,
