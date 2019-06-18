@@ -24,7 +24,8 @@
                 "rightsList": true,
                 "contributors": true,
                 "subjects": true,
-                "formats": true
+                "formats": true,
+                "descriptions": true
             }
         }
     }
