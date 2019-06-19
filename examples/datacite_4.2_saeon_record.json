@@ -5,7 +5,7 @@
     },
     "creators": [
         {
-            "creatorName": "Miller, Elizabeth",
+            "name": "Miller, Elizabeth",
             "nameType": "Personal",
             "givenName": "Elizabeth",
             "familyName": "Miller",
@@ -44,7 +44,7 @@
     "contributors": [
         {
             "contributorType": "ProjectLeader",
-            "contributorName": "Starr, Joan",
+            "name": "Starr, Joan",
             "givenName": "Joan",
             "familyName": "Starr",
             "nameIdentifiers": [
@@ -99,14 +99,10 @@
         }
     ],
     "sizes": [
-        {
-            "size": "4 kB"
-        }
+        "4 kB"
     ],
     "formats": [
-        {
-            "format": "application/xml"
-        }
+        "application/xml"
     ],
     "version": "4.2",
     "rightsList": [
