@@ -18,6 +18,7 @@
                     "nameIdentifierScheme": {"type": "string"},
                     "schemeURI": {"type": "string", "format": "uri"}
                 },
+                "additionalProperties": false,
                 "required": ["nameIdentifier", "nameIdentifierScheme"]
             },
             "uniqueItems": true
@@ -29,6 +30,7 @@
                 "properties": {
                     "affiliation": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["affiliation"]
             },
             "uniqueItems": true
@@ -196,6 +198,7 @@
                 "pointLongitude": {"type": "string", "format": "longitude"},
                 "pointLatitude": {"type": "string", "format": "latitude"}
             },
+            "additionalProperties": false,
             "required": ["pointLongitude", "pointLatitude"]
         },
         "funderIdentifierType": {
@@ -230,6 +233,7 @@
                 "identifier": {"type": "string", "pattern": "^10\\.\\d+(\\.\\d+)*/.+$"},
                 "identifierType": {"type": "string", "enum": ["DOI"]}
             },
+            "additionalProperties": false,
             "required": ["identifier", "identifierType"]
         },
         "creators": {
@@ -244,6 +248,7 @@
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
                     "affiliations": {"$ref": "#/definitions/affiliations"}
                 },
+                "additionalProperties": false,
                 "required": ["name"]
             },
             "minItems": 1,
@@ -258,6 +263,7 @@
                     "titleType": {"$ref": "#/definitions/titleType"},
                     "lang": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["title"]
             },
             "minItems": 1,
@@ -281,6 +287,7 @@
                     "valueURI": {"type": "string", "format": "uri"},
                     "lang": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["subject"]
             },
             "minItems": 1,
@@ -299,6 +306,7 @@
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
                     "affiliations": {"$ref": "#/definitions/affiliations"}
                 },
+                "additionalProperties": false,
                 "required": ["contributorType", "name"]
             },
             "uniqueItems": true
@@ -312,6 +320,7 @@
                     "dateType": {"$ref": "#/definitions/dateType"},
                     "dateInformation": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["date", "dateType"]
             },
             "uniqueItems": true,
@@ -331,6 +340,7 @@
                 "resourceType": {"type": "string"},
                 "resourceTypeGeneral": {"$ref": "#/definitions/resourceTypeGeneral"}
             },
+            "additionalProperties": false,
             "required": ["resourceType", "resourceTypeGeneral"]
         },
         "alternateIdentifiers": {
@@ -341,6 +351,7 @@
                     "alternateIdentifier": {"type": "string"},
                     "alternateIdentifierType": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["alternateIdentifier", "alternateIdentifierType"]
             },
             "minItems": 1,
@@ -359,6 +370,7 @@
                     "schemeType": {"type": "string"},
                     "resourceTypeGeneral": {"$ref": "#/definitions/resourceTypeGeneral"}
                 },
+                "additionalProperties": false,
                 "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"],
                 "if": {
                     "properties": {
@@ -405,6 +417,7 @@
                     "schemeURI": {"type": "string", "format": "uri"},
                     "lang": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["rights"]
             },
             "minItems": 1,
@@ -419,6 +432,7 @@
                     "descriptionType": {"$ref": "#/definitions/descriptionType"},
                     "lang": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["description", "descriptionType"]
             },
             "uniqueItems": true,
@@ -443,6 +457,7 @@
                             "southBoundLatitude": {"type": "string", "format": "latitude"},
                             "northBoundLatitude": {"type": "string", "format": "latitude"}
                         },
+                        "additionalProperties": false,
                         "required": ["westBoundLongitude", "eastBoundLongitude", "southBoundLatitude", "northBoundLatitude"]
                     },
                     "geoLocationPolygons": {
@@ -456,11 +471,13 @@
                                     "minItems": 4
                                 },
                                 "inPolygonPoint": {"$ref": "#/definitions/geoLocationPoint"}
-                            }
+                            },
+                            "additionalProperties": false
                         },
                         "uniqueItems": true
                     }
-                }
+                },
+                "additionalProperties": false
             },
             "uniqueItems": true
         },
@@ -476,6 +493,7 @@
                     "awardURI": {"type": "string", "format": "uri"},
                     "awardTitle": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["funderName"]
             },
             "uniqueItems": true
@@ -489,6 +507,7 @@
                 "resourceChecksum": {"type": "string"},
                 "checksumAlgorithm": {"type": "string"}
             },
+            "additionalProperties": false,
             "required": ["resourceURL"],
             "dependencies": {
                 "resourceChecksum": ["checksumAlgorithm"]
@@ -504,6 +523,7 @@
                     "resourceName": {"type": "string"},
                     "resourceDescription": {"type": "string"}
                 },
+                "additionalProperties": false,
                 "required": ["linkedResourceType", "resourceURL"]
             },
             "uniqueItems": true
@@ -512,6 +532,8 @@
             "type": "string"
         }
     },
+
+    "additionalProperties": false,
 
     "required": [
         "creators",
