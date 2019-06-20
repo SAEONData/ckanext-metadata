@@ -172,6 +172,9 @@ class JSONValidator(object):
                 else:
                     error.message = 'Object has too many properties'
 
+            elif error.schema_path[-1] == 'additionalProperties':
+                error.path.append('__additionalProperties')
+
             elif error.schema_path[-1] == 'urlTest':
                 error.message = 'URL test failed'
 
