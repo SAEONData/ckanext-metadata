@@ -88,7 +88,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'metadata_standard_id': metadata_standard['id'],
             'organization_id': '',
             'infrastructure_id': '',
-            'schema_json': load_example('datacite_4.2_saeon_schema.json'),
+            'schema_json': load_example('saeon_odp_4.2_schema.json'),
         }
         result, obj = self.test_action('metadata_schema_create', **input_dict)
         assert_object_matches_dict(obj, input_dict)
@@ -409,7 +409,7 @@ class TestMetadataSchemaActions(ActionTestBase):
             'metadata_standard_id': metadata_schema['metadata_standard_id'],
             'organization_id': '',
             'infrastructure_id': '',
-            'schema_json': load_example('datacite_4.2_saeon_schema.json'),
+            'schema_json': load_example('saeon_odp_4.2_schema.json'),
         }
         result, obj = self.test_action('metadata_schema_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)

@@ -27,7 +27,7 @@ class TestMetadataRecordActions(ActionTestBase):
         self.owner_org = self._generate_organization()
         self.metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'])
         self.metadata_standard = ckanext_factories.MetadataStandard(
-            metadata_template_json=load_example('datacite_4.2_saeon_record.json'))
+            metadata_template_json=load_example('saeon_odp_4.2_record.json'))
 
     def _generate_organization(self, **kwargs):
         return ckan_factories.Organization(user=self.normal_user, **kwargs)
@@ -146,7 +146,7 @@ class TestMetadataRecordActions(ActionTestBase):
         Test copying of metadata element values into package attributes via metadata JSON
         attribute mappings.
         """
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier = metadata_dict['identifier']['identifier']
         url = metadata_dict['immutableResource']['resourceURL']
@@ -166,7 +166,7 @@ class TestMetadataRecordActions(ActionTestBase):
         Test that when values do not exist in the metadata JSON for the defined mappings,
         the target attributes are left unchanged.
         """
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         del metadata_dict['identifier']
         metadata_dict['immutableResource']['resourceURL'] = ''
@@ -187,7 +187,7 @@ class TestMetadataRecordActions(ActionTestBase):
         Test that we switch to an update when matching on key attributes, while non-key
         attributes play no part in matching.
         """
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier = metadata_dict['identifier']['identifier']
         url = metadata_dict['immutableResource']['resourceURL']
@@ -216,7 +216,7 @@ class TestMetadataRecordActions(ActionTestBase):
         Test that we fail an attempt to create (update) a record when incoming key attributes
         match different existing records.
         """
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier1 = metadata_dict['identifier']['identifier']
         url1 = metadata_dict['immutableResource']['resourceURL']
@@ -249,7 +249,7 @@ class TestMetadataRecordActions(ActionTestBase):
         Test that we fail an attempt to create (update) a record when some of the incoming key
         attributes do not match the existing record.
         """
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier = metadata_dict['identifier']['identifier']
         url = metadata_dict['immutableResource']['resourceURL']
@@ -274,7 +274,7 @@ class TestMetadataRecordActions(ActionTestBase):
         Test that we fail an attempt to create (update) a record when some of the incoming key
         attributes required to match the existing record are not provided.
         """
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier = metadata_dict['identifier']['identifier']
         url = metadata_dict['immutableResource']['resourceURL']
@@ -523,7 +523,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier = metadata_dict['identifier']['identifier']
         url = metadata_dict['immutableResource']['resourceURL']
@@ -545,7 +545,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         del metadata_dict['identifier']
         metadata_dict['immutableResource']['resourceURL'] = ''
@@ -568,7 +568,7 @@ class TestMetadataRecordActions(ActionTestBase):
         self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
         self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
 
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier1 = metadata_dict['identifier']['identifier']
         url1 = metadata_dict['immutableResource']['resourceURL']
@@ -596,7 +596,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier1 = metadata_dict['identifier']['identifier']
         url1 = metadata_dict['immutableResource']['resourceURL']
@@ -631,7 +631,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier = metadata_dict['identifier']['identifier']
         url = metadata_dict['immutableResource']['resourceURL']
@@ -658,7 +658,7 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier = metadata_dict['identifier']['identifier']
         url = metadata_dict['immutableResource']['resourceURL']
@@ -685,7 +685,7 @@ class TestMetadataRecordActions(ActionTestBase):
         self._define_attribute_map('/identifier/identifier', 'name', is_key=True)
         self._define_attribute_map('/immutableResource/resourceURL', 'url', is_key=True)
 
-        metadata_json = load_example('datacite_4.2_saeon_record.json')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         identifier1 = metadata_dict['identifier']['identifier']
         url1 = metadata_dict['immutableResource']['resourceURL']
@@ -808,10 +808,10 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_validate_datacite(self):
         metadata_record = self._generate_metadata_record(
-            metadata_json=load_example('datacite_4.2_saeon_record.json'))
+            metadata_json=load_example('saeon_odp_4.2_record.json'))
         metadata_schema = ckanext_factories.MetadataSchema(
             metadata_standard_id=metadata_record['metadata_standard_id'],
-            schema_json=load_example('datacite_4.2_saeon_schema.json'))
+            schema_json=load_example('saeon_odp_4.2_schema.json'))
         ckan_factories.Vocabulary(name='language-tags', tags=[{'name': 'en-us'}])
 
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
@@ -902,7 +902,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_workflow_transition_captured(self):
         metadata_record = self._generate_metadata_record(
-            metadata_json=load_example('datacite_4.2_saeon_record.json'))
+            metadata_json=load_example('saeon_odp_4.2_record.json'))
         workflow_state_captured = ckanext_factories.WorkflowState(
             workflow_rules_json=load_example('workflow_state_captured_rules.json'))
         ckanext_factories.WorkflowTransition(
@@ -982,7 +982,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_workflow_transition_accepted(self):
         metadata_record = self._generate_metadata_record(
-            metadata_json=load_example('datacite_4.2_saeon_record.json'))
+            metadata_json=load_example('saeon_odp_4.2_record.json'))
         workflow_state_accepted = ckanext_factories.WorkflowState(
             workflow_rules_json=load_example('workflow_state_accepted_rules.json'))
         ckanext_factories.WorkflowTransition(
@@ -1053,7 +1053,7 @@ class TestMetadataRecordActions(ActionTestBase):
         # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_accepted['id'])
 
     def test_workflow_transition_published(self):
-        metadata_json = json.loads(load_example('datacite_4.2_saeon_record.json'))
+        metadata_json = json.loads(load_example('saeon_odp_4.2_record.json'))
         metadata_json['identifier']['identifier'] = 'foo'
         metadata_json['immutableResource']['resourceURL'] = 'http://inaccessible.url'
         metadata_json['linkedResources'][0]['resourceURL'] = 'http://inaccessible.url'
@@ -1062,7 +1062,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         ckanext_factories.MetadataSchema(
             metadata_standard_id=metadata_record['metadata_standard_id'],
-            schema_json=load_example('datacite_4.2_saeon_schema.json'))
+            schema_json=load_example('saeon_odp_4.2_schema.json'))
         call_action('metadata_record_validate', id=metadata_record['id'], context={'user': self.normal_user['name']})
 
         workflow_state_published = ckanext_factories.WorkflowState(
@@ -1100,7 +1100,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
-        metadata_record['metadata_json'] = load_example('datacite_4.2_saeon_record.json')
+        metadata_record['metadata_json'] = load_example('saeon_odp_4.2_record.json')
         call_action('metadata_record_update', context={'user': self.normal_user['name']}, **metadata_record)
         call_action('metadata_record_validate', id=metadata_record['id'], context={'user': self.normal_user['name']})
 
