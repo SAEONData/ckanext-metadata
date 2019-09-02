@@ -533,6 +533,9 @@
         },
         "originalMetadata": {
             "type": "string"
+        },
+        "additionalFields": {
+            "type": "object"
         }
     },
 
