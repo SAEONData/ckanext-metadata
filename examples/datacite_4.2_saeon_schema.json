@@ -72,7 +72,7 @@
         },
         "date": {
             "type": "string",
-            "oneOf": [
+            "anyOf": [
                 {"format": "year"},
                 {"format": "yearmonth"},
                 {"format": "date"},
@@ -246,7 +246,8 @@
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
-                    "affiliations": {"$ref": "#/definitions/affiliations"}
+                    "affiliations": {"$ref": "#/definitions/affiliations"},
+                    "lang": {"type": "string"}
                 },
                 "additionalProperties": false,
                 "required": ["name"]
@@ -304,7 +305,8 @@
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
-                    "affiliations": {"$ref": "#/definitions/affiliations"}
+                    "affiliations": {"$ref": "#/definitions/affiliations"},
+                    "lang": {"type": "string"}
                 },
                 "additionalProperties": false,
                 "required": ["contributorType", "name"]
@@ -472,6 +474,7 @@
                                 },
                                 "inPolygonPoint": {"$ref": "#/definitions/geoLocationPoint"}
                             },
+                            "required": ["polygonPoints"],
                             "additionalProperties": false
                         },
                         "uniqueItems": true
