@@ -505,13 +505,17 @@
             "type": "object",
             "properties": {
                 "resourceURL": {"type": "string", "format": "url"},
+                "resourceData": {},
                 "resourceName": {"type": "string"},
                 "resourceDescription": {"type": "string"},
                 "resourceChecksum": {"type": "string"},
                 "checksumAlgorithm": {"type": "string"}
             },
             "additionalProperties": false,
-            "required": ["resourceURL"],
+            "oneOf": [
+                {"required": ["resourceURL"]},
+                {"required": ["resourceData"]}
+            ],
             "dependencies": {
                 "resourceChecksum": ["checksumAlgorithm"]
             }
