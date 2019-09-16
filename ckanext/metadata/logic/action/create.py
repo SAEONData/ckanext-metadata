@@ -96,7 +96,7 @@ def metadata_schema_create(context, data_dict):
     :type description: string
     :param metadata_standard_id: the id or name of the metadata standard for which this schema is defined
     :type metadata_standard_id: string
-    :param schema_json: the JSON dictionary defining the schema (nullable)
+    :param schema_json: the JSON dictionary defining the schema
     :type schema_json: string
     :param organization_id: the id or name of the associated organization (nullable)
     :type organization_id: string
