@@ -13,11 +13,9 @@ from requests.exceptions import RequestException
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
+from ckanext.metadata.common import DOI_RE, TIME_RE
 
 checks_format = jsonschema.FormatChecker.cls_checks
-
-DOI_RE = re.compile(r'^10\.\d+(\.\d+)*/.+$')
-TIME_RE = re.compile(r'^(?P<h>\d{2}):(?P<m>\d{2})(:(?P<s>\d{2})(\.\d+)?)?(Z|[+-](?P<tzh>\d{2}):(?P<tzm>\d{2}))$')
 
 
 def _unique_objects(array, key_properties):

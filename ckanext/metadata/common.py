@@ -11,6 +11,13 @@ METADATA_WORKFLOW_ACTIVITY_TYPE = u'metadata workflow'
 WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES = (u'string', u'number', u'boolean', u'date', u'enum', u'userid',)
 RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE = re.compile(r'^string|number|boolean|date|enum\((\w+)(?:,(\w+))*\)|userid$')
 
+# DOI regex
+DOI_RE = re.compile(r'^10\.\d+(\.\d+)*/.+$')
+
+# regex for the time portion of a datetime string, as specified by https://www.w3.org/TR/NOTE-datetime
+TIME_RE = re.compile(r'^(?P<h>\d{2}):(?P<m>\d{2})(:(?P<s>\d{2})(\.\d+)?)?(Z|[+-](?P<tzh>\d{2}):(?P<tzm>\d{2}))$')
+
+
 model_info = {
     'organization': {
         'desc': u'Organization',
