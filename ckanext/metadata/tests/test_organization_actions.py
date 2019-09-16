@@ -32,13 +32,6 @@ class TestOrganizationActions(ActionTestBase):
         assert obj.is_organization == True
         assert_object_matches_dict(obj, input_dict)
 
-        default_collection = ckan_model.Session.query(ckan_model.Group) \
-            .join(ckan_model.GroupExtra) \
-            .filter_by(key='organization_id', value=obj.id) \
-            .first()
-        assert default_collection
-        assert default_collection.name == input_dict['name'] + '-metadata'
-
     def test_delete_valid(self):
         organization = self._generate_organization()
         self.test_action('organization_delete',

@@ -9,7 +9,6 @@ from ckan.common import _
 from ckanext.metadata.logic import schema
 from ckanext.metadata.lib.dictization import model_save
 from ckan.logic.action.create import organization_create as ckan_org_create
-from ckanext.metadata.common import DEFAULT_METADATA_COLLECTION_SUFFIX, DEFAULT_METADATA_COLLECTION_TITLE
 
 log = logging.getLogger(__name__)
 
@@ -236,12 +235,6 @@ def organization_create(context, data_dict):
 
     internal_context = context.copy()
     internal_context['defer_commit'] = False
-
-    metadata_collection_create(internal_context, {
-        'name': organization_dict['name'] + DEFAULT_METADATA_COLLECTION_SUFFIX,
-        'title': DEFAULT_METADATA_COLLECTION_TITLE,
-        'organization_id': organization_dict['id'],
-    })
 
     output = organization_dict['id'] if return_id_only \
         else tk.get_action('organization_show')(internal_context, {'id': organization_dict['id']})

@@ -8,9 +8,6 @@ from ckanext.metadata import model as model_ext
 METADATA_VALIDATION_ACTIVITY_TYPE = u'metadata validation'
 METADATA_WORKFLOW_ACTIVITY_TYPE = u'metadata workflow'
 
-DEFAULT_METADATA_COLLECTION_SUFFIX = u'-metadata'
-DEFAULT_METADATA_COLLECTION_TITLE = u'Default Metadata Collection'
-
 WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES = (u'string', u'number', u'boolean', u'date', u'enum', u'userid',)
 RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE = re.compile(r'^string|number|boolean|date|enum\((\w+)(?:,(\w+))*\)|userid$')
 
