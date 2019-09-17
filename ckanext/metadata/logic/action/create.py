@@ -326,6 +326,9 @@ def metadata_record_create(context, data_dict):
     :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content
     :type metadata_json: string
+    :param doi: the DOI to be associated with this record (nullable); depending on the metadata collection
+        settings, this may be automatically generated if empty
+    :type doi: string
     :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
     :type deserialize_json: boolean
 

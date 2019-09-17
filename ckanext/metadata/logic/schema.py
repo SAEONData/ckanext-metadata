@@ -89,6 +89,7 @@ def metadata_record_create_schema():
         },
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard'), convert_to_extras],
         'metadata_json': [v.not_empty, unicode, v.json_dict_validator, convert_to_extras],
+        'doi': [v.not_missing, unicode, v.doi_validator, convert_to_extras],
         'validated': [convert_to_extras],
         'errors': [convert_to_extras],
         'workflow_state_id': [convert_to_extras],
@@ -96,6 +97,7 @@ def metadata_record_create_schema():
         # post-validation
         '__after': [v.metadata_record_id_name_generator,
                     v.owner_org_owns_metadata_collection,
+                    v.metadata_record_doi_generator,
                     ignore],
     }
 
@@ -142,6 +144,7 @@ def metadata_record_show_schema(deserialize_json=False):
         'owner_org': [v.convert_id_to_name('organization')],
         'metadata_standard_id': [convert_from_extras, v.convert_id_to_name('metadata_standard')],
         'metadata_json': [convert_from_extras, v.format_json(deserialize_json)],
+        'doi': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras, v.convert_id_to_name('metadata_collection')],
         'infrastructures': {
             'id': [v.convert_id_to_name('infrastructure')],

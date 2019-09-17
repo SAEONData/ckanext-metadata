@@ -42,6 +42,7 @@ class MetadataRecord(factory.Factory):
 
     title = 'Test Metadata Record'
     metadata_json = factory.Sequence(lambda n: '{{ "testkey": "testvalue{0:02d}" }}'.format(n))
+    doi = factory.Sequence(lambda n: '10.12345/{:03d}'.format(n))
     infrastructures = []
 
     @classmethod

@@ -1,11 +1,14 @@
 # encoding: utf-8
 
 import json
+import re
 from datetime import datetime
 
 from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
 import ckan.plugins.toolkit as tk
+import ckan.model as ckan_model
+from ckanext.metadata.common import DOI_RE
 
 from ckanext.metadata.tests import (
     ActionTestBase,
@@ -71,6 +74,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'infrastructures': [],
             'metadata_standard_id': self.metadata_standard['id'],
             'metadata_json': '{ "testkey": "testvalue" }',
+            'doi': '',
         }
 
     @staticmethod
@@ -94,6 +98,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(obj.id, 'metadata_collection_id', metadata_collection_id)
         assert_package_has_extra(obj.id, 'metadata_standard_id', kwargs.pop('metadata_standard_id', self.metadata_standard['id']))
         assert_package_has_extra(obj.id, 'metadata_json', input_dict['metadata_json'], is_json=True)
+        assert_package_has_extra(obj.id, 'doi', kwargs.pop('doi', input_dict['doi']))
         assert_package_has_extra(obj.id, 'validated', kwargs.pop('validated', False))
         assert_package_has_extra(obj.id, 'errors', kwargs.pop('errors', {}), is_json=True)
         assert_package_has_extra(obj.id, 'workflow_state_id', kwargs.pop('workflow_state_id', ''))
@@ -119,6 +124,26 @@ class TestMetadataRecordActions(ActionTestBase):
         })
         result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
+
+    def test_create_valid_with_doi(self):
+        input_dict = self._make_input_dict()
+        input_dict['doi'] = '10.1234/xyz.123'
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict,
+                                        doi=input_dict['doi'].upper())
+
+    def test_create_valid_auto_generate_doi(self):
+        metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'],
+                                                                 auto_create_doi=True,
+                                                                 doi_collection='foo')
+        input_dict = self._make_input_dict()
+        input_dict['metadata_collection_id'] = metadata_collection['id']
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=obj.id, key='doi') \
+            .scalar()
+        assert re.match(DOI_RE, doi)
+        assert '/FOO.' in doi
 
     def test_create_valid_owner_org_byname(self):
         input_dict = self._make_input_dict()
@@ -300,6 +325,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
         assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
+        assert_error(result, 'doi', 'Missing parameter')
 
     def test_create_invalid_missing_values(self):
         result, obj = self.test_action('metadata_record_create', should_error=True,
@@ -321,6 +347,17 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self.test_action('metadata_record_create', should_error=True,
                                        metadata_json='[1,2,3]')
         assert_error(result, 'metadata_json', 'Expecting a JSON dictionary')
+
+    def test_create_invalid_not_a_doi(self):
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       doi='foo')
+        assert_error(result, 'doi', 'Invalid DOI')
+
+    def test_create_invalid_doi_already_taken(self):
+        metadata_record = self._generate_metadata_record()
+        result, obj = self.test_action('metadata_record_create', should_error=True,
+                                       doi=metadata_record['doi'])
+        assert_error(result, 'doi', 'The DOI has already been taken')
 
     def test_create_invalid_bad_references(self):
         result, obj = self.test_action('metadata_record_create', should_error=True,
@@ -362,6 +399,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         # should return the existing record
         result, obj = self.test_action('metadata_record_create', **input_dict)
+
+        input_dict['doi'] = metadata_record['doi']
         self._assert_metadata_record_ok(obj, input_dict)
         assert obj.id == metadata_record['id']
 
@@ -382,6 +421,7 @@ class TestMetadataRecordActions(ActionTestBase):
             'metadata_collection_id': new_metadata_collection['id'],
             'metadata_standard_id': new_metadata_standard['id'],
             'metadata_json': '{ "newtestkey": "newtestvalue" }',
+            'doi': '10.12345/foo',
             'infrastructures': [
                 {'id': infrastructure2['name']},
                 {'id': new_infrastructure['name']},
@@ -397,7 +437,8 @@ class TestMetadataRecordActions(ActionTestBase):
 
         self._assert_metadata_record_ok(obj, input_dict,
                                         metadata_collection_id=new_metadata_collection['id'],
-                                        metadata_standard_id=new_metadata_standard['id'])
+                                        metadata_standard_id=new_metadata_standard['id'],
+                                        doi=input_dict['doi'].upper())
         assert_group_has_member(infrastructure1['id'], obj.id, 'package', state='deleted')
         assert_group_has_member(infrastructure2['id'], obj.id, 'package')
         assert_group_has_member(new_infrastructure['id'], obj.id, 'package')
@@ -717,6 +758,7 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_error(result, 'metadata_collection_id', 'Missing parameter')
         assert_error(result, 'metadata_standard_id', 'Missing parameter')
         assert_error(result, 'metadata_json', 'Missing parameter')
+        assert_error(result, 'doi', 'Missing parameter')
 
     def test_update_invalid_missing_values(self):
         metadata_record = self._generate_metadata_record()
@@ -744,6 +786,21 @@ class TestMetadataRecordActions(ActionTestBase):
                                        id=metadata_record['id'],
                                        metadata_json='[1,2,3]')
         assert_error(result, 'metadata_json', 'Expecting a JSON dictionary')
+
+    def test_update_invalid_not_a_doi(self):
+        metadata_record = self._generate_metadata_record()
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record['id'],
+                                       doi='foo')
+        assert_error(result, 'doi', 'Invalid DOI')
+
+    def test_update_invalid_doi_already_taken(self):
+        metadata_record1 = self._generate_metadata_record()
+        metadata_record2 = self._generate_metadata_record()
+        result, obj = self.test_action('metadata_record_update', should_error=True,
+                                       id=metadata_record1['id'],
+                                       doi=metadata_record2['doi'])
+        assert_error(result, 'doi', 'The DOI has already been taken')
 
     def test_update_invalid_bad_references(self):
         metadata_record = self._generate_metadata_record()
