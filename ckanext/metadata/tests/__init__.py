@@ -130,8 +130,12 @@ def assert_group_has_extra(group_id, key, value, state='active'):
         .first()
 
     assert extra
-    assert extra.value == value
     assert extra.state == state
+    if type(value) is bool:
+        extra_value = asbool(extra.value)
+    else:
+        extra_value = extra.value
+    assert extra_value == value
 
 
 def assert_group_has_member(group_id, object_id, object_table, capacity='public', state='active'):

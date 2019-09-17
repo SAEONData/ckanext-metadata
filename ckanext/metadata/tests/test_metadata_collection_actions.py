@@ -25,12 +25,18 @@ class TestMetadataCollectionActions(ActionTestBase):
             'title': 'Test Metadata Collection',
             'description': 'This is a test metadata collection',
             'organization_id': organization['id'],
+            'doi_collection': 'test.doi',
+            'auto_create_doi': True,
         }
         result, obj = self.test_action('metadata_collection_create', **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
         assert_group_has_extra(obj.id, 'organization_id', input_dict['organization_id'])
+        assert_group_has_extra(obj.id, 'doi_collection', 'TEST.DOI')
+        assert_group_has_extra(obj.id, 'auto_create_doi', True)
         del input_dict['organization_id']
+        del input_dict['doi_collection']
+        del input_dict['auto_create_doi']
         assert_object_matches_dict(obj, input_dict)
         assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
 
@@ -39,12 +45,16 @@ class TestMetadataCollectionActions(ActionTestBase):
         input_dict = {
             'name': 'test-metadata-collection',
             'organization_id': organization['name'],
+            'doi_collection': '',
+            'auto_create_doi': False,
         }
         result, obj = self.test_action('metadata_collection_create', **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
         assert obj.name == input_dict['name']
         assert_group_has_extra(obj.id, 'organization_id', organization['id'])
+        assert_group_has_extra(obj.id, 'doi_collection', '')
+        assert_group_has_extra(obj.id, 'auto_create_doi', False)
         assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
 
     def test_create_invalid_duplicate_name(self):
@@ -65,6 +75,11 @@ class TestMetadataCollectionActions(ActionTestBase):
                                        organization_id=organization['id'])
         assert_error(result, 'organization_id', 'Not found: Organization')
 
+    def test_create_invalid_bad_doi_collection(self):
+        result, obj = self.test_action('metadata_collection_create', should_error=True,
+                                       doi_collection='has spaces')
+        assert_error(result, 'doi_collection', 'Invalid DOI collection identifier')
+
     def test_update_valid(self):
         metadata_collection = ckanext_factories.MetadataCollection()
         input_dict = {
@@ -73,13 +88,19 @@ class TestMetadataCollectionActions(ActionTestBase):
             'title': 'Updated Test Metadata Collection',
             'description': 'Updated test metadata collection',
             'organization_id': metadata_collection['organization_id'],
+            'doi_collection': 'updated.test.doi',
+            'auto_create_doi': True,
         }
         result, obj = self.test_action('metadata_collection_update', **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
         del input_dict['organization_id']
+        del input_dict['doi_collection']
+        del input_dict['auto_create_doi']
         assert_object_matches_dict(obj, input_dict)
         assert_group_has_extra(obj.id, 'organization_id', metadata_collection['organization_id'])
+        assert_group_has_extra(obj.id, 'doi_collection', 'UPDATED.TEST.DOI')
+        assert_group_has_extra(obj.id, 'auto_create_doi', True)
 
     def test_update_valid_partial(self):
         metadata_collection = ckanext_factories.MetadataCollection()
@@ -87,6 +108,8 @@ class TestMetadataCollectionActions(ActionTestBase):
             'id': metadata_collection['id'],
             'title': 'Updated Test Metadata Collection',
             'organization_id': metadata_collection['organization_id'],
+            'doi_collection': 'updated.test.doi',
+            'auto_create_doi': True,
         }
         result, obj = self.test_action('metadata_collection_update', **input_dict)
         assert obj.type == 'metadata_collection'
@@ -95,6 +118,8 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert obj.name == metadata_collection['name']
         assert obj.description == metadata_collection['description']
         assert_group_has_extra(obj.id, 'organization_id', metadata_collection['organization_id'])
+        assert_group_has_extra(obj.id, 'doi_collection', 'UPDATED.TEST.DOI')
+        assert_group_has_extra(obj.id, 'auto_create_doi', True)
 
     def test_update_invalid_duplicate_name(self):
         metadata_collection1 = ckanext_factories.MetadataCollection()

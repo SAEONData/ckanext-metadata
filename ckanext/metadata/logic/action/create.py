@@ -255,6 +255,11 @@ def metadata_collection_create(context, data_dict):
     :type description: string
     :param organization_id: the id or name of the organization to which this collection belongs
     :type organization_id: string
+    :param doi_collection: a qualifier to be inserted into new DOIs after the DOI prefix (nullable);
+        e.g. 'DOI.COLLECTION' in '10.12345/DOI.COLLECTION.67890'
+    :type doi_collection: string
+    :param auto_create_doi: automatically generate DOIs for new metadata records in this collection
+    :type auto_create_doi: boolean
     :param users: the users associated with the collection (optional); a list of dictionaries
         each with key ``'name'`` (string, the id or name of the user) and optionally ``'capacity'``
         (string, the capacity in which the user is a member of the collection)

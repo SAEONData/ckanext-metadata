@@ -13,6 +13,8 @@ class MetadataCollection(factory.Factory):
     name = factory.Sequence(lambda n: 'test_collection_{0:02d}'.format(n))
     title = factory.LazyAttribute(ckan_factories._generate_group_title)
     description = 'A test description for this test metadata collection.'
+    doi_collection = 'TEST.DOI'
+    auto_create_doi = False
 
     @classmethod
     def _build(cls, target_class, *args, **kwargs):

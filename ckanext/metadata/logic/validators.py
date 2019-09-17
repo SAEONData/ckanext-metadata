@@ -12,7 +12,13 @@ from ckan.common import _, config
 import ckan.lib.navl.dictization_functions as df
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.json_validator import JSONValidator
-from ckanext.metadata.common import model_info, RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE, WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES
+from ckanext.metadata.common import (
+    model_info,
+    RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE,
+    WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES,
+    DOI_RE,
+    DOI_SUFFIX_RE,
+)
 
 convert_to_extras = tk.get_validator('convert_to_extras')
 
@@ -256,6 +262,20 @@ def extract_re_group(pattern):
 
     return callable_
 
+
+def doi_validator(key, data, errors, context):
+    """
+    Check for a well-formed DOI.
+    """
+    value = data.get(key)
+    if value:
+        value = value.upper()
+        if not re.match(DOI_RE, value):
+            _abort(errors, key, _("Invalid DOI"))
+
+        data[key] = value
+
+
 # endregion
 
 
@@ -392,6 +412,19 @@ def metadata_collection_org_unchanged(key, data, errors, context):
 
     if new_organization_id != old_organization_id:
         raise tk.Invalid(_("Organization cannot be changed"))
+
+
+def doi_collection_validator(key, data, errors, context):
+    """
+    Check that the value is valid for use in a DOI.
+    """
+    value = data.get(key)
+    if value:
+        value = value.upper()
+        if not re.match(DOI_SUFFIX_RE, value):
+            _abort(errors, key, _("Invalid DOI collection identifier"))
+
+        data[key] = value
 
 
 def metadata_record_id_name_generator(key, data, errors, context):
