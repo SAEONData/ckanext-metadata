@@ -19,6 +19,7 @@ import ckanext.metadata.model.setup as ckanext_setup
 from ckanext.metadata import model as ckanext_model
 from ckanext.jsonpatch.model.jsonpatch import JSONPatch
 import ckanext.jsonpatch.model.setup as jsonpatch_setup
+from ckanext.metadata.logic.validators import _generate_name
 
 _model_map = {
     'organization': ckan_model.Group,
@@ -66,11 +67,7 @@ def generate_name(*strings):
     """
     Converts the given string(s) into a form suitable for an object name.
     """
-    strings = list(strings)
-    while '' in strings:
-        strings.remove('')
-    text = '-'.join(strings)
-    return re.sub(r'[^a-z0-9_-]+', '-', text.lower())
+    return _generate_name(*strings)
 
 
 def assert_object_matches_dict(object_, dict_, json_values=()):

@@ -46,7 +46,7 @@ def _generate_name(*strings):
     while '' in strings:
         strings.remove('')
     text = '-'.join(strings)
-    return re.sub(r'[^a-z0-9_-]+', '-', text.lower())
+    return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
 
 
 def _abort(error_dict, key, message):
