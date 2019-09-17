@@ -359,6 +359,16 @@ def metadata_record_create(context, data_dict):
         session.rollback()
         raise tk.ValidationError(errors)
 
+    # check if we match an existing record exactly on important properties
+    # - if a match is found, then we do nothing and just return that record
+    # - this provides re-entrance for harvesters, bulk imports, etc
+    matching_record_id = tk.get_action('metadata_record_exact_match')(internal_context, data)
+    if matching_record_id:
+        log.info('Exact matching record found')
+        output = matching_record_id if return_id_only \
+            else tk.get_action('metadata_record_show')(internal_context, {'id': matching_record_id, 'deserialize_json': deserialize_json})
+        return output
+
     # map values from the metadata JSON into the data_dict
     attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
         'metadata_standard_id': data_dict.get('metadata_standard_id'),
@@ -373,16 +383,6 @@ def metadata_record_create(context, data_dict):
         data_dict['id'] = matching_record_id
         internal_context['redirect_from_create'] = True
         return tk.get_action('metadata_record_update')(internal_context, data_dict)
-
-    # check if we match an existing record exactly on important properties
-    # - if a match is found, then we do nothing and just return that record
-    # - this provides re-entrance for harvesters, bulk imports, etc
-    matching_record_id = tk.get_action('metadata_record_exact_match')(internal_context, data)
-    if matching_record_id:
-        log.info('Exact matching record found')
-        output = matching_record_id if return_id_only \
-            else tk.get_action('metadata_record_show')(internal_context, {'id': matching_record_id, 'deserialize_json': deserialize_json})
-        return output
 
     # it's new metadata; create the package object
     data_dict.update({
