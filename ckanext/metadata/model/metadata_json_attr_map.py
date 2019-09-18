@@ -14,7 +14,6 @@ metadata_json_attr_map_table = Table(
     Column('is_key', types.Boolean, nullable=False),
     Column('metadata_standard_id', types.UnicodeText, ForeignKey('metadata_standard.id'), nullable=False),
     UniqueConstraint('metadata_standard_id', 'record_attr'),
-    UniqueConstraint('metadata_standard_id', 'json_path'),
 )
 
 vdm.sqlalchemy.make_table_stateful(metadata_json_attr_map_table)

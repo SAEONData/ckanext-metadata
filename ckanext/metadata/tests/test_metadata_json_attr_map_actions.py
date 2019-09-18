@@ -51,15 +51,6 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
                                        metadata_standard_id=metadata_standard['id'])
         assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
 
-    def test_create_invalid_duplicate_standard_jsonpath(self):
-        metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
-        input_dict = {
-            'json_path': metadata_json_attr_map['json_path'],
-            'metadata_standard_id': metadata_json_attr_map['metadata_standard_id'],
-        }
-        result, obj = self.test_action('metadata_json_attr_map_create', should_error=True, **input_dict)
-        assert_error(result, 'json_path', 'Unique constraint violation')
-
     def test_create_invalid_duplicate_standard_recordattr(self):
         metadata_json_attr_map = ckanext_factories.MetadataJSONAttrMap()
         input_dict = {
@@ -113,16 +104,6 @@ class TestMetadataJSONAttrMapActions(ActionTestBase):
         }
         result, obj = self.test_action('metadata_json_attr_map_update', **input_dict)
         assert_object_matches_dict(obj, input_dict)
-
-    def test_update_invalid_duplicate_standard_jsonpath(self):
-        metadata_json_attr_map1 = ckanext_factories.MetadataJSONAttrMap(json_path='/c/d', record_attr='url')
-        metadata_json_attr_map2 = ckanext_factories.MetadataJSONAttrMap(metadata_standard_id=metadata_json_attr_map1['metadata_standard_id'])
-        input_dict = {
-            'id': metadata_json_attr_map1['id'],
-            'json_path': metadata_json_attr_map2['json_path'],
-        }
-        result, obj = self.test_action('metadata_json_attr_map_update', should_error=True, **input_dict)
-        assert_error(result, 'json_path', 'Unique constraint violation')
 
     def test_update_invalid_duplicate_standard_recordattr(self):
         metadata_json_attr_map1 = ckanext_factories.MetadataJSONAttrMap(json_path='/c/d', record_attr='url')
