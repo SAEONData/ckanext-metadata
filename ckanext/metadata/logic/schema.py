@@ -89,7 +89,6 @@ def metadata_record_create_schema():
         },
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard'), convert_to_extras],
         'metadata_json': [v.not_empty, unicode, v.json_dict_validator, convert_to_extras],
-        'doi': [v.not_missing, unicode, v.doi_validator, convert_to_extras],
         'validated': [convert_to_extras],
         'errors': [convert_to_extras],
         'workflow_state_id': [convert_to_extras],
@@ -101,7 +100,7 @@ def metadata_record_create_schema():
                     ignore],
     }
 
-    # optional native package fields
+    # fields whose values may be obtained via mappings from the metadata JSON
     schema.update(metadata_record_attr_mappable_schema())
 
     _make_create_schema(schema)
@@ -110,12 +109,16 @@ def metadata_record_create_schema():
 
 def metadata_record_attr_mappable_schema():
     """
-    Defines the metadata record (package) fields that may be referenced by MetadataJSONAttrMap.record_attr.
+    Defines the metadata record fields that may be referenced by MetadataJSONAttrMap.record_attr.
     These fields may optionally be provided as input to the metadata_record_create|update actions; but
     if they are defined in a mapping, the mapping will override any input values with the corresponding
     values in the metadata JSON.
     """
     schema = {
+        # extension extra fields
+        'doi': [v.not_missing, unicode, v.doi_validator, convert_to_extras],
+
+        # native package fields
         'name': [ignore_missing, unicode, package_name_validator],
         'title': [ignore_missing, unicode],
         'author': [ignore_missing, unicode],
@@ -338,6 +341,7 @@ def metadata_json_attr_map_create_schema():
         # post-validation
         '__after': [v.metadata_template_json_path_validator,
                     v.metadata_json_attr_map_unique,
+                    v.metadata_json_attr_key_field_validator,
                     ignore],
     }
     _make_create_schema(schema)

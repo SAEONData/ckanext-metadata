@@ -789,6 +789,20 @@ def metadata_json_attr_map_unique(key, data, errors, context):
         errors[key[:-1] + ('record_attr',)].append(_("Unique constraint violation: %s") % '(metadata_standard_id, record_attr)')
 
 
+def metadata_json_attr_key_field_validator(key, data, errors, context):
+    """
+    Checks that a metadata record attribute may be specified as a key field (is_key = True);
+    this is only permitted for native package fields.
+    """
+    model = context['model']
+    record_attr = _convert_missing(data.get(key[:-1] + ('record_attr',)))
+    is_key = _convert_missing(data.get(key[:-1] + ('is_key',)))
+    if is_key and not hasattr(model.Package, record_attr):
+        errors[key[:-1] + ('is_key',)] = [
+            _("'{}' is not a native CKAN package attribute, and therefore cannot be specified as a key attribute"
+              .format(record_attr))]
+
+
 def workflow_annotation_attributes_validator(value):
     """
     Checks that the supplied dict maps valid attribute names to valid attribute types.
