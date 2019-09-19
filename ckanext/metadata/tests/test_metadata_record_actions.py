@@ -69,6 +69,7 @@ class TestMetadataRecordActions(ActionTestBase):
     def _make_input_dict(self):
         return {
             'title': 'Test Metadata Record',
+            'author': 'Someone',
             'owner_org': self.owner_org['id'],
             'metadata_collection_id': self.metadata_collection['id'],
             'infrastructures': [],
@@ -90,6 +91,7 @@ class TestMetadataRecordActions(ActionTestBase):
         """
         assert obj.type == 'metadata_record'
         assert obj.title == kwargs.pop('title', input_dict.get('title'))
+        assert obj.author == kwargs.pop('author', input_dict.get('author'))
         assert obj.name == kwargs.pop('name', obj.id)
         assert obj.owner_org == kwargs.pop('owner_org', self.owner_org['id'])
         assert obj.private == kwargs.pop('private', True)
@@ -186,21 +188,36 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict, name=identifier, title=title, url=url)
 
-    def test_create_valid_no_map_empty_attributes(self):
+    def test_create_valid_map_empty_attributes(self):
         """
         Test that when values do not exist in the metadata JSON for the defined mappings,
-        the target attributes are left unchanged.
+        the target attributes are cleared.
+        """
+        metadata_json = load_example('saeon_odp_4.2_record.json')
+        metadata_dict = json.loads(metadata_json)
+        metadata_dict['titles'][0] = {}
+        del metadata_dict['creators']
+        metadata_json = json.dumps(metadata_dict)
+
+        self._define_attribute_map('/titles/0/title', 'title')
+        self._define_attribute_map('/creators/0/name', 'author')
+
+        input_dict = self._make_input_dict()
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict, title='', author='')
+
+    def test_create_valid_map_empty_name(self):
+        """
+        Test that when record name is the target of an attribute mapping, and the source value
+        is empty, the record name defaults to the record id.
         """
         metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         del metadata_dict['identifier']
-        metadata_dict['immutableResource']['resourceURL'] = ''
-        metadata_dict['titles'][0] = {}
         metadata_json = json.dumps(metadata_dict)
 
         self._define_attribute_map('/identifier/identifier', 'name')
-        self._define_attribute_map('/immutableResource/resourceURL', 'url')
-        self._define_attribute_map('/titles/0/title', 'title')
 
         input_dict = self._make_input_dict()
         input_dict['metadata_json'] = metadata_json
@@ -400,8 +417,7 @@ class TestMetadataRecordActions(ActionTestBase):
         # should return the existing record
         result, obj = self.test_action('metadata_record_create', **input_dict)
 
-        input_dict['doi'] = metadata_record['doi']
-        self._assert_metadata_record_ok(obj, input_dict)
+        self._assert_metadata_record_ok(obj, metadata_record)
         assert obj.id == metadata_record['id']
 
     def test_update_valid(self):
@@ -578,10 +594,31 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict, name=identifier, title=title, url=url)
 
-    def test_update_valid_no_map_empty_attributes(self):
+    def test_update_valid_map_empty_attributes(self):
         """
         Test that when values do not exist in the metadata JSON for the defined mappings,
-        the target attributes are left unchanged.
+        the target attributes are cleared.
+        """
+        metadata_record = self._generate_metadata_record()
+        input_dict = self._make_input_dict_from_output_dict(metadata_record)
+
+        metadata_json = load_example('saeon_odp_4.2_record.json')
+        metadata_dict = json.loads(metadata_json)
+        metadata_dict['titles'][0] = {}
+        del metadata_dict['creators']
+        metadata_json = json.dumps(metadata_dict)
+
+        self._define_attribute_map('/titles/0/title', 'title')
+        self._define_attribute_map('/creators/0/name', 'author')
+
+        input_dict['metadata_json'] = metadata_json
+        result, obj = self.test_action('metadata_record_update', **input_dict)
+        self._assert_metadata_record_ok(obj, input_dict, title='', author='')
+
+    def test_update_valid_map_empty_name(self):
+        """
+        Test that when record name is the target of an attribute mapping, and the source value
+        is empty, the record name defaults to the record id.
         """
         metadata_record = self._generate_metadata_record()
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
@@ -589,13 +626,9 @@ class TestMetadataRecordActions(ActionTestBase):
         metadata_json = load_example('saeon_odp_4.2_record.json')
         metadata_dict = json.loads(metadata_json)
         del metadata_dict['identifier']
-        metadata_dict['immutableResource']['resourceURL'] = ''
-        metadata_dict['titles'][0] = {}
         metadata_json = json.dumps(metadata_dict)
 
         self._define_attribute_map('/identifier/identifier', 'name')
-        self._define_attribute_map('/immutableResource/resourceURL', 'url')
-        self._define_attribute_map('/titles/0/title', 'title')
 
         input_dict['metadata_json'] = metadata_json
         result, obj = self.test_action('metadata_record_update', **input_dict)

@@ -391,6 +391,9 @@ def metadata_record_update(context, data_dict):
             'metadata_json': data_dict.get('metadata_json'),
         })
         data_dict.update(attr_map['data_dict'])
+        # if 'name' got an empty string from the attribute map, we remove it and allow the default behaviour
+        if data_dict.get('name') == '':
+            del data_dict['name']
 
         # check that an existing record matched on key attributes mapped from the JSON is the
         # same record that we are updating; note that we should not find a match if we are actually

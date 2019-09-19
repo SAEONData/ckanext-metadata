@@ -378,6 +378,9 @@ def metadata_record_create(context, data_dict):
         'metadata_json': data_dict.get('metadata_json'),
     })
     data_dict.update(attr_map['data_dict'])
+    # if 'name' got an empty string from the attribute map, we remove it and allow the default behaviour
+    if data_dict.get('name') == '':
+        del data_dict['name']
 
     # check if we match an existing record on key attributes mapped from the JSON; if so, switch to an update
     matching_record_id = tk.get_action('metadata_record_attr_match')(internal_context, attr_map['key_dict'])

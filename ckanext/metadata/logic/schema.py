@@ -136,7 +136,6 @@ def metadata_record_attr_mappable_schema():
 def metadata_record_update_schema():
     schema = metadata_record_create_schema()
     _make_update_schema(schema)
-    schema['__after'] = [v.owner_org_owns_metadata_collection, ignore]
     return schema
 
 

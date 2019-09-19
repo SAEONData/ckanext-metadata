@@ -450,9 +450,6 @@ def metadata_record_id_name_generator(key, data, errors, context):
     id_ = _convert_missing(data.get(key[:-1] + ('id',)))
     name = _convert_missing(data.get(key[:-1] + ('name',)))
 
-    if id_ and model.Package.get(id_):
-        return  # we only need to generate on create
-
     if not id_:
         id_ = _make_uuid()
         data[key[:-1] + ('id',)] = id_

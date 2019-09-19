@@ -1179,9 +1179,8 @@ def metadata_json_attr_map_apply(context, data_dict):
     mapping values from the given metadata JSON document, using the metadata JSON
     attribute maps that have been defined for the given metadata standard.
 
-    Note that missing or empty elements in the JSON are not copied into the resultant
-    data_dict. However, the resultant key_dict includes every key attribute mapping,
-    regardless of whether the source element is present or not.
+    Missing or empty elements in the JSON are copied into the resultant data_dict
+    (and key_dict, where applicable) as emtpy strings.
 
     :param metadata_standard_id: the id or name of the metadata standard
     :type metadata_standard_id: string
@@ -1189,8 +1188,8 @@ def metadata_json_attr_map_apply(context, data_dict):
     :type metadata_json: string
 
     :rtype: dictionary {
-                'data_dict': dict of mapped attribute-value pairs, excluding empties
-                'key_dict': dict of key mapped attribute-value pairs, including empties
+                'data_dict': dict of mapped attribute-value pairs
+                'key_dict': dict of key mapped attribute-value pairs
             }
     """
     log.debug("Applying metadata JSON attribute mappings to metadata dict: %r", data_dict)
@@ -1219,14 +1218,12 @@ def metadata_json_attr_map_apply(context, data_dict):
         path = metadata_json_attr_map.json_path
         is_key = metadata_json_attr_map.is_key
 
-        # empty or non-existent elements are mapped to empty strings
         try:
             value = jsonpointer.resolve_pointer(metadata_dict, path) or ''
         except jsonpointer.JsonPointerException:
             value = ''
 
-        if value:
-            result['data_dict'][attr] = value
+        result['data_dict'][attr] = value
         if is_key:
             result['key_dict'][attr] = value
 
