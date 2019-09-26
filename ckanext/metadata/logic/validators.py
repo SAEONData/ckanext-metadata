@@ -457,56 +457,6 @@ def metadata_record_id_name_generator(key, data, errors, context):
         data[key[:-1] + ('name',)] = id_
 
 
-def metadata_record_doi_generator(key, data, errors, context):
-    """
-    Generates a DOI for a new metadata record where this has not been supplied, and if the
-    metadata collection is set to auto-generate DOIs. For use with the '__after' schema key.
-    """
-    model = context['model']
-    session = context['session']
-
-    doi = _convert_missing(data.get(key[:-1] + ('doi',)))
-    if doi:
-        return  # only generate if empty
-
-    id_ = _convert_missing(data.get(key[:-1] + ('id',)))
-    if id_ and model.Package.get(id_):
-        return  # only generate on create
-
-    metadata_collection_id = _convert_missing(data.get(key[:-1] + ('metadata_collection_id',)))
-
-    auto_create_doi = session.query(model.GroupExtra.value) \
-        .filter_by(group_id=metadata_collection_id, key='auto_create_doi').scalar()
-    if not asbool(auto_create_doi):
-        return  # only generate if the metadata collection says so
-
-    doi_prefix = config.get('ckan.metadata.doi_prefix')
-    if not doi_prefix:
-        raise tk.Invalid(_("Config option ckan.metadata.doi_prefix has not been set"))
-
-    doi_collection = session.query(model.GroupExtra.value) \
-        .filter_by(group_id=metadata_collection_id, key='doi_collection').scalar()
-    if doi_collection and not doi_collection.endswith('.'):
-        doi_collection += '.'
-
-    while True:
-        doi = '{doi_prefix}/{doi_collection}{unique_number}'.format(
-            doi_prefix=doi_prefix,
-            doi_collection=doi_collection,
-            unique_number='{:.10f}'.format(random.SystemRandom().random())[2:],
-        )
-        # collisions are extremely unlikely, but we check anyway
-        collision = session.query(model.PackageExtra) \
-            .filter_by(key='doi', value=doi) \
-            .first()
-        if not collision:
-            break
-
-    data[key[:-1] + ('doi',)] = doi
-    doi_validator(key[:-1] + ('doi',), data, errors, context)
-    convert_to_extras(key[:-1] + ('doi',), data, errors, context)
-
-
 def metadata_record_infrastructures_not_missing(key, data, errors, context):
     """
     Checks that the infrastructures list is not missing.

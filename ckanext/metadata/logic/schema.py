@@ -96,7 +96,6 @@ def metadata_record_create_schema():
         # post-validation
         '__after': [v.metadata_record_id_name_generator,
                     v.owner_org_owns_metadata_collection,
-                    v.metadata_record_doi_generator,
                     ignore],
     }
 
