@@ -43,9 +43,9 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def _generate_metadata_record(self, **kwargs):
         return ckanext_factories.MetadataRecord(
-            owner_org=self.owner_org['id'],
-            metadata_collection_id=self.metadata_collection['id'],
-            metadata_standard_id=self.metadata_standard['id'],
+            owner_org=kwargs.pop('owner_org', self.owner_org['id']),
+            metadata_collection_id=kwargs.pop('metadata_collection_id', self.metadata_collection['id']),
+            metadata_standard_id=kwargs.pop('metadata_standard_id', self.metadata_standard['id']),
             **kwargs
         )
 
@@ -106,12 +106,12 @@ class TestMetadataRecordActions(ActionTestBase):
         assert_package_has_extra(obj.id, 'workflow_state_id', kwargs.pop('workflow_state_id', ''))
         assert_group_has_member(metadata_collection_id, obj.id, 'package')
 
-    def _define_attribute_map(self, json_path, record_attr, is_key=False):
+    def _define_attribute_map(self, json_path, record_attr, is_key=False, **kwargs):
         return ckanext_factories.MetadataJSONAttrMap(
             json_path=json_path,
             record_attr=record_attr,
             is_key=is_key,
-            metadata_standard_id=self.metadata_standard['id']
+            metadata_standard_id=kwargs.pop('metadata_standard_id', self.metadata_standard['id'])
         )
 
     def test_create_valid(self):
@@ -1262,3 +1262,80 @@ class TestMetadataRecordActions(ActionTestBase):
                                        exception_class=tk.NotAuthorized,
                                        id=metadata_record['id'])
         assert_error(result, None, "This action may not be used for metadata records.")
+
+    def test_assign_doi(self):
+        metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'],
+                                                                 doi_collection='')
+        metadata_record = self._generate_metadata_record(metadata_collection_id=metadata_collection['id'],
+                                                         doi='')
+        self.test_action('metadata_record_assign_doi', id=metadata_record['id'])
+        doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=metadata_record['id'], key='doi') \
+            .scalar()
+        assert re.match(DOI_RE, doi)
+
+    def test_assign_doi_with_collection(self):
+        metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'],
+                                                                 doi_collection='foo')
+        metadata_record = self._generate_metadata_record(metadata_collection_id=metadata_collection['id'],
+                                                         doi='')
+        self.test_action('metadata_record_assign_doi', id=metadata_record['id'])
+        doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=metadata_record['id'], key='doi') \
+            .scalar()
+        assert re.match(DOI_RE, doi)
+        assert '/FOO.' in doi
+
+    def test_assign_doi_update_json_1(self):
+        """
+        Test that the DOI is put into the metadata JSON if there's an appropriate attribute mapping.
+        """
+        metadata_standard = ckanext_factories.MetadataStandard(metadata_template_json='{"a": {"b": {"c": "doi"}}}')
+        self._define_attribute_map('/a/b/c', 'doi', metadata_standard_id=metadata_standard['id'])
+
+        metadata_record = self._generate_metadata_record(doi='', metadata_standard_id=metadata_standard['id'])
+        self.test_action('metadata_record_assign_doi', id=metadata_record['id'])
+
+        doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=metadata_record['id'], key='doi') \
+            .scalar()
+        assert re.match(DOI_RE, doi)
+
+        metadata_json = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=metadata_record['id'], key='metadata_json') \
+            .scalar()
+        metadata_dict = json.loads(metadata_json)
+        assert metadata_dict['a']['b']['c'] == doi
+
+    def test_assign_doi_update_json_2(self):
+        """
+        Test that the DOI is put into the metadata JSON if there's an appropriate attribute mapping,
+        and that doing so does not bork existing metadata content.
+        """
+        metadata_standard = ckanext_factories.MetadataStandard(metadata_template_json='{"a": {"b": {"c": "doi"}}}')
+        self._define_attribute_map('/a/b/c', 'doi', metadata_standard_id=metadata_standard['id'])
+
+        metadata_record = self._generate_metadata_record(
+            doi='',
+            metadata_standard_id=metadata_standard['id'],
+            metadata_json='{"a": {"x": "y"}}',
+        )
+        self.test_action('metadata_record_assign_doi', id=metadata_record['id'])
+
+        doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=metadata_record['id'], key='doi') \
+            .scalar()
+        assert re.match(DOI_RE, doi)
+
+        metadata_json = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=metadata_record['id'], key='metadata_json') \
+            .scalar()
+        metadata_dict = json.loads(metadata_json)
+        assert metadata_dict['a']['b']['c'] == doi
+        assert metadata_dict['a']['x'] == 'y'
+
+    def test_assign_doi_invalid_already_exists(self):
+        metadata_record = self._generate_metadata_record()
+        result, obj = self.test_action('metadata_record_assign_doi', should_error=True,
+                                       id=metadata_record['id'])
+        assert_error(result, 'message', 'The metadata record already has a DOI')

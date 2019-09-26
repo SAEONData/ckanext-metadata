@@ -13,6 +13,7 @@ RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE = re.compile(r'^string|number|boolean|date
 
 # DOI regex, slightly more lenient (for prefix) than https://www.crossref.org/blog/dois-and-matching-regular-expressions
 DOI_RE = re.compile(r'^10\.\d{4,}(\.\d+)*/[-._;()/:A-Z0-9]+$')
+DOI_PREFIX_RE = re.compile(r'^10\.\d{4,}(\.\d+)*$')
 DOI_SUFFIX_RE = re.compile(r'[-._;()/:A-Z0-9]+$')
 
 # regex for the time portion of a datetime string, as specified by https://www.w3.org/TR/NOTE-datetime

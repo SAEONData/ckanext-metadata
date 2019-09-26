@@ -92,3 +92,7 @@ def metadata_collection_validate(context, data_dict):
 
 def metadata_collection_workflow_state_transition(context, data_dict):
     return {'success': True}
+
+
+def metadata_record_assign_doi(context, data_dict):
+    return {'success': True}

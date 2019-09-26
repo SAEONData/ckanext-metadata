@@ -2,13 +2,20 @@
 
 import logging
 import json
+import random
+import re
 from paste.deploy.converters import asbool, falsy
 from sqlalchemy.orm import aliased
+import jsonpointer
 
 import ckan.plugins.toolkit as tk
-from ckan.common import _
+from ckan.common import _, config
 from ckanext.metadata.logic import schema
-from ckanext.metadata.common import METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
+from ckanext.metadata.common import (
+    METADATA_VALIDATION_ACTIVITY_TYPE,
+    METADATA_WORKFLOW_ACTIVITY_TYPE,
+    DOI_PREFIX_RE,
+)
 from ckanext.metadata.lib.dictization import model_save
 import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.logic.metadata_validator import MetadataValidator
@@ -1359,3 +1366,108 @@ def metadata_collection_workflow_state_transition(context, data_dict):
     data_dicts = [{'id': record_id, 'workflow_state_id': target_workflow_state_id}
                   for (record_id,) in record_ids]
     return bulk_action('metadata_record_workflow_state_transition', context, data_dicts, async)
+
+
+def metadata_record_assign_doi(context, data_dict):
+    """
+    Assign a DOI to a metadata record.
+
+    Prerequisites for this to succeed:
+    - the config option 'ckan.metadata.doi_prefix' must be set
+    - the record must not already have a DOI assigned to it
+
+    The metadata collection's 'doi_collection' property will be used if it has been set.
+
+    :param id: the id or name of the metadata record
+    :type id: string
+    :return: the new DOI
+    """
+    log.info("Assigning a DOI to metadata record: %r", data_dict)
+    tk.check_access('metadata_record_assign_doi', context, data_dict)
+
+    model = context['model']
+    session = context['session']
+    user = context['user']
+    defer_commit = context.get('defer_commit', False)
+
+    metadata_record = context.get('metadata_record')
+    if not metadata_record:
+        metadata_record_id = tk.get_or_bust(data_dict, 'id')
+        metadata_record = model.Package.get(metadata_record_id)
+        if metadata_record is None or metadata_record.type != 'metadata_record':
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
+
+    if metadata_record.extras['doi']:
+        raise tk.ValidationError(_("The metadata record already has a DOI"))
+
+    doi_prefix = config.get('ckan.metadata.doi_prefix')
+    if not doi_prefix:
+        raise tk.ValidationError(_("Config option ckan.metadata.doi_prefix has not been set"))
+
+    if not re.match(DOI_PREFIX_RE, doi_prefix):
+        raise tk.ValidationError(_("Config option ckan.metadata.doi_prefix specifies an invalid DOI prefix"))
+
+    doi_collection = session.query(model.GroupExtra.value) \
+        .filter_by(key='doi_collection', group_id=metadata_record.extras['metadata_collection_id']) \
+        .scalar()
+    if doi_collection and not doi_collection.endswith('.'):
+        doi_collection += '.'
+
+    while True:
+        doi = '{doi_prefix}/{doi_collection}{unique_number}'.format(
+            doi_prefix=doi_prefix,
+            doi_collection=doi_collection,
+            unique_number='{:.10f}'.format(random.SystemRandom().random())[2:],
+        )
+        # collisions are extremely unlikely, but we check anyway
+        collision = session.query(model.PackageExtra) \
+            .filter_by(key='doi', value=doi) \
+            .first()
+        if not collision:
+            break
+
+    metadata_record.extras['doi'] = doi
+
+    # if there is a JSON attribute mapping for the 'doi' field, then we try to put the new DOI into the metadata JSON
+    doi_json_path = session.query(ckanext_model.MetadataJSONAttrMap.json_path) \
+        .filter_by(metadata_standard_id=metadata_record.extras['metadata_standard_id'],
+                   record_attr='doi', state='active') \
+        .scalar()
+    if doi_json_path:
+        metadata_dict = json.loads(metadata_record.extras['metadata_json'])
+
+        # if the target element for the DOI is nested, we have to make sure the parent element chain exists
+        parents = []
+        parent_path = doi_json_path
+        while True:
+            parent_path = parent_path.rpartition('/')[0]
+            if parent_path:
+                parents.insert(0, parent_path)
+            else:
+                break
+
+        try:
+            for parent in parents:
+                try:
+                    jsonpointer.resolve_pointer(metadata_dict, parent)
+                except jsonpointer.JsonPointerException:
+                    jsonpointer.set_pointer(metadata_dict, parent, {})
+
+            jsonpointer.set_pointer(metadata_dict, doi_json_path, doi)
+            metadata_record.extras['metadata_json'] = json.dumps(metadata_dict)
+
+        except jsonpointer.JsonPointerException:
+            # it's good enough that we've set the 'doi' field above
+            pass
+
+    rev = model.repo.new_revision()
+    rev.author = user
+    if 'message' in context:
+        rev.message = context['message']
+    else:
+        rev.message = _(u'REST API: Assign DOI to metadata record %s') % metadata_record.id
+
+    if not defer_commit:
+        model.repo.commit()
+
+    return doi
