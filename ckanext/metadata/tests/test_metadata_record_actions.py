@@ -136,7 +136,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_create_valid_auto_generate_doi(self):
         metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'],
-                                                                 auto_create_doi=True,
+                                                                 auto_assign_doi=True,
                                                                  doi_collection='foo')
         input_dict = self._make_input_dict()
         input_dict['metadata_collection_id'] = metadata_collection['id']

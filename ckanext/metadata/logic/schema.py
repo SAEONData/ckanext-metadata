@@ -227,7 +227,7 @@ def metadata_collection_create_schema():
         # extension-specific fields
         'organization_id': [v.not_empty, unicode, v.object_exists('organization'), convert_to_extras],
         'doi_collection': [v.not_missing, unicode, v.doi_collection_validator, convert_to_extras],
-        'auto_create_doi': [v.not_missing, boolean_validator, convert_to_extras],
+        'auto_assign_doi': [v.not_missing, boolean_validator, convert_to_extras],
     }
     _make_create_schema(schema)
     return schema
