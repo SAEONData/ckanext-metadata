@@ -147,6 +147,31 @@ class TestMetadataRecordActions(ActionTestBase):
         assert re.match(DOI_RE, doi)
         assert '/FOO.' in doi
 
+    def test_create_valid_auto_generate_doi_update_json(self):
+        metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'],
+                                                                 auto_assign_doi=True,
+                                                                 doi_collection='')
+        self._define_attribute_map('/identifier/identifier', 'doi')
+        metadata_json = load_example('saeon_odp_4.2_record.json')
+        metadata_dict = json.loads(metadata_json)
+        del metadata_dict['identifier']['identifier']
+        metadata_json = json.dumps(metadata_dict)
+
+        input_dict = self._make_input_dict()
+        input_dict['metadata_collection_id'] = metadata_collection['id']
+        input_dict['metadata_json'] = metadata_json
+
+        result, obj = self.test_action('metadata_record_create', **input_dict)
+        doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=obj.id, key='doi') \
+            .scalar()
+        assert re.match(DOI_RE, doi)
+        metadata_json = ckan_model.Session.query(ckan_model.PackageExtra.value) \
+            .filter_by(package_id=obj.id, key='metadata_json') \
+            .scalar()
+        metadata_dict = json.loads(metadata_json)
+        assert metadata_dict['identifier']['identifier'] == doi
+
     def test_create_valid_owner_org_byname(self):
         input_dict = self._make_input_dict()
         input_dict['owner_org'] = self.owner_org['name']

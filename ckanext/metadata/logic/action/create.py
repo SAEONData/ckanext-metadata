@@ -408,6 +408,15 @@ def metadata_record_create(context, data_dict):
     model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], internal_context)
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
+    # auto assign a DOI if applicable
+    if not data_dict['doi']:
+        auto_assign_doi = session.query(model.GroupExtra.value) \
+            .filter_by(key='auto_assign_doi', group_id=data_dict['metadata_collection_id']) \
+            .scalar()
+        if asbool(auto_assign_doi):
+            internal_context['metadata_record'] = internal_context['package']
+            tk.get_action('metadata_record_assign_doi')(internal_context, {'id': metadata_record_id})
+
     if not defer_commit:
         model.repo.commit()
 
