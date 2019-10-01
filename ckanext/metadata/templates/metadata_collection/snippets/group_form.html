@@ -25,6 +25,18 @@
 
     {{ form.image_upload(data, errors, is_upload_enabled=h.uploads_enabled(), is_url=is_url, is_upload=is_upload) }}
 
+    {% call form.checkbox('auto_assign_doi', label=_('Auto Assign DOIs?'), id='field-auto-assign-doi',
+        value=1, checked=data.auto_assign_doi, error=errors.auto_assign_doi,
+        attrs={'onchange': 'change_auto_assign_doi(this.checked);'}) %}
+      {{ form.info(_('Automatically assign DOIs to metadata records in this collection? This is only done for records without a DOI.')) }}
+    {% endcall %}
+
+    {% call form.input('doi_collection', label=_('DOI Collection'), id='field-doi-collection',
+          placeholder=_('(Optional) A qualifier that is inserted into automatically assigned DOIs'),
+          value=data.doi_collection, error=errors.doi_collection) %}
+      {{ form.info(_('For example, if DOI Collection is set to "MY.COLLECTION", a generated DOI would look like "10.4444/MY.COLLECTION.3800020199".')) }}
+    {% endcall %}
+
   {% endblock %}
 
   {{ form.required_message() }}
@@ -38,3 +50,13 @@
     <button class="btn btn-primary" name="save" type="submit">{% block save_text %}{{ _('Save Metadata Collection') }}{% endblock %}</button>
   </div>
 </form>
+
+<script type="text/javascript">
+
+  function change_auto_assign_doi(checked) {
+    document.getElementById("field-doi-collection").readOnly = !checked;
+  }
+
+  change_auto_assign_doi({% if data.auto_assign_doi %} true {% else %} false {% endif %});
+
+</script>

@@ -401,6 +401,9 @@ def metadata_collection_org_unchanged(key, data, errors, context):
     if new_organization_id != old_organization_id:
         raise tk.Invalid(_("Organization cannot be changed"))
 
+    # ensure that we're storing the id, not the name
+    data[key[:-1] + ('organization_id',)] = new_organization_id
+
 
 def doi_collection_validator(key, data, errors, context):
     """

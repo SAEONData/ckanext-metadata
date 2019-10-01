@@ -120,7 +120,7 @@ class MetadataCollectionController(GroupController):
                 msg = str(e)
             tk.h.flash_error(msg)
             tk.c.page = helpers.Page([], 0)
-            return tk.render('metadata_record/index.html')
+            return tk.render('metadata_collection/read.html')
 
         data_dict_page_results = {
             'owner_org': organization_id,
@@ -239,6 +239,7 @@ class MetadataCollectionController(GroupController):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             data_dict['type'] = 'metadata_collection'
+            data_dict.setdefault('auto_assign_doi', False)
             context['message'] = data_dict.get('log_message', '')
             data_dict['users'] = [{'name': tk.c.user, 'capacity': 'admin'}]
             group = tk.get_action('metadata_collection_create')(context, data_dict)
@@ -260,6 +261,7 @@ class MetadataCollectionController(GroupController):
         """
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
+            data_dict.setdefault('auto_assign_doi', False)
             context['message'] = data_dict.get('log_message', '')
             data_dict['id'] = id
             context['allow_partial_update'] = True

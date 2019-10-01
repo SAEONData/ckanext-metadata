@@ -245,6 +245,8 @@ def metadata_collection_show_schema():
     _make_show_schema(schema)
     schema.update({
         'organization_id': [convert_from_extras, v.convert_id_to_name('organization')],
+        'auto_assign_doi': [convert_from_extras, boolean_validator],
+        'doi_collection': [convert_from_extras],
         'extras': _extras_schema(),
         'num_followers': [],
         'package_count': [],
