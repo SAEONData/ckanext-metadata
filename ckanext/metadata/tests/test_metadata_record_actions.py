@@ -136,10 +136,10 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_create_valid_auto_generate_doi(self):
         metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'],
-                                                                 auto_assign_doi=True,
                                                                  doi_collection='foo')
         input_dict = self._make_input_dict()
         input_dict['metadata_collection_id'] = metadata_collection['id']
+        input_dict['auto_assign_doi'] = True
         result, obj = self.test_action('metadata_record_create', **input_dict)
         doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
             .filter_by(package_id=obj.id, key='doi') \
@@ -149,7 +149,6 @@ class TestMetadataRecordActions(ActionTestBase):
 
     def test_create_valid_auto_generate_doi_update_json(self):
         metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'],
-                                                                 auto_assign_doi=True,
                                                                  doi_collection='')
         self._define_attribute_map('/identifier/identifier', 'doi')
         metadata_json = load_example('saeon_odp_4.2_record.json')
@@ -160,6 +159,7 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict = self._make_input_dict()
         input_dict['metadata_collection_id'] = metadata_collection['id']
         input_dict['metadata_json'] = metadata_json
+        input_dict['auto_assign_doi'] = True
 
         result, obj = self.test_action('metadata_record_create', **input_dict)
         doi = ckan_model.Session.query(ckan_model.PackageExtra.value) \
@@ -171,6 +171,13 @@ class TestMetadataRecordActions(ActionTestBase):
             .scalar()
         metadata_dict = json.loads(metadata_json)
         assert metadata_dict['identifier']['identifier'] == doi
+
+    def test_create_invalid_auto_generate_doi_conflict(self):
+        input_dict = self._make_input_dict()
+        input_dict['doi'] = '10.1234/XYZ'
+        input_dict['auto_assign_doi'] = True
+        result, obj = self.test_action('metadata_record_create', should_error=True, **input_dict)
+        assert_error(result, 'message', 'The metadata record already has a DOI')
 
     def test_create_valid_owner_org_byname(self):
         input_dict = self._make_input_dict()

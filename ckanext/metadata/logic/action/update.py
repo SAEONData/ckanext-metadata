@@ -1398,14 +1398,14 @@ def metadata_record_assign_doi(context, data_dict):
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
     if metadata_record.extras['doi']:
-        raise tk.ValidationError(_("The metadata record already has a DOI"))
+        raise tk.ValidationError(_("Cannot assign DOI: The metadata record already has a DOI"))
 
     doi_prefix = config.get('ckan.metadata.doi_prefix')
     if not doi_prefix:
-        raise tk.ValidationError(_("Config option ckan.metadata.doi_prefix has not been set"))
+        raise tk.ValidationError(_("Cannot assign DOI: Config option ckan.metadata.doi_prefix has not been set"))
 
     if not re.match(DOI_PREFIX_RE, doi_prefix):
-        raise tk.ValidationError(_("Config option ckan.metadata.doi_prefix specifies an invalid DOI prefix"))
+        raise tk.ValidationError(_("Cannot assign DOI: Config option ckan.metadata.doi_prefix specifies an invalid DOI prefix"))
 
     doi_collection = session.query(model.GroupExtra.value) \
         .filter_by(key='doi_collection', group_id=metadata_record.extras['metadata_collection_id']) \

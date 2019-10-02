@@ -227,7 +227,6 @@ def metadata_collection_create_schema():
         # extension-specific fields
         'organization_id': [v.not_empty, unicode, v.object_exists('organization'), convert_to_extras],
         'doi_collection': [v.not_missing, unicode, v.doi_collection_validator, convert_to_extras],
-        'auto_assign_doi': [v.not_missing, boolean_validator, convert_to_extras],
     }
     _make_create_schema(schema)
     return schema
@@ -245,7 +244,6 @@ def metadata_collection_show_schema():
     _make_show_schema(schema)
     schema.update({
         'organization_id': [convert_from_extras, v.convert_id_to_name('organization')],
-        'auto_assign_doi': [convert_from_extras, boolean_validator],
         'doi_collection': [convert_from_extras],
         'extras': _extras_schema(),
         'num_followers': [],

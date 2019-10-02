@@ -258,8 +258,6 @@ def metadata_collection_create(context, data_dict):
     :param doi_collection: a qualifier to be inserted into new DOIs after the DOI prefix (nullable);
         e.g. 'DOI.COLLECTION' in '10.12345/DOI.COLLECTION.67890'
     :type doi_collection: string
-    :param auto_assign_doi: automatically generate DOIs for new metadata records in this collection
-    :type auto_assign_doi: boolean
     :param users: the users associated with the collection (optional); a list of dictionaries
         each with key ``'name'`` (string, the id or name of the user) and optionally ``'capacity'``
         (string, the capacity in which the user is a member of the collection)
@@ -326,9 +324,10 @@ def metadata_record_create(context, data_dict):
     :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content
     :type metadata_json: string
-    :param doi: the DOI to be associated with this record (nullable); depending on the metadata collection
-        settings, this may be automatically generated if empty
+    :param doi: the DOI to be associated with this record (nullable)
     :type doi: string
+    :param auto_assign_doi: automatically generate a DOI for this record; if this is True, then 'doi' must be left blank
+    :type auto_assign_doi: boolean
     :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
     :type deserialize_json: boolean
 
@@ -351,6 +350,7 @@ def metadata_record_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
     deserialize_json = asbool(data_dict.get('deserialize_json'))
+    auto_assign_doi = asbool(data_dict.get('auto_assign_doi'))
 
     internal_context = context.copy()
     internal_context['ignore_auth'] = True
@@ -409,13 +409,9 @@ def metadata_record_create(context, data_dict):
     model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
     # auto assign a DOI if applicable
-    if not data_dict['doi']:
-        auto_assign_doi = session.query(model.GroupExtra.value) \
-            .filter_by(key='auto_assign_doi', group_id=data_dict['metadata_collection_id']) \
-            .scalar()
-        if asbool(auto_assign_doi):
-            internal_context['metadata_record'] = internal_context['package']
-            tk.get_action('metadata_record_assign_doi')(internal_context, {'id': metadata_record_id})
+    if auto_assign_doi:
+        internal_context['metadata_record'] = internal_context['package']
+        tk.get_action('metadata_record_assign_doi')(internal_context, {'id': metadata_record_id})
 
     if not defer_commit:
         model.repo.commit()
