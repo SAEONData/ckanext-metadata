@@ -80,8 +80,11 @@ class MetadataRecordController(tk.BaseController):
         data = data or {}
         errors = errors or {}
         error_summary = error_summary or {}
+        metadata_standard_lookup_list = self._metadata_standard_lookup_list()
+        doi_attr_mappings = self._doi_attribute_mappings([ms['value'] for ms in metadata_standard_lookup_list])
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
-                'metadata_standard_lookup_list': self._metadata_standard_lookup_list(),
+                'metadata_standard_lookup_list': metadata_standard_lookup_list,
+                'doi_attr_mappings': doi_attr_mappings,
                 'infrastructure_lookup_list': self._infrastructure_lookup_list()}
 
         tk.c.form = tk.render('metadata_record/edit_form.html', extra_vars=vars)
@@ -104,8 +107,11 @@ class MetadataRecordController(tk.BaseController):
         data = data or tk.c.metadata_record
         errors = errors or {}
         error_summary = error_summary or {}
+        metadata_standard_lookup_list = self._metadata_standard_lookup_list()
+        doi_attr_mappings = self._doi_attribute_mappings([ms['value'] for ms in metadata_standard_lookup_list])
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
-                'metadata_standard_lookup_list': self._metadata_standard_lookup_list(),
+                'metadata_standard_lookup_list': metadata_standard_lookup_list,
+                'doi_attr_mappings': doi_attr_mappings,
                 'infrastructure_lookup_list': self._infrastructure_lookup_list(),
                 'selected_infrastructure_ids': [i['id'] for i in data['infrastructures']]}
 
@@ -360,6 +366,30 @@ class MetadataRecordController(tk.BaseController):
                 for metadata_standard in metadata_standards]
 
     @staticmethod
+    def _doi_attribute_mappings(metadata_standard_names):
+        """
+        Return a dict of {metadata_standard_name: doi_source_path}, where doi_source_path is
+        the MetadataJSONAttrMap.json_path for MetadataJSONAttrMap.record_attr == 'doi', or ''
+        if a 'doi' mapping has not been defined.
+
+        :param metadata_standard_names: list of names of available metadata standards
+        """
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        result = {}
+        for metadata_standard in metadata_standard_names:
+            if not metadata_standard:
+                result[metadata_standard] = ''
+                continue
+            attr_maps = tk.get_action('metadata_json_attr_map_list')(context, {
+                'all_fields': True,
+                'metadata_standard_id': metadata_standard,
+            })
+            doi_source_path = next((attr_map['json_path'] for attr_map in attr_maps
+                                    if attr_map['record_attr'] == 'doi'), '')
+            result[metadata_standard] = doi_source_path
+        return result
+
+    @staticmethod
     def _infrastructure_lookup_list():
         """
         Return a list of {'value': name, 'text': display_name} dicts for populating the
@@ -416,6 +446,7 @@ class MetadataRecordController(tk.BaseController):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             data_dict['infrastructures'] = self._parse_infrastructure_ids(data_dict.get('infrastructure_ids'))
+            data_dict.setdefault('auto_assign_doi', False)
             context['message'] = data_dict.get('log_message', '')
             metadata_record = tk.get_action('metadata_record_create')(context, data_dict)
             tk.h.redirect_to('metadata_record_read', id=metadata_record['id'],
