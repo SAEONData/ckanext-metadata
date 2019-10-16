@@ -37,6 +37,7 @@ _permissions_map = {
             'metadata_record_workflow_state_revert',
             'metadata_record_index_show',
             'metadata_record_index_update',
+            'metadata_record_assign_doi',
             'metadata_standard_list',
             'metadata_standard_show',
             'infrastructure_list',
@@ -54,6 +55,8 @@ _permissions_map = {
             'metadata_collection_create',
             'metadata_collection_update',
             'metadata_collection_delete',
+            'metadata_collection_validate',
+            'metadata_collection_workflow_state_transition',
         ],
     },
 
@@ -78,6 +81,8 @@ _permissions_map = {
             'infrastructure_create',
             'infrastructure_update',
             'infrastructure_delete',
+            'infrastructure_member_create',
+            'infrastructure_member_delete',
         ],
     },
 
