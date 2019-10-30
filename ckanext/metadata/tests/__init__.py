@@ -37,7 +37,7 @@ _model_map = {
 
 
 def load_example(filename):
-    return pkg_resources.resource_string(__name__, '../../../examples/' + filename)
+    return pkg_resources.resource_string(__name__, '../../../schema/' + filename)
 
 
 def config_filename():
