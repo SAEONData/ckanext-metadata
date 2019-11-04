@@ -602,18 +602,24 @@ def metadata_record_validate(context, data_dict):
 
     validation_results = []
     accumulated_errors = {}
+    metadata_dict = json.loads(metadata_record.extras['metadata_json'])
+
     for metadata_schema in validation_schemas:
         validate_context = context.copy()
         validate_context.update({
             'allow_side_effects': True,
             'ignore_auth': True,
         })
-
-        metadata_dict = json.loads(metadata_record.extras['metadata_json'])
         schema_dict = json.loads(metadata_schema['schema_json'])
-
         json_validator = MetadataValidator(schema_dict, metadata_record_id, validate_context)
+
         validation_errors = json_validator.validate(metadata_dict)
+        if not validation_errors:
+            # if validation modified the metadata, we update the local dict and the stored JSON
+            if metadata_dict != json_validator.jsonschema_validator.root_instance:
+                metadata_dict = json_validator.jsonschema_validator.root_instance.copy()
+                metadata_record.extras['metadata_json'] = json.dumps(metadata_dict)
+
         validation_result = {
             'metadata_schema_id': metadata_schema['id'],
             'errors': validation_errors,

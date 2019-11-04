@@ -3,10 +3,11 @@
 import jsonschema
 import jsonschema.validators
 import jsonschema._utils
+import jsonpointer
+import jsonpatch
 from datetime import datetime
 import re
 import urlparse
-from jsonpointer import resolve_pointer, JsonPointerException
 import sys
 import requests
 from requests.exceptions import RequestException
@@ -121,16 +122,16 @@ def task_validator(validator, task_dict, instance, schema):
     """
     "task" keyword validator: adds a task to the validator, which will call the specified action
     (for the object currently being validated) post-validation if this instance is otherwise valid.
-    A task looks like:
-    {
-        'action': API action name,
-        'params': array of [{
-            'param': a key in the data_dict to be passed to the action,
-            'valueRelPath': JSON pointer into this instance where the value is located
-        }],
-        'errorAbsPath': JSON pointer into the whole document; the task will only be executed if
-            the instance at this location contains no errors
-    }
+    A task looks like::
+        {
+            'action': API action name,
+            'params': array of [{
+                'param': a key in the data_dict to be passed to the action,
+                'valueRelPath': JSON pointer into this instance where the value is located
+            }],
+            'errorAbsPath': JSON pointer into the whole document; the task will only be executed if
+                the instance at this location contains no errors
+        }
 
     Note: Validation is usually expected to be a side effect-free process. However, because
     a task likely will cause side effects (i.e. updates to DB objects, besides validation logs),
@@ -161,17 +162,17 @@ def task_validator(validator, task_dict, instance, schema):
         data_dict = {'id': validator.object_id}
         try:
             for param in params:
-                data_dict[param['param']] = resolve_pointer(instance, param['valueRelPath'])
+                data_dict[param['param']] = jsonpointer.resolve_pointer(instance, param['valueRelPath'])
         except (TypeError, KeyError):
             errors = True
             yield jsonschema.ValidationError(_("Invalid params array"))
-        except JsonPointerException:
+        except jsonpointer.JsonPointerException:
             errors = True
             yield jsonschema.ValidationError(_("valueRelPath: invalid JSON pointer"))
 
         try:
-            resolve_pointer(validator.root_instance, error_path)
-        except JsonPointerException:
+            jsonpointer.resolve_pointer(validator.root_instance, error_path)
+        except jsonpointer.JsonPointerException:
             errors = True
             yield jsonschema.ValidationError(_("errorAbsPath: invalid JSON pointer"))
 
@@ -206,6 +207,65 @@ def url_test_validator(validator, url_exists, instance, schema):
         except RequestException, e:
             if url_exists:
                 yield jsonschema.ValidationError(e.message)
+
+
+def map_to_validator(validator, map_dict, instance, schema):
+    """
+    "mapTo" keyword validator: copies the instance to a target element, optionally passing it
+    through a conversion function. The target is replaced if already present in the document.
+    "mapTo" is a dict with the following structure::
+        {
+            "target": JSON pointer to the target location,
+            "converter": string representing a registered conversion function (optional),
+        }
+    """
+    if validator.is_type(map_dict, 'object'):
+        target = map_dict.get('target')
+        converter = map_dict.get('converter')
+        value = instance
+        errors = False
+
+        if not target:
+            errors = True
+            yield jsonschema.ValidationError(_("target not specified"))
+        elif target == '/':
+            errors = True
+            yield jsonschema.ValidationError(_("target cannot be the document root"))
+        else:
+            try:
+                jsonpointer.JsonPointer(target)
+            except (TypeError, jsonpointer.JsonPointerException):
+                errors = True
+                yield jsonschema.ValidationError(_("target: invalid JSON pointer"))
+
+        converter_func = None
+        if converter is not None:
+            try:
+                converter_func = validator.converters[converter]
+            except KeyError:
+                errors = True
+                yield jsonschema.ValidationError(_("converter '{}' not found".format(converter)))
+
+        if converter_func:
+            try:
+                value = converter_func(value)
+            except:
+                errors = True
+                yield jsonschema.ValidationError(_("Unable to convert value using '{}'".format(converter)))
+
+        if errors:
+            return
+
+        operation = {
+            'op': 'add',
+            'path': target,
+            'value': value,
+        }
+        try:
+            patch = jsonpatch.JsonPatch([operation])
+            patch.apply(validator.root_instance, in_place=True)
+        except (TypeError, jsonpatch.JsonPatchException, jsonpointer.JsonPointerException), e:
+            yield jsonschema.ValidationError(_("Error applying mapping: {}".format(e)))
 
 
 @checks_format('doi')
@@ -335,3 +395,11 @@ def is_latitude(instance):
         return -90 <= float(instance) <= 90
     except ValueError:
         return False
+
+
+def date_to_year(instance):
+    """
+    "date-to-year" converter for the "mapTo" keyword validator.
+    """
+    dt = datetime.strptime(instance, '%Y-%m-%d')
+    return str(dt.year)

@@ -40,6 +40,7 @@ class JSONValidator(object):
         jsonschema_validator_cls.check_schema(schema)
         jsonschema_validator_cls.VALIDATORS.update(self._validators())
         jsonschema_validator_cls.add_post_validation_task = add_post_validation_task
+        jsonschema_validator_cls.converters = self._converters()
 
         formats = self._formats()
         if 'uri' in formats:
@@ -70,6 +71,14 @@ class JSONValidator(object):
         :return: list of strings
         """
         return []
+
+    @classmethod
+    def _converters(cls):
+        """
+        Define the converter functions available for "mapTo" functions.
+        :return: dict of {string: function}
+        """
+        return {}
 
     @classmethod
     def check_schema(cls, schema):

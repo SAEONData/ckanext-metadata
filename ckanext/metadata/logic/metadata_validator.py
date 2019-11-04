@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 from ckanext.metadata.logic.json_validator import JSONValidator
-from ckanext.metadata.logic.json_validator_functions import vocabulary_validator, task_validator, item_cardinality_validator
+from ckanext.metadata.logic import json_validator_functions as jvf
 
 
 class MetadataValidator(JSONValidator):
@@ -16,8 +16,9 @@ class MetadataValidator(JSONValidator):
     @classmethod
     def _validators(cls):
         return {
-            'vocabulary': vocabulary_validator,
-            'itemCardinality': item_cardinality_validator,
+            'vocabulary': jvf.vocabulary_validator,
+            'itemCardinality': jvf.item_cardinality_validator,
+            'mapTo': jvf.map_to_validator,
         }
 
     @classmethod
@@ -37,3 +38,9 @@ class MetadataValidator(JSONValidator):
             'longitude',
             'latitude',
         ]
+
+    @classmethod
+    def _converters(cls):
+        return {
+            'date-to-year': jvf.date_to_year,
+        }
