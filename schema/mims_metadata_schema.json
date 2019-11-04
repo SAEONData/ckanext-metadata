@@ -1,0 +1,80 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "definitions": {
+        "responsiblePartyRole": {
+            "type": "string",
+            "enum": [
+                "resourceProvider",
+                "custodian",
+                "owner",
+                "user",
+                "distributor",
+                "originator",
+                "pointOfContact",
+                "principalInvestigator",
+                "processor",
+                "publisher"
+            ]
+        },
+        "onlineResource": {
+            "type": "object",
+            "properties": {
+                "linkage": {"type": "string", "format": "uri"},
+                "applicationProfile": {"type": "string"},
+                "name": {"type": "string"},
+                "description": {
+                    "type": "string",
+                    "enum": [
+                        "download",
+                        "information",
+                        "offlineAccess",
+                        "order",
+                        "search"
+                    ]
+                }
+            }
+        }
+    },
+
+    "type": "object",
+
+    "properties": {
+        "title": {
+            "type": "string",
+            "mapTo": {
+                "target": "/titles/0/title"
+            }
+        },
+        "publicationDate": {
+            "type": "string",
+            "format": "date",
+            "mapTo": {
+                "target": "/publicationYear",
+                "converter": "date-to-year"
+            }
+        },
+        "responsibleParties": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "individualName": {"type": "string"},
+                    "organizationName": {"type": "string"},
+                    "positionName": {"type": "string"},
+                    "contactInfo": {"type": "string"},
+                    "role": {"$ref": "#/definitions/responsiblePartyRole"},
+                    "onlineResource": {"$ref": "#/definitions/onlineResource"}
+                }
+            }
+        }
+    },
+
+    "additionalProperties": false,
+
+    "required": [
+        "title",
+        "publicationDate",
+        "responsibleParties"
+    ]
+}
