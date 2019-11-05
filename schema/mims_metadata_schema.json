@@ -1,6 +1,36 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
 
+    "type": "object",
+
+    "propertyNames": {
+        "$comment": "Declares all capturable properties as well as automatically mapped properties.",
+        "oneOf": [
+            {"const": "title"},
+            {"const": "publicationDate"},
+            {"const": "responsibleParties"},
+            {"const": "titles"},
+            {"const": "publicationYear"},
+            {"const": "publisher"},
+            {"const": "creators"},
+            {"const": "contributors"}
+        ]
+    },
+
+    "required": [
+        "title",
+        "publicationDate",
+        "responsibleParties"
+    ],
+
+    "mapInit": {
+        "titles": "array",
+        "publicationYear": "string",
+        "publisher": "string",
+        "creators": "array",
+        "contributors": "array"
+    },
+
     "definitions": {
         "responsiblePartyRole": {
             "type": "string",
@@ -33,17 +63,59 @@
                         "search"
                     ]
                 }
+            },
+            "required": ["linkage"],
+            "additionalProperties": false
+        },
+        "nameIdentifiersMapping": {
+            "$comment": "Used in mapping from responsibleParties to (DataCite) creators/contributors",
+            "type": "array",
+            "count": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "nameIdentifier": {
+                        "type": "string",
+                        "sourceProperties": ["onlineResource/name"]
+                    },
+                    "nameIdentifierScheme": {
+                        "type": "string",
+                        "sourceProperties": ["onlineResource/applicationProfile"]
+                    },
+                    "schemeURI": {
+                        "type": "string",
+                        "sourceProperties": ["onlineResource/linkage"]
+                    }
+                }
+            }
+        },
+        "affiliationsMapping": {
+            "$comment": "Used in mapping from responsibleParties to (DataCite) creators/contributors",
+            "type": "array",
+            "count": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "affiliation": {
+                        "type": "string",
+                        "sourceProperties": ["organizationName", "positionName", "contactInfo"]
+                    }
+                }
             }
         }
     },
-
-    "type": "object",
 
     "properties": {
         "title": {
             "type": "string",
             "mapTo": {
-                "target": "/titles/0/title"
+                "target": "/titles/-",
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"}
+                    }
+                }
             }
         },
         "publicationDate": {
@@ -51,7 +123,10 @@
             "format": "date",
             "mapTo": {
                 "target": "/publicationYear",
-                "converter": "date-to-year"
+                "value": {
+                    "type": "string",
+                    "converter": "date-to-year"
+                }
             }
         },
         "responsibleParties": {
@@ -65,16 +140,100 @@
                     "contactInfo": {"type": "string"},
                     "role": {"$ref": "#/definitions/responsiblePartyRole"},
                     "onlineResource": {"$ref": "#/definitions/onlineResource"}
-                }
+                },
+                "required": ["individualName", "organizationName", "contactInfo", "role"],
+                "additionalProperties": false,
+                "oneOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "role": {"const": "publisher"}
+                            }
+                        },
+                        "then": {
+                            "mapTo": {
+                                "target": "/publisher",
+                                "value": {
+                                    "type": "string",
+                                    "sourceProperties": ["organizationName"]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "if": {
+                            "properties": {
+                                "role": {
+                                    "oneOf": [
+                                        {"const": "originator"},
+                                        {"const": "principalInvestigator"}
+                                    ]
+                                }
+                            }
+                        },
+                        "then": {
+                            "mapTo": {
+                                "target": "/creators/-",
+                                "value": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string",
+                                            "sourceProperties": ["individualName"]
+                                        },
+                                        "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiersMapping"},
+                                        "affiliations": {"$ref": "#/definitions/affiliationsMapping"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "if": {
+                            "properties": {
+                                "role": {
+                                    "oneOf": [
+                                        {"const": "resourceProvider"},
+                                        {"const": "custodian"},
+                                        {"const": "owner"},
+                                        {"const": "distributor"},
+                                        {"const": "pointOfContact"},
+                                        {"const": "processor"}
+                                    ]
+                                }
+                            }
+                        },
+                        "then": {
+                            "mapTo": {
+                                "target": "/contributors/-",
+                                "value": {
+                                    "type": "object",
+                                    "properties": {
+                                        "contributorType": {
+                                            "type": "string",
+                                            "sourceProperties": ["role"],
+                                            "valueMap": {
+                                                "resourceProvider": "HostingInstitution",
+                                                "custodian": "DataManager",
+                                                "owner": "RightsHolder",
+                                                "distributor": "Distributor",
+                                                "pointOfContact": "ContactPerson",
+                                                "processor": "ProjectMember"
+                                            }
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "sourceProperties": ["individualName"]
+                                        },
+                                        "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiersMapping"},
+                                        "affiliations": {"$ref": "#/definitions/affiliationsMapping"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         }
-    },
-
-    "additionalProperties": false,
-
-    "required": [
-        "title",
-        "publicationDate",
-        "responsibleParties"
-    ]
+    }
 }
