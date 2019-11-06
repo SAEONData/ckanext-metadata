@@ -187,6 +187,29 @@ class JSONValidator(object):
             elif error.schema_path[-1] == 'urlTest':
                 error.message = 'URL test failed'
 
+            elif error.schema_path[-1] == 'oneOf':
+                error.path.append('__oneOf')
+                error.message = 'Instance is not valid under exactly one of the given schemas'
+                # hacky way to see if we've used "oneOf" and "if-then-else" to make a switch statement
+                is_switch = False
+                err_i = -1
+                err_msg = ''
+                for i, err in enumerate(error.context):
+                    if str(err).startswith('False schema does not allow '):
+                        # this option failed its "if" condition and aborted at the "else": false
+                        is_switch = True
+                    else:
+                        # this option matched its "if" condition but threw a validation error
+                        err_i = i
+                        err_msg = str(err)
+                if is_switch:
+                    error.path.append(err_i)
+                    error.message = err_msg
+
+            elif error.schema_path[-1] == 'anyOf':
+                error.path.append('__anyOf')
+                error.message = 'Instance is not valid under any of the given schemas'
+
             add_error(errors, error.path, error.message)
 
         for task in self.jsonschema_validator.tasks:

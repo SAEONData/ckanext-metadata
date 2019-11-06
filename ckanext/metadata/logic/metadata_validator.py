@@ -18,6 +18,7 @@ class MetadataValidator(JSONValidator):
         return {
             'vocabulary': jvf.vocabulary_validator,
             'itemCardinality': jvf.item_cardinality_validator,
+            'mapInit': jvf.map_init_validator,
             'mapTo': jvf.map_to_validator,
         }
 

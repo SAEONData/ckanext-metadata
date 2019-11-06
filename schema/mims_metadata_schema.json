@@ -66,42 +66,6 @@
             },
             "required": ["linkage"],
             "additionalProperties": false
-        },
-        "nameIdentifiersMapping": {
-            "$comment": "Used in mapping from responsibleParties to (DataCite) creators/contributors",
-            "type": "array",
-            "count": 1,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "nameIdentifier": {
-                        "type": "string",
-                        "sourceProperties": ["onlineResource/name"]
-                    },
-                    "nameIdentifierScheme": {
-                        "type": "string",
-                        "sourceProperties": ["onlineResource/applicationProfile"]
-                    },
-                    "schemeURI": {
-                        "type": "string",
-                        "sourceProperties": ["onlineResource/linkage"]
-                    }
-                }
-            }
-        },
-        "affiliationsMapping": {
-            "$comment": "Used in mapping from responsibleParties to (DataCite) creators/contributors",
-            "type": "array",
-            "count": 1,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "affiliation": {
-                        "type": "string",
-                        "sourceProperties": ["organizationName", "positionName", "contactInfo"]
-                    }
-                }
-            }
         }
     },
 
@@ -155,10 +119,11 @@
                                 "target": "/publisher",
                                 "value": {
                                     "type": "string",
-                                    "sourceProperties": ["organizationName"]
+                                    "source": "organizationName"
                                 }
                             }
-                        }
+                        },
+                        "else": false
                     },
                     {
                         "if": {
@@ -179,14 +144,34 @@
                                     "properties": {
                                         "name": {
                                             "type": "string",
-                                            "sourceProperties": ["individualName"]
+                                            "source": "individualName"
                                         },
-                                        "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiersMapping"},
-                                        "affiliations": {"$ref": "#/definitions/affiliationsMapping"}
+                                        "nameIdentifiers": {
+                                            "type": "array",
+                                            "source": "onlineResource",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "nameIdentifier": {"type": "string", "source": "name"},
+                                                    "nameIdentifierScheme": {"type": "string", "source": "applicationProfile"},
+                                                    "schemeURI": {"type": "string", "source": "linkage"}
+                                                }
+                                            }
+                                        },
+                                        "affiliations": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "affiliation": {"type": "string", "source": ["organizationName", "positionName", "contactInfo"]}
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
+                        },
+                        "else": false
                     },
                     {
                         "if": {
@@ -211,8 +196,8 @@
                                     "properties": {
                                         "contributorType": {
                                             "type": "string",
-                                            "sourceProperties": ["role"],
-                                            "valueMap": {
+                                            "source": "role",
+                                            "converter": {
                                                 "resourceProvider": "HostingInstitution",
                                                 "custodian": "DataManager",
                                                 "owner": "RightsHolder",
@@ -223,14 +208,34 @@
                                         },
                                         "name": {
                                             "type": "string",
-                                            "sourceProperties": ["individualName"]
+                                            "source": "individualName"
                                         },
-                                        "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiersMapping"},
-                                        "affiliations": {"$ref": "#/definitions/affiliationsMapping"}
+                                        "nameIdentifiers": {
+                                            "type": "array",
+                                            "source": "onlineResource",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "nameIdentifier": {"type": "string", "source": "name"},
+                                                    "nameIdentifierScheme": {"type": "string", "source": "applicationProfile"},
+                                                    "schemeURI": {"type": "string", "source": "linkage"}
+                                                }
+                                            }
+                                        },
+                                        "affiliations": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "affiliation": {"type": "string", "source": ["organizationName", "positionName", "contactInfo"]}
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
+                        },
+                        "else": false
                     }
                 ]
             }

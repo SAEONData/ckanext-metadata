@@ -209,61 +209,157 @@ def url_test_validator(validator, url_exists, instance, schema):
                 yield jsonschema.ValidationError(e.message)
 
 
-def map_to_validator(validator, map_dict, instance, schema):
+def map_init_validator(validator, target_elements, instance, schema):
     """
-    "mapTo" keyword validator: copies the instance to a target element, optionally passing it
-    through a conversion function. The target is replaced if already present in the document.
-    "mapTo" is a dict with the following structure::
+    "mapInit" keyword validator: initializes the top-level target elements that will be
+    written to by "mapTo" operations.
+
+    "mapInit" is a dict containing the target element names and their corresponding types.
+    """
+    if validator.is_type(target_elements, 'object'):
+        for target_name, target_type in target_elements.iteritems():
+            if target_type == 'string':
+                validator.root_instance[target_name] = ''
+            elif target_type == 'array':
+                validator.root_instance[target_name] = []
+            else:
+                yield jsonschema.ValidationError(_("Unsupported top-level target element type"))
+
+
+def map_to_validator(validator, map_params, instance, schema):
+    """
+    "mapTo" keyword validator: provides flexible copying of data from the instance being
+    validated to a different location in the document, where the target may be differently
+    structured and have different semantics.
+
+    "mapTo" is a dict with the following structure:
+    ::
         {
-            "target": JSON pointer to the target location,
-            "converter": string representing a registered conversion function (optional),
+            "target": JSON pointer to the target location
+            "value": schema for the value to be inserted at the target location
+        }
+
+    The "value" schema has the following structure:
+    ::
+        {
+            "type": (mandatory)
+                - the JSON type of the target value; only "string", "array" and "object" are supported
+            "source": (optional)
+                - if this is a string, it specifies the property on the current instance from which the
+                  target value is obtained
+                - for a target type of string, this may be a list of strings; it specifies the properties
+                  on the current instance from which the target value is constructed, by concatenating
+                  source values, separated by newlines
+                - if this is not specified, then the entire current instance is used as the source of the
+                  target value
+            "converter": (optional, for a target type of string)
+                - if this is a dict, it defines a simple vocabulary converter, with key-value pairs
+                  specifying source-target keyword conversions
+                - if this is a string, it indicates a conversion function (linked to a Python routine
+                  in JSONValidator._converters), which takes the source value as input and returns the
+                  target value
+            "items": (mandatory, for a target type of array)
+                - defines a nested "value" schema to be used for every item in the target array
+            "properties": (mandatory, for a target type of object)
+                - defines nested "value" schemas to be used for each property in the target object
         }
     """
-    if validator.is_type(map_dict, 'object'):
-        target = map_dict.get('target')
-        converter = map_dict.get('converter')
-        value = instance
+    def make_value(source_instance, **kwargs):
+        target_type = kwargs.get('type')
+        source_prop = kwargs.pop('source', None)
+
+        if not target_type:
+            raise SyntaxError(_("A 'type' must be specified for the target value"))
+        if source_prop and type(source_instance) is not dict:
+            raise SyntaxError(_("The 'source' keyword can only be used with object instances"))
+
+        if isinstance(source_prop, basestring):
+            if source_prop in source_instance:
+                return make_value(source_instance[source_prop], **kwargs)
+            return None
+        elif type(source_prop) is list:
+            if target_type != 'string':
+                raise SyntaxError(_("The 'source' keyword can only specify a list of properties if the target type is 'string'"))
+            result = []
+            for source_prop_i in source_prop:
+                if source_prop_i in source_instance:
+                    result += [make_value(source_instance[source_prop_i], **kwargs)]
+            return '\n'.join(result)
+
+        if target_type == 'string':
+            converter = kwargs.pop('converter', None)
+            if type(converter) is dict:
+                return converter.get(str(source_instance), str(source_instance))
+            elif isinstance(converter, basestring):
+                if converter not in validator.converters:
+                    raise SyntaxError(_("Converter '{}' not found".format(converter)))
+                converter_fn = validator.converters[converter]
+                try:
+                    return str(converter_fn(source_instance))
+                except Exception, e:
+                    raise ValueError(_("Unable to convert value using '{}' function: {}".format(converter, e)))
+            return str(source_instance)
+
+        elif target_type == 'array':
+            item_schema = kwargs.pop('items', None)
+            if type(item_schema) is not dict:
+                raise SyntaxError(_("An 'items' dictionary must be defined for a target type of 'array'"))
+            if type(source_instance) is list:
+                return [make_value(source_item, **item_schema) for source_item in source_instance]
+            return [make_value(source_instance, **item_schema)]
+
+        elif target_type == 'object':
+            properties = kwargs.pop('properties', None)
+            if type(properties) is not dict:
+                raise SyntaxError(_("A 'properties' dictionary must be defined for a target type of 'object'"))
+            result = {}
+            for prop_name, prop_schema in properties.iteritems():
+                if type(prop_schema) is not dict:
+                    raise SyntaxError(_("The value for each property, for a target type of 'object', must be a dictionary"))
+                result[prop_name] = make_value(source_instance, **prop_schema)
+            return result
+
+        else:
+            raise SyntaxError(_("Unsupported 'type' for target: '{}'".format(target_type)))
+
+    if validator.is_type(map_params, 'object'):
+        target_path = map_params.get('target')
+        value_schema = map_params.get('value')
         errors = False
 
-        if not target:
+        if not target_path:
             errors = True
-            yield jsonschema.ValidationError(_("target not specified"))
-        elif target == '/':
+            yield jsonschema.ValidationError(_("A 'target' must be defined"))
+        elif target_path == '/':
             errors = True
-            yield jsonschema.ValidationError(_("target cannot be the document root"))
+            yield jsonschema.ValidationError(_("'target' cannot be the document root"))
         else:
             try:
-                jsonpointer.JsonPointer(target)
+                jsonpointer.JsonPointer(target_path)
             except (TypeError, jsonpointer.JsonPointerException):
                 errors = True
-                yield jsonschema.ValidationError(_("target: invalid JSON pointer"))
+                yield jsonschema.ValidationError(_("'target': invalid JSON pointer"))
 
-        converter_func = None
-        if converter is not None:
-            try:
-                converter_func = validator.converters[converter]
-            except KeyError:
-                errors = True
-                yield jsonschema.ValidationError(_("converter '{}' not found".format(converter)))
-
-        if converter_func:
-            try:
-                value = converter_func(value)
-            except:
-                errors = True
-                yield jsonschema.ValidationError(_("Unable to convert value using '{}'".format(converter)))
+        if type(value_schema) is not dict:
+            errors = True
+            yield jsonschema.ValidationError(_("A 'value' schema dictionary must be defined"))
 
         if errors:
             return
 
-        operation = {
-            'op': 'add',
-            'path': target,
-            'value': value,
-        }
         try:
+            operation = {
+                'op': 'add',
+                'path': target_path,
+                'value': make_value(instance, **value_schema),
+            }
             patch = jsonpatch.JsonPatch([operation])
             patch.apply(validator.root_instance, in_place=True)
+
+        except SyntaxError, e:
+            yield jsonschema.ValidationError(_("Schema syntax error: {}".format(e)))
+        except ValueError, e:
+            yield jsonschema.ValidationError(_(str(e)))
         except (TypeError, jsonpatch.JsonPatchException, jsonpointer.JsonPointerException), e:
             yield jsonschema.ValidationError(_("Error applying mapping: {}".format(e)))
 
