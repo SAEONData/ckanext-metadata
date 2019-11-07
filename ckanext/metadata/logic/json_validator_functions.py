@@ -219,7 +219,7 @@ def map_init_validator(validator, target_elements, instance, schema):
     if validator.is_type(target_elements, 'object'):
         for target_name, target_type in target_elements.iteritems():
             if target_type == 'string':
-                validator.root_instance[target_name] = ''
+                validator.root_instance.pop(target_name, None)
             elif target_type == 'array':
                 validator.root_instance[target_name] = []
             else:
@@ -283,7 +283,9 @@ def map_to_validator(validator, map_params, instance, schema):
             result = []
             for source_prop_i in source_prop:
                 if source_prop_i in source_instance:
-                    result += [make_value(source_instance[source_prop_i], **kwargs)]
+                    value = make_value(source_instance[source_prop_i], **kwargs)
+                    if value:
+                        result += [value]
             return '\n'.join(result)
 
         if target_type == 'string':
@@ -304,9 +306,17 @@ def map_to_validator(validator, map_params, instance, schema):
             item_schema = kwargs.pop('items', None)
             if type(item_schema) is not dict:
                 raise SyntaxError(_("An 'items' dictionary must be defined for a target type of 'array'"))
+            result = []
             if type(source_instance) is list:
-                return [make_value(source_item, **item_schema) for source_item in source_instance]
-            return [make_value(source_instance, **item_schema)]
+                for source_item in source_instance:
+                    value = make_value(source_item, **item_schema)
+                    if value:
+                        result += [value]
+            else:
+                value = make_value(source_instance, **item_schema)
+                if value:
+                    result = [value]
+            return result
 
         elif target_type == 'object':
             properties = kwargs.pop('properties', None)
@@ -316,7 +326,9 @@ def map_to_validator(validator, map_params, instance, schema):
             for prop_name, prop_schema in properties.iteritems():
                 if type(prop_schema) is not dict:
                     raise SyntaxError(_("The value for each property, for a target type of 'object', must be a dictionary"))
-                result[prop_name] = make_value(source_instance, **prop_schema)
+                value = make_value(source_instance, **prop_schema)
+                if value:
+                    result[prop_name] = value
             return result
 
         else:
@@ -348,13 +360,15 @@ def map_to_validator(validator, map_params, instance, schema):
             return
 
         try:
-            operation = {
-                'op': 'add',
-                'path': target_path,
-                'value': make_value(instance, **value_schema),
-            }
-            patch = jsonpatch.JsonPatch([operation])
-            patch.apply(validator.root_instance, in_place=True)
+            value = make_value(instance, **value_schema)
+            if value:
+                operation = {
+                    'op': 'add',
+                    'path': target_path,
+                    'value': value,
+                }
+                patch = jsonpatch.JsonPatch([operation])
+                patch.apply(validator.root_instance, in_place=True)
 
         except SyntaxError, e:
             yield jsonschema.ValidationError(_("Schema syntax error: {}".format(e)))
