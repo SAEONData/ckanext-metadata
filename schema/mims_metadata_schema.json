@@ -95,6 +95,11 @@
         },
         "responsibleParties": {
             "type": "array",
+            "allOf": [
+                {"contains": {"properties": {"role": {"const": "originator"}}}},
+                {"contains": {"properties": {"role": {"const": "publisher"}}}},
+                {"contains": {"properties": {"role": {"const": "pointOfContact"}}, "required": ["contactInfo"]}}
+            ],
             "items": {
                 "type": "object",
                 "properties": {
@@ -105,7 +110,7 @@
                     "role": {"$ref": "#/definitions/responsiblePartyRole"},
                     "onlineResource": {"$ref": "#/definitions/onlineResource"}
                 },
-                "required": ["individualName", "organizationName", "contactInfo", "role"],
+                "required": ["individualName", "organizationName", "role"],
                 "additionalProperties": false,
                 "oneOf": [
                     {

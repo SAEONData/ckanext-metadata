@@ -17,6 +17,11 @@
             "positionName": "Land-Sea Interface Consultant",
             "contactInfo": "Intertidal Zone, Seashore Business Park",
             "role": "pointOfContact"
+        },
+        {
+            "individualName": "Polly the Parrotfish",
+            "organizationName": "Reef Community",
+            "role": "publisher"
         }
     ]
 }
