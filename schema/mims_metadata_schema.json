@@ -152,9 +152,9 @@
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "nameIdentifier": {"type": "string", "source": "name"},
-                                                    "nameIdentifierScheme": {"type": "string", "source": "applicationProfile"},
-                                                    "schemeURI": {"type": "string", "source": "linkage"}
+                                                    "nameIdentifier": {"type": "string", "source": "linkage"},
+                                                    "nameIdentifierScheme": {"type": "string", "source": "linkage", "converter": "link-to-base-url"},
+                                                    "schemeURI": {"type": "string", "source": "linkage", "converter": "link-to-base-url"}
                                                 }
                                             }
                                         },
@@ -216,9 +216,9 @@
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "nameIdentifier": {"type": "string", "source": "name"},
-                                                    "nameIdentifierScheme": {"type": "string", "source": "applicationProfile"},
-                                                    "schemeURI": {"type": "string", "source": "linkage"}
+                                                    "nameIdentifier": {"type": "string", "source": "linkage"},
+                                                    "nameIdentifierScheme": {"type": "string", "source": "linkage", "converter": "link-to-base-url"},
+                                                    "schemeURI": {"type": "string", "source": "linkage", "converter": "link-to-base-url"}
                                                 }
                                             }
                                         },

@@ -6,7 +6,17 @@
             "individualName": "Ophelia the Octopus",
             "organizationName": "The Octopus's Garden",
             "contactInfo": "Under The Sea",
-            "role": "originator"
+            "role": "originator",
+            "onlineResource": {
+                "linkage": "https://orcid.org/0000-0002-3843-3472"
+            }
+        },
+        {
+            "individualName": "Leroy the Limpet",
+            "organizationName": "Rock Pool Inc",
+            "positionName": "Land-Sea Interface Consultant",
+            "contactInfo": "Intertidal Zone, Seashore Business Park",
+            "role": "pointOfContact"
         }
     ]
 }

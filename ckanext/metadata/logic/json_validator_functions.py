@@ -513,3 +513,12 @@ def date_to_year(instance):
     """
     dt = datetime.strptime(instance, '%Y-%m-%d')
     return str(dt.year)
+
+
+def link_to_base_url(instance):
+    """
+    "link-to-base-url" converter for the "mapTo" keyword validator.
+    e.g. given "https://orcid.org/0000-0002-3843-3472" returns "https://orcid.org"
+    """
+    urlparts = urlparse.urlparse(instance)
+    return '{}://{}'.format(urlparts.scheme, urlparts.netloc)

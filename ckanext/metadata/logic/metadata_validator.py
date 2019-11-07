@@ -44,4 +44,5 @@ class MetadataValidator(JSONValidator):
     def _converters(cls):
         return {
             'date-to-year': jvf.date_to_year,
+            'link-to-base-url': jvf.link_to_base_url,
         }
