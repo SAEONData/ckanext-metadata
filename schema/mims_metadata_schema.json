@@ -9,18 +9,31 @@
             {"const": "title"},
             {"const": "publicationDate"},
             {"const": "responsibleParties"},
+            {"const": "datasetLanguages"},
+            {"const": "dataCharacterSet"},
+            {"const": "topicCategories"},
+            {"const": "abstract"},
+            {"const": "distributionFormats"},
             {"const": "titles"},
             {"const": "publicationYear"},
             {"const": "publisher"},
             {"const": "creators"},
-            {"const": "contributors"}
+            {"const": "contributors"},
+            {"const": "subjects"},
+            {"const": "descriptions"},
+            {"const": "formats"}
         ]
     },
 
     "required": [
         "title",
         "publicationDate",
-        "responsibleParties"
+        "responsibleParties",
+        "datasetLanguages",
+        "dataCharacterSet",
+        "topicCategories",
+        "abstract",
+        "distributionFormats"
     ],
 
     "mapInit": {
@@ -28,7 +41,10 @@
         "publicationYear": "string",
         "publisher": "string",
         "creators": "array",
-        "contributors": "array"
+        "contributors": "array",
+        "subjects": "array",
+        "descriptions": "array",
+        "formats": "array"
     },
 
     "definitions": {
@@ -66,6 +82,41 @@
             },
             "required": ["linkage"],
             "additionalProperties": false
+        },
+        "dataCharacterSetCode": {
+            "type": "string",
+            "enum": [
+                "ucs2",
+                "ucs4",
+                "utf7",
+                "utf8",
+                "utf16",
+                "UsASCII"
+            ]
+        },
+        "topicCategoryCode": {
+            "type": "string",
+            "enum": [
+                "farming",
+                "biota",
+                "boundaries",
+                "climatologyMeteorologyAtmoshere",
+                "economy",
+                "elevation",
+                "environment",
+                "geoscientificInformation",
+                "health",
+                "imageryBaseMapsEarth-Cover",
+                "intelligenceMilitary",
+                "inlandWaters",
+                "location",
+                "oceans",
+                "planningCadastre",
+                "society",
+                "structure",
+                "transportation",
+                "utilitiesCommunication"
+            ]
         }
     },
 
@@ -168,7 +219,11 @@
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "affiliation": {"type": "string", "source": ["organizationName", "positionName", "contactInfo"]}
+                                                    "affiliation": {
+                                                        "type": "string",
+                                                        "source": ["organizationName", "positionName", "contactInfo"],
+                                                        "separator": "\n"
+                                                    }
                                                 }
                                             }
                                         }
@@ -232,7 +287,11 @@
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
-                                                    "affiliation": {"type": "string", "source": ["organizationName", "positionName", "contactInfo"]}
+                                                    "affiliation": {
+                                                        "type": "string",
+                                                        "source": ["organizationName", "positionName", "contactInfo"],
+                                                        "separator": "\n"
+                                                    }
                                                 }
                                             }
                                         }
@@ -243,6 +302,68 @@
                         "else": false
                     }
                 ]
+            }
+        },
+        "datasetLanguages": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1
+        },
+        "dataCharacterSet": {
+            "$ref": "#/definitions/dataCharacterSetCode"
+        },
+        "topicCategories": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/topicCategoryCode"},
+            "minItems": 1,
+            "mapTo": {
+                "target": "/subjects/-",
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "subject": {"type": "string"},
+                            "subjectScheme": {"type": "string", "const": "SANS1878 Dataset Topic Category"}
+                        }
+                    }
+                }
+            }
+        },
+        "abstract": {
+            "type": "string",
+            "mapTo": {
+                "target": "/descriptions/-",
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string"},
+                        "descriptionType": {"type": "string", "const": "Abstract"}
+                    }
+                }
+            }
+        },
+        "distributionFormats": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "formatName": {"type": "string"},
+                    "formatVersion": {"type": "string"}
+                },
+                "required": ["formatName", "formatVersion"]
+            },
+            "minItems": 1,
+            "mapTo": {
+                "target": "/formats/-",
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "source": ["formatName", "formatVersion"],
+                        "separator": " "
+                    }
+                }
             }
         }
     }

@@ -23,5 +23,13 @@
             "organizationName": "Reef Community",
             "role": "publisher"
         }
+    ],
+    "datasetLanguages": ["en"],
+    "dataCharacterSet": "utf8",
+    "topicCategories": ["oceans", "society"],
+    "abstract": "Concerning things that'd like to be under the sea, in an octopus's garden, in the shade.",
+    "distributionFormats": [
+        {"formatName": "PDF", "formatVersion": "2.0"},
+        {"formatName": "MPEG-4", "formatVersion": "2"}
     ]
 }
