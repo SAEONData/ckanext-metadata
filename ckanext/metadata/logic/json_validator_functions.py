@@ -249,9 +249,11 @@ def map_to_validator(validator, map_params, instance, schema):
                   target value is obtained
                 - for a target type of string, this may be a list of strings; it specifies the properties
                   on the current instance from which the target value is constructed, by concatenating
-                  source values, separated by newlines
+                  source values
                 - if this is not specified, then the entire current instance is used as the source of the
                   target value
+            "separator": (mandatory, if "source" is a list of strings)
+                - the separator string to be used for combining multiple source values
             "converter": (optional, for a target type of string)
                 - if this is a dict, it defines a simple vocabulary converter, with key-value pairs
                   specifying source-target keyword conversions
@@ -280,13 +282,16 @@ def map_to_validator(validator, map_params, instance, schema):
         elif type(source_prop) is list:
             if target_type != 'string':
                 raise SyntaxError(_("The 'source' keyword can only specify a list of properties if the target type is 'string'"))
+            separator = kwargs.pop('separator', None)
+            if not isinstance(separator, basestring):
+                raise SyntaxError(_("A 'separator' must be specified if 'source' is a list of properties"))
             result = []
             for source_prop_i in source_prop:
                 if source_prop_i in source_instance:
                     value = make_value(source_instance[source_prop_i], **kwargs)
                     if value:
                         result += [value]
-            return '\n'.join(result)
+            return separator.join(result)
 
         if target_type == 'string':
             converter = kwargs.pop('converter', None)
