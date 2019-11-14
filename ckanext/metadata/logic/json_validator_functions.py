@@ -373,12 +373,22 @@ def map_to_validator(validator, map_params, instance, schema):
         try:
             value = make_value(instance, **value_schema)
             if value:
-                operation = {
-                    'op': 'add',
-                    'path': target_path,
-                    'value': value,
-                }
-                patch = jsonpatch.JsonPatch([operation])
+                if target_path.endswith('/-') and type(value) is list:
+                    # merge an array onto an array element
+                    operations = [{
+                        'op': 'add',
+                        'path': target_path,
+                        'value': item,
+                    } for item in value]
+                    patch = jsonpatch.JsonPatch(operations)
+                else:
+                    operation = {
+                        'op': 'add',
+                        'path': target_path,
+                        'value': value,
+                    }
+                    patch = jsonpatch.JsonPatch([operation])
+
                 patch.apply(validator.root_instance, in_place=True)
 
         except SyntaxError, e:
