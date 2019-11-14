@@ -260,6 +260,9 @@ def map_to_validator(validator, map_params, instance, schema):
                 - if this is a string, it indicates a conversion function (linked to a Python routine
                   in JSONValidator._converters), which takes the source value as input and returns the
                   target value
+            "const": (optional, for a target type of string)
+                - a constant string value to be set at the target location
+                - if specified, "source" and "converter" have no effect
             "items": (mandatory, for a target type of array)
                 - defines a nested "value" schema to be used for every item in the target array
             "properties": (mandatory, for a target type of object)
@@ -294,8 +297,11 @@ def map_to_validator(validator, map_params, instance, schema):
             return separator.join(result)
 
         if target_type == 'string':
+            const = kwargs.pop('const', None)
             converter = kwargs.pop('converter', None)
-            if type(converter) is dict:
+            if isinstance(const, basestring):
+                return const
+            elif type(converter) is dict:
                 return converter.get(str(source_instance), str(source_instance))
             elif isinstance(converter, basestring):
                 if converter not in validator.converters:
