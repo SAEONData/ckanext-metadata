@@ -31,5 +31,7 @@
     "distributionFormats": [
         {"formatName": "PDF", "formatVersion": "2.0"},
         {"formatName": "MPEG-4", "formatVersion": "2"}
-    ]
+    ],
+    "spatialRepresentationTypes": ["image", "video"],
+    "lineageStatement": "The study was conducted using a tentacles-on approach."
 }

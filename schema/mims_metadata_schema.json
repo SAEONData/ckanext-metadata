@@ -14,6 +14,8 @@
             {"const": "topicCategories"},
             {"const": "abstract"},
             {"const": "distributionFormats"},
+            {"const": "spatialRepresentationTypes"},
+            {"const": "lineageStatement"},
             {"const": "titles"},
             {"const": "publicationYear"},
             {"const": "publisher"},
@@ -33,7 +35,9 @@
         "dataCharacterSet",
         "topicCategories",
         "abstract",
-        "distributionFormats"
+        "distributionFormats",
+        "spatialRepresentationTypes",
+        "lineageStatement"
     ],
 
     "mapInit": {
@@ -116,6 +120,18 @@
                 "structure",
                 "transportation",
                 "utilitiesCommunication"
+            ]
+        },
+        "spatialRepresentationTypeCode": {
+            "type": "string",
+            "enum": [
+                "vector",
+                "grid",
+                "textTable",
+                "tin",
+                "stereoModel",
+                "video",
+                "image"
             ]
         }
     },
@@ -362,6 +378,37 @@
                         "type": "string",
                         "source": ["formatName", "formatVersion"],
                         "separator": " "
+                    }
+                }
+            }
+        },
+        "spatialRepresentationTypes": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/spatialRepresentationTypeCode"},
+            "minItems": 1,
+            "mapTo": {
+                "target": "/subjects/-",
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "subject": {"type": "string"},
+                            "subjectScheme": {"type": "string", "const": "SANS1878 Spatial Representation Type"}
+                        }
+                    }
+                }
+            }
+        },
+        "lineageStatement": {
+            "type": "string",
+            "mapTo": {
+                "target": "/descriptions/-",
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string"},
+                        "descriptionType": {"type": "string", "const": "Methods"}
                     }
                 }
             }
