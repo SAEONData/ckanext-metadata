@@ -16,6 +16,7 @@
             {"const": "distributionFormats"},
             {"const": "spatialRepresentationTypes"},
             {"const": "lineageStatement"},
+            {"const": "onlineResources"},
             {"const": "titles"},
             {"const": "publicationYear"},
             {"const": "publisher"},
@@ -23,7 +24,9 @@
             {"const": "contributors"},
             {"const": "subjects"},
             {"const": "descriptions"},
-            {"const": "formats"}
+            {"const": "formats"},
+            {"const": "immutableResource"},
+            {"const": "linkedResources"}
         ]
     },
 
@@ -37,7 +40,8 @@
         "abstract",
         "distributionFormats",
         "spatialRepresentationTypes",
-        "lineageStatement"
+        "lineageStatement",
+        "onlineResources"
     ],
 
     "mapInit": {
@@ -48,7 +52,9 @@
         "contributors": "array",
         "subjects": "array",
         "descriptions": "array",
-        "formats": "array"
+        "formats": "array",
+        "immutableResource": "object",
+        "linkedResources": "array"
     },
 
     "definitions": {
@@ -412,6 +418,70 @@
                     }
                 }
             }
+        },
+        "onlineResources": {
+            "type": "array",
+            "items": {
+                "allOf": [
+                    {"$ref": "#/definitions/onlineResource"},
+                    {
+                        "required": ["description"],
+                        "oneOf": [
+                            {
+                                "if": {
+                                    "properties": {
+                                        "description": {"const": "download"}
+                                    }
+                                },
+                                "then": {
+                                    "mapTo": {
+                                        "target": "/immutableResource",
+                                        "value": {
+                                            "type": "object",
+                                            "properties": {
+                                                "resourceURL": {"type": "string", "source": "linkage"},
+                                                "resourceName": {"type": "string", "source": "name"}
+                                            }
+                                        }
+                                    }
+                                },
+                                "else": false
+                            },
+                            {
+                                "if": {
+                                    "properties": {
+                                        "description": {"not": {"const": "download"}}
+                                    }
+                                },
+                                "then": {
+                                    "mapTo": {
+                                        "target": "/linkedResources/-",
+                                        "value": {
+                                            "type": "object",
+                                            "properties": {
+                                                "resourceURL": {"type": "string", "source": "linkage"},
+                                                "resourceName": {"type": "string", "source": "name"},
+                                                "linkedResourceType": {
+                                                    "type": "string",
+                                                    "source": "description",
+                                                    "converter": {
+                                                        "information": "Information",
+                                                        "offlineAccess": "OfflineAccess",
+                                                        "order": "ConditionalAccess",
+                                                        "search": "Query"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "else": false
+                            }
+                        ]
+                    }
+                ]
+            },
+            "minItems": 1
         }
     }
 }

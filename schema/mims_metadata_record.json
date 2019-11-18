@@ -33,5 +33,9 @@
         {"formatName": "MPEG-4", "formatVersion": "2"}
     ],
     "spatialRepresentationTypes": ["image", "video"],
-    "lineageStatement": "The study was conducted using a tentacles-on approach."
+    "lineageStatement": "The study was conducted using a tentacles-on approach.",
+    "onlineResources": [
+        {"name": "The Movie", "description": "download", "linkage": "http://octo.gdn/mims.mp4"},
+        {"name": "The Info", "description": "information", "linkage": "http://octo.gdn/mims.pdf"}
+    ]
 }
