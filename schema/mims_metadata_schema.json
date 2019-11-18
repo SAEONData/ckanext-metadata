@@ -4,7 +4,6 @@
     "type": "object",
 
     "propertyNames": {
-        "$comment": "Declares all capturable properties as well as automatically mapped properties.",
         "oneOf": [
             {"const": "title"},
             {"const": "publicationDate"},
@@ -17,6 +16,11 @@
             {"const": "spatialRepresentationTypes"},
             {"const": "lineageStatement"},
             {"const": "onlineResources"},
+            {"const": "fileIdentifier"},
+            {"const": "metadataStandardName"},
+            {"const": "metadataStandardVersion"},
+            {"const": "metadataLanguage"},
+            {"const": "metadataCharacterSet"},
             {"const": "titles"},
             {"const": "publicationYear"},
             {"const": "publisher"},
@@ -26,7 +30,8 @@
             {"const": "descriptions"},
             {"const": "formats"},
             {"const": "immutableResource"},
-            {"const": "linkedResources"}
+            {"const": "linkedResources"},
+            {"const": "alternateIdentifiers"}
         ]
     },
 
@@ -41,7 +46,12 @@
         "distributionFormats",
         "spatialRepresentationTypes",
         "lineageStatement",
-        "onlineResources"
+        "onlineResources",
+        "fileIdentifier",
+        "metadataStandardName",
+        "metadataStandardVersion",
+        "metadataLanguage",
+        "metadataCharacterSet"
     ],
 
     "mapInit": {
@@ -54,7 +64,8 @@
         "descriptions": "array",
         "formats": "array",
         "immutableResource": "object",
-        "linkedResources": "array"
+        "linkedResources": "array",
+        "alternateIdentifiers": "array"
     },
 
     "definitions": {
@@ -93,7 +104,7 @@
             "required": ["linkage"],
             "additionalProperties": false
         },
-        "dataCharacterSetCode": {
+        "characterSetCode": {
             "type": "string",
             "enum": [
                 "ucs2",
@@ -332,7 +343,7 @@
             "minItems": 1
         },
         "dataCharacterSet": {
-            "$ref": "#/definitions/dataCharacterSetCode"
+            "$ref": "#/definitions/characterSetCode"
         },
         "topicCategories": {
             "type": "array",
@@ -482,6 +493,33 @@
                 ]
             },
             "minItems": 1
+        },
+        "fileIdentifier": {
+            "type": "string",
+            "mapTo": {
+                "target": "/alternateIdentifiers/-",
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "alternateIdentifier": {"type": "string"},
+                        "alternateIdentifierType": {"type": "string", "const": "Local accession number"}
+                    }
+                }
+            }
+        },
+        "metadataStandardName": {
+            "type": "string",
+            "enum": ["SANS 1878", "ISO 19115"]
+        },
+        "metadataStandardVersion": {
+            "type": "string",
+            "const": "1"
+        },
+        "metadataLanguage": {
+            "type": "string"
+        },
+        "metadataCharacterSet": {
+            "$ref": "#/definitions/characterSetCode"
         }
     }
 }

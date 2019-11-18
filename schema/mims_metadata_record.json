@@ -37,5 +37,10 @@
     "onlineResources": [
         {"name": "The Movie", "description": "download", "linkage": "http://octo.gdn/mims.mp4"},
         {"name": "The Info", "description": "information", "linkage": "http://octo.gdn/mims.pdf"}
-    ]
+    ],
+    "fileIdentifier": "000006",
+    "metadataStandardName": "SANS 1878",
+    "metadataStandardVersion": "1",
+    "metadataLanguage": "en",
+    "metadataCharacterSet": "utf8"
 }
