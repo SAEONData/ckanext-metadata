@@ -21,6 +21,7 @@
             {"const": "metadataStandardVersion"},
             {"const": "metadataLanguage"},
             {"const": "metadataCharacterSet"},
+            {"const": "metadataTimestamp"},
 
             {"const": "titles"},
             {"const": "publicationYear"},
@@ -32,7 +33,8 @@
             {"const": "formats"},
             {"const": "immutableResource"},
             {"const": "linkedResources"},
-            {"const": "alternateIdentifiers"}
+            {"const": "alternateIdentifiers"},
+            {"const": "dates"}
         ]
     },
 
@@ -52,7 +54,8 @@
         "metadataStandardName",
         "metadataStandardVersion",
         "metadataLanguage",
-        "metadataCharacterSet"
+        "metadataCharacterSet",
+        "metadataTimestamp"
     ],
 
     "mapInit": {
@@ -66,7 +69,8 @@
         "formats": "array",
         "immutableResource": "object",
         "linkedResources": "array",
-        "alternateIdentifiers": "array"
+        "alternateIdentifiers": "array",
+        "dates": "array"
     },
 
     "definitions": {
@@ -521,6 +525,20 @@
         },
         "metadataCharacterSet": {
             "$ref": "#/definitions/characterSetCode"
+        },
+        "metadataTimestamp": {
+            "type": "string",
+            "format": "datetime",
+            "mapTo": {
+                "target": "/dates/-",
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "date": {"type": "string"},
+                        "dateType": {"type": "string", "const": "Issued"}
+                    }
+                }
+            }
         }
     }
 }
