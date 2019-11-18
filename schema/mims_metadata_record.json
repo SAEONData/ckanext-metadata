@@ -1,6 +1,6 @@
 {
     "title": "Example MIMS Metadata Record",
-    "publicationDate": "2019-11-02",
+    "date": "2019-11-02",
     "responsibleParties": [
         {
             "individualName": "Ophelia the Octopus",
@@ -24,8 +24,8 @@
             "role": "publisher"
         }
     ],
-    "datasetLanguages": ["en"],
-    "dataCharacterSet": "utf8",
+    "languages": ["en"],
+    "characterSet": "utf8",
     "topicCategories": ["oceans", "society"],
     "abstract": "Concerning things that'd like to be under the sea, in an octopus's garden, in the shade.",
     "distributionFormats": [

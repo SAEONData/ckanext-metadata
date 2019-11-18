@@ -6,10 +6,10 @@
     "propertyNames": {
         "oneOf": [
             {"const": "title"},
-            {"const": "publicationDate"},
+            {"const": "date"},
             {"const": "responsibleParties"},
-            {"const": "datasetLanguages"},
-            {"const": "dataCharacterSet"},
+            {"const": "languages"},
+            {"const": "characterSet"},
             {"const": "topicCategories"},
             {"const": "abstract"},
             {"const": "distributionFormats"},
@@ -21,6 +21,7 @@
             {"const": "metadataStandardVersion"},
             {"const": "metadataLanguage"},
             {"const": "metadataCharacterSet"},
+
             {"const": "titles"},
             {"const": "publicationYear"},
             {"const": "publisher"},
@@ -37,10 +38,10 @@
 
     "required": [
         "title",
-        "publicationDate",
+        "date",
         "responsibleParties",
-        "datasetLanguages",
-        "dataCharacterSet",
+        "languages",
+        "characterSet",
         "topicCategories",
         "abstract",
         "distributionFormats",
@@ -166,7 +167,7 @@
                 }
             }
         },
-        "publicationDate": {
+        "date": {
             "type": "string",
             "format": "date",
             "mapTo": {
@@ -337,12 +338,12 @@
                 ]
             }
         },
-        "datasetLanguages": {
+        "languages": {
             "type": "array",
             "items": {"type": "string"},
             "minItems": 1
         },
-        "dataCharacterSet": {
+        "characterSet": {
             "$ref": "#/definitions/characterSetCode"
         },
         "topicCategories": {
