@@ -222,8 +222,10 @@ def map_init_validator(validator, target_elements, instance, schema):
                 validator.root_instance.pop(target_name, None)
             elif target_type == 'array':
                 validator.root_instance[target_name] = []
+            elif target_type == 'object':
+                validator.root_instance[target_name] = {}
             else:
-                yield jsonschema.ValidationError(_("Unsupported top-level target element type"))
+                yield jsonschema.ValidationError(_("mapInit: Unsupported top-level target element type"))
 
 
 def map_to_validator(validator, map_params, instance, schema):
