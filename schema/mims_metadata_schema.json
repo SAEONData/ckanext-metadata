@@ -22,6 +22,10 @@
             {"const": "metadataLanguage"},
             {"const": "metadataCharacterSet"},
             {"const": "metadataTimestamp"},
+            {"const": "purpose"},
+            {"const": "scope"},
+            {"const": "status"},
+            {"const": "descriptiveKeywords"},
 
             {"const": "titles"},
             {"const": "publicationYear"},
@@ -34,7 +38,8 @@
             {"const": "immutableResource"},
             {"const": "linkedResources"},
             {"const": "alternateIdentifiers"},
-            {"const": "dates"}
+            {"const": "dates"},
+            {"const": "resourceType"}
         ]
     },
 
@@ -55,7 +60,10 @@
         "metadataStandardVersion",
         "metadataLanguage",
         "metadataCharacterSet",
-        "metadataTimestamp"
+        "metadataTimestamp",
+        "purpose",
+        "scope",
+        "status"
     ],
 
     "mapInit": {
@@ -70,7 +78,8 @@
         "immutableResource": "object",
         "linkedResources": "array",
         "alternateIdentifiers": "array",
-        "dates": "array"
+        "dates": "array",
+        "resourceType": "object"
     },
 
     "definitions": {
@@ -154,6 +163,48 @@
                 "stereoModel",
                 "video",
                 "image"
+            ]
+        },
+        "scopeCode": {
+            "type": "string",
+            "enum": [
+                "attribute",
+                "attributeType",
+                "collectionHardware",
+                "collectionSession",
+                "dataset",
+                "series",
+                "nonGeographicDataset",
+                "dimensionGroup",
+                "feature",
+                "featureType",
+                "propertyType",
+                "fieldSession",
+                "software",
+                "service",
+                "model"
+            ]
+        },
+        "progressCode": {
+            "type": "string",
+            "enum": [
+                "completed",
+                "historicalArchive",
+                "obsolete",
+                "onGoing",
+                "planned",
+                "required",
+                "underDevelopment"
+            ]
+        },
+        "keywordType": {
+            "type": "string",
+            "enum": [
+                "discipline",
+                "place",
+                "stratum",
+                "temporal",
+                "theme"
             ]
         }
     },
@@ -389,7 +440,7 @@
                     "formatName": {"type": "string"},
                     "formatVersion": {"type": "string"}
                 },
-                "required": ["formatName", "formatVersion"]
+                "required": ["formatName"]
             },
             "minItems": 1,
             "mapTo": {
@@ -536,6 +587,97 @@
                     "properties": {
                         "date": {"type": "string"},
                         "dateType": {"type": "string", "const": "Issued"}
+                    }
+                }
+            }
+        },
+        "purpose": {
+            "type": "string",
+            "mapTo": {
+                "target": "/descriptions/-",
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string"},
+                        "descriptionType": {"type": "string", "const": "Other"}
+                    }
+                }
+            }
+        },
+        "scope": {
+            "allOf": [
+                {"$ref": "#/definitions/scopeCode"},
+                {"mapTo": {
+                        "target": "/resourceType",
+                        "value": {
+                            "type": "object",
+                            "properties": {
+                                "resourceType": {
+                                    "type": "string"
+                                },
+                                "resourceTypeGeneral": {
+                                    "type": "string",
+                                    "converter": {
+                                        "attribute": "Other",
+                                        "attributeType": "Other",
+                                        "collectionHardware": "Other",
+                                        "collectionSession": "Other",
+                                        "dataset": "Dataset",
+                                        "series": "Other",
+                                        "nonGeographicDataset": "Other",
+                                        "dimensionGroup": "Other",
+                                        "feature": "Other",
+                                        "featureType": "Other",
+                                        "propertyType": "Other",
+                                        "fieldSession": "Other",
+                                        "software": "Software",
+                                        "service": "Service",
+                                        "model": "Model"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "status": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/progressCode"},
+            "minItems": 1,
+            "mapTo": {
+                "target": "/subjects/-",
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "subject": {"type": "string"},
+                            "subjectScheme": {"type": "string", "const": "SANS1878 Status"}
+                        }
+                    }
+                }
+            }
+        },
+        "descriptiveKeywords": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "keyword": {"type": "string"},
+                    "keywordType": {"$ref": "#/definitions/keywordType"}
+                },
+                "required": ["keyword", "keywordType"]
+            },
+            "mapTo": {
+                "target": "/subjects/-",
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "subject": {"type": "string", "source": "keyword"}
+                        }
                     }
                 }
             }
