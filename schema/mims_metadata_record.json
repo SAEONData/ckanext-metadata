@@ -59,5 +59,10 @@
         "accessConstraints": ["otherRestrictions"],
         "useConstraints": ["license", "intellectualPropertyRights"],
         "classification": "secret"
+    }],
+    "relatedIdentifiers": [{
+        "relatedIdentifier": "https://images.rapgenius.com/a69f8be10aa6228ba1a64e427b3bce28.900x643x1.jpg",
+        "relatedIdentifierType": "URL",
+        "relationType": "IsVariantFormOf"
     }]
 }

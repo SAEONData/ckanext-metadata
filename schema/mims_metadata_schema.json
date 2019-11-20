@@ -27,6 +27,7 @@
             {"const": "status"},
             {"const": "descriptiveKeywords"},
             {"const": "constraints"},
+            {"const": "relatedIdentifiers"},
 
             {"const": "titles"},
             {"const": "publicationYear"},
@@ -233,6 +234,68 @@
                 "secret",
                 "topSecret"
             ]
+        },
+        "relatedIdentifierType": {
+            "type": "string",
+            "enum": [
+                "ARK",
+                "arXiv",
+                "bibcode",
+                "DOI",
+                "EAN13",
+                "EISSN",
+                "Handle",
+                "IGSN",
+                "ISBN",
+                "ISSN",
+                "ISTC",
+                "LISSN",
+                "LSID",
+                "PMID",
+                "PURL",
+                "UPC",
+                "URL",
+                "URN",
+                "w3id"
+            ]
+        },
+        "relationType": {
+            "type": "string",
+            "enum": [
+                "IsCitedBy",
+                "Cites",
+                "IsSupplementTo",
+                "IsSupplementedBy",
+                "IsContinuedBy",
+                "Continues",
+                "IsDescribedBy",
+                "Describes",
+                "HasMetadata",
+                "IsMetadataFor",
+                "HasVersion",
+                "IsVersionOf",
+                "IsNewVersionOf",
+                "IsPreviousVersionOf",
+                "IsPartOf",
+                "HasPart",
+                "IsReferencedBy",
+                "References",
+                "IsDocumentedBy",
+                "Documents",
+                "IsCompiledBy",
+                "Compiles",
+                "IsVariantFormOf",
+                "IsOriginalFormOf",
+                "IsIdenticalTo",
+                "IsReviewedBy",
+                "Reviews",
+                "IsDerivedFrom",
+                "IsSourceOf",
+                "IsRequiredBy",
+                "Requires",
+                "IsObsoletedBy",
+                "Obsoletes"
+            ]
         }
     },
 
@@ -418,12 +481,14 @@
                         "else": false
                     }
                 ]
-            }
+            },
+            "uniqueItems": true
         },
         "languages": {
             "type": "array",
             "items": {"type": "string"},
-            "minItems": 1
+            "minItems": 1,
+            "uniqueItems": true
         },
         "characterSet": {
             "$ref": "#/definitions/characterSetCode"
@@ -432,6 +497,7 @@
             "type": "array",
             "items": {"$ref": "#/definitions/topicCategoryCode"},
             "minItems": 1,
+            "uniqueItems": true,
             "mapTo": {
                 "target": "/subjects/-",
                 "value": {
@@ -471,6 +537,7 @@
                 "additionalProperties": false
             },
             "minItems": 1,
+            "uniqueItems": true,
             "mapTo": {
                 "target": "/formats/-",
                 "value": {
@@ -487,6 +554,7 @@
             "type": "array",
             "items": {"$ref": "#/definitions/spatialRepresentationTypeCode"},
             "minItems": 1,
+            "uniqueItems": true,
             "mapTo": {
                 "target": "/subjects/-",
                 "value": {
@@ -576,7 +644,8 @@
                     }
                 ]
             },
-            "minItems": 1
+            "minItems": 1,
+            "uniqueItems": true
         },
         "fileIdentifier": {
             "type": "string",
@@ -673,6 +742,7 @@
             "type": "array",
             "items": {"$ref": "#/definitions/progressCode"},
             "minItems": 1,
+            "uniqueItems": true,
             "mapTo": {
                 "target": "/subjects/-",
                 "value": {
@@ -698,6 +768,7 @@
                 "required": ["keyword", "keywordType"],
                 "additionalProperties": false
             },
+            "uniqueItems": true,
             "mapTo": {
                 "target": "/subjects/-",
                 "value": {
@@ -719,6 +790,7 @@
                     "useLimitations": {
                         "type": "array",
                         "items": {"type": "string"},
+                        "uniqueItems": true,
                         "mapTo": {
                             "target": "/subjects/-",
                             "value": {
@@ -736,6 +808,7 @@
                     "accessConstraints": {
                         "type": "array",
                         "items": {"$ref": "#/definitions/restrictionCode"},
+                        "uniqueItems": true,
                         "mapTo": {
                             "target": "/subjects/-",
                             "value": {
@@ -753,6 +826,7 @@
                     "useConstraints": {
                         "type": "array",
                         "items": {"$ref": "#/definitions/restrictionCode"},
+                        "uniqueItems": true,
                         "mapTo": {
                             "target": "/subjects/-",
                             "value": {
@@ -806,6 +880,20 @@
                     }
                 }
             }
+        },
+        "relatedIdentifiers": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "relatedIdentifier": {"type": "string"},
+                    "relatedIdentifierType": {"$ref": "#/definitions/relatedIdentifierType"},
+                    "relationType": {"$ref": "#/definitions/relationType"}
+                },
+                "additionalProperties": false,
+                "required": ["relatedIdentifier", "relatedIdentifierType", "relationType"]
+            },
+            "uniqueItems": true
         }
     }
 }
