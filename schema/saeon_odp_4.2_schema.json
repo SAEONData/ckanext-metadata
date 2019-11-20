@@ -420,7 +420,7 @@
                     "lang": {"type": "string"}
                 },
                 "additionalProperties": false,
-                "required": ["rights"]
+                "required": ["rights", "rightsURI"]
             },
             "minItems": 1,
             "maxItems": 1
