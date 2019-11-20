@@ -26,6 +26,7 @@
             {"const": "scope"},
             {"const": "status"},
             {"const": "descriptiveKeywords"},
+            {"const": "constraints"},
 
             {"const": "titles"},
             {"const": "publicationYear"},
@@ -39,7 +40,8 @@
             {"const": "linkedResources"},
             {"const": "alternateIdentifiers"},
             {"const": "dates"},
-            {"const": "resourceType"}
+            {"const": "resourceType"},
+            {"const": "rightsList"}
         ]
     },
 
@@ -63,7 +65,8 @@
         "metadataTimestamp",
         "purpose",
         "scope",
-        "status"
+        "status",
+        "constraints"
     ],
 
     "mapInit": {
@@ -79,7 +82,8 @@
         "linkedResources": "array",
         "alternateIdentifiers": "array",
         "dates": "array",
-        "resourceType": "object"
+        "resourceType": "object",
+        "rightsList": "array"
     },
 
     "definitions": {
@@ -205,6 +209,29 @@
                 "stratum",
                 "temporal",
                 "theme"
+            ]
+        },
+        "restrictionCode": {
+            "type": "string",
+            "enum": [
+                "copyright",
+                "patent",
+                "patentPending",
+                "trademark",
+                "license",
+                "intellectualPropertyRights",
+                "restricted",
+                "otherRestrictions"
+            ]
+        },
+        "classificationCode": {
+            "type": "string",
+            "enum": [
+                "unclassified",
+                "restricted",
+                "confidential",
+                "secret",
+                "topSecret"
             ]
         }
     },
@@ -440,7 +467,8 @@
                     "formatName": {"type": "string"},
                     "formatVersion": {"type": "string"}
                 },
-                "required": ["formatName"]
+                "required": ["formatName"],
+                "additionalProperties": false
             },
             "minItems": 1,
             "mapTo": {
@@ -667,7 +695,8 @@
                     "keyword": {"type": "string"},
                     "keywordType": {"$ref": "#/definitions/keywordType"}
                 },
-                "required": ["keyword", "keywordType"]
+                "required": ["keyword", "keywordType"],
+                "additionalProperties": false
             },
             "mapTo": {
                 "target": "/subjects/-",
@@ -677,6 +706,102 @@
                         "type": "object",
                         "properties": {
                             "subject": {"type": "string", "source": "keyword"}
+                        }
+                    }
+                }
+            }
+        },
+        "constraints": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "useLimitations": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "mapTo": {
+                            "target": "/subjects/-",
+                            "value": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "subject": {"type": "string"},
+                                        "subjectScheme": {"type": "string", "const": "SANS1878 Use Limitation"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "accessConstraints": {
+                        "type": "array",
+                        "items": {"$ref": "#/definitions/restrictionCode"},
+                        "mapTo": {
+                            "target": "/subjects/-",
+                            "value": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "subject": {"type": "string"},
+                                        "subjectScheme": {"type": "string", "const": "SANS1878 Constraint"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "useConstraints": {
+                        "type": "array",
+                        "items": {"$ref": "#/definitions/restrictionCode"},
+                        "mapTo": {
+                            "target": "/subjects/-",
+                            "value": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "subject": {"type": "string"},
+                                        "subjectScheme": {"type": "string", "const": "SANS1878 Constraint"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "classification": {
+                        "allOf": [
+                            {"$ref": "#/definitions/classificationCode"},
+                            {"mapTo": {
+                                "target": "/subjects/-",
+                                "value": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "subject": {"type": "string"},
+                                            "subjectScheme": {"type": "string", "const": "SANS1878 Security Classification"}
+                                        }
+                                    }
+                                }
+                            }}
+                        ]
+                    },
+                    "otherConstraints": {"type": "string"},
+                    "userNote": {"type": "string"}
+                },
+                "required": ["otherConstraints", "userNote"],
+                "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 1,
+            "mapTo": {
+                "target": "/rightsList/-",
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "rights": {"type": "string", "source": "userNote"},
+                            "rightsURI": {"type": "string", "source": "otherConstraints"}
                         }
                     }
                 }
