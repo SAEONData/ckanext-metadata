@@ -11,9 +11,11 @@
             {"const": "languages"},
             {"const": "characterSet"},
             {"const": "topicCategories"},
+            {"const": "spatialResolution"},
             {"const": "abstract"},
             {"const": "distributionFormats"},
             {"const": "spatialRepresentationTypes"},
+            {"const": "referenceSystemName"},
             {"const": "lineageStatement"},
             {"const": "onlineResources"},
             {"const": "fileIdentifier"},
@@ -53,9 +55,11 @@
         "languages",
         "characterSet",
         "topicCategories",
+        "spatialResolution",
         "abstract",
         "distributionFormats",
         "spatialRepresentationTypes",
+        "referenceSystemName",
         "lineageStatement",
         "onlineResources",
         "fileIdentifier",
@@ -330,6 +334,7 @@
                 {"contains": {"properties": {"role": {"const": "publisher"}}}},
                 {"contains": {"properties": {"role": {"const": "pointOfContact"}}, "required": ["contactInfo"]}}
             ],
+            "uniqueItems": true,
             "items": {
                 "type": "object",
                 "properties": {
@@ -481,8 +486,7 @@
                         "else": false
                     }
                 ]
-            },
-            "uniqueItems": true
+            }
         },
         "languages": {
             "type": "array",
@@ -511,6 +515,9 @@
                     }
                 }
             }
+        },
+        "spatialResolution": {
+            "type": "string"
         },
         "abstract": {
             "type": "string",
@@ -565,6 +572,25 @@
                             "subject": {"type": "string"},
                             "subjectScheme": {"type": "string", "const": "SANS1878 Spatial Representation Type"}
                         }
+                    }
+                }
+            }
+        },
+        "referenceSystemName": {
+            "type": "object",
+            "properties": {
+                "codeSpace": {"type": "string"},
+                "version": {"type": "string"}
+            },
+            "required": ["codeSpace"],
+            "additionalProperties": false,
+            "mapTo": {
+                "target": "/subjects/-",
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "subject": {"type": "string", "source": ["codeSpace", "version"], "separator": " "},
+                        "subjectScheme": {"type": "string", "const": "SANS1878 Reference System"}
                     }
                 }
             }

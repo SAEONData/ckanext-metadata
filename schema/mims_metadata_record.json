@@ -7,9 +7,7 @@
             "organizationName": "The Octopus's Garden",
             "contactInfo": "Under The Sea",
             "role": "originator",
-            "onlineResource": {
-                "linkage": "https://orcid.org/0000-0002-3843-3472"
-            }
+            "onlineResource": {"linkage": "https://orcid.org/0000-0002-3843-3472"}
         },
         {
             "individualName": "Leroy the Limpet",
@@ -27,12 +25,14 @@
     "languages": ["en"],
     "characterSet": "utf8",
     "topicCategories": ["oceans", "society"],
+    "spatialResolution": "1cm",
     "abstract": "Concerning things that'd like to be under the sea, in an octopus's garden, in the shade.",
     "distributionFormats": [
         {"formatName": "JPEG"},
         {"formatName": "HTML", "formatVersion": "5"}
     ],
     "spatialRepresentationTypes": ["image", "stereoModel"],
+    "referenceSystemName": {"codeSpace": "EPSG", "version": "4148"},
     "lineageStatement": "The study was conducted using a tentacles-on approach.",
     "onlineResources": [
         {"name": "The Picture", "description": "download", "linkage": "https://images.genius.com/8fa8b8afd1e7142232b9627901967dcf.550x400x1.jpg"},
