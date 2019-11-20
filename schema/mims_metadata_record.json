@@ -22,6 +22,9 @@
             "role": "publisher"
         }
     ],
+    "extents": [
+
+    ],
     "languages": ["en"],
     "characterSet": "utf8",
     "topicCategories": ["oceans", "society"],
