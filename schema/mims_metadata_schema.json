@@ -519,19 +519,27 @@
                                 "minItems": 1,
                                 "uniqueItems": true,
                                 "items": {
-                                    "$comment": "A polygon: an array of at least 4 non-aligned points, with the first and last point coinciding",
-                                    "type": "array",
-                                    "minItems": 4,
-                                    "items": {
-                                        "$comment": "A geographic point",
-                                        "type": "object",
-                                        "required": ["longitude", "latitude"],
-                                        "properties": {
-                                            "longitude": {"type": "number", "minimum": -180, "maximum": 180},
-                                            "latitude": {"type": "number", "minimum": -90, "maximum": 90}
-                                        },
-                                        "additionalProperties": false
-                                    }
+                                    "$comment": "A polygon",
+                                    "type": "object",
+                                    "required": ["polygon"],
+                                    "properties": {
+                                        "polygon": {
+                                            "$comment": "An array of at least 4 non-aligned points, with the first and last point coinciding",
+                                            "type": "array",
+                                            "minItems": 4,
+                                            "items": {
+                                                "$comment": "A geographic point",
+                                                "type": "object",
+                                                "required": ["longitude", "latitude"],
+                                                "properties": {
+                                                    "longitude": {"type": "number", "minimum": -180, "maximum": 180},
+                                                    "latitude": {"type": "number", "minimum": -90, "maximum": 90}
+                                                },
+                                                "additionalProperties": false
+                                            }
+                                        }
+                                    },
+                                    "additionalProperties": false
                                 }
                             },
                             "boundingBox": {
@@ -576,6 +584,7 @@
                                             "properties": {
                                                 "polygonPoints": {
                                                     "type": "array",
+                                                    "source": "polygon",
                                                     "items": {
                                                         "type": "object",
                                                         "properties": {

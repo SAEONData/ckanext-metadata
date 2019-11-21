@@ -23,7 +23,46 @@
         }
     ],
     "extent": {
-
+        "geographicElements": [
+            {
+                "geographicIdentifier": "Somewhere off the Atlantic coast of Cape Town",
+                "boundingBox": {
+                    "westBoundLongitude": 17.9,
+                    "eastBoundLongitude": 18.3,
+                    "southBoundLatitude": -34.4,
+                    "northBoundLatitude": -34.0
+                },
+                "boundingPolygon": [
+                    {
+                        "polygon": [
+                            {"longitude": 18.19, "latitude": -34.01},
+                            {"longitude": 18.27, "latitude": -34.08},
+                            {"longitude": 18.24, "latitude": -34.18},
+                            {"longitude": 18.11, "latitude": -34.15},
+                            {"longitude": 18.19, "latitude": -34.01}
+                        ]
+                    },
+                    {
+                        "polygon": [
+                            {"longitude": 17.93, "latitude": -34.30},
+                            {"longitude": 18.05, "latitude": -34.22},
+                            {"longitude": 18.06, "latitude": -34.39},
+                            {"longitude": 17.93, "latitude": -34.30}
+                        ]
+                    }
+                ]
+            }
+        ],
+        "verticalElement": {
+            "minimumValue": -50,
+            "maximumValue": -10,
+            "unitOfMeasure": "m",
+            "verticalDatum": "Metres below sea level"
+        },
+        "temporalElement": {
+            "startTime": "2019-01-01T00:00:00+02:00",
+            "endTime": "2019-02-01T00:00:00+02:00"
+        }
     },
     "languages": ["en"],
     "characterSet": "utf8",
