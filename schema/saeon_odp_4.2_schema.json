@@ -328,7 +328,7 @@
             "uniqueItems": true,
             "contains": {
                 "properties": {
-                    "dateType": {"const": "Collected"}
+                    "dateType": {"const": "Valid"}
                 }
             }
         },
