@@ -37,6 +37,7 @@
             {"const": "publisher"},
             {"const": "creators"},
             {"const": "contributors"},
+            {"const": "geoLocations"},
             {"const": "subjects"},
             {"const": "descriptions"},
             {"const": "formats"},
@@ -82,6 +83,7 @@
         "publisher": "string",
         "creators": "array",
         "contributors": "array",
+        "geoLocations": "array",
         "subjects": "array",
         "descriptions": "array",
         "formats": "array",
@@ -547,16 +549,105 @@
                             "geographicIdentifier": {"type": "string"}
                         },
                         "additionalProperties": false
+                    },
+                    "mapTo": {
+                        "target": "/geoLocations/-",
+                        "value": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "geoLocationPlace": {"type": "string", "source": "geographicIdentifier"},
+                                    "geoLocationBox": {
+                                        "type": "object",
+                                        "source": "boundingBox",
+                                        "properties": {
+                                            "westBoundLongitude": {"type": "string", "source": "westBoundLongitude"},
+                                            "eastBoundLongitude": {"type": "string", "source": "eastBoundLongitude"},
+                                            "southBoundLatitude": {"type": "string", "source": "southBoundLatitude"},
+                                            "northBoundLatitude": {"type": "string", "source": "northBoundLatitude"}
+                                        }
+                                    },
+                                    "geoLocationPolygons": {
+                                        "type": "array",
+                                        "source": "boundingPolygon",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "polygonPoints": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "pointLongitude": {"type": "string", "source": "longitude"},
+                                                            "pointLatitude": {"type": "string", "source": "latitude"}
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "verticalElement": {
                     "type": "object",
                     "required": ["minimumValue", "maximumValue", "unitOfMeasure", "verticalDatum"],
                     "properties": {
-                        "minimumValue": {"type": "number"},
-                        "maximumValue": {"type": "number"},
-                        "unitOfMeasure": {"type": "string"},
-                        "verticalDatum": {"type": "string"}
+                        "minimumValue": {
+                            "type": "number",
+                            "mapTo": {
+                                "target": "/subjects/-",
+                                "value": {
+                                    "type": "object",
+                                    "properties": {
+                                        "subject": {"type": "string"},
+                                        "subjectScheme": {"type": "string", "const": "SANS1878 Vertical Extent: minimumValue"}
+                                    }
+                                }
+                            }
+                        },
+                        "maximumValue": {
+                            "type": "number",
+                            "mapTo": {
+                                "target": "/subjects/-",
+                                "value": {
+                                    "type": "object",
+                                    "properties": {
+                                        "subject": {"type": "string"},
+                                        "subjectScheme": {"type": "string", "const": "SANS1878 Vertical Extent: maximumValue"}
+                                    }
+                                }
+                            }
+                        },
+                        "unitOfMeasure": {
+                            "type": "string",
+                            "mapTo": {
+                                "target": "/subjects/-",
+                                "value": {
+                                    "type": "object",
+                                    "properties": {
+                                        "subject": {"type": "string"},
+                                        "subjectScheme": {"type": "string", "const": "SANS1878 Vertical Extent: unitOfMeasure"}
+                                    }
+                                }
+                            }
+                        },
+                        "verticalDatum": {
+                            "type": "string",
+                            "mapTo": {
+                                "target": "/subjects/-",
+                                "value": {
+                                    "type": "object",
+                                    "properties": {
+                                        "subject": {"type": "string"},
+                                        "subjectScheme": {"type": "string", "const": "SANS1878 Vertical Extent: verticalDatum"}
+                                    }
+                                }
+                            }
+                        }
                     },
                     "additionalProperties": false
                 },
@@ -567,7 +658,17 @@
                         "startTime": {"type": "string", "format": "datetime"},
                         "endTime": {"type": "string", "format": "datetime"}
                     },
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "mapTo": {
+                        "target": "/dates/-",
+                        "value": {
+                            "type": "object",
+                            "properties": {
+                                "date": {"type": "string", "source": ["startTime", "endTime"], "separator": "/"},
+                                "dateType": {"type": "string", "const": "Valid"}
+                            }
+                        }
+                    }
                 }
             },
             "additionalProperties": false
