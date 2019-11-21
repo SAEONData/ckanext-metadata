@@ -492,6 +492,7 @@
         },
         "extent": {
             "type": "object",
+            "required": ["geographicElements", "temporalElement"],
             "properties": {
                 "geographicElements": {
                     "$comment": "Array of geographic elements",
@@ -501,10 +502,13 @@
                     "items": {
                         "$comment": "A geographic element",
                         "type": "object",
-                        "required": ["boundingPolygon", "boundingBox", "geographicIdentifier"],
+                        "anyOf": [
+                            {"required": ["geographicIdentifier"]},
+                            {"required": ["boundingBox"]}
+                        ],
                         "properties": {
                             "extentTypeCode": {
-                                "$comment": "Indicates whether bounding polygon includes or excludes data: true = inclusion; false = exclusion",
+                                "$comment": "Indicates whether bounding polygon includes or excludes data: true = inclusion (the default if not specified); false = exclusion",
                                 "type": "boolean"
                             },
                             "boundingPolygon": {
@@ -544,6 +548,26 @@
                         },
                         "additionalProperties": false
                     }
+                },
+                "verticalElement": {
+                    "type": "object",
+                    "required": ["minimumValue", "maximumValue", "unitOfMeasure", "verticalDatum"],
+                    "properties": {
+                        "minimumValue": {"type": "number"},
+                        "maximumValue": {"type": "number"},
+                        "unitOfMeasure": {"type": "string"},
+                        "verticalDatum": {"type": "string"}
+                    },
+                    "additionalProperties": false
+                },
+                "temporalElement": {
+                    "type": "object",
+                    "required": ["startTime", "endTime"],
+                    "properties": {
+                        "startTime": {"type": "string", "format": "datetime"},
+                        "endTime": {"type": "string", "format": "datetime"}
+                    },
+                    "additionalProperties": false
                 }
             },
             "additionalProperties": false
