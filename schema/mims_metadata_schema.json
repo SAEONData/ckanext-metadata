@@ -1079,10 +1079,10 @@
                             }}
                         ]
                     },
-                    "otherConstraints": {"type": "string"},
-                    "userNote": {"type": "string"}
+                    "rightsURI": {"type": "string"},
+                    "rights": {"type": "string"}
                 },
-                "required": ["otherConstraints", "userNote"],
+                "required": ["rightsURI", "rights"],
                 "additionalProperties": false
             },
             "minItems": 1,
@@ -1094,8 +1094,8 @@
                     "items": {
                         "type": "object",
                         "properties": {
-                            "rights": {"type": "string", "source": "userNote"},
-                            "rightsURI": {"type": "string", "source": "otherConstraints"}
+                            "rights": {"type": "string", "source": "rights"},
+                            "rightsURI": {"type": "string", "source": "rightsURI"}
                         }
                     }
                 }

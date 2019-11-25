@@ -95,8 +95,8 @@
         {"keywordType": "theme", "keyword": "joy"}
     ],
     "constraints": [{
-        "userNote": "Attribution 4.0 International (CC BY 4.0)",
-        "otherConstraints": "https://creativecommons.org/licenses/by/4.0/",
+        "rights": "Attribution 4.0 International (CC BY 4.0)",
+        "rightsURI": "https://creativecommons.org/licenses/by/4.0/",
         "useLimitations": ["Not to be used by landlubbers."],
         "accessConstraints": ["otherRestrictions"],
         "useConstraints": ["license", "intellectualPropertyRights"],
