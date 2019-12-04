@@ -43,7 +43,7 @@
             {"const": "formats"},
             {"const": "immutableResource"},
             {"const": "linkedResources"},
-            {"const": "alternateIdentifiers"},
+            {"const": "identifier"},
             {"const": "dates"},
             {"const": "resourceType"},
             {"const": "rightsList"}
@@ -89,7 +89,7 @@
         "formats": "array",
         "immutableResource": "object",
         "linkedResources": "array",
-        "alternateIdentifiers": "array",
+        "identifier": "object",
         "dates": "array",
         "resourceType": "object",
         "rightsList": "array"
@@ -870,12 +870,12 @@
         "fileIdentifier": {
             "type": "string",
             "mapTo": {
-                "target": "/alternateIdentifiers/-",
+                "target": "/identifier",
                 "value": {
                     "type": "object",
                     "properties": {
-                        "alternateIdentifier": {"type": "string"},
-                        "alternateIdentifierType": {"type": "string", "const": "Local accession number"}
+                        "identifier": {"type": "string"},
+                        "identifierType": {"type": "string", "const": "AccessionID"}
                     }
                 }
             }

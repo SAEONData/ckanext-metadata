@@ -304,12 +304,10 @@
             "linkedResourceType": "Information"
         }
     ],
-    "alternateIdentifiers": [
-        {
-            "alternateIdentifierType": "Local accession number",
-            "alternateIdentifier": "000006"
-        }
-    ],
+    "identifier": {
+        "identifierType": "AccessionID",
+        "identifier": "000006"
+    },
     "dates": [
         {
             "date": "2019-11-18T16:42:24+02:00",
