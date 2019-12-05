@@ -18,6 +18,11 @@ from ckanext.metadata.common import DOI_RE, TIME_RE
 
 checks_format = jsonschema.FormatChecker.cls_checks
 
+# regexes to be used in conjunction with datetime.strptime, because we need to enforce 2-digit
+# months and days, while strptime is lenient and will accept single digit months and days
+_YRMONTH_RE = re.compile(r'^\d{4}-\d{2}$')
+_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
 
 def _unique_objects(array, key_properties):
     """
@@ -436,6 +441,8 @@ def is_year(instance):
 def is_yearmonth(instance):
     if not isinstance(instance, basestring):
         return True
+    if not re.match(_YRMONTH_RE, instance):
+        return False
     try:
         datetime.strptime(instance, '%Y-%m')
         return True
@@ -447,6 +454,8 @@ def is_yearmonth(instance):
 def is_date(instance):
     if not isinstance(instance, basestring):
         return True
+    if not re.match(_DATE_RE, instance):
+        return False
     try:
         datetime.strptime(instance, '%Y-%m-%d')
         return True
@@ -460,6 +469,8 @@ def is_datetime(instance):
         return True
     try:
         datestr, timestr = instance.split('T')
+        if not re.match(_DATE_RE, datestr):
+            return False
         datetime.strptime(datestr, '%Y-%m-%d')
         time_match = re.match(TIME_RE, timestr)
         if time_match:
