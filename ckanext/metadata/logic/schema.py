@@ -227,6 +227,9 @@ def metadata_collection_create_schema():
         # extension-specific fields
         'organization_id': [v.not_empty, unicode, v.object_exists('organization'), convert_to_extras],
         'doi_collection': [v.not_missing, unicode, v.doi_collection_validator, convert_to_extras],
+        'infrastructures': {
+            'id': [v.not_empty, unicode, v.object_exists('infrastructure')],
+        },
     }
     _make_create_schema(schema)
     return schema
@@ -249,6 +252,10 @@ def metadata_collection_show_schema():
         'num_followers': [],
         'package_count': [],
         'display_name': [],
+        'infrastructures': {
+            'id': [v.convert_id_to_name('infrastructure')],
+            '__extras': [ignore],
+        },
     })
     return schema
 

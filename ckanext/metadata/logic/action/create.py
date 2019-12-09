@@ -262,6 +262,9 @@ def metadata_collection_create(context, data_dict):
         each with key ``'name'`` (string, the id or name of the user) and optionally ``'capacity'``
         (string, the capacity in which the user is a member of the collection)
     :type users: list of dictionaries
+    :param infrastructures: the infrastructures associated with the collection (optional);
+        list of dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
+    :type infrastructures: list of dictionaries
 
     :returns: the newly created metadata collection (unless 'return_id_only' is set to True
               in the context, in which case just the metadata collection id will be returned)
@@ -289,9 +292,10 @@ def metadata_collection_create(context, data_dict):
 
     # defer_commit does not actually work due to a bug in _group_or_org_create (in ckan.logic.action.create)
     # - addition of the creating user as a member is done (committed) without consideration for defer_commit
-    # - this will be a (minor) problem if saving of organization membership fails for whatever reason
+    # - this will be a problem if saving of organization membership or infrastructure list fails
     metadata_collection_id = tk.get_action('group_create')(internal_context, data_dict)
     model_save.metadata_collection_organization_membership_save(data_dict['organization_id'], internal_context)
+    model_save.metadata_collection_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
     if not defer_commit:
         model.repo.commit()

@@ -163,6 +163,16 @@ def infrastructure_delete(context, data_dict):
             .count() > 0:
         raise tk.ValidationError(_('Infrastructure has dependent metadata records'))
 
+    if session.query(model.Member) \
+            .join(model.Group, model.Group.id == model.Member.table_id) \
+            .filter(model.Member.group_id == infrastructure_id) \
+            .filter(model.Member.table_name == 'group') \
+            .filter(model.Member.state != 'deleted') \
+            .filter(model.Group.type == 'metadata_collection') \
+            .filter(model.Group.state != 'deleted') \
+            .count() > 0:
+        raise tk.ValidationError(_('Infrastructure has dependent metadata collections'))
+
     # cascade delete to dependent metadata schemas
     cascade_context = {
         'model': model,

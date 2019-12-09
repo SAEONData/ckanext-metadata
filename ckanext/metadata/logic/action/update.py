@@ -330,6 +330,7 @@ def metadata_collection_update(context, data_dict):
 
     tk.get_action('group_update')(internal_context, data_dict)
     model_save.metadata_collection_organization_membership_save(metadata_collection.extras['organization_id'], internal_context)
+    model_save.metadata_collection_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
     if not defer_commit:
         model.repo.commit()

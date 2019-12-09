@@ -6,7 +6,6 @@ import ckan.plugins.toolkit as tk
 from ckanext.metadata import model as ckanext_model
 from ckanext.metadata.tests import (
     ActionTestBase,
-    make_uuid,
     assert_object_matches_dict,
     assert_error,
     factories as ckanext_factories,
@@ -83,7 +82,7 @@ class TestInfrastructureActions(ActionTestBase):
         self.test_action('infrastructure_delete',
                          id=infrastructure['id'])
 
-    def test_delete_with_dependencies(self):
+    def test_delete_with_dependencies_1(self):
         infrastructure = ckanext_factories.Infrastructure()
         metadata_schema = ckanext_factories.MetadataSchema(infrastructure_id=infrastructure['id'])
         metadata_record = ckanext_factories.MetadataRecord(infrastructures=[{'id': infrastructure['id']}])
@@ -94,6 +93,21 @@ class TestInfrastructureActions(ActionTestBase):
         assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'active'
 
         call_action('metadata_record_delete', id=metadata_record['id'])
+        self.test_action('infrastructure_delete',
+                         id=infrastructure['id'])
+        assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'deleted'
+
+    def test_delete_with_dependencies_2(self):
+        infrastructure = ckanext_factories.Infrastructure()
+        metadata_schema = ckanext_factories.MetadataSchema(infrastructure_id=infrastructure['id'])
+        metadata_collection = ckanext_factories.MetadataCollection(infrastructures=[{'id': infrastructure['id']}])
+
+        result, obj = self.test_action('infrastructure_delete', should_error=True,
+                                       id=infrastructure['id'])
+        assert_error(result, 'message', 'Infrastructure has dependent metadata collections')
+        assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'active'
+
+        call_action('metadata_collection_delete', id=metadata_collection['id'])
         self.test_action('infrastructure_delete',
                          id=infrastructure['id'])
         assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'deleted'

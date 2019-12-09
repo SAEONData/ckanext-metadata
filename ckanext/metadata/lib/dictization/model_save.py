@@ -175,6 +175,68 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
             raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
 
 
+def metadata_collection_infrastructure_list_save(infrastructure_dicts, context):
+    """
+    Save the member records representing the metadata collection's membership of its infrastructure
+    groups. Modified from ckan.lib.dictization.model_save.package_membership_list_save
+    """
+    allow_partial_update = context.get("allow_partial_update", False)
+    if infrastructure_dicts is None and allow_partial_update:
+        return
+
+    model = context['model']
+    session = context['session']
+    user = context.get('user')
+    group = context.get('group')
+    capacity = 'public'
+
+    members = session.query(model.Member) \
+        .join(model.Group, model.Member.group_id==model.Group.id) \
+        .filter(model.Group.type == 'infrastructure') \
+        .filter(model.Member.table_id == group.id) \
+        .filter(model.Member.table_name == 'group')
+
+    infrastructure_members = dict((member.group, member) for member in members)
+
+    infrastructures = set()
+    for infrastructure_dict in infrastructure_dicts or []:
+        infrastructure = model.Group.get(infrastructure_dict['id'])
+        if infrastructure:
+            infrastructures.add(infrastructure)
+
+    # Remove any infrastructure groups we are no longer in
+    for infrastructure in set(infrastructure_members.keys()) - infrastructures:
+        member_obj = infrastructure_members[infrastructure]
+        if member_obj and member_obj.state == 'deleted':
+            continue
+        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
+            member_obj.capacity = capacity
+            member_obj.state = 'deleted'
+            session.add(member_obj)
+        else:
+            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
+
+    # Add any new infrastructure groups
+    for infrastructure in infrastructures:
+        member_obj = infrastructure_members.get(infrastructure)
+        if member_obj and member_obj.state == 'active':
+            continue
+        if authz.has_user_permission_for_group_or_org(infrastructure.id, user, 'read'):
+            if member_obj:
+                member_obj.capacity = capacity
+                member_obj.state = 'active'
+            else:
+                member_obj = model.Member(group=infrastructure,
+                                          group_id=infrastructure.id,
+                                          table_name='group',
+                                          table_id=group.id,
+                                          capacity=capacity,
+                                          state='active')
+            session.add(member_obj)
+        else:
+            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
+
+
 def metadata_schema_dict_save(metadata_schema_dict, context):
     return _object_dict_save('metadata_schema', metadata_schema_dict, context)
 

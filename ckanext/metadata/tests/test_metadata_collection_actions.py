@@ -18,8 +18,14 @@ from ckanext.metadata.tests import (
 
 class TestMetadataCollectionActions(ActionTestBase):
 
+    def _generate_organization(self, **kwargs):
+        return ckan_factories.Organization(user=self.normal_user, **kwargs)
+
+    def _generate_infrastructure(self, **kwargs):
+        return ckanext_factories.Infrastructure(user=self.normal_user, **kwargs)
+
     def test_create_valid(self):
-        organization = ckan_factories.Organization(user=self.normal_user)
+        organization = self._generate_organization()
         input_dict = {
             'name': 'test-metadata-collection',
             'title': 'Test Metadata Collection',
@@ -37,12 +43,18 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_object_matches_dict(obj, input_dict)
         assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
 
-    def test_create_valid_organization_byname(self):
-        organization = ckan_factories.Organization(user=self.normal_user)
+    def test_create_valid_with_infrastructures(self):
+        organization = self._generate_organization()
+        infrastructure1 = self._generate_infrastructure()
+        infrastructure2 = self._generate_infrastructure()
         input_dict = {
             'name': 'test-metadata-collection',
             'organization_id': organization['name'],
             'doi_collection': '',
+            'infrastructures': [
+                {'id': infrastructure1['id']},
+                {'id': infrastructure2['name']},
+            ],
         }
         result, obj = self.test_action('metadata_collection_create', **input_dict)
         assert obj.type == 'metadata_collection'
@@ -51,6 +63,8 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_group_has_extra(obj.id, 'organization_id', organization['id'])
         assert_group_has_extra(obj.id, 'doi_collection', '')
         assert_group_has_member(organization['id'], obj.id, 'group', capacity='parent')
+        assert_group_has_member(infrastructure1['id'], obj.id, 'group')
+        assert_group_has_member(infrastructure2['id'], obj.id, 'group')
 
     def test_create_invalid_duplicate_name(self):
         metadata_collection = ckanext_factories.MetadataCollection()
@@ -58,17 +72,23 @@ class TestMetadataCollectionActions(ActionTestBase):
                                        name=metadata_collection['name'])
         assert_error(result, 'name', 'Group name already exists in database')
 
-    def test_create_invalid_bad_organization(self):
+    def test_create_invalid_bad_references(self):
         result, obj = self.test_action('metadata_collection_create', should_error=True,
-                                       organization_id='foo')
+                                       organization_id='foo',
+                                       infrastructures=[{'id': 'bar'}])
         assert_error(result, 'organization_id', 'Not found: Organization')
+        assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
-    def test_create_invalid_deleted_organization(self):
-        organization = ckan_factories.Organization()
+    def test_create_invalid_deleted_references(self):
+        organization = self._generate_organization()
+        infrastructure = self._generate_infrastructure()
         call_action('organization_delete', id=organization['id'])
+        call_action('infrastructure_delete', id=infrastructure['id'])
         result, obj = self.test_action('metadata_collection_create', should_error=True,
-                                       organization_id=organization['id'])
+                                       organization_id=organization['id'],
+                                       infrastructures=[{'id': infrastructure['id']}])
         assert_error(result, 'organization_id', 'Not found: Organization')
+        assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
     def test_create_invalid_bad_doi_collection(self):
         result, obj = self.test_action('metadata_collection_create', should_error=True,
@@ -76,7 +96,12 @@ class TestMetadataCollectionActions(ActionTestBase):
         assert_error(result, 'doi_collection', 'Invalid DOI collection identifier')
 
     def test_update_valid(self):
-        metadata_collection = ckanext_factories.MetadataCollection()
+        infrastructure1 = self._generate_infrastructure()
+        infrastructure2 = self._generate_infrastructure()
+        metadata_collection = ckanext_factories.MetadataCollection(infrastructures=[
+            {'id': infrastructure1['id']}, {'id': infrastructure2['id']}])
+
+        new_infrastructure = self._generate_infrastructure()
         input_dict = {
             'id': metadata_collection['id'],
             'name': 'updated-test-metadata-collection',
@@ -84,15 +109,23 @@ class TestMetadataCollectionActions(ActionTestBase):
             'description': 'Updated test metadata collection',
             'organization_id': metadata_collection['organization_id'],
             'doi_collection': 'updated.test.doi',
+            'infrastructures': [
+                {'id': infrastructure2['name']},
+                {'id': new_infrastructure['name']},
+            ],
         }
         result, obj = self.test_action('metadata_collection_update', **input_dict)
         assert obj.type == 'metadata_collection'
         assert obj.is_organization == False
         del input_dict['organization_id']
         del input_dict['doi_collection']
+        del input_dict['infrastructures']
         assert_object_matches_dict(obj, input_dict)
         assert_group_has_extra(obj.id, 'organization_id', metadata_collection['organization_id'])
         assert_group_has_extra(obj.id, 'doi_collection', 'UPDATED.TEST.DOI')
+        assert_group_has_member(infrastructure1['id'], obj.id, 'group', state='deleted')
+        assert_group_has_member(infrastructure2['id'], obj.id, 'group')
+        assert_group_has_member(new_infrastructure['id'], obj.id, 'group')
 
     def test_update_valid_partial(self):
         metadata_collection = ckanext_factories.MetadataCollection()
@@ -133,13 +166,22 @@ class TestMetadataCollectionActions(ActionTestBase):
 
     def test_update_invalid_cannot_change_organization(self):
         metadata_collection = ckanext_factories.MetadataCollection()
-        organization = ckan_factories.Organization()
+        organization = self._generate_organization()
         input_dict = {
             'id': metadata_collection['id'],
             'organization_id': organization['id'],
         }
         result, obj = self.test_action('metadata_collection_update', should_error=True, **input_dict)
         assert_error(result, 'organization_id', 'Organization cannot be changed')
+
+    def test_update_invalid_deleted_references(self):
+        metadata_collection = ckanext_factories.MetadataCollection()
+        infrastructure = self._generate_infrastructure()
+        call_action('infrastructure_delete', id=infrastructure['id'])
+        result, obj = self.test_action('metadata_collection_update', should_error=True,
+                                       id=metadata_collection['id'],
+                                       infrastructures=[{'id': infrastructure['id']}])
+        assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
     def test_delete_valid(self):
         metadata_collection = ckanext_factories.MetadataCollection()
