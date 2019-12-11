@@ -302,26 +302,14 @@ def metadata_collection_show(context, data_dict):
 
     tk.check_access('metadata_collection_show', context, data_dict)
 
-    data_dict.update({
-        'type': 'metadata_collection',
-        'include_datasets': False,
-        'include_dataset_count': True,
-        'include_extras': True,
-        'include_tags': False,
-        'include_users': False,
-        'include_groups': False,
-        'include_followers': True,
-    })
-    group_context = context.copy()
-    group_context.update({
-        'schema': schema.metadata_collection_show_schema(),
-        'invoked_action': 'metadata_collection_show',
-        'ignore_auth': True,
-    })
+    context['group'] = metadata_collection
+    metadata_collection_dict = model_dictize.metadata_collection_dictize(metadata_collection, context)
+    metadata_collection_dict['num_followers'] = tk.get_action('group_follower_count')(
+        {'model': model, 'session': model.Session},
+        {'id': metadata_collection_id})
 
-    metadata_collection_dict = tk.get_action('group_show')(group_context, data_dict)
-    context['group'] = group_context['group']  # because the group controller depends on internal behaviour *smh*
-    return metadata_collection_dict
+    result_dict, errors = tk.navl_validate(metadata_collection_dict, schema.metadata_collection_show_schema(), context)
+    return result_dict
 
 
 @tk.side_effect_free

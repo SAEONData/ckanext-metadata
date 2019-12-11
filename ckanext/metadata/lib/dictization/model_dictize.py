@@ -64,6 +64,39 @@ def metadata_record_dictize(pkg, context):
     return result_dict
 
 
+def metadata_collection_dictize(metadata_collection, context):
+    model = context['model']
+    is_latest_revision = not(context.get('revision_id') or
+                             context.get('revision_date'))
+    execute = _execute if is_latest_revision else _execute_with_revision
+
+    result_dict = ckan_model_dictize.group_dictize(metadata_collection, context,
+                                                   include_groups=False,
+                                                   include_tags=False,
+                                                   include_users=False,
+                                                   include_extras=True,
+                                                   packages_field='dataset_count')
+
+    # infrastructures
+    if is_latest_revision:
+        member = model.member_table
+    else:
+        member = model.member_revision_table
+    group = model.group_table
+    q = select([group, member.c.capacity],
+               from_obj=member.join(group, group.c.id == member.c.group_id)
+               ).where(member.c.table_id == metadata_collection.id)\
+                .where(member.c.state == 'active') \
+                .where(group.c.is_organization == False) \
+                .where(group.c.type == 'infrastructure')
+    result = execute(q, member, context)
+    context['with_capacity'] = False
+    result_dict['infrastructures'] = ckan_model_dictize.group_list_dictize(
+        result, context, with_package_counts=False)
+
+    return result_dict
+
+
 def metadata_record_activity_dictize(activity, context):
     model = context['model']
     session = context['session']
