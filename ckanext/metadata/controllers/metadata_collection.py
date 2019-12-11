@@ -77,12 +77,68 @@ class MetadataCollectionController(GroupController):
         tk.h.redirect_to('organization_read', id=organization_id)
 
     def new(self, data=None, errors=None, error_summary=None, organization_id=None):
+        """
+        Replaces group.new
+        """
         self._set_organization_context(organization_id)
-        return super(MetadataCollectionController, self).new(data, errors, error_summary)
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user,
+                   'save': 'save' in tk.request.params}
+
+        if context['save'] and not data and tk.request.method == 'POST':
+            return self._save_new(context)
+
+        try:
+            tk.check_access('metadata_collection_create', context)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('Unauthorized to create a metadata collection'))
+
+        data = data or {}
+        errors = errors or {}
+        error_summary = error_summary or {}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
+                'group_type': 'metadata_collection',
+                'infrastructure_lookup_list': self._infrastructure_lookup_list()}
+
+        self._setup_template_variables(context, data, group_type='metadata_collection')
+        tk.c.form = tk.render(self._group_form(group_type='metadata_collection'), extra_vars=vars)
+        return tk.render(self._new_template('metadata_collection'), extra_vars={'group_type': 'metadata_collection'})
 
     def edit(self, id, data=None, errors=None, error_summary=None, organization_id=None):
+        """
+        Replaces group.edit
+        """
         self._set_organization_context(organization_id)
-        return super(MetadataCollectionController, self).edit(id, data, errors, error_summary)
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user,
+                   'save': 'save' in tk.request.params, 'for_edit': True}
+
+        if context['save'] and not data and tk.request.method == 'POST':
+            return self._save_edit(id, context)
+
+        try:
+            tk.check_access('metadata_collection_update', context)
+        except tk.NotAuthorized:
+            tk.abort(403, tk._('User %r not authorized to edit %s') % (tk.c.user, id))
+
+        try:
+            old_data = tk.get_action('metadata_collection_show')(context, {'id': id})
+            tk.c.grouptitle = old_data.get('title')
+            tk.c.groupname = old_data.get('name')
+            tk.c.group = context.get('group')
+            tk.c.group_dict = old_data
+            data = data or old_data
+        except (tk.NotFound, tk.NotAuthorized):
+            tk.abort(404, tk._('Metadata Collection not found'))
+
+        errors = errors or {}
+        error_summary = error_summary or {}
+        vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
+                'group_type': 'metadata_collection',
+                'infrastructure_lookup_list': self._infrastructure_lookup_list(),
+                'selected_infrastructure_ids': [i['id'] for i in data['infrastructures']]}
+
+        self._setup_template_variables(context, data, group_type='metadata_collection')
+        tk.c.form = tk.render(self._group_form(group_type='metadata_collection'), extra_vars=vars)
+        return tk.render(self._edit_template('metadata_collection'), extra_vars={'group_type': 'metadata_collection'})
 
     def read(self, id, limit=50, organization_id=None):
         context = {'model': model, 'session': model.Session,
@@ -212,6 +268,17 @@ class MetadataCollectionController(GroupController):
                [{'value': workflow_state['name'], 'text': workflow_state['display_name']}
                 for workflow_state in workflow_states]
 
+    @staticmethod
+    def _infrastructure_lookup_list():
+        """
+        Return a list of {'value': name, 'text': display_name} dicts for populating the
+        infrastructure select control.
+        """
+        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+        infrastructures = tk.get_action('infrastructure_list')(context, {'all_fields': True})
+        return [{'value': infrastructure['name'], 'text': infrastructure['display_name']}
+                for infrastructure in infrastructures]
+
     def activity(self, id, offset=0, organization_id=None):
         self._set_organization_context(organization_id)
         return super(MetadataCollectionController, self).activity(id, offset)
@@ -239,6 +306,7 @@ class MetadataCollectionController(GroupController):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             data_dict['type'] = 'metadata_collection'
+            data_dict['infrastructures'] = self._parse_infrastructure_ids(data_dict.get('infrastructure_ids'))
             context['message'] = data_dict.get('log_message', '')
             data_dict['users'] = [{'name': tk.c.user, 'capacity': 'admin'}]
             group = tk.get_action('metadata_collection_create')(context, data_dict)
@@ -262,6 +330,7 @@ class MetadataCollectionController(GroupController):
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             context['message'] = data_dict.get('log_message', '')
             data_dict['id'] = id
+            data_dict['infrastructures'] = self._parse_infrastructure_ids(data_dict.get('infrastructure_ids'))
             context['allow_partial_update'] = True
             group = tk.get_action('metadata_collection_update')(context, data_dict)
             if id != group['name']:
@@ -277,3 +346,11 @@ class MetadataCollectionController(GroupController):
             errors = e.error_dict
             error_summary = e.error_summary
             return self.edit(id, data_dict, errors, error_summary)
+
+    @staticmethod
+    def _parse_infrastructure_ids(infrastructure_ids):
+        if not infrastructure_ids:
+            return []
+        if isinstance(infrastructure_ids, basestring):
+            return [{'id': infrastructure_ids}]
+        return [{'id': infrastructure_id} for infrastructure_id in infrastructure_ids]
