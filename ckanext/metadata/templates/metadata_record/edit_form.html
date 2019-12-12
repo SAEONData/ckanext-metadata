@@ -28,12 +28,6 @@
         value=data.metadata_json, error=errors.metadata_json, is_required=true,
         attrs={'style': 'font-family: monospace'}, rows=12) }}
 
-  {% call form.multiselect('infrastructure_ids', label=_('Infrastructures'), id='field-infrastructures',
-        options=infrastructure_lookup_list, selected=selected_infrastructure_ids, error=errors.infrastructures,
-        classes=['control-medium']) %}
-    {{ form.info(_('Select the infrastructure(s) with which to associate the metadata record. Use Ctrl+Click to select / deselect individual items.')) }}
-  {% endcall %}
-
   {{ form.required_message() }}
 
   <div class="form-actions">

@@ -84,8 +84,7 @@ class MetadataRecordController(tk.BaseController):
         doi_attr_mappings = self._doi_attribute_mappings([ms['value'] for ms in metadata_standard_lookup_list])
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
                 'metadata_standard_lookup_list': metadata_standard_lookup_list,
-                'doi_attr_mappings': doi_attr_mappings,
-                'infrastructure_lookup_list': self._infrastructure_lookup_list()}
+                'doi_attr_mappings': doi_attr_mappings}
 
         tk.c.form = tk.render('metadata_record/edit_form.html', extra_vars=vars)
         return tk.render('metadata_record/new.html')
@@ -111,9 +110,7 @@ class MetadataRecordController(tk.BaseController):
         doi_attr_mappings = self._doi_attribute_mappings([ms['value'] for ms in metadata_standard_lookup_list])
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
                 'metadata_standard_lookup_list': metadata_standard_lookup_list,
-                'doi_attr_mappings': doi_attr_mappings,
-                'infrastructure_lookup_list': self._infrastructure_lookup_list(),
-                'selected_infrastructure_ids': [i['id'] for i in data['infrastructures']]}
+                'doi_attr_mappings': doi_attr_mappings}
 
         tk.c.form = tk.render('metadata_record/edit_form.html', extra_vars=vars)
         return tk.render('metadata_record/edit.html')
@@ -390,17 +387,6 @@ class MetadataRecordController(tk.BaseController):
         return result
 
     @staticmethod
-    def _infrastructure_lookup_list():
-        """
-        Return a list of {'value': name, 'text': display_name} dicts for populating the
-        infrastructure select control.
-        """
-        context = {'model': model, 'session': model.Session, 'user': tk.c.user}
-        infrastructures = tk.get_action('infrastructure_list')(context, {'all_fields': True})
-        return [{'value': infrastructure['name'], 'text': infrastructure['display_name']}
-                for infrastructure in infrastructures]
-
-    @staticmethod
     def _workflow_state_lookup_list():
         """
         Return a list of {'value': name, 'text': display_name} dicts for populating the
@@ -445,7 +431,6 @@ class MetadataRecordController(tk.BaseController):
     def _save_new(self, context):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
-            data_dict['infrastructures'] = self._parse_infrastructure_ids(data_dict.get('infrastructure_ids'))
             data_dict.setdefault('auto_assign_doi', False)
             context['message'] = data_dict.get('log_message', '')
             metadata_record = tk.get_action('metadata_record_create')(context, data_dict)
@@ -467,7 +452,6 @@ class MetadataRecordController(tk.BaseController):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
             data_dict['id'] = id
-            data_dict['infrastructures'] = self._parse_infrastructure_ids(data_dict.get('infrastructure_ids'))
             context['message'] = data_dict.get('log_message', '')
             context['allow_partial_update'] = True
             metadata_record = tk.get_action('metadata_record_update')(context, data_dict)
@@ -522,14 +506,6 @@ class MetadataRecordController(tk.BaseController):
             errors = e.error_dict
             error_summary = e.error_summary
             return self.annotation_edit(id, key, data_dict, errors, error_summary)
-
-    @staticmethod
-    def _parse_infrastructure_ids(infrastructure_ids):
-        if not infrastructure_ids:
-            return []
-        if isinstance(infrastructure_ids, basestring):
-            return [{'id': infrastructure_ids}]
-        return [{'id': infrastructure_id} for infrastructure_id in infrastructure_ids]
 
     @staticmethod
     def _elastic_update_index(id, organization_id, metadata_collection_id, context):
