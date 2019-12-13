@@ -126,8 +126,8 @@ def metadata_record_index_update(original_action, context, data_dict):
             .join(model.Member, model.Group.id == model.Member.group_id) \
             .filter(model.Group.type == 'infrastructure') \
             .filter(model.Group.state == 'active') \
-            .filter(model.Member.table_name == 'package') \
-            .filter(model.Member.table_id == metadata_record.id) \
+            .filter(model.Member.table_name == 'group') \
+            .filter(model.Member.table_id == metadata_record.extras['metadata_collection_id']) \
             .filter(model.Member.state == 'active') \
             .all()
         infrastructure_titles = [title for (title,) in infrastructure_titles]
@@ -226,9 +226,11 @@ def infrastructure_update(original_action, context, data_dict):
 
     if update_search_index:
         metadata_records = session.query(model.Package) \
-            .join(model.Member, model.Package.id == model.Member.table_id) \
+            .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
+            .filter(model.PackageExtra.key == 'metadata_collection_id') \
+            .join(model.Member, model.PackageExtra.value == model.Member.table_id) \
             .filter(model.Member.group_id == infrastructure_id) \
-            .filter(model.Member.table_name == 'package') \
+            .filter(model.Member.table_name == 'group') \
             .filter(model.Member.state != 'deleted') \
             .filter(model.Package.type == 'metadata_record') \
             .filter(model.Package.state != 'deleted') \
@@ -245,22 +247,42 @@ def infrastructure_update(original_action, context, data_dict):
 @tk.chained_action
 def metadata_collection_update(original_action, context, data_dict):
     """
-    Hook into this action so that we can update the search index if a metadata collection title changes.
+    Hook into this action so that we can update the search index if a metadata collection title changes
+    or if its infrastructure list changes.
     """
     model = context['model']
     session = context['session']
     return_id_only = context.get('return_id_only', False)
 
+    id_ = tk.get_or_bust(data_dict, 'id')
+    metadata_collection = model.Group.get(id_)
+    if metadata_collection is None or metadata_collection.type != 'metadata_collection':
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
+
     update_search_index = False
 
     new_title = data_dict.get('title')
     if new_title is not None:
-        id_ = tk.get_or_bust(data_dict, 'id')
-        metadata_collection = model.Group.get(id_)
-        if metadata_collection is None or metadata_collection.type != 'metadata_collection':
-            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Collection')))
-        
         update_search_index = new_title != metadata_collection.title
+
+    if not update_search_index:
+        # check if infrastructure list has changed
+        new_infrastructures = []
+        for new_inf_dict in data_dict.get('infrastructures'):
+            new_inf = model.Group.get(new_inf_dict['id'])
+            if new_inf is not None:  # no need to validate the infrastructure here; it's done in the original_action call
+                new_infrastructures += [new_inf.id]
+
+        old_infrastructures = session.query(model.Member.group_id) \
+            .join(model.Group, model.Group.id == model.Member.group_id) \
+            .filter(model.Group.type == 'infrastructure') \
+            .filter(model.Group.state == 'active') \
+            .filter(model.Member.table_name == 'group') \
+            .filter(model.Member.table_id == metadata_collection.id) \
+            .filter(model.Member.state == 'active') \
+            .all()
+        old_infrastructures = [old_inf_id for (old_inf_id,) in old_infrastructures]
+        update_search_index = set(new_infrastructures) != set(old_infrastructures)
 
     result = original_action(context, data_dict)
     metadata_collection_id = result if return_id_only else result['id']
