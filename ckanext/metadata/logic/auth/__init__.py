@@ -64,14 +64,22 @@ def _authorize_member_action(method, context, data_dict):
     :param method: 'create' | 'delete'
     :return: auth dict{'success': .., 'msg': ..}
     """
+    model = context['model']
     if data_dict['object_type'] == 'package':
-        model = context['model']
         package = model.Package.get(data_dict['object'])
         group = model.Group.get(data_dict['id'])
         if package.type == 'metadata_record' and group.type in ('infrastructure', 'metadata_collection'):
             return {
                 'success': False,
                 'msg': _("This action may not be used to alter a metadata record's membership of metadata collections or infrastructures.")
+            }
+    elif data_dict['object_type'] == 'group':
+        member_grp = model.Group.get(data_dict['object'])
+        container_grp = model.Group.get(data_dict['id'])
+        if member_grp.type == 'metadata_collection' and container_grp.type in ('infrastructure',):
+            return {
+                'success': False,
+                'msg': _("This action may not be used to alter a metadata collection's membership of infrastructures.")
             }
 
     auth_module = getattr(auth, method)
