@@ -3,6 +3,7 @@
 import logging
 from paste.deploy.converters import asbool
 from sqlalchemy import or_
+from sqlalchemy.orm import aliased
 import json
 import jsonpointer
 
@@ -192,8 +193,11 @@ def metadata_schema_dependent_record_list(context, data_dict):
         q = q.filter(model.Package.owner_org == metadata_schema.organization_id)
 
     if metadata_schema.infrastructure_id:
-        q = q.join(model.Member, model.Member.table_id == model.Package.id) \
-            .filter(model.Member.table_name == 'package') \
+        collection_extra = aliased(model.PackageExtra)
+        q = q.join(collection_extra, model.Package.id == collection_extra.package_id) \
+            .filter(collection_extra.key == 'metadata_collection_id') \
+            .join(model.Member, collection_extra.value == model.Member.table_id) \
+            .filter(model.Member.table_name == 'group') \
             .filter(model.Member.state == 'active') \
             .join(model.Group, model.Group.id == model.Member.group_id) \
             .filter(model.Group.type == 'infrastructure') \
@@ -594,7 +598,7 @@ def metadata_record_validation_schema_list(context, data_dict):
     This comprises the following:
     1. The default schema defined for the record's metadata standard.
     2. A schema for that standard (optionally) defined for the owner organization.
-    3. Any schemas (optionally) defined for that standard for infrastructures linked to the record.
+    3. Any schemas (optionally) defined for that standard for infrastructures linked to the record's collection.
 
     :param id: the id or name of the metadata record
     :type id: string
@@ -629,8 +633,8 @@ def metadata_record_validation_schema_list(context, data_dict):
         .join(model.Member, model.Group.id == model.Member.group_id) \
         .filter(model.Group.type == 'infrastructure') \
         .filter(model.Group.state == 'active') \
-        .filter(model.Member.table_name == 'package') \
-        .filter(model.Member.table_id == metadata_record_id) \
+        .filter(model.Member.table_name == 'group') \
+        .filter(model.Member.table_id == metadata_record.extras['metadata_collection_id']) \
         .filter(model.Member.state == 'active') \
         .all()
     infrastructure_ids = [infra_id for (infra_id,) in infrastructure_ids] + [None]
