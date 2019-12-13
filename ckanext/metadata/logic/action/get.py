@@ -478,10 +478,13 @@ def metadata_record_list(context, data_dict):
             raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
         infrastructure_id = infrastructure.id
 
-        metadata_records_q = metadata_records_q.join(model.Member, model.Package.id==model.Member.table_id) \
+        metadata_records_q = metadata_records_q \
+            .join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id) \
+            .filter(model.PackageExtra.key == 'metadata_collection_id') \
+            .join(model.Member, model.PackageExtra.value == model.Member.table_id) \
             .filter(model.Member.group_id == infrastructure_id) \
-            .filter(model.Member.table_name == 'package') \
-            .filter(model.Member.state == 'active')
+            .filter(model.Member.table_name == 'group') \
+            .filter(model.Member.state != 'deleted')
 
     if limit:
         metadata_records_q = metadata_records_q.limit(limit)

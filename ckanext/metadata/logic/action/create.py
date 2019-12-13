@@ -321,9 +321,6 @@ def metadata_record_create(context, data_dict):
     :type owner_org: string
     :param metadata_collection_id: the id or name of the metadata collection to which this record will be added
     :type metadata_collection_id: string
-    :param infrastructures: the infrastructures associated with the record (optional);
-        list of dictionaries each with key ``'id'`` (string, the id or name of the infrastructure)
-    :type infrastructures: list of dictionaries
     :param metadata_standard_id: the id or name of the metadata standard that describes the record's structure
     :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content
@@ -410,7 +407,6 @@ def metadata_record_create(context, data_dict):
     })
     metadata_record_id = tk.get_action('package_create')(internal_context, data_dict)
     model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], internal_context)
-    model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
     # auto assign a DOI if applicable
     if auto_assign_doi:

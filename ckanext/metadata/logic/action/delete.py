@@ -154,16 +154,6 @@ def infrastructure_delete(context, data_dict):
     tk.check_access('infrastructure_delete', context, data_dict)
 
     if session.query(model.Member) \
-            .join(model.Package, model.Package.id == model.Member.table_id) \
-            .filter(model.Member.group_id == infrastructure_id) \
-            .filter(model.Member.table_name == 'package') \
-            .filter(model.Member.state != 'deleted') \
-            .filter(model.Package.type == 'metadata_record') \
-            .filter(model.Package.state != 'deleted') \
-            .count() > 0:
-        raise tk.ValidationError(_('Infrastructure has dependent metadata records'))
-
-    if session.query(model.Member) \
             .join(model.Group, model.Group.id == model.Member.table_id) \
             .filter(model.Member.group_id == infrastructure_id) \
             .filter(model.Member.table_name == 'group') \

@@ -437,11 +437,10 @@ def metadata_record_update(context, data_dict):
 
     tk.get_action('package_update')(internal_context, data_dict)
     model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], internal_context)
-    model_save.metadata_record_infrastructure_list_save(data_dict.get('infrastructures'), internal_context)
 
     # check if we need to invalidate the record
     if asbool(metadata_record.extras['validated']):
-        # ensure new validation schema list sees infrastructure list changes
+        # ensure new validation schema list sees infrastructure list changes (infrastructures are now on the collection but there's no harm in leaving this here)
         session.flush()
 
         new_metadata_json = metadata_record.extras['metadata_json']
