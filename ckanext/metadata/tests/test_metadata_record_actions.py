@@ -57,7 +57,6 @@ class TestMetadataRecordActions(ActionTestBase):
         """
         metadata_schema = ckanext_factories.MetadataSchema(
             metadata_standard_id=metadata_record['metadata_standard_id'],
-            infrastructure_id=metadata_record['infrastructures'][0]['id'] if metadata_record['infrastructures'] else ''
         )
         call_action('metadata_record_validate', id=metadata_record['id'], context={'user': self.normal_user['name']})
         assert_package_has_extra(metadata_record['id'], 'validated', True)
@@ -72,7 +71,6 @@ class TestMetadataRecordActions(ActionTestBase):
             'author': 'Someone',
             'owner_org': self.owner_org['id'],
             'metadata_collection_id': self.metadata_collection['id'],
-            'infrastructures': [],
             'metadata_standard_id': self.metadata_standard['id'],
             'metadata_json': '{ "testkey": "testvalue" }',
             'doi': '',
@@ -184,21 +182,6 @@ class TestMetadataRecordActions(ActionTestBase):
         input_dict['owner_org'] = self.owner_org['name']
         result, obj = self.test_action('metadata_record_create', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict)
-
-    def test_create_valid_with_infrastructures(self):
-        infrastructure1 = self._generate_infrastructure()
-        infrastructure2 = self._generate_infrastructure()
-        input_dict = self._make_input_dict()
-        input_dict.update({
-            'infrastructures': [
-                {'id': infrastructure1['id']},
-                {'id': infrastructure2['name']},
-            ],
-        })
-        result, obj = self.test_action('metadata_record_create', **input_dict)
-        self._assert_metadata_record_ok(obj, input_dict)
-        assert_group_has_member(infrastructure1['id'], obj.id, 'package')
-        assert_group_has_member(infrastructure2['id'], obj.id, 'package')
 
     def test_create_valid_map_attributes(self):
         """
@@ -412,28 +395,22 @@ class TestMetadataRecordActions(ActionTestBase):
         result, obj = self.test_action('metadata_record_create', should_error=True,
                                        owner_org='a',
                                        metadata_collection_id='b',
-                                       metadata_standard_id='c',
-                                       infrastructures=[{'id': 'd'}])
+                                       metadata_standard_id='c')
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
         assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
-        assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
     def test_create_invalid_deleted_references(self):
-        infrastructure = self._generate_infrastructure()
         call_action('organization_delete', context={'user': self.normal_user['name']}, id=self.owner_org['id'])
         call_action('metadata_collection_delete', id=self.metadata_collection['id'])
         call_action('metadata_standard_delete', id=self.metadata_standard['id'])
-        call_action('infrastructure_delete', id=infrastructure['id'])
 
         input_dict = self._make_input_dict()
-        input_dict['infrastructures'] = [{'id': infrastructure['id']}]
         result, obj = self.test_action('metadata_record_create', should_error=True, **input_dict)
 
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
         assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
-        assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
     def test_create_invalid_owner_org_collection_mismatch(self):
         result, obj = self.test_action('metadata_record_create', should_error=True,
@@ -453,14 +430,9 @@ class TestMetadataRecordActions(ActionTestBase):
         assert obj.id == metadata_record['id']
 
     def test_update_valid(self):
-        infrastructure1 = self._generate_infrastructure()
-        infrastructure2 = self._generate_infrastructure()
-        metadata_record = self._generate_metadata_record(infrastructures=[
-            {'id': infrastructure1['id']}, {'id': infrastructure2['id']}])
-
+        metadata_record = self._generate_metadata_record()
         new_metadata_collection = self._generate_metadata_collection(organization_id=self.owner_org['id'])
         new_metadata_standard = ckanext_factories.MetadataStandard()
-        new_infrastructure = self._generate_infrastructure()
 
         input_dict = {
             'id': metadata_record['id'],
@@ -470,10 +442,6 @@ class TestMetadataRecordActions(ActionTestBase):
             'metadata_standard_id': new_metadata_standard['id'],
             'metadata_json': '{ "newtestkey": "newtestvalue" }',
             'doi': '10.12345/foo',
-            'infrastructures': [
-                {'id': infrastructure2['name']},
-                {'id': new_infrastructure['name']},
-            ],
             # the following fields are set automatically, so any values provided as input should be ignored
             'type': 'ignore',
             'validated': 'ignore',
@@ -487,27 +455,20 @@ class TestMetadataRecordActions(ActionTestBase):
                                         metadata_collection_id=new_metadata_collection['id'],
                                         metadata_standard_id=new_metadata_standard['id'],
                                         doi=input_dict['doi'].upper())
-        assert_group_has_member(infrastructure1['id'], obj.id, 'package', state='deleted')
-        assert_group_has_member(infrastructure2['id'], obj.id, 'package')
-        assert_group_has_member(new_infrastructure['id'], obj.id, 'package')
         assert_group_has_member(self.metadata_collection['id'], obj.id, 'package', state='deleted')
 
     def test_update_valid_partial(self):
-        infrastructure = self._generate_infrastructure()
-        metadata_record = self._generate_metadata_record(
-            infrastructures=[{'id': infrastructure['id']}])
+        metadata_record = self._generate_metadata_record()
 
         input_dict = self._make_input_dict()
         input_dict.update({
             'id': metadata_record['id'],
             'title': 'Updated Test Metadata Record',
             'metadata_json': '{ "newtestkey": "newtestvalue" }',
-            'infrastructures': [{'id': infrastructure['id']}],
         })
         result, obj = self.test_action('metadata_record_update', **input_dict)
 
         self._assert_metadata_record_ok(obj, input_dict)
-        assert_group_has_member(infrastructure['id'], obj.id, 'package')
 
     def test_update_json_invalidate(self):
         metadata_record = self._generate_metadata_record()
@@ -561,31 +522,30 @@ class TestMetadataRecordActions(ActionTestBase):
                                                      metadata_schema['name'], new_metadata_schema['name'])
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
-    def test_update_infrastructures_invalidate(self):
-        infrastructure = self._generate_infrastructure()
-        metadata_record = self._generate_metadata_record(infrastructures=[{'id': infrastructure['id']}])
-        metadata_schema = self._validate_metadata_record(metadata_record)
-        input_dict = self._make_input_dict_from_output_dict(metadata_record)
-
-        new_infrastructure = self._generate_infrastructure()
-        new_metadata_schema = ckanext_factories.MetadataSchema(metadata_standard_id=metadata_record['metadata_standard_id'],
-                                                             infrastructure_id=new_infrastructure['id'])
-        assert_package_has_extra(metadata_record['id'], 'validated', True)
-
-        input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
-        result, obj = self.test_action('metadata_record_update', **input_dict)
-        self._assert_metadata_record_ok(obj, input_dict,
-                                        validated=False)
-        assert_metadata_record_has_validation_schemas(metadata_record['id'], new_metadata_schema['name'])
-        self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
+    # TODO: We should do this in metadata collection tests
+    # def test_update_infrastructures_invalidate(self):
+    #     infrastructure = self._generate_infrastructure()
+    #     metadata_record = self._generate_metadata_record(infrastructures=[{'id': infrastructure['id']}])
+    #     metadata_schema = self._validate_metadata_record(metadata_record)
+    #     input_dict = self._make_input_dict_from_output_dict(metadata_record)
+    #
+    #     new_infrastructure = self._generate_infrastructure()
+    #     new_metadata_schema = ckanext_factories.MetadataSchema(metadata_standard_id=metadata_record['metadata_standard_id'],
+    #                                                          infrastructure_id=new_infrastructure['id'])
+    #     assert_package_has_extra(metadata_record['id'], 'validated', True)
+    #
+    #     input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
+    #     result, obj = self.test_action('metadata_record_update', **input_dict)
+    #     self._assert_metadata_record_ok(obj, input_dict,
+    #                                     validated=False)
+    #     assert_metadata_record_has_validation_schemas(metadata_record['id'], new_metadata_schema['name'])
+    #     self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_record_update', obj)
 
     def test_update_no_invalidate(self):
         metadata_record = self._generate_metadata_record()
         metadata_schema = self._validate_metadata_record(metadata_record)
         input_dict = self._make_input_dict_from_output_dict(metadata_record)
 
-        new_infrastructure = self._generate_infrastructure()
-        input_dict['infrastructures'] = [{'id': new_infrastructure['id']}]
         result, obj = self.test_action('metadata_record_update', **input_dict)
         self._assert_metadata_record_ok(obj, input_dict,
                                         validated=True)
@@ -873,35 +833,29 @@ class TestMetadataRecordActions(ActionTestBase):
                                        id=metadata_record['id'],
                                        owner_org='a',
                                        metadata_collection_id='b',
-                                       metadata_standard_id='c',
-                                       infrastructures=[{'id': 'd'}])
+                                       metadata_standard_id='c')
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
         assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
-        assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
     def test_update_invalid_deleted_references(self):
         metadata_record = self._generate_metadata_record()
-        infrastructure = self._generate_infrastructure()
         organization = self._generate_organization()
         metadata_collection = self._generate_metadata_collection(organization_id=organization['id'])
         metadata_standard = ckanext_factories.MetadataStandard()
         call_action('organization_delete', context={'user': self.normal_user['name']}, id=organization['id'])
         call_action('metadata_collection_delete', id=metadata_collection['id'])
         call_action('metadata_standard_delete', id=metadata_standard['id'])
-        call_action('infrastructure_delete', id=infrastructure['id'])
 
         result, obj = self.test_action('metadata_record_update', should_error=True,
                                        id=metadata_record['id'],
                                        owner_org=organization['id'],
                                        metadata_collection_id=metadata_collection['id'],
-                                       metadata_standard_id=metadata_standard['id'],
-                                       infrastructures=[{'id': infrastructure['id']}])
+                                       metadata_standard_id=metadata_standard['id'])
 
         assert_error(result, 'owner_org', 'Not found: Organization')
         assert_error(result, 'metadata_collection_id', 'Not found: Metadata Collection')
         assert_error(result, 'metadata_standard_id', 'Not found: Metadata Standard')
-        assert_error(result, 'infrastructures/0/id', 'Not found: Infrastructure')
 
     def test_update_invalid_owner_org_collection_mismatch(self):
         metadata_record = self._generate_metadata_record()

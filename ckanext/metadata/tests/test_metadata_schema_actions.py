@@ -6,7 +6,6 @@ from ckan.tests.helpers import call_action
 from ckanext.metadata import model as ckanext_model
 from ckanext.metadata.tests import (
     ActionTestBase,
-    make_uuid,
     generate_name,
     assert_object_matches_dict,
     assert_error,
@@ -21,30 +20,37 @@ from ckanext.metadata.tests import (
 class TestMetadataSchemaActions(ActionTestBase):
 
     def _generate_and_validate_metadata_record(self, metadata_standard_id=None,
-                                               add_infrastructure_to_record=False,
+                                               add_infrastructure_to_collection=False,
                                                add_organization_to_schema=False,
                                                add_infrastructure_to_schema=False):
         """
         Generate a metadata record and a metadata schema, and validate the record using the schema.
         :param metadata_standard_id: specify the metadata standard to use
-        :param add_infrastructure_to_record: assign an infrastructure to the record
+        :param add_infrastructure_to_collection: assign an infrastructure to the record's metadata collection
         :param add_organization_to_schema: associate the record's organization with the schema
         :param add_infrastructure_to_schema: associate the record's infrastructure with the schema
-        :return: tuple of new record and schema dictionaries
+        :return: tuple of new record, new collection, new schema
         """
+        organization = ckan_factories.Organization()
+        metadata_collection = ckanext_factories.MetadataCollection(
+            organization_id=organization['id'],
+            infrastructures=[{'id': ckanext_factories.Infrastructure()['id']}] if add_infrastructure_to_collection else []
+        )
         metadata_record = ckanext_factories.MetadataRecord(
             metadata_standard_id=metadata_standard_id,
-            infrastructures=[{'id': ckanext_factories.Infrastructure()['id']}] if add_infrastructure_to_record else [])
-
+            metadata_collection_id=metadata_collection['id'],
+            owner_org=organization['id'],
+        )
         metadata_schema = ckanext_factories.MetadataSchema(
             metadata_standard_id=metadata_record['metadata_standard_id'],
-            organization_id=metadata_record['owner_org'] if add_organization_to_schema else '',
-            infrastructure_id=metadata_record['infrastructures'][0]['id'] if add_infrastructure_to_schema else '')
+            organization_id=organization['id'] if add_organization_to_schema else '',
+            infrastructure_id=metadata_collection['infrastructures'][0]['id'] if add_infrastructure_to_schema else ''
+        )
 
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
         self._validate_metadata_record(metadata_record)
         self.assert_validate_activity_logged(metadata_record['id'], metadata_schema)
-        return metadata_record, metadata_schema
+        return metadata_record, metadata_collection, metadata_schema
 
     def _generate_and_validate_metadata_record_using_schema(self, metadata_schema):
         """
@@ -52,10 +58,15 @@ class TestMetadataSchemaActions(ActionTestBase):
         and validate it using this schema.
         :return: metadata record dict
         """
+        metadata_collection = ckanext_factories.MetadataCollection(
+            organization_id=metadata_schema['organization_id'] if metadata_schema['organization_id'] else ckan_factories.Organization()['id'],
+            infrastructures=[{'id': metadata_schema['infrastructure_id']}] if metadata_schema['infrastructure_id'] else []
+        )
         metadata_record = ckanext_factories.MetadataRecord(
             metadata_standard_id=metadata_schema['metadata_standard_id'],
-            owner_org=metadata_schema['organization_id'],
-            infrastructures=[{'id': metadata_schema['infrastructure_id']}] if metadata_schema['infrastructure_id'] else [])
+            owner_org=metadata_collection['organization_id'],
+            metadata_collection_id=metadata_collection['id'],
+        )
 
         assert_metadata_record_has_validation_schemas(metadata_record['id'], metadata_schema['name'])
         self._validate_metadata_record(metadata_record)
@@ -193,7 +204,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         of matching on the record's metadata standard. This should invalidate the record.
         """
         # add org to schema to avoid unique key violation below
-        metadata_record, _ = self._generate_and_validate_metadata_record(add_organization_to_schema=True)
+        metadata_record, _, _ = self._generate_and_validate_metadata_record(add_organization_to_schema=True)
         result, obj = self.test_action('metadata_schema_create',
                                        metadata_standard_id=metadata_record['metadata_standard_id'],
                                        organization_id='',
@@ -207,7 +218,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         Create a schema that will be used for validating an existing validated metadata record by virtue
         of matching on standard and organization. This should invalidate the record.
         """
-        metadata_record, _ = self._generate_and_validate_metadata_record()
+        metadata_record, _, _ = self._generate_and_validate_metadata_record()
         result, obj = self.test_action('metadata_schema_create',
                                        metadata_standard_id=metadata_record['metadata_standard_id'],
                                        organization_id=metadata_record['owner_org'],
@@ -221,11 +232,11 @@ class TestMetadataSchemaActions(ActionTestBase):
         Create a schema that will be used for validating an existing validated metadata record by virtue
         of matching on standard and infrastructure. This should invalidate the record.
         """
-        metadata_record, _ = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
+        metadata_record, metadata_collection, _ = self._generate_and_validate_metadata_record(add_infrastructure_to_collection=True)
         result, obj = self.test_action('metadata_schema_create',
                                        metadata_standard_id=metadata_record['metadata_standard_id'],
                                        organization_id='',
-                                       infrastructure_id=metadata_record['infrastructures'][0]['id'],
+                                       infrastructure_id=metadata_collection['infrastructures'][0]['id'],
                                        schema_json='{}')
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_schema_create', obj)
@@ -235,7 +246,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         Create a schema with a different standard to that of an existing validated metadata record.
         This should not invalidate the record.
         """
-        metadata_record, _ = self._generate_and_validate_metadata_record()
+        metadata_record, _, _ = self._generate_and_validate_metadata_record()
         call_action('metadata_schema_create',
                     metadata_standard_id=ckanext_factories.MetadataStandard()['id'],
                     organization_id='',
@@ -248,7 +259,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         Create a schema with the same standard but a different organization to that of an existing
         validated metadata record. This should not invalidate the record.
         """
-        metadata_record, _ = self._generate_and_validate_metadata_record()
+        metadata_record, _, _ = self._generate_and_validate_metadata_record()
         call_action('metadata_schema_create',
                     metadata_standard_id=metadata_record['metadata_standard_id'],
                     organization_id=ckan_factories.Organization()['id'],
@@ -261,7 +272,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         Create a schema with the same standard but a different infrastructure to that of an existing
         validated metadata record. This should not invalidate the record.
         """
-        metadata_record, _ = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
+        metadata_record, _, _ = self._generate_and_validate_metadata_record(add_infrastructure_to_collection=True)
         call_action('metadata_schema_create',
                     metadata_standard_id=metadata_record['metadata_standard_id'],
                     organization_id='',
@@ -274,7 +285,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         Create a schema with the same standard but a different infrastructure to that of an existing
         validated metadata record. This should not invalidate the record.
         """
-        metadata_record, _ = self._generate_and_validate_metadata_record()
+        metadata_record, _, _ = self._generate_and_validate_metadata_record()
         call_action('metadata_schema_create',
                     metadata_standard_id=metadata_record['metadata_standard_id'],
                     organization_id='',
@@ -449,7 +460,8 @@ class TestMetadataSchemaActions(ActionTestBase):
         Update the JSON of a schema that was used to validate existing metadata records that are associated with
         different organizations and infrastructures. This should invalidate all those records.
         """
-        metadata_record_1, metadata_schema = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
+        metadata_record_1, _, metadata_schema = self._generate_and_validate_metadata_record(
+            add_infrastructure_to_collection=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_schema(metadata_schema)
         assert_metadata_schema_has_dependent_records(metadata_schema['id'], metadata_record_1['id'], metadata_record_2['id'])
 
@@ -471,7 +483,8 @@ class TestMetadataSchemaActions(ActionTestBase):
         Update the JSON of a schema that was used to validate existing metadata records that are associated with
         the same infrastructure and different organizations. This should invalidate all those records.
         """
-        metadata_record_1, metadata_schema = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True, add_infrastructure_to_schema=True)
+        metadata_record_1, _, metadata_schema = self._generate_and_validate_metadata_record(
+            add_infrastructure_to_collection=True, add_infrastructure_to_schema=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_schema(metadata_schema)
         assert_metadata_schema_has_dependent_records(metadata_schema['id'], metadata_record_1['id'], metadata_record_2['id'])
 
@@ -493,7 +506,8 @@ class TestMetadataSchemaActions(ActionTestBase):
         Update the JSON of a schema that was used to validate existing metadata records that are associated with
         the same organization and different infrastructures. This should invalidate all those records.
         """
-        metadata_record_1, metadata_schema = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True, add_organization_to_schema=True)
+        metadata_record_1, _, metadata_schema = self._generate_and_validate_metadata_record(
+            add_infrastructure_to_collection=True, add_organization_to_schema=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_schema(metadata_schema)
         assert_metadata_schema_has_dependent_records(metadata_schema['id'], metadata_record_1['id'], metadata_record_2['id'])
 
@@ -515,7 +529,8 @@ class TestMetadataSchemaActions(ActionTestBase):
         Assign an infrastructure to a schema that was used to validate existing metadata records. This should invalidate
         those records that are no longer dependent on the schema due to not being associated with that infrastructure.
         """
-        metadata_record_1, metadata_schema = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True)
+        metadata_record_1, metadata_collection_1, metadata_schema = self._generate_and_validate_metadata_record(
+            add_infrastructure_to_collection=True)
         metadata_record_2 = self._generate_and_validate_metadata_record_using_schema(metadata_schema)
         assert_metadata_schema_has_dependent_records(metadata_schema['id'], metadata_record_1['id'], metadata_record_2['id'])
 
@@ -523,7 +538,7 @@ class TestMetadataSchemaActions(ActionTestBase):
                                        id=metadata_schema['id'],
                                        metadata_standard_id=metadata_schema['metadata_standard_id'],
                                        organization_id='',
-                                       infrastructure_id=metadata_record_1['infrastructures'][0]['id'],
+                                       infrastructure_id=metadata_collection_1['infrastructures'][0]['id'],
                                        schema_json=metadata_schema['schema_json'])
 
         assert_package_has_extra(metadata_record_1['id'], 'validated', True)
@@ -536,8 +551,9 @@ class TestMetadataSchemaActions(ActionTestBase):
         Unassign an infrastructure from a schema. This should invalidate existing validated metadata records that are
         newly dependent on the schema.
         """
-        metadata_record_1, metadata_schema_1 = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True, add_infrastructure_to_schema=True)
-        metadata_record_2, metadata_schema_2 = self._generate_and_validate_metadata_record(metadata_standard_id=metadata_record_1['metadata_standard_id'], add_organization_to_schema=True)
+        metadata_record_1, _, metadata_schema_1 = self._generate_and_validate_metadata_record(
+            add_infrastructure_to_collection=True, add_infrastructure_to_schema=True)
+        metadata_record_2, _, metadata_schema_2 = self._generate_and_validate_metadata_record(metadata_standard_id=metadata_record_1['metadata_standard_id'], add_organization_to_schema=True)
         assert_metadata_schema_has_dependent_records(metadata_schema_1['id'], metadata_record_1['id'])
 
         result, obj = self.test_action('metadata_schema_update',
@@ -557,7 +573,7 @@ class TestMetadataSchemaActions(ActionTestBase):
         Assign an organization to a schema that was used to validate existing metadata records. This should invalidate
         those records that are no longer dependent on the schema due to not being associated with that organization.
         """
-        metadata_record_1, metadata_schema = self._generate_and_validate_metadata_record()
+        metadata_record_1, _, metadata_schema = self._generate_and_validate_metadata_record()
         metadata_record_2 = self._generate_and_validate_metadata_record_using_schema(metadata_schema)
         assert_metadata_schema_has_dependent_records(metadata_schema['id'], metadata_record_1['id'], metadata_record_2['id'])
 
@@ -578,8 +594,8 @@ class TestMetadataSchemaActions(ActionTestBase):
         Unassign an organization from a schema. This should invalidate existing validated metadata records that are
         newly dependent on the schema.
         """
-        metadata_record_1, metadata_schema_1 = self._generate_and_validate_metadata_record(add_organization_to_schema=True)
-        metadata_record_2, metadata_schema_2 = self._generate_and_validate_metadata_record(metadata_standard_id=metadata_record_1['metadata_standard_id'], add_organization_to_schema=True)
+        metadata_record_1, _, metadata_schema_1 = self._generate_and_validate_metadata_record(add_organization_to_schema=True)
+        metadata_record_2, _, metadata_schema_2 = self._generate_and_validate_metadata_record(metadata_standard_id=metadata_record_1['metadata_standard_id'], add_organization_to_schema=True)
         assert_metadata_schema_has_dependent_records(metadata_schema_1['id'], metadata_record_1['id'])
 
         result, obj = self.test_action('metadata_schema_update',
@@ -726,20 +742,21 @@ class TestMetadataSchemaActions(ActionTestBase):
                          id=metadata_schema['id'])
 
     def test_delete_invalidate_records(self):
-        metadata_record, metadata_schema = self._generate_and_validate_metadata_record()
+        metadata_record, _, metadata_schema = self._generate_and_validate_metadata_record()
         result, obj = self.test_action('metadata_schema_delete',
                                        id=metadata_schema['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_schema_delete', obj)
 
-        metadata_record, metadata_schema = self._generate_and_validate_metadata_record(add_organization_to_schema=True)
+        metadata_record, _, metadata_schema = self._generate_and_validate_metadata_record(add_organization_to_schema=True)
         result, obj = self.test_action('metadata_schema_delete',
                                        id=metadata_schema['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', False)
         self.assert_invalidate_activity_logged(metadata_record['id'], 'metadata_schema_delete', obj)
 
-        metadata_record, metadata_schema = self._generate_and_validate_metadata_record(add_infrastructure_to_record=True,
-                                                                                      add_infrastructure_to_schema=True)
+        metadata_record, _, metadata_schema = self._generate_and_validate_metadata_record(
+            add_infrastructure_to_collection=True,
+            add_infrastructure_to_schema=True)
         result, obj = self.test_action('metadata_schema_delete',
                                        id=metadata_schema['id'])
         assert_package_has_extra(metadata_record['id'], 'validated', False)
