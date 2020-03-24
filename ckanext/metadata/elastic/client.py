@@ -7,7 +7,7 @@ from celery import Celery
 from ckan.common import config
 
 app = Celery('client',
-             broker='pyamqp://localhost',
+             broker='pyamqp://{}'.format(config.get('ckan.metadata.elastic.rabbitmq_host')),
              include=['ckanext.metadata.elastic.client'])
 
 log = logging.getLogger(__name__)

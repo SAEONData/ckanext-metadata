@@ -26,3 +26,5 @@ class ElasticSearchPlugin(p.SingletonPlugin):
     def configure(self, config):
         if not config.get('ckan.metadata.elastic.search_agent_url'):
             raise Exception('Config option ckan.metadata.elastic.search_agent_url has not been set')
+        if not config.get('ckan.metadata.elastic.rabbitmq_host'):
+            raise Exception('Config option ckan.metadata.elastic.rabbitmq_host has not been set')
