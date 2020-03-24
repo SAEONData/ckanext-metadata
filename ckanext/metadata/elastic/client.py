@@ -1,13 +1,18 @@
 # encoding: utf-8
 
+import os
 import logging
 import requests
 from celery import Celery
 
 from ckan.common import config
 
+RABBITMQ_HOST = os.getenv('RABBITMQ_HOST')
+if not RABBITMQ_HOST:
+    raise ValueError('RABBITMQ_HOST environment variable has not been set')
+
 app = Celery('client',
-             broker='pyamqp://{}'.format(config.get('ckan.metadata.elastic.rabbitmq_host')),
+             broker='pyamqp://{}'.format(RABBITMQ_HOST),
              include=['ckanext.metadata.elastic.client'])
 
 log = logging.getLogger(__name__)

@@ -56,6 +56,9 @@ The following configuration options are used by plugins as indicated:
 | metadata_framework | ckan.metadata.convert_nested_ids_to_names | True | If True, object IDs are converted to object names in API output dictionaries. Note: this option must be set to True for metadata framework UI forms to work correctly.
 | metadata_framework | ckan.metadata.doi_prefix | | The DOI prefix for auto-generation of DOIs (dependent on metadata collection settings).
 | metadata_elasticsearch | ckan.metadata.elastic.search_agent_url | | The URL of the Elastic Search Agent.
-| metadata_elasticsearch | ckan.metadata.elastic.rabbitmq_host | | The host on which the RabbitMQ server is running.
+
+### Environment variables
+
+* RABBITMQ_HOST: The host on which the RabbitMQ server is running.
 
 Restart your CKAN instance after any configuration changes.
