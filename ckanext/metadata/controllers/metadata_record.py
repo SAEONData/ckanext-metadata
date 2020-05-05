@@ -319,8 +319,11 @@ class MetadataRecordController(tk.BaseController):
     @staticmethod
     def _transition(id, organization_id, metadata_collection_id, workflow_state_id, context):
         try:
-            tk.get_action('metadata_record_workflow_state_transition')(context, {'id': id, 'workflow_state_id': workflow_state_id})
-            tk.h.flash_notice(tk._('The metadata record has been transitioned to a new workflow state.'))
+            workflow_activity_dict = tk.get_action('metadata_record_workflow_state_transition')(context, {'id': id, 'workflow_state_id': workflow_state_id})
+            if workflow_activity_dict['data']['errors']:
+                tk.h.flash_error(tk._('The workflow transition could not be completed due to workflow validation errors.'))
+            else:
+                tk.h.flash_notice(tk._('The metadata record has been transitioned to a new workflow state.'))
         except tk.NotAuthorized:
             tk.abort(403, tk._('Unauthorized to change the workflow state of the metadata record'))
         except tk.ObjectNotFound:
