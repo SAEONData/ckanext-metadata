@@ -79,8 +79,9 @@ def role_validator(validator, role_name, instance, schema):
     """
     "role" keyword validator function: checks that instance is the id of a user with the named role.
     """
-    if validator.is_type(instance, 'string'):
-        yield jsonschema.ValidationError("Role validation has not been implemented yet")
+    # todo
+    # if validator.is_type(instance, 'string'):
+    #     yield jsonschema.ValidationError("Role validation has not been implemented yet")
 
 
 def unique_objects_validator(validator, key_properties, instance, schema):
