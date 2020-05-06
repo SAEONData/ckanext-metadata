@@ -253,7 +253,8 @@ class MetadataRecordController(tk.BaseController):
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'new',
                 'predefined_annotations': predefined_annotations,
                 'annotation_key_lookup_list': self._annotation_key_lookup_list(predefined_annotations),
-                'user_lookup_list': self._user_lookup_list(predefined_annotations)}
+                'user_lookup_list': self._user_lookup_list(predefined_annotations),
+                'email_lookup_list': self._email_lookup_list(predefined_annotations)}
 
         tk.c.form = tk.render('metadata_record/annotation_form.html', extra_vars=vars)
         return tk.render('metadata_record/annotation_edit.html', extra_vars=vars)
@@ -289,7 +290,8 @@ class MetadataRecordController(tk.BaseController):
         vars = {'data': data, 'errors': errors, 'error_summary': error_summary, 'action': 'edit',
                 'predefined_annotations': predefined_annotations,
                 'annotation_key_lookup_list': self._annotation_key_lookup_list(predefined_annotations),
-                'user_lookup_list': self._user_lookup_list(predefined_annotations)}
+                'user_lookup_list': self._user_lookup_list(predefined_annotations),
+                'email_lookup_list': self._email_lookup_list(predefined_annotations)}
 
         tk.c.form = tk.render('metadata_record/annotation_form.html', extra_vars=vars)
         return tk.render('metadata_record/annotation_edit.html', extra_vars=vars)
@@ -421,15 +423,28 @@ class MetadataRecordController(tk.BaseController):
     @staticmethod
     def _user_lookup_list(predefined_annotations):
         """
-        Return a list of {'value': user_id, 'text': user_name} dicts for populating user
+        Return a list of {'value': user_id, 'text': user_email} dicts for populating user
         select controls, if there are any 'userid' type attributes in the predefined annotation definitions.
         """
         if any((True for annotation in predefined_annotations if 'userid' in annotation['attributes'].itervalues())):
             context = {'model': model, 'session': model.Session, 'user': tk.c.user}
             users = tk.get_action('user_list')(context, {'all_fields': True})
             return [{'value': '', 'text': tk._('(None)')}] + \
-                   [{'value': user['id'], 'text': user['display_name']}
-                    for user in users]
+                   [{'value': user['id'], 'text': user['email']}
+                    for user in users if user['name'] != 'default']
+
+    @staticmethod
+    def _email_lookup_list(predefined_annotations):
+        """
+        Return a list of {'value': user_email, 'text': user_email} dicts for populating user
+        select controls, if there are any 'email' type attributes in the predefined annotation definitions.
+        """
+        if any((True for annotation in predefined_annotations if 'email' in annotation['attributes'].itervalues())):
+            context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+            users = tk.get_action('user_list')(context, {'all_fields': True})
+            return [{'value': '', 'text': tk._('(None)')}] + \
+                   [{'value': user['email'], 'text': user['email']}
+                    for user in users if user['name'] != 'default']
 
     def _save_new(self, context):
         try:

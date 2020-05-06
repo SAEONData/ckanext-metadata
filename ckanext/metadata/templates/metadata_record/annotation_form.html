@@ -71,6 +71,12 @@
                            options=user_lookup_list, selected=attr_value,
                            attrs={'class': attr_class, 'data-attr-name': attr_name,
                                   'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
+
+          {% elif attr_type == 'email' %}
+            {{ form.select(label=attr_name, id=attr_id, classes=['control-medium'],
+                           options=email_lookup_list, selected=attr_value,
+                           attrs={'class': attr_class, 'data-attr-name': attr_name,
+                                  'onchange': 'change_attribute(this.dataset.attrName, this.value);'}) }}
           {% endif %}
         {% endfor %}
       </div>
