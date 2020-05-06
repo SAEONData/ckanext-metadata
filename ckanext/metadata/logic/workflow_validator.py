@@ -28,4 +28,5 @@ class WorkflowValidator(JSONValidator):
         return [
             'url',
             'date',
+            'email',
         ]

@@ -29,10 +29,10 @@
         "quality_control_1": {
             "type": "object",
             "properties": {
-                "userid": {"type": "string", "objectid": "user", "role": "curator"},
+                "user": {"type": "string", "format": "email", "role": "curator"},
                 "date": {"type": "string", "format": "date"}
             },
-            "required": ["userid", "date"]
+            "required": ["user", "date"]
         },
         "validated": {
             "type": "boolean",

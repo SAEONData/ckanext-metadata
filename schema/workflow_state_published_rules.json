@@ -29,18 +29,18 @@
         "quality_control_1": {
             "type": "object",
             "properties": {
-                "userid": {"type": "string", "objectid": "user", "role": "curator"},
+                "user": {"type": "string", "format": "email", "role": "curator"},
                 "date": {"type": "string", "format": "date"}
             },
-            "required": ["userid", "date"]
+            "required": ["user", "date"]
         },
         "quality_control_2": {
             "type": "object",
             "properties": {
-                "userid": {"type": "string", "objectid": "user", "role": "curator"},
+                "user": {"type": "string", "format": "email", "role": "curator"},
                 "date": {"type": "string", "format": "date"}
             },
-            "required": ["userid", "date"]
+            "required": ["user", "date"]
         },
         "validated": {
             "type": "boolean",
@@ -84,6 +84,6 @@
 
     "uniqueProperties": {
         "namePattern": "quality_control_[0-9]+",
-        "childProperties": ["userid"]
+        "childProperties": ["user"]
     }
 }
