@@ -1094,39 +1094,28 @@ class TestMetadataRecordActions(ActionTestBase):
         self._validate_metadata_record(metadata_record)
         call_action('metadata_record_workflow_annotation_update', id=metadata_record['id'],
                     key='quality_control_1',
-                    value='{"userid": "someone", "date": "Friday the 13th"}')
+                    value='{"user": "someone", "date": "Friday the 13th"}')
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_accepted['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
                                              *jsonpatch_ids, **{
-                                                 'quality_control_1/userid': 'Not found.? User',
+                                                 'quality_control_1/user': 'is not a .*email',
                                                  'quality_control_1/date': 'is not a .*date',
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
         call_action('metadata_record_workflow_annotation_update', id=metadata_record['id'],
                     key='quality_control_1',
-                    value=json.dumps({"userid": self.normal_user['name'], "date": "2018-08-14"}))
+                    value=json.dumps({"user": self.normal_user['email'], "date": "2018-08-14"}))
+
+        # TODO: role validation test
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_accepted['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
-                                             *jsonpatch_ids, **{
-                                                 'quality_control_1/userid': 'Must use object id not name',
-                                             })
-        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
-
-        call_action('metadata_record_workflow_annotation_update', id=metadata_record['id'],
-                    key='quality_control_1',
-                    value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-14"}))
-
-        # TODO: the following depends on implementation of role_validator() in json_validator_functions
-        # self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-        #                  workflow_state_id=workflow_state_accepted['id'])
-        # self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
-        #                                      *jsonpatch_ids)
-        # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_accepted['id'])
+                                             *jsonpatch_ids)
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_accepted['id'])
 
     def test_workflow_transition_published(self):
         metadata_json = json.loads(load_example('saeon_odp_4.2_record.json'))
@@ -1162,7 +1151,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                       )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='quality_control_1',
-                                      value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-14"}),
+                                      value=json.dumps({"user": self.normal_user['email'], "date": "2018-08-14"}),
                                       )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
@@ -1182,7 +1171,7 @@ class TestMetadataRecordActions(ActionTestBase):
 
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='quality_control_2',
-                                      value=json.dumps({"userid": self.normal_user['id'], "date": "2018-08-15"}),
+                                      value=json.dumps({"user": self.normal_user['email'], "date": "2018-08-15"}),
                                       )['jsonpatch_id']]
 
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
@@ -1195,14 +1184,15 @@ class TestMetadataRecordActions(ActionTestBase):
 
         call_action('metadata_record_workflow_annotation_update', id=metadata_record['id'],
                     key='quality_control_2',
-                    value=json.dumps({"userid": ckan_factories.User()['id'], "date": "2018-08-14"}))
+                    value=json.dumps({"user": ckan_factories.User()['email'], "date": "2018-08-14"}))
 
-        # TODO: the following depends on implementation of role_validator() in json_validator_functions
-        # self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
-        #                  workflow_state_id=workflow_state_published['id'])
-        # self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
-        #                                      *jsonpatch_ids)
-        # assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_published['id'])
+        # TODO: role validation test
+
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_published['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
+                                             *jsonpatch_ids)
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', workflow_state_published['id'])
 
     def test_workflow_state_revert(self):
         metadata_record = self._generate_metadata_record()

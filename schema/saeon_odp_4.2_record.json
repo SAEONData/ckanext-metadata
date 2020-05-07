@@ -171,7 +171,7 @@
         }
     ],
     "immutableResource": {
-        "resourceURL": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.2.xml",
+        "resourceURL": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.xml",
         "resourceChecksum": "1f4d92f643bf831131f7bd26bdb6d3e3",
         "checksumAlgorithm": "md5",
         "resourceName": "Full DataCite XML Example",
