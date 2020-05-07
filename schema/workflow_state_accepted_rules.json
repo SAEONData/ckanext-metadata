@@ -22,7 +22,7 @@
         "capture_info": {
             "type": "object",
             "properties": {
-                "capture_method": {"type": "string", "enum": ["harvester", "curator", "manual"]}
+                "capture_method": {"type": "string", "enum": ["curator", "harvester", "wizard"]}
             },
             "required": ["capture_method"]
         },

@@ -1076,7 +1076,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                       )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='capture_info',
-                                      value='{"capture_method": "manual"}',
+                                      value='{"capture_method": "wizard"}',
                                       )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='quality_control_1',
@@ -1147,7 +1147,7 @@ class TestMetadataRecordActions(ActionTestBase):
                                       )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='capture_info',
-                                      value='{"capture_method": "manual"}',
+                                      value='{"capture_method": "curator"}',
                                       )['jsonpatch_id']]
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='quality_control_1',
