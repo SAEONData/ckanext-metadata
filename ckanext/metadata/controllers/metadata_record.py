@@ -427,7 +427,7 @@ class MetadataRecordController(tk.BaseController):
         select controls, if there are any 'userid' type attributes in the predefined annotation definitions.
         """
         if any((True for annotation in predefined_annotations if 'userid' in annotation['attributes'].itervalues())):
-            context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+            context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'keep_email': True}
             users = tk.get_action('user_list')(context, {'all_fields': True})
             return [{'value': '', 'text': tk._('(None)')}] + \
                    [{'value': user['id'], 'text': user['email']}
@@ -440,7 +440,7 @@ class MetadataRecordController(tk.BaseController):
         select controls, if there are any 'email' type attributes in the predefined annotation definitions.
         """
         if any((True for annotation in predefined_annotations if 'email' in annotation['attributes'].itervalues())):
-            context = {'model': model, 'session': model.Session, 'user': tk.c.user}
+            context = {'model': model, 'session': model.Session, 'user': tk.c.user, 'keep_email': True}
             users = tk.get_action('user_list')(context, {'all_fields': True})
             return [{'value': '', 'text': tk._('(None)')}] + \
                    [{'value': user['email'], 'text': user['email']}
