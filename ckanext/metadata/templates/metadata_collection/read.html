@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block page_primary_action %}
-  {% if h.check_access('metadata_record_create') %}
+  {% if h.check_access('metadata_record_create', {'owner_org': c.org_dict.id}) %}
     {% link_for _('Add Metadata Record'), action='new', class_='btn btn-primary', icon='plus-square',
       organization_id=c.org_dict.name, metadata_collection_id=c.group_dict.name,
       controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController' %}

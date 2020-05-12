@@ -2,7 +2,7 @@
 
 import logging
 
-from ckanext.metadata.logic.auth import _authorize_package_action, _authorize_group_action, _authorize_member_action
+from ckanext.metadata.logic.auth import check_privs, _authorize_package_action, _authorize_group_action, _authorize_member_action
 
 log = logging.getLogger(__name__)
 
@@ -31,49 +31,56 @@ def member_create(context, data_dict):
     return _authorize_member_action('create', context, data_dict)
 
 
+# Admin functions
+
 def metadata_standard_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def metadata_schema_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def infrastructure_create(context, data_dict):
-    return {'success': True}
-
-
-def metadata_collection_create(context, data_dict):
-    return {'success': True}
-
-
-def metadata_record_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def workflow_state_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def workflow_transition_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def workflow_annotation_create(context, data_dict):
-    return {'success': True}
-
-
-def metadata_record_workflow_annotation_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def metadata_standard_index_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def metadata_json_attr_map_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
 
 
 def infrastructure_member_create(context, data_dict):
-    return {'success': True}
+    return {'success': check_privs(context, require_admin=True)}
+
+
+# Curation functions
+
+def metadata_collection_create(context, data_dict):
+    return {'success': check_privs(context, require_curator=True, require_organization=(data_dict or {}).get('organization_id'))}
+
+
+def metadata_record_workflow_annotation_create(context, data_dict):
+    organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
+    return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
+
+
+# Contributor functions
+
+def metadata_record_create(context, data_dict):
+    return {'success': check_privs(context, require_contributor=True, require_organization=(data_dict or {}).get('owner_org'))}

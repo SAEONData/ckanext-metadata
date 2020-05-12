@@ -1,7 +1,74 @@
 # encoding: utf-8
 
-from ckan.common import _
+import json
+
+from ckan.common import _, config
 from ckan.logic import auth
+from ckan.lib.redis import connect_to_redis
+
+
+def check_privs(context, require_admin=False, require_curator=False, require_contributor=False, require_organization=None):
+    """
+    Check whether the user has the specified privileges.
+
+    This is done by looking up the info directly in Redis, which gets written by
+    ckanext/accesscontrol/logic/openidconnect.py (see functions _extract_token_data
+    and _save_token_data for details).
+
+    Note: this is not the usual CKAN way of doing things; it effectively makes this extension
+    dependent on ckanext-accesscontrol. At this point, however, it's the simplest means of
+    implementing role based access control.
+
+    :param require_admin: the user must have the administrator role in the admin organization
+    :param require_curator: the user must have the curator role either in the admin organization or the specified require_organization
+    :param require_contributor: the user must have the contributor role in the specified require_organization
+    :param require_organization: the organization (id or name) associated with the resource being requested or updated
+    :return: bool
+    """
+    admin_org = config.get('ckan.metadata.admin_org')
+    admin_role = config.get('ckan.metadata.admin_role')
+    curator_role = config.get('ckan.metadata.curator_role')
+    contributor_role = config.get('ckan.metadata.contributor_role')
+
+    model = context['model']
+    user = context['user']
+    user_id = model.User.by_name(user.decode('utf8')).id
+
+    redis = connect_to_redis()
+    key = 'oidc_token_data:' + user_id
+    token_json = redis.get(key)
+    if not token_json:
+        return False
+    token_data = json.loads(token_json)
+
+    is_admin = False
+    is_curator = False
+    is_contributor = False
+    is_member = False
+
+    if require_organization:
+        require_organization = model.Group.get(require_organization).name
+
+    for privilege in token_data['privileges']:
+        if privilege['institution'] == admin_org and privilege['role'] == admin_role:
+            is_admin = True
+        if privilege['institution'] in (admin_org, require_organization) and privilege['role'] == curator_role:
+            is_curator = True
+        if privilege['institution'] == require_organization and privilege['role'] == contributor_role:
+            is_contributor = True
+        if privilege['institution'] == require_organization:
+            is_member = True
+
+    if require_admin:
+        return is_admin
+    if require_curator:
+        return is_admin or is_curator
+    if require_contributor:
+        return is_admin or is_curator or is_contributor
+    if require_organization:
+        return is_admin or is_curator or is_contributor or is_member
+
+    return True
 
 
 def _authorize_package_action(method, context, data_dict):

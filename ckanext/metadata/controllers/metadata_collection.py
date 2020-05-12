@@ -88,7 +88,7 @@ class MetadataCollectionController(GroupController):
             return self._save_new(context)
 
         try:
-            tk.check_access('metadata_collection_create', context)
+            tk.check_access('metadata_collection_create', context, {'organization_id': organization_id})
         except tk.NotAuthorized:
             tk.abort(403, tk._('Unauthorized to create a metadata collection'))
 
@@ -115,7 +115,7 @@ class MetadataCollectionController(GroupController):
             return self._save_edit(id, context)
 
         try:
-            tk.check_access('metadata_collection_update', context)
+            tk.check_access('metadata_collection_update', context, {'id': id})
         except tk.NotAuthorized:
             tk.abort(403, tk._('User %r not authorized to edit %s') % (tk.c.user, id))
 

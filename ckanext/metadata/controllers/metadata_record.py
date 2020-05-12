@@ -73,7 +73,7 @@ class MetadataRecordController(tk.BaseController):
             return self._save_new(context)
 
         try:
-            tk.check_access('metadata_record_create', context)
+            tk.check_access('metadata_record_create', context, {'owner_org': organization_id})
         except tk.NotAuthorized:
             tk.abort(403, tk._('Unauthorized to create a metadata record'))
 
@@ -99,7 +99,7 @@ class MetadataRecordController(tk.BaseController):
             return self._save_edit(id, context)
 
         try:
-            tk.check_access('metadata_record_update', context)
+            tk.check_access('metadata_record_update', context, {'id': id})
         except tk.NotAuthorized:
             tk.abort(403, tk._('User %r not authorized to edit %s') % (tk.c.user, id))
 
@@ -240,7 +240,7 @@ class MetadataRecordController(tk.BaseController):
             return self._save_annotation_new(id, context)
 
         try:
-            tk.check_access('metadata_record_workflow_annotation_create', context)
+            tk.check_access('metadata_record_workflow_annotation_create', context, {'id': id})
         except tk.NotAuthorized:
             tk.abort(403, tk._('Not authorized to add annotations to the metadata record'))
 
@@ -269,7 +269,7 @@ class MetadataRecordController(tk.BaseController):
             return self._save_annotation_edit(id, key, context)
 
         try:
-            tk.check_access('metadata_record_workflow_annotation_update', context)
+            tk.check_access('metadata_record_workflow_annotation_update', context, {'id': id})
         except tk.NotAuthorized:
             tk.abort(403, tk._('Not authorized to update annotations on the metadata record'))
 

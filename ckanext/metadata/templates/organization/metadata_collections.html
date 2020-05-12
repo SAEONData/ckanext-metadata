@@ -1,7 +1,7 @@
 {% extends "organization/read_base.html" %}
 
 {% block page_primary_action %}
-  {% if h.check_access('metadata_collection_create') %}
+  {% if h.check_access('metadata_collection_create', {'organization_id': c.org_dict.id}) %}
     {% link_for _('Add Metadata Collection'), controller='ckanext.metadata.controllers.metadata_collection:MetadataCollectionController',
       organization_id=c.org_dict.name, action='new', class_='btn btn-primary', icon='plus-square' %}
   {% endif %}
