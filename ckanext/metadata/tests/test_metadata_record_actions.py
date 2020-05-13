@@ -8,6 +8,7 @@ from ckan.tests import factories as ckan_factories
 from ckan.tests.helpers import call_action
 import ckan.plugins.toolkit as tk
 import ckan.model as ckan_model
+from ckan.lib.redis import connect_to_redis
 from ckanext.metadata.common import DOI_RE
 
 from ckanext.metadata.tests import (
@@ -111,6 +112,18 @@ class TestMetadataRecordActions(ActionTestBase):
             is_key=is_key,
             metadata_standard_id=kwargs.pop('metadata_standard_id', self.metadata_standard['id'])
         )
+
+    @staticmethod
+    def _grant_privilege(user_id, organization_name, role_name):
+        token_data = {
+            'privileges': [{
+                'institution': organization_name,
+                'role': role_name,
+            }]
+        }
+        redis = connect_to_redis()
+        key = 'oidc_token_data:' + user_id
+        redis.setex(key, json.dumps(token_data), 300)
 
     def test_create_valid(self):
         input_dict = self._make_input_dict()
@@ -1109,8 +1122,15 @@ class TestMetadataRecordActions(ActionTestBase):
                     key='quality_control_1',
                     value=json.dumps({"user": self.normal_user['email'], "date": "2018-08-14"}))
 
-        # TODO: role validation test
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_accepted['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
+                                             *jsonpatch_ids, **{
+                                                 'quality_control_1/user': 'User .* does not have the curator role',
+                                             })
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
+        self._grant_privilege(self.normal_user['id'], self.owner_org['name'], 'curator')
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_accepted['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_accepted['id'],
@@ -1136,6 +1156,7 @@ class TestMetadataRecordActions(ActionTestBase):
             from_state_id='',
             to_state_id=workflow_state_published['id'])
 
+        self._grant_privilege(self.normal_user['id'], self.owner_org['name'], 'curator')
         jsonpatch_ids = []
         jsonpatch_ids += [call_action('metadata_record_workflow_annotation_create', id=metadata_record['id'],
                                       key='data_agreement',
@@ -1182,12 +1203,20 @@ class TestMetadataRecordActions(ActionTestBase):
                                              })
         assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
+        qc2_user = ckan_factories.User()
         call_action('metadata_record_workflow_annotation_update', id=metadata_record['id'],
                     key='quality_control_2',
-                    value=json.dumps({"user": ckan_factories.User()['email'], "date": "2018-08-14"}))
+                    value=json.dumps({"user": qc2_user['email'], "date": "2018-08-14"}))
 
-        # TODO: role validation test
+        self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
+                         workflow_state_id=workflow_state_published['id'])
+        self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],
+                                             *jsonpatch_ids, **{
+                                                 'quality_control_2/user': 'User .* does not have the curator role',
+                                             })
+        assert_package_has_extra(metadata_record['id'], 'workflow_state_id', '')
 
+        self._grant_privilege(qc2_user['id'], self.owner_org['name'], 'curator')
         self.test_action('metadata_record_workflow_state_transition', id=metadata_record['id'],
                          workflow_state_id=workflow_state_published['id'])
         self.assert_workflow_activity_logged('transition', metadata_record['id'], workflow_state_published['id'],

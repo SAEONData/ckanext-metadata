@@ -13,8 +13,10 @@ import requests
 from requests.exceptions import RequestException
 
 import ckan.plugins.toolkit as tk
-from ckan.common import _
+from ckan.common import _, config
+from ckan import model as ckan_model
 from ckanext.metadata.common import DOI_RE, TIME_RE
+from ckanext.metadata.logic.auth import check_privs
 
 checks_format = jsonschema.FormatChecker.cls_checks
 
@@ -77,11 +79,31 @@ def objectid_validator(validator, model_name, instance, schema):
 
 def role_validator(validator, role_name, instance, schema):
     """
-    "role" keyword validator function: checks that instance is the id of a user with the named role.
+    "role" keyword validator function: checks that instance is the email of a user with the named role,
+    and that the role is applicable to the metadata record being validated.
     """
-    # todo
-    # if validator.is_type(instance, 'string'):
-    #     yield jsonschema.ValidationError("Role validation has not been implemented yet")
+    if validator.is_type(instance, 'string'):
+        metadata_record_id = validator.object_id
+        organization_id = ckan_model.Package.get(metadata_record_id).owner_org
+        users = ckan_model.User.by_email(instance)
+        user = users[0] if users else None
+        if not user:
+            yield jsonschema.ValidationError(_("User not found for email %s") % instance)
+            return
+        check_context = {'user': user.name, 'model': ckan_model}
+
+        if role_name == config.get('ckan.metadata.admin_role'):
+            valid = check_privs(check_context, require_admin=True)
+        elif role_name == config.get('ckan.metadata.curator_role'):
+            valid = check_privs(check_context, require_curator=True, require_organization=organization_id)
+        elif role_name == config.get('ckan.metadata.contributor_role'):
+            valid = check_privs(check_context, require_contributor=True, require_organization=organization_id)
+        else:
+            yield jsonschema.ValidationError(_("Role %s is not supported by this keyword") % role_name)
+            return
+
+        if not valid:
+            yield jsonschema.ValidationError(_("User %s does not have the %s role within the applicable organizational context") % (instance, role_name))
 
 
 def unique_objects_validator(validator, key_properties, instance, schema):
