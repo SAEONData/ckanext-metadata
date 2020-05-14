@@ -1,0 +1,11 @@
+{% ckan_extends %}
+
+{% block user_info %}
+  {{ super() }}
+  {% if is_myself %}
+    <dl>
+      <dt class="key">{{ _('Access Token') }} <span class="label label-default" title="{{ _('This means only you can see this') }}">{{ _('Private') }}</span></dt>
+      <dd class="value"><code>{{ h.access_token() }}</code></dd>
+    </dl>
+  {% endif %}
+{% endblock %}
