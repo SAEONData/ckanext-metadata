@@ -52,19 +52,34 @@
         },
         "metadata_json": {
             "$comment": "This element specifies additional validation to be performed on the metadata JSON at workflow transition time; validation rules defined in the applicable metadata schema(s) should not be repeated here.",
-            "properties": {
-                "immutableResource": {
-                    "properties": {
-                        "resourceURL": {
-                            "urlTest": true
+            "if": {
+                "$comment": "This subschema evaluates to true if the resource is restricted in terms of SANS 1878",
+                "properties": {
+                    "constraints": {
+                        "contains": {
+                            "properties": {
+                                "accessConstraints": {
+                                    "contains": {"const": "restricted"}
+                                }
+                            },
+                            "required": ["accessConstraints"]
                         }
                     }
                 },
-                "linkedResources": {
-                    "items": {
+                "required": ["constraints"]
+            },
+            "else": {
+                "$comment": "This subschema is evaluated only if the resource is not restricted in terms of SANS 1878",
+                "properties": {
+                    "immutableResource": {
                         "properties": {
-                            "resourceURL": {
-                                "urlTest": true
+                            "resourceURL": {"urlTest": true}
+                        }
+                    },
+                    "linkedResources": {
+                        "items": {
+                            "properties": {
+                                "resourceURL": {"urlTest": true}
                             }
                         }
                     }

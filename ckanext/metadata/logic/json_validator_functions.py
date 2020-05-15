@@ -221,19 +221,17 @@ def item_cardinality_validator(validator, item_cardinality, instance, schema):
             yield jsonschema.ValidationError(_("Array contains too many items that match the given schema"))
 
 
-def url_test_validator(validator, url_exists, instance, schema):
+def url_test_validator(validator, url_test, instance, schema):
     """
-    "urlTest" keyword validator: does a HEAD request to the specified url; the value of this keyword
-    (url_exists) is a boolean.
+    "urlTest" keyword validator: the value of this keyword is a boolean; if True,
+    a HEAD request is made to the specified url.
     """
     if validator.is_type(instance, 'string'):
-        try:
-            response = requests.head(instance)
-            response.raise_for_status()
-            if not url_exists:
-                yield jsonschema.ValidationError(_("URL test is intended to fail for the specified value"))
-        except RequestException, e:
-            if url_exists:
+        if url_test:
+            try:
+                response = requests.head(instance)
+                response.raise_for_status()
+            except RequestException, e:
                 yield jsonschema.ValidationError(e.message)
 
 
