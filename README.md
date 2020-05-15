@@ -53,6 +53,10 @@ The following configuration options are used by plugins as indicated:
 
 | Plugin | Option | Default | Description |
 | ------ | ------ | ------- | ----------- |
+| metadata_framework | ckan.metadata.admin_org | | The name of the admin organization; applicable to the administrator and curator roles.
+| metadata_framework | ckan.metadata.admin_role | | The name of the administrator role. A user with the admin role - within the admin org - can perform functions like configuring metadata schemas and workflow schemas.
+| metadata_framework | ckan.metadata.curator_role | | The name of the curator role. A user with the curator role - either within the admin org or within the org that owns the resources being requested/updated - can perform functions related to metadata collections and metadata workflow.
+| metadata_framework | ckan.metadata.contributor_role | | The name of the contributor role. A user with the contributor role can create, update and delete metadata records owned by the organization in which they have that role.
 | metadata_framework | ckan.metadata.convert_nested_ids_to_names | True | If True, object IDs are converted to object names in API output dictionaries. Note: this option must be set to True for metadata framework UI forms to work correctly.
 | metadata_framework | ckan.metadata.doi_prefix | | The DOI prefix for auto-generation of DOIs (dependent on metadata collection settings).
 | metadata_elasticsearch | ckan.metadata.elastic.search_agent_url | | The URL of the Elastic Search Agent.
