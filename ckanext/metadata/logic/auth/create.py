@@ -75,12 +75,12 @@ def metadata_collection_create(context, data_dict):
     return {'success': check_privs(context, require_curator=True, require_organization=(data_dict or {}).get('organization_id'))}
 
 
-def metadata_record_workflow_annotation_create(context, data_dict):
-    organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
-    return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
-
-
 # Contributor functions
 
 def metadata_record_create(context, data_dict):
     return {'success': check_privs(context, require_contributor=True, require_organization=(data_dict or {}).get('owner_org'))}
+
+
+def metadata_record_workflow_annotation_create(context, data_dict):
+    organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
+    return {'success': check_privs(context, require_contributor=True, require_organization=organization_id)}

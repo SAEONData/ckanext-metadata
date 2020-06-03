@@ -79,11 +79,6 @@ def metadata_record_workflow_state_revert(context, data_dict):
     return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
 
 
-def metadata_record_workflow_annotation_update(context, data_dict):
-    organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
-    return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
-
-
 def metadata_record_index_update(context, data_dict):
     organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
     return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
@@ -119,6 +114,11 @@ def metadata_record_assign_doi(context, data_dict):
 # Contributor functions
 
 def metadata_record_update(context, data_dict):
+    organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
+    return {'success': check_privs(context, require_contributor=True, require_organization=organization_id)}
+
+
+def metadata_record_workflow_annotation_update(context, data_dict):
     organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
     return {'success': check_privs(context, require_contributor=True, require_organization=organization_id)}
 

@@ -90,8 +90,6 @@ def metadata_record_workflow_annotation_delete(context, data_dict):
     return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
 
 
-# Contributor functions
-
 def metadata_record_delete(context, data_dict):
     organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
-    return {'success': check_privs(context, require_contributor=True, require_organization=organization_id)}
+    return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
