@@ -226,7 +226,7 @@ def infrastructure_show(context, data_dict):
     if infrastructure is not None and infrastructure.type == 'infrastructure':
         infrastructure_id = infrastructure.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Project')))
 
     tk.check_access('infrastructure_show', context, data_dict)
 
@@ -479,7 +479,7 @@ def metadata_record_list(context, data_dict):
         if infrastructure is None or \
                 infrastructure.type != 'infrastructure' or \
                 infrastructure.state != 'active':
-            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+            raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Project')))
         infrastructure_id = infrastructure.id
 
         metadata_records_q = metadata_records_q \

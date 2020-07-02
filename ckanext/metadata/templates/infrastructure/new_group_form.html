@@ -10,9 +10,9 @@ overriding the form blocks depending on the current context
 
 {% block save_text %}
   {%- if action == "edit" -%}
-    {{ _('Update Infrastructure') }}
+    {{ _('Update Project') }}
   {%- else -%}
-    {{ _('Create Infrastructure') }}
+    {{ _('Create Project') }}
   {%- endif -%}
 {% endblock %}
 

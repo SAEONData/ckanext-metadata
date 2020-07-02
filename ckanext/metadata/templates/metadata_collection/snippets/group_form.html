@@ -31,10 +31,10 @@
       {{ form.info(_('For example, if DOI Collection is set to "MY.COLLECTION", a generated DOI would look like "10.4444/MY.COLLECTION.3800020199".')) }}
     {% endcall %}
 
-    {% call form.multiselect('infrastructure_ids', label=_('Infrastructures'), id='field-infrastructures',
+    {% call form.multiselect('infrastructure_ids', label=_('Available Projects (click to select)'), id='field-infrastructures',
           options=infrastructure_lookup_list, selected=selected_infrastructure_ids, error=errors.infrastructures,
           classes=['control-medium']) %}
-      {{ form.info(_('Select the infrastructure(s) with which to associate metadata records in this metadata collection. Use Ctrl+Click to select / deselect individual items.')) }}
+      {{ form.info(_('Select the project(s) with which to associate metadata records in this metadata collection. Use Ctrl+Click to select / deselect individual items.')) }}
     {% endcall %}
 
   {% endblock %}

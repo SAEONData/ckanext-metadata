@@ -249,7 +249,7 @@ def infrastructure_update(context, data_dict):
     if infrastructure is not None and infrastructure.type == 'infrastructure':
         infrastructure_id = infrastructure.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Project')))
 
     tk.check_access('infrastructure_update', context, data_dict)
 

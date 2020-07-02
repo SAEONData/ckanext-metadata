@@ -9,7 +9,7 @@
         options=organization_lookup_list, selected=data.organization_id, error=errors.organization_id,
         attrs={'onchange': 'change_organization(this.value);'}, classes=['control-medium']) }}
 
-  {{ form.select('infrastructure_id', label=_('Infrastructure'), id='field-infrastructure',
+  {{ form.select('infrastructure_id', label=_('Project'), id='field-infrastructure',
         options=infrastructure_lookup_list, selected=data.infrastructure_id, error=errors.infrastructure_id,
         attrs={'onchange': 'change_infrastructure(this.value);'}, classes=['control-medium']) }}
 

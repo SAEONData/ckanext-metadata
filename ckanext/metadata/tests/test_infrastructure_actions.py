@@ -92,7 +92,7 @@ class TestInfrastructureActions(ActionTestBase):
 
         result, obj = self.test_action('infrastructure_delete', should_error=True,
                                        id=infrastructure['id'])
-        assert_error(result, 'message', 'Infrastructure has dependent metadata collections')
+        assert_error(result, 'message', 'Project has dependent metadata collections')
         assert ckanext_model.MetadataSchema.get(metadata_schema['id']).state == 'active'
 
         call_action('metadata_collection_delete', id=metadata_collection['id'])

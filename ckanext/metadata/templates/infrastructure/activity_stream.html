@@ -1,6 +1,6 @@
 {% extends "group/activity_stream.html" %}
 
-{% block subtitle %}{{ h.get_translated(c.group_dict, 'title') or c.group_dict.display_name }} - {{ _('Infrastructures') }}{% endblock %}
+{% block subtitle %}{{ h.get_translated(c.group_dict, 'title') or c.group_dict.display_name }} - {{ _('Projects') }}{% endblock %}
 
 {% block breadcrumb_content %}
   {% snippet "infrastructure/snippets/breadcrumb_content_outer.html" %}

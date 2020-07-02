@@ -723,7 +723,7 @@ def infrastructure_member_create(context, data_dict):
     if infrastructure is not None and infrastructure.type == 'infrastructure':
         infrastructure_id = infrastructure.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Project')))
 
     member_dict = {
         'id': infrastructure_id,

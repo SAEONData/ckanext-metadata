@@ -1,13 +1,13 @@
 {% extends "group/new.html" %}
 
-{% block page_heading %}{{ _('Create an Infrastructure') }}{% endblock %}
-{% block subtitle %}{{ _('Create an Infrastructure') }}{% endblock %}
+{% block page_heading %}{{ _('Create a Project') }}{% endblock %}
+{% block subtitle %}{{ _('Create a Project') }}{% endblock %}
 
 {% block breadcrumb_content %}
   {% snippet "infrastructure/snippets/breadcrumb_content_outer.html" %}
   <li class="active">
     {% block breadcrumb_link %}
-      {{ h.nav_link(_('Create an Infrastructure'), action='new',
+      {{ h.nav_link(_('Create a Project'), action='new',
         controller='ckanext.metadata.controllers.infrastructure:InfrastructureController') }}
     {% endblock %}
   </li>

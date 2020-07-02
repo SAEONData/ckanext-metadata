@@ -7,6 +7,7 @@ from ckan.controllers.group import GroupController
 from ckan.lib.render import TemplateNotFound
 
 
+# Infrastructures are now called "Projects" in the UI.
 class InfrastructureController(GroupController):
 
     group_types = ['infrastructure']

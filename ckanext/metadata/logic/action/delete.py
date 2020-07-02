@@ -149,7 +149,7 @@ def infrastructure_delete(context, data_dict):
     if infrastructure is not None and infrastructure.type == 'infrastructure':
         infrastructure_id = infrastructure.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Project')))
 
     tk.check_access('infrastructure_delete', context, data_dict)
 
@@ -161,7 +161,7 @@ def infrastructure_delete(context, data_dict):
             .filter(model.Group.type == 'metadata_collection') \
             .filter(model.Group.state != 'deleted') \
             .count() > 0:
-        raise tk.ValidationError(_('Infrastructure has dependent metadata collections'))
+        raise tk.ValidationError(_('Project has dependent metadata collections'))
 
     # cascade delete to dependent metadata schemas
     cascade_context = {
@@ -589,7 +589,7 @@ def infrastructure_member_delete(context, data_dict):
     if infrastructure is not None and infrastructure.type == 'infrastructure':
         infrastructure_id = infrastructure.id
     else:
-        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Infrastructure')))
+        raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Project')))
 
     member_dict = {
         'id': infrastructure_id,
