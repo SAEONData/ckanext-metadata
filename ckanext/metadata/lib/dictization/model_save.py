@@ -33,31 +33,25 @@ def metadata_record_collection_membership_save(metadata_collection_id, context):
         member_obj = collection_members[old_collection]
         if member_obj and member_obj.state == 'deleted':
             continue
-        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
-            member_obj.capacity = capacity
-            member_obj.state = 'deleted'
-            session.add(member_obj)
-        else:
-            raise tk.NotAuthorized(_('Not authorized to access metadata collection'))
+        member_obj.capacity = capacity
+        member_obj.state = 'deleted'
+        session.add(member_obj)
 
     # Add the record to the new metadata collection group
     member_obj = collection_members.get(new_collection)
     if member_obj and member_obj.state == 'active':
         return
-    if authz.has_user_permission_for_group_or_org(new_collection.id, user, 'read'):
-        if member_obj:
-            member_obj.capacity = capacity
-            member_obj.state = 'active'
-        else:
-            member_obj = model.Member(group=new_collection,
-                                      group_id=new_collection.id,
-                                      table_name='package',
-                                      table_id=package.id,
-                                      capacity=capacity,
-                                      state='active')
-        session.add(member_obj)
+    if member_obj:
+        member_obj.capacity = capacity
+        member_obj.state = 'active'
     else:
-        raise tk.NotAuthorized(_('Not authorized to access metadata collection'))
+        member_obj = model.Member(group=new_collection,
+                                  group_id=new_collection.id,
+                                  table_name='package',
+                                  table_id=package.id,
+                                  capacity=capacity,
+                                  state='active')
+    session.add(member_obj)
 
 
 def metadata_collection_organization_membership_save(organization_id, context):
@@ -86,31 +80,25 @@ def metadata_collection_organization_membership_save(organization_id, context):
         member_obj = organization_members[old_organization]
         if member_obj and member_obj.state == 'deleted':
             continue
-        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
-            member_obj.capacity = capacity
-            member_obj.state = 'deleted'
-            session.add(member_obj)
-        else:
-            raise tk.NotAuthorized(_('Not authorized to access organization'))
+        member_obj.capacity = capacity
+        member_obj.state = 'deleted'
+        session.add(member_obj)
 
     # Add the collection to the new organization
     member_obj = organization_members.get(new_organization)
     if member_obj and member_obj.state == 'active':
         return
-    if authz.has_user_permission_for_group_or_org(new_organization.id, user, 'read'):
-        if member_obj:
-            member_obj.capacity = capacity
-            member_obj.state = 'active'
-        else:
-            member_obj = model.Member(group=new_organization,
-                                      group_id=new_organization.id,
-                                      table_name='group',
-                                      table_id=collection.id,
-                                      capacity=capacity,
-                                      state='active')
-        session.add(member_obj)
+    if member_obj:
+        member_obj.capacity = capacity
+        member_obj.state = 'active'
     else:
-        raise tk.NotAuthorized(_('Not authorized to access organization'))
+        member_obj = model.Member(group=new_organization,
+                                  group_id=new_organization.id,
+                                  table_name='group',
+                                  table_id=collection.id,
+                                  capacity=capacity,
+                                  state='active')
+    session.add(member_obj)
 
 
 def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
@@ -147,32 +135,26 @@ def metadata_record_infrastructure_list_save(infrastructure_dicts, context):
         member_obj = infrastructure_members[infrastructure]
         if member_obj and member_obj.state == 'deleted':
             continue
-        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
-            member_obj.capacity = capacity
-            member_obj.state = 'deleted'
-            session.add(member_obj)
-        else:
-            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
+        member_obj.capacity = capacity
+        member_obj.state = 'deleted'
+        session.add(member_obj)
 
     # Add any new infrastructure groups
     for infrastructure in infrastructures:
         member_obj = infrastructure_members.get(infrastructure)
         if member_obj and member_obj.state == 'active':
             continue
-        if authz.has_user_permission_for_group_or_org(infrastructure.id, user, 'read'):
-            if member_obj:
-                member_obj.capacity = capacity
-                member_obj.state = 'active'
-            else:
-                member_obj = model.Member(group=infrastructure,
-                                          group_id=infrastructure.id,
-                                          table_name='package',
-                                          table_id=package.id,
-                                          capacity=capacity,
-                                          state='active')
-            session.add(member_obj)
+        if member_obj:
+            member_obj.capacity = capacity
+            member_obj.state = 'active'
         else:
-            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
+            member_obj = model.Member(group=infrastructure,
+                                      group_id=infrastructure.id,
+                                      table_name='package',
+                                      table_id=package.id,
+                                      capacity=capacity,
+                                      state='active')
+        session.add(member_obj)
 
 
 def metadata_collection_infrastructure_list_save(infrastructure_dicts, context):
@@ -209,32 +191,26 @@ def metadata_collection_infrastructure_list_save(infrastructure_dicts, context):
         member_obj = infrastructure_members[infrastructure]
         if member_obj and member_obj.state == 'deleted':
             continue
-        if authz.has_user_permission_for_group_or_org(member_obj.group_id, user, 'read'):
-            member_obj.capacity = capacity
-            member_obj.state = 'deleted'
-            session.add(member_obj)
-        else:
-            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
+        member_obj.capacity = capacity
+        member_obj.state = 'deleted'
+        session.add(member_obj)
 
     # Add any new infrastructure groups
     for infrastructure in infrastructures:
         member_obj = infrastructure_members.get(infrastructure)
         if member_obj and member_obj.state == 'active':
             continue
-        if authz.has_user_permission_for_group_or_org(infrastructure.id, user, 'read'):
-            if member_obj:
-                member_obj.capacity = capacity
-                member_obj.state = 'active'
-            else:
-                member_obj = model.Member(group=infrastructure,
-                                          group_id=infrastructure.id,
-                                          table_name='group',
-                                          table_id=group.id,
-                                          capacity=capacity,
-                                          state='active')
-            session.add(member_obj)
+        if member_obj:
+            member_obj.capacity = capacity
+            member_obj.state = 'active'
         else:
-            raise tk.NotAuthorized(_('Not authorized to access infrastructure'))
+            member_obj = model.Member(group=infrastructure,
+                                      group_id=infrastructure.id,
+                                      table_name='group',
+                                      table_id=group.id,
+                                      capacity=capacity,
+                                      state='active')
+        session.add(member_obj)
 
 
 def metadata_schema_dict_save(metadata_schema_dict, context):
