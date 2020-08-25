@@ -36,6 +36,10 @@ def infrastructure_update(context, data_dict):
     return {'success': check_privs(context, require_admin=True)}
 
 
+def organization_update(context, data_dict):
+    return {'success': check_privs(context, require_admin=True)}
+
+
 def workflow_state_update(context, data_dict):
     return {'success': check_privs(context, require_admin=True)}
 

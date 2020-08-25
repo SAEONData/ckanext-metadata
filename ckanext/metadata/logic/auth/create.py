@@ -45,6 +45,10 @@ def infrastructure_create(context, data_dict):
     return {'success': check_privs(context, require_admin=True)}
 
 
+def organization_create(context, data_dict):
+    return {'success': check_privs(context, require_admin=True)}
+
+
 def workflow_state_create(context, data_dict):
     return {'success': check_privs(context, require_admin=True)}
 
