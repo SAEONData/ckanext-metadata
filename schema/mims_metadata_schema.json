@@ -217,7 +217,8 @@
                 "place",
                 "stratum",
                 "temporal",
-                "theme"
+                "theme",
+                "general"
             ]
         },
         "restrictionCode": {
