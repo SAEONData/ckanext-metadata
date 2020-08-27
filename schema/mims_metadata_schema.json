@@ -997,7 +997,19 @@
                     "items": {
                         "type": "object",
                         "properties": {
-                            "subject": {"type": "string", "source": "keyword"}
+                            "subject": {"type": "string", "source": "keyword"},
+                            "subjectScheme": {
+                                "type": "string",
+                                "source": "keywordType",
+                                "converter": {
+                                    "discipline": "SANS1878 keywordType discipline",
+                                    "place": "SANS1878 keywordType place",
+                                    "stratum": "SANS1878 keywordType stratum",
+                                    "temporal": "SANS1878 keywordType temporal",
+                                    "theme": "SANS1878 keywordType theme",
+                                    "general": "SANS1878 keywordType general"
+                                }
+                            }
                         }
                     }
                 }
