@@ -256,7 +256,7 @@
                 "required": ["identifier", "identifierType"]
             },
             "minItems": 1,
-            "uniqueItems": true
+            "maxItems": 1
         },
         "creators": {
             "type": "array",
