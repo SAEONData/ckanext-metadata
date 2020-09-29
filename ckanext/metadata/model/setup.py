@@ -1,6 +1,8 @@
 # encoding: utf-8
 
 import logging
+from ckan.model import meta
+from sqlalchemy import text
 
 from ckanext.metadata.model import *
 
@@ -28,3 +30,6 @@ def init_tables():
             table.create()
         else:
             log.debug("Table %s already exists", table.name)
+
+    conn = meta.engine.connect()
+    conn.execute(text('alter table package add column if not exists last_publish_check timestamp without time zone'))
