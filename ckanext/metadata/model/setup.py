@@ -32,4 +32,4 @@ def init_tables():
             log.debug("Table %s already exists", table.name)
 
     conn = meta.engine.connect()
-    conn.execute(text('alter table package add column if not exists last_publish_check timestamp without time zone'))
+    conn.execute(text('alter table package add column if not exists last_publish_check timestamp with time zone'))
