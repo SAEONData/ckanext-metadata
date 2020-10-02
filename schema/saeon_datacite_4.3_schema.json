@@ -237,26 +237,9 @@
     "type": "object",
 
     "properties": {
-        "types": {
-            "type": "object",
-            "properties": {
-                "resourceType": {"type": "string"},
-                "resourceTypeGeneral": {"$ref": "#/definitions/resourceTypeGeneral"}
-            },
-            "required": ["resourceType", "resourceTypeGeneral"]
-        },
-        "identifiers": {
-            "type": "array",
-            "items":{
-                "type": "object",
-                "properties": {
-                    "identifier": {"type": "string"},
-                    "identifierType": {"type": "string"}
-                },
-                "required": ["identifier", "identifierType"]
-            },
-            "minItems": 1,
-            "maxItems": 1
+        "doi": {
+            "type": "string",
+            "pattern": "^10\\.\\d{4,}(\\.\\d+)*/[-._;()/:a-zA-Z0-9]+$"
         },
         "creators": {
             "type": "array",
@@ -358,18 +341,25 @@
             "type": "string",
             "$comment": "Primary language of the resource. Allowed values are taken from  IETF BCP 47, ISO 639-1 language codes."
         },
-        "alternateIdentifiers": {
+        "types": {
+            "type": "object",
+            "properties": {
+                "resourceType": {"type": "string"},
+                "resourceTypeGeneral": {"$ref": "#/definitions/resourceTypeGeneral"}
+            },
+            "required": ["resourceType", "resourceTypeGeneral"]
+        },
+        "identifiers": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "alternateIdentifier": {"type": "string"},
-                    "alternateIdentifierType": {"type": "string"}
+                    "identifier": {"type": "string"},
+                    "identifierType": {"type": "string"}
                 },
                 "additionalProperties": false,
-                "required": ["alternateIdentifier", "alternateIdentifierType"]
+                "required": ["identifier", "identifierType"]
             },
-            "minItems": 1,
             "uniqueItems": true
         },
         "relatedIdentifiers": {
@@ -569,14 +559,13 @@
         "publicationYear",
         "subjects",
         "dates",
-        "alternateIdentifiers",
+        "types",
         "rightsList",
         "descriptions",
-        "types",
         "schemaVersion"
     ],
 
     "dependencies": {
-        "identifiers": ["immutableResource"]
+        "doi": ["immutableResource"]
     }
 }

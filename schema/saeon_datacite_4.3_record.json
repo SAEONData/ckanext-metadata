@@ -1,14 +1,5 @@
 {
-    "types": {
-        "resourceTypeGeneral": "Software",
-        "resourceType": "XML"
-    },
-    "identifiers": [
-        {
-            "identifier": "10.15493/example-full",
-            "identifierType": "DOI"
-        }
-    ],
+    "doi": "10.15493/example-saeon-datacite-4.3",
     "creators": [
         {
             "name": "Miller, Elizabeth",
@@ -79,10 +70,14 @@
         }
     ],
     "language": "en-US",
-    "alternateIdentifiers": [
+    "types": {
+        "resourceTypeGeneral": "Software",
+        "resourceType": "XML"
+    },
+    "identifiers": [
         {
-            "alternateIdentifier": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.2.xml",
-            "alternateIdentifierType": "URL"
+            "identifier": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.2.xml",
+            "identifierType": "URL"
         }
     ],
     "relatedIdentifiers": [
@@ -188,5 +183,6 @@
         }
     ],
     "originalMetadata": "<?xml version='1.0'?><resource>(optional) original metadata record</resource>",
+    "additionalFields": {},
     "schemaVersion": "http://datacite.org/schema/kernel-4"
 }
