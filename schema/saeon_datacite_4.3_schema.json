@@ -511,6 +511,7 @@
                 "resourceData": {},
                 "resourceName": {"type": "string"},
                 "resourceDescription": {"type": "string"},
+                "resourceFormat": {"type": "string"},
                 "resourceChecksum": {"type": "string"},
                 "checksumAlgorithm": {"type": "string"}
             },
@@ -531,7 +532,8 @@
                     "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
                     "resourceURL": {"type": "string", "format": "url"},
                     "resourceName": {"type": "string"},
-                    "resourceDescription": {"type": "string"}
+                    "resourceDescription": {"type": "string"},
+                    "resourceFormat": {"type": "string"}
                 },
                 "additionalProperties": false,
                 "required": ["linkedResourceType", "resourceURL"]
