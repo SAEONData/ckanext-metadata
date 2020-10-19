@@ -96,6 +96,8 @@ def role_validator(validator, role_name, instance, schema):
             valid = check_privs(check_context, require_admin=True)
         elif role_name == config.get('ckan.metadata.curator_role'):
             valid = check_privs(check_context, require_curator=True, require_organization=organization_id)
+        elif role_name == config.get('ckan.metadata.harvester_role'):
+            valid = check_privs(check_context, require_harvester=True, require_organization=organization_id)
         elif role_name == config.get('ckan.metadata.contributor_role'):
             valid = check_privs(check_context, require_contributor=True, require_organization=organization_id)
         else:

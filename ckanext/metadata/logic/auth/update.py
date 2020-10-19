@@ -73,11 +73,6 @@ def metadata_collection_update(context, data_dict):
     return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
 
 
-def metadata_record_workflow_state_transition(context, data_dict):
-    organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
-    return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
-
-
 def metadata_record_workflow_state_revert(context, data_dict):
     organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
     return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
@@ -113,6 +108,13 @@ def metadata_collection_workflow_state_transition(context, data_dict):
 def metadata_record_assign_doi(context, data_dict):
     organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
     return {'success': check_privs(context, require_curator=True, require_organization=organization_id)}
+
+
+# Harvester functions
+
+def metadata_record_workflow_state_transition(context, data_dict):
+    organization_id = context['model'].Package.get(data_dict['id']).owner_org if 'id' in (data_dict or {}) else None
+    return {'success': check_privs(context, require_harvester=True, require_organization=organization_id)}
 
 
 # Contributor functions
