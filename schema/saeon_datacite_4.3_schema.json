@@ -231,6 +231,32 @@
                 "Ethics",
                 "QualityAssessment"
             ]
+        },
+        "serverType": {
+            "type": "string",
+            "enum": [
+                "GeoServer",
+                "Esri",
+                "THREDDS"
+            ]
+        },
+        "fileDownload": {
+            "type": "object",
+            "properties": {
+                "downloadURL": {"type": "string", "format": "uri"},
+                "fileFormat": {"type": "string"},
+                "fileName": {"type": "string"},
+                "fileSize": {"type": "integer"},
+                "fileChecksum": {"type": "string"},
+                "checksumAlgorithm": {"type": "string"},
+                "archive": {"type": "boolean"},
+                "archivedFormats": {"type": "array", "items": {"type": "string"}}
+            },
+            "required": ["downloadURL"],
+            "dependencies": {
+                "fileChecksum": ["checksumAlgorithm"]
+            },
+            "additionalProperties": false
         }
     },
 
@@ -507,36 +533,39 @@
         "immutableResource": {
             "type": "object",
             "properties": {
-                "resourceURL": {"type": "string", "format": "url"},
-                "resourceData": {},
                 "resourceName": {"type": "string"},
                 "resourceDescription": {"type": "string"},
-                "resourceFormat": {"type": "string"},
-                "resourceChecksum": {"type": "string"},
-                "checksumAlgorithm": {"type": "string"}
+                "resourceDownload": {"$ref": "#/definitions/fileDownload"},
+                "resourceData": {}
             },
-            "additionalProperties": false,
             "oneOf": [
-                {"required": ["resourceURL"]},
+                {"required": ["resourceDownload"]},
                 {"required": ["resourceData"]}
             ],
-            "dependencies": {
-                "resourceChecksum": ["checksumAlgorithm"]
-            }
+            "additionalProperties": false
         },
         "linkedResources": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
-                    "resourceURL": {"type": "string", "format": "url"},
                     "resourceName": {"type": "string"},
                     "resourceDescription": {"type": "string"},
-                    "resourceFormat": {"type": "string"}
+                    "resourceURL": {"type": "string", "format": "url"},
+                    "resourceFormat": {"type": "string"},
+                    "linkedResourceType": {"$ref": "#/definitions/linkedResourceType"},
+                    "serverType": {"$ref": "#/definitions/serverType"}
                 },
-                "additionalProperties": false,
-                "required": ["linkedResourceType", "resourceURL"]
+                "required": ["linkedResourceType", "resourceURL"],
+                "if": {
+                    "properties": {
+                        "linkedResourceType": {"const": "Query"}
+                    }
+                },
+                "then": {
+                    "required": ["serverType"]
+                },
+                "additionalProperties": false
             },
             "uniqueItems": true
         },
