@@ -168,12 +168,16 @@
         }
     ],
     "immutableResource": {
-        "resourceURL": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.xml",
-        "resourceChecksum": "1f4d92f643bf831131f7bd26bdb6d3e3",
-        "checksumAlgorithm": "md5",
+        "resourceDownload": {
+            "downloadURL": "https://schema.datacite.org/meta/kernel-4.2/example/datacite-example-full-v4.xml",
+            "fileFormat": "xml",
+            "fileName": "datacite-example-full-v4.xml",
+            "fileSize": 4664,
+            "fileChecksum": "bf5e2254c69908d9c634229d4ac6fe00",
+            "checksumAlgorithm": "md5"
+        },
         "resourceName": "Full DataCite XML Example",
-        "resourceDescription": "A complete example of a DataCite 4.2-compliant XML metadata record",
-        "resourceFormat": "xml"
+        "resourceDescription": "A complete example of a DataCite 4.2-compliant XML metadata record"
     },
     "linkedResources": [
         {
