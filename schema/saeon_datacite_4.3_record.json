@@ -13,9 +13,12 @@
                     "schemeURI": "http://orcid.org/"
                 }
             ],
-            "affiliations": [
+            "affiliation": [
                 {
-                    "affiliation": "DataCite"
+                    "affiliation": "DataCite",
+                    "affiliationIdentifier": "https://ror.org/04wxnsj81",
+                    "affiliationIdentifierScheme": "ROR",
+                    "schemeURI": "https://ror.org/"
                 }
             ]
         }
@@ -51,7 +54,7 @@
                     "schemeURI": "http://orcid.org/"
                 }
             ],
-            "affiliations": [
+            "affiliation": [
                 {
                     "affiliation": "California Digital Library"
                 }

@@ -23,15 +23,21 @@
             },
             "uniqueItems": true
         },
-        "affiliations": {
+        "affiliation": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "affiliation": {"type": "string"}
+                    "affiliation": {"type": "string"},
+                    "affiliationIdentifier": {"type": "string"},
+                    "affiliationIdentifierScheme": {"type": "string"},
+                    "schemeURI": {"type": "string", "format": "uri"}
                 },
                 "additionalProperties": false,
-                "required": ["affiliation"]
+                "required": ["affiliation"],
+                "dependencies": {
+                    "affiliationIdentifier": ["affiliationIdentifierScheme"]
+                }
             },
             "uniqueItems": true
         },
@@ -217,6 +223,7 @@
                 "ISNI",
                 "GRID",
                 "Crossref Funder ID",
+                "ROR",
                 "Other"
             ]
         },
@@ -277,7 +284,7 @@
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
-                    "affiliations": {"$ref": "#/definitions/affiliations"},
+                    "affiliation": {"$ref": "#/definitions/affiliation"},
                     "lang": {"type": "string"}
                 },
                 "additionalProperties": false,
@@ -335,7 +342,7 @@
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
-                    "affiliations": {"$ref": "#/definitions/affiliations"},
+                    "affiliation": {"$ref": "#/definitions/affiliation"},
                     "lang": {"type": "string"}
                 },
                 "additionalProperties": false,
@@ -520,6 +527,7 @@
                     "funderName": {"type": "string"},
                     "funderIdentifier": {"type": "string"},
                     "funderIdentifierType": {"$ref": "#/definitions/funderIdentifierType"},
+                    "schemeURI": {"type": "string", "format": "uri"},
                     "awardNumber": {"type": "string"},
                     "awardURI": {"type": "string", "format": "uri"},
                     "awardTitle": {"type": "string"}
