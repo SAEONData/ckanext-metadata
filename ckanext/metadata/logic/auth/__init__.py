@@ -53,6 +53,9 @@ def check_privs(
         return False
     token_data = json.loads(token_json)
 
+    if token_data['superuser']:
+        return True
+
     is_admin = False
     is_curator = False
     is_harvester = False
