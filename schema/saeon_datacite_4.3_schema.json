@@ -305,8 +305,7 @@
             "type": "string"
         },
         "publicationYear": {
-            "type": "string",
-            "format": "year"
+            "type": "integer"
         },
         "subjects": {
             "type": "array",
