@@ -23,16 +23,9 @@
             },
             "uniqueItems": true
         },
-        "affiliations": {
+        "affiliation": {
             "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "affiliation": {"type": "string"}
-                },
-                "additionalProperties": false,
-                "required": ["affiliation"]
-            },
+            "items": {"type": "string"},
             "uniqueItems": true
         },
         "titleType": {
@@ -277,7 +270,7 @@
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
-                    "affiliations": {"$ref": "#/definitions/affiliations"},
+                    "affiliation": {"$ref": "#/definitions/affiliation"},
                     "lang": {"type": "string"}
                 },
                 "additionalProperties": false,
@@ -335,7 +328,7 @@
                     "givenName": {"type": "string"},
                     "familyName": {"type": "string"},
                     "nameIdentifiers": {"$ref": "#/definitions/nameIdentifiers"},
-                    "affiliations": {"$ref": "#/definitions/affiliations"},
+                    "affiliation": {"$ref": "#/definitions/affiliation"},
                     "lang": {"type": "string"}
                 },
                 "additionalProperties": false,
