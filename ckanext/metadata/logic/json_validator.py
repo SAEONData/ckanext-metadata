@@ -132,12 +132,13 @@ class JSONValidator(object):
             else:
                 node[index] += [message]
 
-        self.jsonschema_validator.root_instance = instance.copy()
-        errors = {}
+        # operate on a copy of the incoming data
+        instance = instance.copy()
         clear_empties(instance)
+        self.jsonschema_validator.root_instance = instance
 
+        errors = {}
         for error in self.jsonschema_validator.iter_errors(instance):
-
             if error.schema_path[-1] == 'required':
                 # put required errors under the required keys themselves
                 match = re.match(r'(?P<key>.+) is a required property', error.message)
