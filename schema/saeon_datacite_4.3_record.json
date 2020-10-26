@@ -13,7 +13,11 @@
                     "schemeURI": "http://orcid.org/"
                 }
             ],
-            "affiliation": ["DataCite"]
+            "affiliations": [
+                {
+                    "affiliation": "DataCite"
+                }
+            ]
         }
     ],
     "titles": [
@@ -47,7 +51,11 @@
                     "schemeURI": "http://orcid.org/"
                 }
             ],
-            "affiliation": ["California Digital Library"]
+            "affiliations": [
+                {
+                    "affiliation": "California Digital Library"
+                }
+            ]
         }
     ],
     "dates": [
