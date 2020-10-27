@@ -1,0 +1,111 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "type": "object",
+
+    "properties": {
+        "data_agreement": {
+            "type": "object",
+            "properties": {
+                "accepted": {"type": "boolean", "const": true},
+                "href": {"type": "string", "format": "url"}
+            },
+            "required": ["accepted", "href"]
+        },
+        "terms_and_conditions": {
+            "type": "object",
+            "properties": {
+                "accepted": {"type": "boolean", "const": true}
+            },
+            "required": ["accepted"]
+        },
+        "capture_info": {
+            "type": "object",
+            "properties": {
+                "capture_method": {"type": "string", "enum": ["curator", "harvester", "wizard"]}
+            },
+            "required": ["capture_method"]
+        },
+        "quality_control_1": {
+            "type": "object",
+            "properties": {
+                "user": {"type": "string", "format": "email", "role": "curator"},
+                "date": {"type": "string", "format": "date"}
+            },
+            "required": ["user", "date"]
+        },
+        "quality_control_2": {
+            "type": "object",
+            "properties": {
+                "user": {"type": "string", "format": "email", "role": "curator"},
+                "date": {"type": "string", "format": "date"}
+            },
+            "required": ["user", "date"]
+        },
+        "validated": {
+            "type": "boolean",
+            "const": true
+        },
+        "errors": {
+            "type": "object",
+            "additionalProperties": false,
+            "$comment": "Errors are permitted only for properties listed explicitly here.",
+            "properties": {
+                "spatialResolution": true,
+                "spatialRepresentationTypes": true,
+                "metadataTimestamp": true,
+                "purpose": true
+            }
+        },
+        "metadata_json": {
+            "$comment": "This element specifies additional validation to be performed on the metadata JSON at workflow transition time; validation rules defined in the applicable metadata schema(s) should not be repeated here.",
+            "if": {
+                "$comment": "This subschema evaluates to true if the resource is restricted in terms of SANS 1878",
+                "properties": {
+                    "constraints": {
+                        "contains": {
+                            "properties": {
+                                "accessConstraints": {
+                                    "contains": {"const": "restricted"}
+                                }
+                            },
+                            "required": ["accessConstraints"]
+                        }
+                    }
+                },
+                "required": ["constraints"]
+            },
+            "else": {
+                "$comment": "This subschema is evaluated only if the resource is not restricted in terms of SANS 1878",
+                "properties": {
+                    "immutableResource": {
+                        "properties": {
+                            "resourceURL": {"urlTest": true}
+                        }
+                    },
+                    "linkedResources": {
+                        "items": {
+                            "properties": {
+                                "resourceURL": {"urlTest": true}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    "required": [
+        "data_agreement",
+        "terms_and_conditions",
+        "capture_info",
+        "validated",
+        "quality_control_1",
+        "quality_control_2"
+    ],
+
+    "uniqueProperties": {
+        "namePattern": "quality_control_[0-9]+",
+        "childProperties": ["user"]
+    }
+}
