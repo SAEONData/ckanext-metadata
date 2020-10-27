@@ -382,10 +382,7 @@ def map_to_validator(validator, map_params, instance, schema):
 
         if not target_path:
             errors = True
-            yield jsonschema.ValidationError(_("A 'target' must be defined"))
-        elif target_path == '/':
-            errors = True
-            yield jsonschema.ValidationError(_("'target' cannot be the document root"))
+            yield jsonschema.ValidationError(_("A 'target' location must be defined"))
         else:
             try:
                 jsonpointer.JsonPointer(target_path)
