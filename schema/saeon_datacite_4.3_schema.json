@@ -564,14 +564,6 @@
                     "serverType": {"$ref": "#/definitions/serverType"}
                 },
                 "required": ["linkedResourceType", "resourceURL"],
-                "if": {
-                    "properties": {
-                        "linkedResourceType": {"const": "Query"}
-                    }
-                },
-                "then": {
-                    "required": ["serverType"]
-                },
                 "additionalProperties": false
             },
             "uniqueItems": true
