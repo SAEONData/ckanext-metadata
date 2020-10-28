@@ -242,18 +242,11 @@ def map_init_validator(validator, target_elements, instance, schema):
     "mapInit" keyword validator: initializes the top-level target elements that will be
     written to by "mapTo" operations.
 
-    "mapInit" is a dict containing the target element names and their corresponding types.
+    "mapInit" is a dict containing the target element names and their initial values.
     """
     if validator.is_type(target_elements, 'object'):
-        for target_name, target_type in target_elements.iteritems():
-            if target_type == 'string':
-                validator.root_instance.pop(target_name, None)
-            elif target_type == 'array':
-                validator.root_instance[target_name] = []
-            elif target_type == 'object':
-                validator.root_instance[target_name] = {}
-            else:
-                yield jsonschema.ValidationError(_("mapInit: Unsupported top-level target element type"))
+        for target_name, init_value in target_elements.iteritems():
+            validator.root_instance[target_name] = init_value
 
 
 def map_to_validator(validator, map_params, instance, schema):
@@ -273,7 +266,10 @@ def map_to_validator(validator, map_params, instance, schema):
     ::
         {
             "type": (mandatory)
-                - the JSON type of the target value; only "string", "array" and "object" are supported
+                - the JSON type of the target value ("string", "object", etc)
+            "const": (optional)
+                - a constant value to be set at the target location
+                - if specified, the remaining parameters have no effect
             "source": (optional)
                 - if this is a string, it specifies the property on the current instance from which the
                   target value is obtained
@@ -284,66 +280,85 @@ def map_to_validator(validator, map_params, instance, schema):
                   target value
             "separator": (mandatory, if "source" is a list of strings)
                 - the separator string to be used for combining multiple source values
-            "converter": (optional, for a target type of string)
-                - if this is a dict, it defines a simple vocabulary converter, with key-value pairs
-                  specifying source-target keyword conversions
+            "converter": (optional)
                 - if this is a string, it indicates a conversion function (linked to a Python routine
                   in JSONValidator._converters), which takes the source value as input and returns the
                   target value
-            "const": (optional, for a target type of string)
-                - a constant string value to be set at the target location
-                - if specified, "source" and "converter" have no effect
-            "items": (mandatory, for a target type of array)
+                - for a target type of string, a converter may be a dictionary defining a simple
+                  vocabulary mapping, with key-value pairs specifying source-target keyword conversions
+                - if a converter is used with target type array or object, then the items/properties
+                  schemas are ignored
+            "items": (mandatory, for a target type of array, unless a converter is used)
                 - defines a nested "value" schema to be used for every item in the target array
-            "properties": (mandatory, for a target type of object)
+            "properties": (mandatory, for a target type of object, unless a converter is used)
                 - defines nested "value" schemas to be used for each property in the target object
         }
     """
     def make_value(source_instance, **kwargs):
-        target_type = kwargs.get('type')
-        source_prop = kwargs.pop('source', None)
+        def cast(val):
+            try:
+                pytype = {
+                    'string': str, 'integer': int, 'number': float, 'boolean': bool,
+                    'array': list, 'object': dict,
+                }[target_type]
+            except KeyError:
+                raise SyntaxError(_("Unsupported type {}".format(target_type)))
+            try:
+                return pytype(val)
+            except (ValueError, TypeError):
+                raise ValueError(_("Unable to cast {} to {}".format(val, pytype)))
 
+        target_type = kwargs.get('type')
         if not target_type:
             raise SyntaxError(_("A 'type' must be specified for the target value"))
-        if source_prop and type(source_instance) is not dict:
-            raise SyntaxError(_("The 'source' keyword can only be used with object instances"))
 
-        if isinstance(source_prop, basestring):
-            if source_prop in source_instance:
-                return make_value(source_instance[source_prop], **kwargs)
+        if target_type == 'null':
             return None
-        elif type(source_prop) is list:
-            if target_type != 'string':
-                raise SyntaxError(_("The 'source' keyword can only specify a list of properties if the target type is 'string'"))
-            separator = kwargs.pop('separator', None)
-            if not isinstance(separator, basestring):
-                raise SyntaxError(_("A 'separator' must be specified if 'source' is a list of properties"))
-            result = []
-            for source_prop_i in source_prop:
-                if source_prop_i in source_instance:
-                    value = make_value(source_instance[source_prop_i], **kwargs)
-                    if value:
-                        result += [value]
-            return separator.join(result)
 
-        if target_type == 'string':
-            const = kwargs.pop('const', None)
-            converter = kwargs.pop('converter', None)
-            if isinstance(const, basestring):
-                return const
-            elif type(converter) is dict:
+        const = kwargs.pop('const', None)
+        if const is not None:
+            return cast(const)
+
+        source_prop = kwargs.pop('source', None)
+        if source_prop is not None:
+            if type(source_instance) is not dict:
+                raise SyntaxError(_("The 'source' keyword can only be used with object instances"))
+            if isinstance(source_prop, basestring):
+                if source_prop in source_instance:
+                    return make_value(source_instance[source_prop], **kwargs)
+                return None
+            if type(source_prop) is list:
+                if target_type != 'string':
+                    raise SyntaxError(_("The 'source' keyword can only specify a list of properties if the target type is 'string'"))
+                separator = kwargs.pop('separator', None)
+                if not isinstance(separator, basestring):
+                    raise SyntaxError(_("A 'separator' must be specified if 'source' is a list of properties"))
+                result = []
+                for source_prop_i in source_prop:
+                    if source_prop_i in source_instance:
+                        value = make_value(source_instance[source_prop_i], **kwargs)
+                        if value:
+                            result += [value]
+                return separator.join(result)
+            raise SyntaxError(_("Invalid value for 'source' keyword"))
+
+        converter = kwargs.pop('converter', None)
+        if converter is not None:
+            if type(converter) is dict:
+                if target_type != 'string':
+                    raise SyntaxError(_("A dictionary converter can only be used for a target type of 'string'"))
                 return converter.get(str(source_instance), str(source_instance))
-            elif isinstance(converter, basestring):
+            if isinstance(converter, basestring):
                 if converter not in validator.converters:
                     raise SyntaxError(_("Converter '{}' not found".format(converter)))
                 converter_fn = validator.converters[converter]
                 try:
-                    return str(converter_fn(source_instance))
+                    return cast(converter_fn(source_instance))
                 except Exception, e:
                     raise ValueError(_("Unable to convert value using '{}' function: {}".format(converter, e)))
-            return str(source_instance)
+            raise SyntaxError(_("Invalid value for 'converter' keyword"))
 
-        elif target_type == 'array':
+        if target_type == 'array':
             item_schema = kwargs.pop('items', None)
             if type(item_schema) is not dict:
                 raise SyntaxError(_("An 'items' dictionary must be defined for a target type of 'array'"))
@@ -359,7 +374,7 @@ def map_to_validator(validator, map_params, instance, schema):
                     result = [value]
             return result
 
-        elif target_type == 'object':
+        if target_type == 'object':
             properties = kwargs.pop('properties', None)
             if type(properties) is not dict:
                 raise SyntaxError(_("A 'properties' dictionary must be defined for a target type of 'object'"))
@@ -372,8 +387,9 @@ def map_to_validator(validator, map_params, instance, schema):
                     result[prop_name] = value
             return result
 
-        else:
-            raise SyntaxError(_("Unsupported 'type' for target: '{}'".format(target_type)))
+        return cast(source_instance)
+
+    # end make_value()
 
     if validator.is_type(map_params, 'object'):
         target_path = map_params.get('target')
