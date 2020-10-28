@@ -23,6 +23,12 @@ class MetadataValidator(JSONValidator):
         }
 
     @classmethod
+    def _initializers(cls):
+        return [
+            'mapInit',
+        ]
+
+    @classmethod
     def _formats(cls):
         return [
             'doi',

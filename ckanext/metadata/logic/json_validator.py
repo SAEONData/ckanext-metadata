@@ -6,7 +6,7 @@ import jsonschema.validators
 import re
 import ast
 from jsonpointer import resolve_pointer, JsonPointerException
-from collections import deque
+from collections import deque, OrderedDict
 
 import ckan.plugins.toolkit as tk
 
@@ -49,8 +49,13 @@ class JSONValidator(object):
             except ImportError:
                 raise ImportError("Module rfc3987 is required for uri format checking")
 
+        sorted_schema = OrderedDict()
+        for keyword in self._initializers():
+            sorted_schema[keyword] = None
+        sorted_schema.update(schema)
+
         self.jsonschema_validator = jsonschema_validator_cls(
-            schema, format_checker=jsonschema.FormatChecker(formats))
+            sorted_schema, format_checker=jsonschema.FormatChecker(formats))
 
         self.jsonschema_validator.object_id = object_id
         self.jsonschema_validator.context = context or {}
@@ -63,6 +68,14 @@ class JSONValidator(object):
         :return: dict of {string: function}
         """
         return {}
+
+    @classmethod
+    def _initializers(cls):
+        """
+        Return a list of keywords that must be validated before any others.
+        :return: list of strings
+        """
+        return []
 
     @classmethod
     def _formats(cls):
