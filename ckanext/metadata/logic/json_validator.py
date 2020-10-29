@@ -207,7 +207,6 @@ class JSONValidator(object):
                 # hacky way to see if we've used "oneOf" and "if-then-else" to make a switch statement
                 is_switch = False
                 err_i = -1
-                err_msg = ''
                 for i, err in enumerate(error.context):
                     if str(err).startswith('False schema does not allow '):
                         # this option failed its "if" condition and aborted at the "else": false
@@ -215,10 +214,10 @@ class JSONValidator(object):
                     else:
                         # this option matched its "if" condition but threw a validation error
                         err_i = i
-                        err_msg = str(err)
-                if is_switch:
+                        break
+                if is_switch and err_i >= 0:
                     error.path.append(err_i)
-                    error.message = err_msg
+                    error.message = str(err)
 
             elif error.schema_path[-1] == 'anyOf':
                 error.path.append('__anyOf')
