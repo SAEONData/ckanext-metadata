@@ -51,4 +51,5 @@ class MetadataValidator(JSONValidator):
         return {
             'date-to-year': jvf.date_to_year,
             'link-to-base-url': jvf.link_to_base_url,
+            'string-to-array': jvf.string_to_array,
         }

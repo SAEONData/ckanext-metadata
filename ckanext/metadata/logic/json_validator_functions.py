@@ -592,3 +592,13 @@ def link_to_base_url(instance):
     """
     urlparts = urlparse.urlparse(instance)
     return '{}://{}'.format(urlparts.scheme, urlparts.netloc)
+
+
+def string_to_array(instance):
+    """
+    "string-to-array" converter for the "mapTo" keyword validator.
+    e.g. given "[shp, shx, dbf]" returns ["shp", "shx", "dbf"]
+    """
+    if not re.match("^\\[\\s*\\w+\\s*(,\\s*\\w+\\s*)*]$", instance):
+        raise ValueError("Invalid input value for string-to-array")
+    return [item.strip() for item in instance[1:-1].split(',')]

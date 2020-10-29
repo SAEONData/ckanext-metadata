@@ -847,7 +847,7 @@
                                 "if": {
                                     "properties": {
                                         "description": {"const": "download"},
-                                        "applicationProfile": {"pattern": "^\\[(\\s*\\w+\\s*)(,\\s*\\w+\\s*)*]$"}
+                                        "applicationProfile": {"pattern": "^\\[\\s*\\w+\\s*(,\\s*\\w+\\s*)*]$"}
                                     },
                                     "required": ["applicationProfile"]
                                 },
