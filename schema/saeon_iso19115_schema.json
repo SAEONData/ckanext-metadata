@@ -955,11 +955,11 @@
         },
         "metadataStandardName": {
             "type": "string",
-            "enum": ["SANS 1878", "ISO 19115"]
+            "const": "ISO19115"
         },
         "metadataStandardVersion": {
             "type": "string",
-            "const": "1"
+            "const": "ISO19115 - SAEON Profile"
         },
         "metadataLanguage": {
             "type": "string"
