@@ -77,12 +77,15 @@ def metadata_record_create_schema():
     schema = {
         # native package fields with special usage
         'id': [ignore],
+        'name': [ignore],
         'owner_org': [v.not_empty, v.object_exists('organization'), owner_org_validator, unicode],
         'state': [ignore_not_package_admin, ignore_missing],
         'type': [],
         'private': [],
 
         # extension-specific fields
+        'doi': [v.not_missing, unicode, v.doi_validator, convert_to_extras],
+        'sid': [v.not_missing, unicode, v.sid_validator, convert_to_extras],
         'metadata_collection_id': [v.not_empty, unicode, v.object_exists('metadata_collection'), convert_to_extras],
         'metadata_standard_id': [v.not_empty, unicode, v.object_exists('metadata_standard'), convert_to_extras],
         'metadata_json': [v.not_empty, unicode, v.json_dict_validator, convert_to_extras],
@@ -111,11 +114,7 @@ def metadata_record_attr_mappable_schema():
     values in the metadata JSON.
     """
     schema = {
-        # extension extra fields
-        'doi': [v.not_missing, unicode, v.doi_validator, convert_to_extras],
-
         # native package fields
-        'name': [ignore_missing, unicode, package_name_validator],
         'title': [ignore_missing, unicode],
         'author': [ignore_missing, unicode],
         'author_email': [ignore_missing, unicode, email_validator],
@@ -143,6 +142,7 @@ def metadata_record_show_schema(deserialize_json=False):
         'metadata_standard_id': [convert_from_extras, v.convert_id_to_name('metadata_standard')],
         'metadata_json': [convert_from_extras, v.format_json(deserialize_json)],
         'doi': [convert_from_extras],
+        'sid': [convert_from_extras],
         'metadata_collection_id': [convert_from_extras, v.convert_id_to_name('metadata_collection')],
         'validated': [convert_from_extras, boolean_validator],
         'errors': [convert_from_extras, v.format_json(deserialize_json)],

@@ -1,26 +1,26 @@
 # encoding: utf-8
 
 import json
-import uuid
 import re
 import urlparse
-import jsonschema
-import jsonpointer
-import random
-from paste.deploy.converters import asbool
+import uuid
 
-import ckan.plugins.toolkit as tk
-from ckan.common import _, config
 import ckan.lib.navl.dictization_functions as df
+import ckan.plugins.toolkit as tk
+import jsonpointer
+import jsonschema
+from ckan.common import _, config
+
 import ckanext.metadata.model as ckanext_model
-from ckanext.metadata.logic.json_validator import JSONValidator
 from ckanext.metadata.common import (
     model_info,
     RE_WORKFLOW_ANNOTATION_ATTRIBUTE_TYPE,
     WORKFLOW_ANNOTATION_ATTRIBUTE_TYPES,
     DOI_RE,
     DOI_SUFFIX_RE,
+    SID_RE,
 )
+from ckanext.metadata.logic.json_validator import JSONValidator
 
 convert_to_extras = tk.get_validator('convert_to_extras')
 
@@ -410,35 +410,26 @@ def doi_collection_validator(key, data, errors, context):
     Check that the value is valid for use in a DOI.
     """
     value = data.get(key)
-    if value:
-        value = value.upper()
-        if not re.match(DOI_SUFFIX_RE, value):
-            _abort(errors, key, _("Invalid DOI collection identifier"))
-
-        data[key] = value
+    if value and not re.match(DOI_SUFFIX_RE, value):
+        _abort(errors, key, _("Invalid DOI collection identifier"))
 
 
 def doi_validator(key, data, errors, context):
     """
     Check for a well-formed DOI.
     """
-    model = context['model']
-    session = context['session']
-
     value = data.get(key)
-    if value:
-        value = value.upper()
-        if not re.match(DOI_RE, value):
-            _abort(errors, key, _("Invalid DOI"))
+    if value and not re.match(DOI_RE, value):
+        _abort(errors, key, _("Invalid DOI"))
 
-        id_ = _convert_missing(data.get(key[:-1] + ('id',)))
-        collision_q = session.query(model.PackageExtra).filter_by(key='doi', value=value)
-        if id_:
-            collision_q = collision_q.filter(model.PackageExtra.package_id != id_)
-        if collision_q.first():
-            _abort(errors, key, _("The DOI has already been taken"))
 
-        data[key] = value
+def sid_validator(key, data, errors, context):
+    """
+    Check for a valid SID (secondary identifier).
+    """
+    value = data.get(key)
+    if value and not re.match(SID_RE, value):
+        _abort(errors, key, _("Invalid SID"))
 
 
 def metadata_record_id_name_generator(key, data, errors, context):

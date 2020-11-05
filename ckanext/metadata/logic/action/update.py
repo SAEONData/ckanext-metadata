@@ -5,6 +5,7 @@ import json
 import random
 import re
 from paste.deploy.converters import asbool, falsy
+from sqlalchemy import func
 from sqlalchemy.orm import aliased
 import jsonpointer
 
@@ -369,7 +370,6 @@ def metadata_record_update(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
-    redirect_from_create = context.get('redirect_from_create', False)
     deserialize_json = asbool(data_dict.get('deserialize_json'))
 
     internal_context = context.copy()
@@ -382,33 +382,63 @@ def metadata_record_update(context, data_dict):
     else:
         raise tk.ObjectNotFound('%s: %s' % (_('Not found'), _('Metadata Record')))
 
-    if redirect_from_create:
-        # we've already done the attribute mapping and record matching in metadata_record_create
+    # this is (mostly) duplicating the schema validation that will be done in package_update below,
+    # but we want to validate before processing DOI/SID and attribute mappings
+    data, errors = tk.navl_validate(data_dict, schema.metadata_record_update_schema(), internal_context)
+    if errors:
+        session.rollback()
+        raise tk.ValidationError(errors)
+
+    doi = data_dict.get('doi')
+    sid = data_dict.get('sid')
+    if not doi and not sid:
+        raise tk.ValidationError(_("DOI and/or SID must be given"))
+
+    # check that the DOI, if supplied, does not belong to another record
+    if doi:
+        existing_doi_rec = session.query(model.Package). \
+            join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id). \
+            filter(model.PackageExtra.key == 'doi'). \
+            filter(func.lower(model.PackageExtra.value) == doi.lower()). \
+            first()
+        if existing_doi_rec and existing_doi_rec.id != metadata_record_id:
+            raise tk.ValidationError(_("The DOI is associated with another metadata record"))
+
+    # check that the SID, if supplied, does not belong to another record
+    if sid:
+        existing_sid_rec = session.query(model.Package). \
+            join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id). \
+            filter(model.PackageExtra.key == 'sid'). \
+            filter(func.lower(model.PackageExtra.value) == sid.lower()). \
+            first()
+        if existing_sid_rec and existing_sid_rec.id != metadata_record_id:
+            raise tk.ValidationError(_("The SID is associated with another metadata record"))
+
+    # if the record already has a DOI, make sure it is not being changed or un-set
+    existing_doi = metadata_record.extras['doi']
+    if existing_doi and existing_doi.lower() != doi.lower():
+        raise tk.ValidationError(_("A metadata record's DOI, once set, cannot be changed or removed"))
+
+    # check for discrepancy between parameterized DOI and metadata DOI
+    metadata_dict = json.loads(data_dict['metadata_json'])
+    try:
+        metadata_doi = metadata_dict['doi']
+        if not isinstance(metadata_doi, basestring) or metadata_doi.lower() != doi.lower():
+            raise tk.ValidationError(_("The DOI in the metadata JSON does not match the given DOI"))
+    except KeyError:
         pass
-    else:
-        # this is (mostly) duplicating the schema validation that will be done in package_update below,
-        # but we want to validate before doing the attribute mappings
-        data, errors = tk.navl_validate(data_dict, schema.metadata_record_update_schema(), internal_context)
-        if errors:
-            session.rollback()
-            raise tk.ValidationError(errors)
 
-        # map values from the metadata JSON into the data_dict
-        attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
-            'metadata_standard_id': data_dict.get('metadata_standard_id'),
-            'metadata_json': data_dict.get('metadata_json'),
-        })
-        data_dict.update(attr_map['data_dict'])
-        # if 'name' got an empty string from the attribute map, we remove it and allow the default behaviour
-        if data_dict.get('name') == '':
-            del data_dict['name']
+    # inject DOI into the metadata
+    if doi:
+        metadata_dict['doi'] = doi
+        data_dict['metadata_json'] = json.dumps(metadata_dict)
 
-        # check that an existing record matched on key attributes mapped from the JSON is the
-        # same record that we are updating; note that we should not find a match if we are actually
-        # updating key attributes
-        matching_record_id = tk.get_action('metadata_record_attr_match')(internal_context, attr_map['key_dict'])
-        if matching_record_id and matching_record_id != metadata_record_id:
-            raise tk.ValidationError(_("Cannot update record; another record exists with the given key attribute values"))
+    # map values from the metadata JSON into the data_dict
+    attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
+        'metadata_standard_id': data_dict.get('metadata_standard_id'),
+        'metadata_json': data_dict.get('metadata_json'),
+    })
+    data_dict.update(attr_map['data_dict'])
 
     data_dict.update({
         'id': metadata_record_id,

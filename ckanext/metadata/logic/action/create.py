@@ -3,6 +3,7 @@
 import logging
 import json
 from paste.deploy.converters import asbool
+from sqlalchemy import func
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _
@@ -311,12 +312,15 @@ def metadata_record_create(context, data_dict):
 
     You must be authorized to create metadata records.
 
-    Note that if the incoming record matches an existing one on key attributes mapped from
-    the metadata JSON, then we switch to doing an update instead.
+    If an incoming request matches an existing record on DOI and/or SID,
+    then we switch to an update. Comparisons are case-insensitive.
+    Once set, a DOI is pinned permanently to a record ID.
+    An SID, on the other hand, may be changed or un-set.
 
-    :param name: the name of the metadata record (optional - set to id if not supplied);
-        must conform to standard naming rules
-    :type name: string
+    :param doi: digital object identifier (nullable)
+    :type doi: string
+    :param sid: secondary identifier (nullable, but mandatory if doi is not supplied)
+    :type sid: string
     :param owner_org: the id or name of the organization to which this record belongs
     :type owner_org: string
     :param metadata_collection_id: the id or name of the metadata collection to which this record will be added
@@ -325,10 +329,6 @@ def metadata_record_create(context, data_dict):
     :type metadata_standard_id: string
     :param metadata_json: JSON dictionary of metadata record content
     :type metadata_json: string
-    :param doi: the DOI to be associated with this record (nullable)
-    :type doi: string
-    :param auto_assign_doi: automatically generate a DOI for this record; if this is True, then 'doi' must be left blank
-    :type auto_assign_doi: boolean
     :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
     :type deserialize_json: boolean
 
@@ -351,27 +351,79 @@ def metadata_record_create(context, data_dict):
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
     deserialize_json = asbool(data_dict.get('deserialize_json'))
-    auto_assign_doi = asbool(data_dict.get('auto_assign_doi'))
 
     internal_context = context.copy()
     internal_context['ignore_auth'] = True
 
     # this is (mostly) duplicating the schema validation that will be done in package_create below,
-    # but we want to validate before doing the attribute mappings
+    # but we want to validate before processing DOI/SID and attribute mappings
     data, errors = tk.navl_validate(data_dict, schema.metadata_record_create_schema(), internal_context)
     if errors:
         session.rollback()
         raise tk.ValidationError(errors)
 
-    # check if we match an existing record exactly on important properties
-    # - if a match is found, then we do nothing and just return that record
-    # - this provides re-entrance for harvesters, bulk imports, etc
-    matching_record_id = tk.get_action('metadata_record_exact_match')(internal_context, data)
-    if matching_record_id:
-        log.info('Exact matching record found')
-        output = matching_record_id if return_id_only \
-            else tk.get_action('metadata_record_show')(internal_context, {'id': matching_record_id, 'deserialize_json': deserialize_json})
-        return output
+    doi = data_dict.get('doi')
+    sid = data_dict.get('sid')
+    if not doi and not sid:
+        raise tk.ValidationError(_("DOI and/or SID must be given"))
+
+    # find a matching record by DOI
+    if doi:
+        existing_doi_rec = session.query(model.Package). \
+            join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id). \
+            filter(model.PackageExtra.key == 'doi'). \
+            filter(func.lower(model.PackageExtra.value) == doi.lower()). \
+            first()
+    else:
+        existing_doi_rec = None
+
+    # find a matching record by SID
+    if sid:
+        existing_sid_rec = session.query(model.Package). \
+            join(model.PackageExtra, model.Package.id == model.PackageExtra.package_id). \
+            filter(model.PackageExtra.key == 'sid'). \
+            filter(func.lower(model.PackageExtra.value) == sid.lower()). \
+            first()
+    else:
+        existing_sid_rec = None
+
+    # DOI ownership cannot change
+    if existing_doi_rec and existing_doi_rec.owner_org != data['owner_org']:
+        raise tk.ValidationError(_("The DOI is in use by another organization"))
+
+    # SID ownership cannot change
+    if existing_sid_rec and existing_sid_rec.owner_org != data['owner_org']:
+        raise tk.ValidationError(_("The SID is in use by another organization"))
+
+    # ambiguous match
+    if existing_doi_rec and existing_sid_rec and existing_doi_rec.id != existing_sid_rec.id:
+        raise tk.ValidationError(_("The DOI and SID are associated with two different metadata records"))
+
+    # matched on DOI; switch to an update
+    if existing_doi_rec:
+        log.info('Matched existing record on DOI; switching to metadata_record_update')
+        data_dict['id'] = existing_doi_rec.id
+        return tk.get_action('metadata_record_update')(internal_context, data_dict)
+
+    # matched on SID; switch to an update
+    # metadata_record_update ensures that an existing DOI is not changed or un-set
+    if existing_sid_rec:
+        log.info('Matched existing record on SID; switching to metadata_record_update')
+        data_dict['id'] = existing_sid_rec.id
+        return tk.get_action('metadata_record_update')(internal_context, data_dict)
+
+    # check for discrepancy between parameterized DOI and metadata DOI
+    metadata_dict = json.loads(data_dict['metadata_json'])
+    try:
+        if metadata_dict['doi'].lower() != doi.lower():
+            raise tk.ValidationError(_("The DOI in the metadata JSON does not match the given DOI"))
+    except KeyError:
+        pass
+
+    # inject DOI into the metadata
+    if doi:
+        metadata_dict['doi'] = doi
+        data_dict['metadata_json'] = json.dumps(metadata_dict)
 
     # map values from the metadata JSON into the data_dict
     attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
@@ -379,17 +431,6 @@ def metadata_record_create(context, data_dict):
         'metadata_json': data_dict.get('metadata_json'),
     })
     data_dict.update(attr_map['data_dict'])
-    # if 'name' got an empty string from the attribute map, we remove it and allow the default behaviour
-    if data_dict.get('name') == '':
-        del data_dict['name']
-
-    # check if we match an existing record on key attributes mapped from the JSON; if so, switch to an update
-    matching_record_id = tk.get_action('metadata_record_attr_match')(internal_context, attr_map['key_dict'])
-    if matching_record_id:
-        log.info('Existing record found; switching to metadata_record_update')
-        data_dict['id'] = matching_record_id
-        internal_context['redirect_from_create'] = True
-        return tk.get_action('metadata_record_update')(internal_context, data_dict)
 
     # it's new metadata; create the package object
     data_dict.update({
@@ -407,11 +448,6 @@ def metadata_record_create(context, data_dict):
     })
     metadata_record_id = tk.get_action('package_create')(internal_context, data_dict)
     model_save.metadata_record_collection_membership_save(data_dict['metadata_collection_id'], internal_context)
-
-    # auto assign a DOI if applicable
-    if auto_assign_doi:
-        internal_context['metadata_record'] = internal_context['package']
-        tk.get_action('metadata_record_assign_doi')(internal_context, {'id': metadata_record_id})
 
     if not defer_commit:
         model.repo.commit()
