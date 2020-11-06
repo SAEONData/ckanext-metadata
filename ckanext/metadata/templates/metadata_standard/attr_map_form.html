@@ -19,9 +19,6 @@
         classes=['control-full'], is_required=true,
         attrs={'style': 'font-family: monospace'}) }}
 
-  {{ form.checkbox('is_key', label=_('Key Attribute'), id='field-is-key',
-        value=1, checked=data.is_key, error=errors.is_key) }}
-
   {{ form.required_message() }}
 
   <div class="form-actions">

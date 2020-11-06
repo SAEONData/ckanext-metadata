@@ -1270,6 +1270,7 @@ def metadata_json_attr_map_update(context, data_dict):
     session = context['session']
     defer_commit = context.get('defer_commit', False)
     return_id_only = context.get('return_id_only', False)
+    data_dict['is_key'] = False
 
     metadata_json_attr_map_id = tk.get_or_bust(data_dict, 'id')
     metadata_json_attr_map = ckanext_model.MetadataJSONAttrMap.get(metadata_json_attr_map_id)
