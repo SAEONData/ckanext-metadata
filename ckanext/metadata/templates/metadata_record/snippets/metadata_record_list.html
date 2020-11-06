@@ -14,10 +14,11 @@ Example:
   <table class="table table-header table-hover table-bordered" id="metadata-records-table">
     <thead>
       <tr>
-        <th colspan="3">{{ _('Identifier') }}</th>
+        <th colspan="3">{{ _('DOI') }}</th>
+        <th colspan="3">{{ _('SID') }}</th>
         <th colspan="5">{{ _('Title') }}</th>
         <th colspan="1">{{ _('Valid') }}</th>
-        <th colspan="2">{{ _('Status') }}</th>
+        <th colspan="3">{{ _('Status') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -25,7 +26,11 @@ Example:
       <tr>
         <td colspan="3"><a href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
                                     action='read', id=metadata_record.id, organization_id=organization_id, metadata_collection_id=metadata_collection_id %}">
-          {{ metadata_record.name }}
+          {{ metadata_record.doi }}
+        </a></td>
+        <td colspan="3"><a href="{% url_for controller='ckanext.metadata.controllers.metadata_record:MetadataRecordController',
+                                    action='read', id=metadata_record.id, organization_id=organization_id, metadata_collection_id=metadata_collection_id %}">
+          {{ metadata_record.sid }}
         </a></td>
         <td colspan="5">{{ metadata_record.display_name }}</td>
         <td colspan="1">
@@ -39,7 +44,7 @@ Example:
             <i class="fa fa-question"></i>
           {% endif %}
         </td>
-        <td colspan="2">{{ metadata_record.workflow_state }}</td>
+        <td colspan="3">{{ metadata_record.workflow_state }}</td>
       </tr>
       {% endfor %}
     </tbody>
