@@ -415,7 +415,8 @@ def metadata_record_create(context, data_dict):
     # check for discrepancy between parameterized DOI and metadata DOI
     metadata_dict = json.loads(data_dict['metadata_json'])
     try:
-        if metadata_dict['doi'].lower() != doi.lower():
+        metadata_doi = metadata_dict['doi']
+        if not isinstance(metadata_doi, basestring) or metadata_doi.lower() != doi.lower():
             raise tk.ValidationError(_("The DOI in the metadata JSON does not match the given DOI"))
     except KeyError:
         pass
