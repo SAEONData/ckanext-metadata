@@ -365,7 +365,7 @@ def metadata_record_create(context, data_dict):
     doi = data_dict.get('doi')
     sid = data_dict.get('sid')
     if not doi and not sid:
-        raise tk.ValidationError(_("DOI and/or SID must be given"))
+        raise tk.ValidationError({"doi,sid": ["DOI and/or SID must be given"]})
 
     # find a matching record by DOI
     if doi:
@@ -389,15 +389,15 @@ def metadata_record_create(context, data_dict):
 
     # DOI ownership cannot change
     if existing_doi_rec and existing_doi_rec.owner_org != data['owner_org']:
-        raise tk.ValidationError(_("The DOI is in use by another organization"))
+        raise tk.ValidationError({"doi": ["The DOI is in use by another organization"]})
 
     # SID ownership cannot change
     if existing_sid_rec and existing_sid_rec.owner_org != data['owner_org']:
-        raise tk.ValidationError(_("The SID is in use by another organization"))
+        raise tk.ValidationError({"sid": ["The SID is in use by another organization"]})
 
     # ambiguous match
     if existing_doi_rec and existing_sid_rec and existing_doi_rec.id != existing_sid_rec.id:
-        raise tk.ValidationError(_("The DOI and SID are associated with two different metadata records"))
+        raise tk.ValidationError({"doi,sid": ["The DOI and SID are associated with two different metadata records"]})
 
     # matched on DOI; switch to an update
     if existing_doi_rec:
@@ -417,7 +417,7 @@ def metadata_record_create(context, data_dict):
     try:
         metadata_doi = metadata_dict['doi']
         if not isinstance(metadata_doi, basestring) or metadata_doi.lower() != doi.lower():
-            raise tk.ValidationError(_("The DOI in the metadata JSON does not match the given DOI"))
+            raise tk.ValidationError({"metadata_json": ["The DOI in the metadata JSON does not match the given DOI"]})
     except KeyError:
         pass
 

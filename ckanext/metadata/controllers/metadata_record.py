@@ -449,7 +449,6 @@ class MetadataRecordController(tk.BaseController):
     def _save_new(self, context):
         try:
             data_dict = clean_dict(dict_fns.unflatten(tuplize_dict(parse_params(tk.request.params))))
-            data_dict.setdefault('auto_assign_doi', False)
             context['message'] = data_dict.get('log_message', '')
             metadata_record = tk.get_action('metadata_record_create')(context, data_dict)
             tk.h.redirect_to('metadata_record_read', id=metadata_record['id'],

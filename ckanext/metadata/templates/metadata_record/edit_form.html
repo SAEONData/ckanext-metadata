@@ -11,18 +11,16 @@
         classes=['control-medium'], is_required=true,
         attrs={'onchange': 'set_doi_state();'}) }}
 
-  {% if action == "new" %}
-      {{ form.checkbox('auto_assign_doi', label=_('Automatically assign a DOI to this record?'), id='field-auto-assign-doi',
-            value=1, checked=data.auto_assign_doi, error=errors.auto_assign_doi,
-            attrs={'onchange': 'set_doi_state();'}) }}
-  {% endif %}
-
-  {% call form.input('doi', label=_('DOI'), id='field-doi',
+  {{ form.input('doi', label=_('DOI'), id='field-doi',
         placeholder=_('Digital Object Identifier'),
-        value=data.doi, error=errors.doi) %}
-      <div id="doi-mapping-info" class="info-block info-inline"></div>
-  {% endcall %}
-
+        value=data.doi, error=errors.doi,
+        classes=['control-full'], attrs={'style': 'font-family: monospace'}) }}
+  
+  {{ form.input('sid', label=_('SID'), id='field-sid',
+        placeholder=_('Secondary Identifier'),
+        value=data.sid, error=errors.sid,
+        classes=['control-full'], attrs={'style': 'font-family: monospace'}) }}
+  
   {{ form.textarea('metadata_json', label=_('Metadata JSON'), id='field-metadata-json',
         placeholder=_('The JSON metadata dictionary.'),
         value=data.metadata_json, error=errors.metadata_json, is_required=true,
@@ -54,47 +52,5 @@
     {% for key, val in doi_attr_mappings.items() -%}
         doi_attr_mappings["{{ key }}"] = "{{ val }}";
     {% endfor %}
-
-    set_doi_state();
-
-    function set_doi_state() {
-        {% if action == "new" %}
-            auto_assign_doi = document.getElementById("field-auto-assign-doi").checked;
-        {% else %}
-            auto_assign_doi = false;
-        {% endif %}
-        metadata_standard = document.getElementById("field-metadata-standard").value;
-
-        if (auto_assign_doi == true) {
-            // auto assign DOI -> disable manual DOI entry
-            document.getElementById("field-doi").value = "";
-            document.getElementById("field-doi").readOnly = true;
-            document.getElementById("doi-mapping-info").style.display = "none";
-        } else {
-            // do not auto assign DOI -> check for JSON-DOI attribute mapping
-            var doi_source_path = doi_attr_mappings[metadata_standard];
-            if (doi_source_path !== "") {
-                // an attribute mapping exists -> disable manual DOI entry
-                {% if action == "edit" %}
-                    if (metadata_standard == "{{ c.metadata_record.metadata_standard_id }}") {
-                        document.getElementById("field-doi").value = "{{ c.metadata_record.doi }}";
-                    } else {
-                        document.getElementById("field-doi").value = "";
-                    }
-                {% else %}
-                    document.getElementById("field-doi").value = "";
-                {% endif %}
-                document.getElementById("field-doi").readOnly = true;
-                document.getElementById("doi-mapping-info").style.display = "block";
-                document.getElementById("doi-mapping-info").innerHTML = "<i class='fa fa-info-circle'></i> " +
-                    "There is an active JSON attribute mapping for the DOI field. The DOI value will be " +
-                    "copied from <b>" + doi_source_path + "</b> in the metadata JSON.";
-            } else {
-                // an attribute mapping does not exist -> enable manual DOI entry
-                document.getElementById("field-doi").readOnly = false;
-                document.getElementById("doi-mapping-info").style.display = "none";
-            }
-        }
-    }
 
 </script>

@@ -392,7 +392,7 @@ def metadata_record_update(context, data_dict):
     doi = data_dict.get('doi')
     sid = data_dict.get('sid')
     if not doi and not sid:
-        raise tk.ValidationError(_("DOI and/or SID must be given"))
+        raise tk.ValidationError({"doi,sid": ["DOI and/or SID must be given"]})
 
     # check that the DOI, if supplied, does not belong to another record
     if doi:
@@ -402,7 +402,7 @@ def metadata_record_update(context, data_dict):
             filter(func.lower(model.PackageExtra.value) == doi.lower()). \
             first()
         if existing_doi_rec and existing_doi_rec.id != metadata_record_id:
-            raise tk.ValidationError(_("The DOI is associated with another metadata record"))
+            raise tk.ValidationError({"doi": ["The DOI is associated with another metadata record"]})
 
     # check that the SID, if supplied, does not belong to another record
     if sid:
@@ -412,19 +412,19 @@ def metadata_record_update(context, data_dict):
             filter(func.lower(model.PackageExtra.value) == sid.lower()). \
             first()
         if existing_sid_rec and existing_sid_rec.id != metadata_record_id:
-            raise tk.ValidationError(_("The SID is associated with another metadata record"))
+            raise tk.ValidationError({"sid": ["The SID is associated with another metadata record"]})
 
     # if the record already has a DOI, make sure it is not being changed or un-set
     existing_doi = metadata_record.extras['doi']
     if existing_doi and existing_doi.lower() != doi.lower():
-        raise tk.ValidationError(_("A metadata record's DOI, once set, cannot be changed or removed"))
+        raise tk.ValidationError({"doi": ["A metadata record's DOI, once set, cannot be changed or removed"]})
 
     # check for discrepancy between parameterized DOI and metadata DOI
     metadata_dict = json.loads(data_dict['metadata_json'])
     try:
         metadata_doi = metadata_dict['doi']
         if not isinstance(metadata_doi, basestring) or metadata_doi.lower() != doi.lower():
-            raise tk.ValidationError(_("The DOI in the metadata JSON does not match the given DOI"))
+            raise tk.ValidationError({"metadata_json": ["The DOI in the metadata JSON does not match the given DOI"]})
     except KeyError:
         pass
 

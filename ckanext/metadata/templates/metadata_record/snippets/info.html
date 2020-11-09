@@ -2,38 +2,49 @@
 <div class="module context-info">
   <section class="module-content">
     {% block inner %}
-      {% block image %}
       <div class="image">
         <a href="{{ metadata_record.url }}">
           <img src="{{ h.url_for_static('/images/metadata_record.png') }}" width="190" height="118" alt="{{ metadata_record.name }}" />
         </a>
       </div>
-      {% endblock %}
-      {% block heading %}
       <h1 class="heading">
-        {{ metadata_record.display_name }}
+        {{ metadata_record.title }}
         {% if metadata_record.state == 'deleted' %}
           [{{ _('Deleted') }}]
         {% endif %}
       </h1>
-      {% endblock %}
-      {% block description %}
-        {% if h.get_translated(metadata_record, 'description') %}
-          <p>
-            {{ h.markdown_extract(h.get_translated(metadata_record, 'description'), 180) }}
-          </p>
-        {% endif %}
-      {% endblock %}
-      {% block metadata_standard %}
-          <p>
-            {{ _('Metadata Standard') }}: {{ metadata_standard.display_name }}
-          </p>
-      {% endblock %}
-      {% block workflow_state %}
-          <p>
-            {{ _('Workflow State') }}: {{ workflow_state.display_name if workflow_state else _('None') }}
-          </p>
-      {% endblock %}
+      <p>
+        {{ _('DOI') }}: {{ metadata_record.doi }}
+      </p>
+      <p>
+        {{ _('SID') }}: {{ metadata_record.sid }}
+      </p>
+      <p>
+        {{ _('Metadata Standard') }}: {{ metadata_standard.display_name }}
+      </p>
+      <p>
+        {{ _('Workflow State') }}: {{ workflow_state.display_name if workflow_state else _('None') }}
+      </p>
+      <p>
+        {{ _('Valid') }}:
+          {% if metadata_record.validated %}
+            {% if metadata_record.errors == '{}' %}
+              <i class="fa fa-check"></i>
+            {% else %}
+              <i class="fa fa-times"></i>
+            {% endif %}
+          {% else %}
+            <i class="fa fa-question"></i>
+          {% endif %}
+      </p>
+      <p>
+        {{ _('Published') }}:
+          {% if metadata_record.private %}
+            <i class="fa fa-times"></i>
+          {% else %}
+            <i class="fa fa-check"></i>
+          {% endif %}
+      </p>
     {% endblock %}
   </section>
 </div>
