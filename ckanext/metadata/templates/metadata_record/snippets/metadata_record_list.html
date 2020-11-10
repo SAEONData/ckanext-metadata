@@ -32,7 +32,7 @@ Example:
                                     action='read', id=metadata_record.id, organization_id=organization_id, metadata_collection_id=metadata_collection_id %}">
           {{ metadata_record.sid }}
         </a></td>
-        <td colspan="5">{{ metadata_record.display_name }}</td>
+        <td colspan="5">{{ metadata_record.title }}</td>
         <td colspan="1">
           {% if metadata_record.validated %}
             {% if metadata_record.errors == '{}' %}
