@@ -29,6 +29,10 @@
   {{ form.required_message() }}
 
   <div class="form-actions">
+  {# Comment out the delete button. Deleting metadata records is problematic:
+      - reharvesting does not undelete
+      - removal should be handled by workflow
+
     {% if action == "edit" %}
       {% if h.check_access('metadata_record_delete', {'id': data.id})  %}
         <a class="btn btn-danger pull-left" data-module="confirm-action" data-module-content="{{ _('Are you sure you want to delete this Metadata Record?') }}"
@@ -36,6 +40,7 @@
           {% block delete_button_text %}{{ _('Delete') }}{% endblock %}</a>
       {% endif %}
     {% endif %}
+  #}
     <button class="btn btn-primary" name="save" type="submit">
       {%- if action == "edit" -%}
         {{ _('Update Metadata Record') }}
