@@ -1,20 +1,22 @@
 # encoding: utf-8
 
-import logging
-from paste.deploy.converters import asbool
-from sqlalchemy import or_
-from sqlalchemy.orm import aliased
 import json
-import jsonpointer
+import logging
 
 import ckan.plugins.toolkit as tk
+import jsonpointer
 from ckan.common import _
-from ckanext.metadata.logic import schema
+from paste.deploy.converters import asbool
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy.orm import aliased
+
+import ckanext.metadata.model as ckanext_model
 from ckanext.metadata.common import METADATA_VALIDATION_ACTIVITY_TYPE, METADATA_WORKFLOW_ACTIVITY_TYPE
+from ckanext.metadata.lib.dictization import model_dictize
+from ckanext.metadata.logic import schema
 from ckanext.metadata.logic.metadata_validator import MetadataValidator
 from ckanext.metadata.logic.workflow_validator import WorkflowValidator
-from ckanext.metadata.lib.dictization import model_dictize
-import ckanext.metadata.model as ckanext_model
 
 log = logging.getLogger(__name__)
 
@@ -394,6 +396,62 @@ def metadata_record_show(context, data_dict):
 
     result_dict, errors = tk.navl_validate(metadata_record_dict, schema.metadata_record_show_schema(deserialize_json), context)
     return result_dict
+
+
+@tk.side_effect_free
+def metadata_record_by_doi(context, data_dict):
+    """
+    Retrieve a metadata record by DOI.
+
+    Resolves DOI to ID and returns the result of metadata_record_show.
+
+    :param doi: digital object identifier
+    :type doi: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving metadata record by DOI: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+
+    doi = tk.get_or_bust(data_dict, 'doi')
+    metadata_record_id = session.query(model.PackageExtra.package_id). \
+        filter(model.PackageExtra.key == 'doi'). \
+        filter(func.lower(model.PackageExtra.value) == doi.lower()). \
+        scalar()
+    data_dict['id'] = metadata_record_id
+    return tk.get_action('metadata_record_show')(context, data_dict)
+
+
+@tk.side_effect_free
+def metadata_record_by_sid(context, data_dict):
+    """
+    Retrieve a metadata record by SID.
+
+    Resolves SID to ID and returns the result of metadata_record_show.
+
+    :param sid: secondary identifier
+    :type sid: string
+    :param deserialize_json: convert JSON string fields to objects in the output dict (optional, default: ``False``)
+    :type deserialize_json: boolean
+
+    :rtype: dictionary
+    """
+    log.debug("Retrieving metadata record by SID: %r", data_dict)
+
+    model = context['model']
+    session = context['session']
+
+    sid = tk.get_or_bust(data_dict, 'sid')
+    metadata_record_id = session.query(model.PackageExtra.package_id). \
+        filter(model.PackageExtra.key == 'sid'). \
+        filter(func.lower(model.PackageExtra.value) == sid.lower()). \
+        scalar()
+    data_dict['id'] = metadata_record_id
+    return tk.get_action('metadata_record_show')(context, data_dict)
 
 
 @tk.side_effect_free
