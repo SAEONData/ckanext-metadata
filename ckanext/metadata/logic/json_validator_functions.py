@@ -298,7 +298,7 @@ def map_to_validator(validator, map_params, instance, schema):
         def cast(val):
             try:
                 pytype = {
-                    'string': str, 'integer': int, 'number': float, 'boolean': bool,
+                    'string': unicode, 'integer': int, 'number': float, 'boolean': bool,
                     'array': list, 'object': dict,
                 }[target_type]
             except KeyError:
@@ -347,7 +347,7 @@ def map_to_validator(validator, map_params, instance, schema):
             if type(converter) is dict:
                 if target_type != 'string':
                     raise SyntaxError(_("A dictionary converter can only be used for a target type of 'string'"))
-                return converter.get(str(source_instance), str(source_instance))
+                return converter.get(unicode(source_instance), unicode(source_instance))
             if isinstance(converter, basestring):
                 if converter not in validator.converters:
                     raise SyntaxError(_("Converter '{}' not found".format(converter)))

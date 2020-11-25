@@ -161,7 +161,7 @@ def format_json(deserialize):
             json_obj = value
 
         try:
-            data[key] = json_obj if deserialize else json.dumps(json_obj, indent=4)
+            data[key] = json_obj if deserialize else json.dumps(json_obj, indent=4, ensure_ascii=False)
         except:
             pass
 

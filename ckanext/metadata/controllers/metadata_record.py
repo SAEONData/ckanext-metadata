@@ -183,7 +183,7 @@ class MetadataRecordController(tk.BaseController):
             tk.c.page = helpers.Page([], 0)
 
         last_validation_result = tk.get_action('metadata_record_validation_activity_show')(context, {'id': id})
-        last_validation_result = json.dumps(last_validation_result, indent=4)
+        last_validation_result = json.dumps(last_validation_result, indent=4, ensure_ascii=False)
 
         return tk.render('metadata_record/validation.html', extra_vars={'last_validation_result': last_validation_result})
 
@@ -224,7 +224,7 @@ class MetadataRecordController(tk.BaseController):
         tk.c.annotations = tk.get_action('metadata_record_workflow_annotation_list')(context, {'id': id})
 
         last_workflow_result = tk.get_action('metadata_record_workflow_activity_show')(context, {'id': id})
-        last_workflow_result = json.dumps(last_workflow_result, indent=4)
+        last_workflow_result = json.dumps(last_workflow_result, indent=4, ensure_ascii=False)
 
         return tk.render('metadata_record/workflow.html', extra_vars={
             'workflow_state_lookup_list': self._workflow_state_lookup_list(),

@@ -431,7 +431,7 @@ def metadata_record_update(context, data_dict):
     # inject DOI into the metadata
     if doi:
         metadata_dict['doi'] = doi
-        data_dict['metadata_json'] = json.dumps(metadata_dict)
+        data_dict['metadata_json'] = json.dumps(metadata_dict, ensure_ascii=False)
 
     # map values from the metadata JSON into the data_dict
     attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
@@ -650,7 +650,7 @@ def metadata_record_validate(context, data_dict):
         # regardless of whether or not validation passed
         if metadata_dict != json_validator.jsonschema_validator.root_instance:
             metadata_dict = json_validator.jsonschema_validator.root_instance.copy()
-            metadata_record.extras['metadata_json'] = json.dumps(metadata_dict)
+            metadata_record.extras['metadata_json'] = json.dumps(metadata_dict, ensure_ascii=False)
 
         validation_result = {
             'metadata_schema_id': metadata_schema['id'],
@@ -660,7 +660,7 @@ def metadata_record_validate(context, data_dict):
         accumulated_errors.update(validation_errors)
 
     metadata_record.extras['validated'] = True
-    metadata_record.extras['errors'] = json.dumps(accumulated_errors)
+    metadata_record.extras['errors'] = json.dumps(accumulated_errors, ensure_ascii=False)
 
     activity_context = context.copy()
     activity_context.update({
@@ -1493,7 +1493,7 @@ def metadata_record_assign_doi(context, data_dict):
                     jsonpointer.set_pointer(metadata_dict, parent, {})
 
             jsonpointer.set_pointer(metadata_dict, doi_json_path, doi)
-            metadata_record.extras['metadata_json'] = json.dumps(metadata_dict)
+            metadata_record.extras['metadata_json'] = json.dumps(metadata_dict, ensure_ascii=False)
 
         except jsonpointer.JsonPointerException:
             # it's good enough that we've set the 'doi' field above

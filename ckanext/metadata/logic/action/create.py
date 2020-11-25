@@ -424,7 +424,7 @@ def metadata_record_create(context, data_dict):
     # inject DOI into the metadata
     if doi:
         metadata_dict['doi'] = doi
-        data_dict['metadata_json'] = json.dumps(metadata_dict)
+        data_dict['metadata_json'] = json.dumps(metadata_dict, ensure_ascii=False)
 
     # map values from the metadata JSON into the data_dict
     attr_map = tk.get_action('metadata_json_attr_map_apply')(internal_context, {
