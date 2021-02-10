@@ -10,7 +10,6 @@ import re
 import urlparse
 import sys
 import requests
-from requests.exceptions import RequestException
 
 import ckan.plugins.toolkit as tk
 from ckan.common import _, config
@@ -227,14 +226,26 @@ def url_test_validator(validator, url_test, instance, schema):
     """
     "urlTest" keyword validator: the value of this keyword is a boolean; if True,
     a HEAD request is made to the specified url.
+
+    Notes:
+        - We don't verify the server certificate. We are not fetching any data
+          so there is no risk here. It just means a user might get a certificate
+          warning in their browser when following the download link. Many of our
+          metadata download links are to plain-http servers anyway, the risk of
+          man-in-the-middle attacks applies equally to all of them.
+
+        - We allow HTTP 401 Unauthorized responses to pass. This response
+          typically means the resource is present but the user will be asked to
+          login to access it.
     """
     if validator.is_type(instance, 'string'):
         if url_test:
             try:
-                response = requests.head(instance)
-                response.raise_for_status()
-            except RequestException, e:
-                yield jsonschema.ValidationError(e.message)
+                response = requests.head(instance, verify=False)
+                if response.status_code != 401:
+                    response.raise_for_status()
+            except requests.RequestException, e:
+                yield jsonschema.ValidationError(str(e))
 
 
 def map_init_validator(validator, target_elements, instance, schema):
