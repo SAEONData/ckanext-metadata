@@ -377,11 +377,11 @@ def map_to_validator(validator, map_params, instance, schema):
             if type(source_instance) is list:
                 for source_item in source_instance:
                     value = make_value(source_item, **item_schema)
-                    if value:
+                    if value is not None:
                         result += [value]
             else:
                 value = make_value(source_instance, **item_schema)
-                if value:
+                if value is not None:
                     result = [value]
             return result
 
@@ -394,7 +394,7 @@ def map_to_validator(validator, map_params, instance, schema):
                 if type(prop_schema) is not dict:
                     raise SyntaxError(_("The value for each property, for a target type of 'object', must be a dictionary"))
                 value = make_value(source_instance, **prop_schema)
-                if value:
+                if value is not None:
                     result[prop_name] = value
             return result
 
@@ -426,7 +426,7 @@ def map_to_validator(validator, map_params, instance, schema):
 
         try:
             value = make_value(instance, **value_schema)
-            if value:
+            if value is not None:
                 if target_path.endswith('/-') and type(value) is list:
                     # merge an array onto an array element
                     operations = [{
